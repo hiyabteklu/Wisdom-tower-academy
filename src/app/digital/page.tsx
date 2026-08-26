@@ -16,7 +16,6 @@ import {
   CheckCircle2,
   ChevronDown,
   Users,
-  ListOrdered,
   Send,
   Target,
   Eye,
@@ -27,6 +26,11 @@ import {
   FileText,
   Award,
   Handshake,
+  Search,
+  FileCheck,
+  MessageCircle,
+  GraduationCap as Train,
+  BadgeCheck,
 } from "lucide-react";
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -63,76 +67,49 @@ const requirements = [
   {
     icon: Award,
     title: "Proven skill",
-    body: "You can show real work — portfolio, samples, or verifiable experience in the area you apply for.",
+    body: "Portfolio, samples, or verifiable experience in the line you apply for.",
+    accent: "from-amber-500/20 to-orange-500/5 border-amber-400/30 text-amber-300",
   },
   {
     icon: Eye,
     title: "Attention to detail",
-    body: "Clean delivery, accurate brief-reading, and zero tolerance for sloppy handoffs.",
+    body: "Clean delivery and zero tolerance for sloppy handoffs.",
+    accent: "from-sky-500/20 to-cyan-500/5 border-sky-400/30 text-sky-300",
   },
   {
     icon: Laptop,
     title: "Digital literacy",
-    body: "Comfortable with the tools of your craft and with remote collaboration platforms.",
+    body: "Tools of your craft plus remote collaboration platforms.",
+    accent: "from-violet-500/20 to-purple-500/5 border-violet-400/30 text-violet-300",
   },
   {
     icon: Shield,
-    title: "Discipline & reliability",
-    body: "Deadlines are commitments. We build for clients who depend on predictable quality.",
+    title: "Discipline",
+    body: "Deadlines are commitments clients can depend on.",
+    accent: "from-emerald-500/20 to-teal-500/5 border-emerald-400/30 text-emerald-300",
   },
   {
     icon: MessageSquare,
     title: "Clear communication",
-    body: "You can explain progress, ask precise questions, and escalate blockers early.",
+    body: "Progress updates, precise questions, early escalation.",
+    accent: "from-rose-500/20 to-pink-500/5 border-rose-400/30 text-rose-300",
   },
   {
     icon: Clock,
-    title: "Ownership mindset",
-    body: "You treat every assignment as if your name is on the final deliverable.",
+    title: "Ownership",
+    body: "Treat every assignment as if your name is on the deliverable.",
+    accent: "from-cyan-500/20 to-blue-500/5 border-cyan-400/30 text-cyan-300",
   },
 ];
 
-const steps = [
-  {
-    n: "01",
-    title: "Choose your focus",
-    body: "Select the category and specific service line that matches your strength.",
-  },
-  {
-    n: "02",
-    title: "Submit a letter of interest",
-    body: "Short note: who you are, why this track, and how you work under pressure.",
-  },
-  {
-    n: "03",
-    title: "Share previous work",
-    body: "Portfolio links, files, or case notes — quality over quantity.",
-  },
-  {
-    n: "04",
-    title: "Skills assessment",
-    body: "A practical task or timed exercise in your declared area.",
-  },
-  {
-    n: "05",
-    title: "Interview",
-    body: "Conversation on standards, availability, and how you handle feedback.",
-  },
-  {
-    n: "06",
-    title: "Onboarding training",
-    body: "Briefing on workflows, quality bars, and client communication norms.",
-  },
-  {
-    n: "07",
-    title: "Paid internship",
-    body: "Real assignments with supervision. Performance is measured, not assumed.",
-  },
-  {
-    n: "08",
-    title: "Join the team",
-    body: "Strong performers move into ongoing contributor roles with clearer scope and pay.",
-  },
+const lifecycle = [
+  { n: "1", title: "Focus", body: "Pick category + service", icon: Target, color: "bg-cyan-500/20 border-cyan-400/40 text-cyan-300" },
+  { n: "2", title: "Apply", body: "Letter + portfolio", icon: FileText, color: "bg-sky-500/20 border-sky-400/40 text-sky-300" },
+  { n: "3", title: "Assess", body: "Practical task", icon: FileCheck, color: "bg-violet-500/20 border-violet-400/40 text-violet-300" },
+  { n: "4", title: "Interview", body: "Fit & standards", icon: MessageCircle, color: "bg-amber-500/20 border-amber-400/40 text-amber-300" },
+  { n: "5", title: "Train", body: "Workflows & quality", icon: Train, color: "bg-orange-500/20 border-orange-400/40 text-orange-300" },
+  { n: "6", title: "Intern", body: "Paid live work", icon: Handshake, color: "bg-emerald-500/20 border-emerald-400/40 text-emerald-300" },
+  { n: "7", title: "Join", body: "Contributor role", icon: BadgeCheck, color: "bg-teal-500/20 border-teal-400/40 text-teal-300" },
 ];
 
 export default function DigitalPage() {
@@ -178,7 +155,6 @@ export default function DigitalPage() {
                     </div>
                   </div>
                 </div>
-
                 <div className="p-5 flex flex-col flex-1">
                   <h3 className="font-semibold text-base sm:text-lg mb-1 group-hover:text-wisdom-cyan transition-colors leading-snug">
                     {category.name}
@@ -211,7 +187,6 @@ export default function DigitalPage() {
                   </div>
                 </div>
               </div>
-
               <div className="p-5 flex flex-col flex-1">
                 <h3 className="font-semibold text-base sm:text-lg mb-1 group-hover:text-wisdom-cyan transition-colors leading-snug">
                   Custom order
@@ -228,6 +203,7 @@ export default function DigitalPage() {
             </Link>
           </div>
 
+          {/* ═══════ Work with us ═══════ */}
           <section className="mt-24 md:mt-32" id="work-with-us">
             <div className="text-center mb-12 md:mb-14">
               <p className="text-sm font-semibold tracking-[0.2em] uppercase text-wisdom-cyan/90 mb-3">
@@ -237,181 +213,181 @@ export default function DigitalPage() {
                 Work with us?
               </h2>
               <p className="text-wisdom-muted max-w-2xl mx-auto text-base md:text-lg leading-relaxed">
-                Wisdom Tower Digital is built by people who ship. We hire and develop contributors who
-                meet a clear bar — not a vague “passion for design.” Read the requirements, follow the
-                path, then apply to a specific service line below.
+                Built by people who ship. Meet the bar, follow the path, then apply to one service
+                line — not a client order form.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-7">
-              <article className="rounded-3xl border border-white/12 bg-wisdom-card p-6 sm:p-7 shadow-card-3d flex flex-col">
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-400/25 text-emerald-300">
-                    <Users className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-display text-xl font-bold">What we require</h3>
-                    <p className="text-xs text-wisdom-muted">Non-negotiables before you apply</p>
-                  </div>
+            {/* Lifecycle path */}
+            <div className="mb-12 md:mb-16 rounded-3xl border border-white/12 bg-wisdom-card/90 p-5 sm:p-8 shadow-card-3d overflow-hidden relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-wisdom-cyan/5 via-transparent to-emerald-500/5 pointer-events-none" />
+              <div className="relative flex items-center gap-2 mb-6">
+                <div className="p-2 rounded-xl bg-wisdom-cyan/15 border border-wisdom-cyan/30 text-wisdom-cyan">
+                  <Search className="w-4 h-4" />
                 </div>
-                <ul className="space-y-4 flex-1">
-                  {requirements.map((r) => {
-                    const Icon = r.icon;
-                    return (
-                      <li key={r.title} className="flex gap-3">
-                        <div className="shrink-0 mt-0.5 p-1.5 rounded-lg bg-white/5 border border-white/8 text-emerald-300/90">
-                          <Icon className="w-3.5 h-3.5" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-white/95">{r.title}</p>
-                          <p className="text-xs text-wisdom-muted leading-relaxed mt-0.5">{r.body}</p>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-                <p className="mt-6 pt-4 border-t border-white/8 text-xs text-wisdom-muted leading-relaxed">
-                  If you cannot demonstrate these yet, build them first — then return. We invest in
-                  people who already take their craft seriously.
-                </p>
-              </article>
+                <div>
+                  <h3 className="font-display text-lg font-bold">Your path</h3>
+                  <p className="text-xs text-wisdom-muted">From interest to paid contribution</p>
+                </div>
+              </div>
 
-              <article className="rounded-3xl border border-white/12 bg-wisdom-card p-6 sm:p-7 shadow-card-3d flex flex-col">
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="p-2.5 rounded-xl bg-amber-500/15 border border-amber-400/25 text-amber-300">
-                    <ListOrdered className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-display text-xl font-bold">How it works</h3>
-                    <p className="text-xs text-wisdom-muted">From interest to paid contribution</p>
-                  </div>
-                </div>
-                <ol className="space-y-3.5 flex-1">
-                  {steps.map((s) => (
-                    <li key={s.n} className="flex gap-3">
-                      <span className="shrink-0 w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-400/20 text-amber-300 text-[11px] font-black flex items-center justify-center tabular-nums">
-                        {s.n}
-                      </span>
-                      <div className="min-w-0 pt-0.5">
-                        <p className="text-sm font-semibold text-white/95">{s.title}</p>
-                        <p className="text-xs text-wisdom-muted leading-relaxed mt-0.5">{s.body}</p>
+              <div className="relative grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 sm:gap-2">
+                {/* connector line desktop */}
+                <div className="hidden lg:block absolute top-[2.15rem] left-[7%] right-[7%] h-0.5 bg-gradient-to-r from-cyan-500/40 via-amber-400/30 to-teal-400/40" />
+
+                {lifecycle.map((step, i) => {
+                  const Icon = step.icon;
+                  return (
+                    <div key={step.n} className="relative flex flex-col items-center text-center group">
+                      <div
+                        className={`relative z-10 w-14 h-14 rounded-2xl border-2 flex items-center justify-center mb-2 transition-transform duration-300 group-hover:scale-110 group-hover:-translate-y-1 shadow-lg ${step.color}`}
+                      >
+                        <Icon className="w-6 h-6" />
+                        <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-wisdom-dark border border-white/20 text-[10px] font-black flex items-center justify-center text-white/90">
+                          {step.n}
+                        </span>
                       </div>
-                    </li>
-                  ))}
-                </ol>
-                <div className="mt-6 pt-4 border-t border-white/8 flex items-start gap-2">
-                  <Handshake className="w-4 h-4 text-amber-300 shrink-0 mt-0.5" />
-                  <p className="text-xs text-wisdom-muted leading-relaxed">
-                    Internships are <span className="text-amber-200/90 font-medium">paid</span> when
-                    you are on live client or internal work. Progression depends on delivery, not
-                    tenure alone.
-                  </p>
-                </div>
-              </article>
+                      <p className="text-sm font-bold text-white/95">{step.title}</p>
+                      <p className="text-[11px] text-wisdom-muted mt-0.5 leading-snug px-1">{step.body}</p>
+                      {i < lifecycle.length - 1 && (
+                        <ArrowRight className="lg:hidden w-3.5 h-3.5 text-white/20 absolute -right-1.5 top-5 sm:hidden" />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
 
-              <article className="rounded-3xl border border-wisdom-cyan/25 bg-wisdom-card p-6 sm:p-7 shadow-card-3d flex flex-col">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2.5 rounded-xl bg-wisdom-cyan/15 border border-wisdom-cyan/30 text-wisdom-cyan">
+              <p className="relative mt-6 text-center text-xs text-wisdom-muted flex flex-wrap items-center justify-center gap-1.5">
+                <Handshake className="w-3.5 h-3.5 text-emerald-400" />
+                Internships are <span className="text-emerald-300 font-medium">paid</span> on live
+                work. Progression follows delivery, not tenure alone.
+              </p>
+            </div>
+
+            {/* Requirements grid */}
+            <div className="mb-12">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="p-2 rounded-xl bg-emerald-500/15 border border-emerald-400/25 text-emerald-300">
+                  <Users className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-display text-xl font-bold">What we require</h3>
+                  <p className="text-xs text-wisdom-muted">Non-negotiables before you apply</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 perspective-scene">
+                {requirements.map((r) => {
+                  const Icon = r.icon;
+                  return (
+                    <div
+                      key={r.title}
+                      className={`card-3d rounded-2xl border bg-gradient-to-br p-5 ${r.accent}`}
+                    >
+                      <div className="inline-flex p-2.5 rounded-xl bg-wisdom-dark/50 border border-white/10 mb-3">
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <h4 className="font-display font-bold text-white mb-1">{r.title}</h4>
+                      <p className="text-sm text-wisdom-muted leading-relaxed">{r.body}</p>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="mt-4 text-xs text-wisdom-muted text-center sm:text-left">
+                Can't show these yet? Build them first — then return.
+              </p>
+            </div>
+
+            {/* Start application picker */}
+            <div className="rounded-3xl border border-wisdom-cyan/25 bg-wisdom-card p-6 sm:p-8 shadow-card-3d">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+                <div className="flex items-start gap-3">
+                  <div className="p-2.5 rounded-xl bg-wisdom-cyan/15 border border-wisdom-cyan/30 text-wisdom-cyan shrink-0">
                     <Send className="w-5 h-5" />
                   </div>
                   <div>
                     <h3 className="font-display text-xl font-bold">Start application</h3>
-                    <p className="text-xs text-wisdom-muted">Pick exact category → service</p>
+                    <p className="text-sm text-wisdom-muted mt-1 max-w-lg leading-relaxed">
+                      Expand a category, then pick the exact service line. You'll open the{" "}
+                      <strong className="text-white/90">talent application form</strong> (not a client
+                      quote request).
+                    </p>
                   </div>
                 </div>
-                <p className="text-xs text-wisdom-muted leading-relaxed mb-5">
-                  Expand a category, then choose the service line you are applying for. You will go to
-                  a request form pre-filled with that focus so we know exactly where you fit.
-                </p>
+              </div>
 
-                <div className="space-y-2 flex-1 max-h-[28rem] overflow-y-auto pr-1">
-                  {categories.map((cat) => {
-                    const open = openCategory === cat.id;
-                    return (
+              <div className="space-y-2 max-h-[26rem] overflow-y-auto pr-1">
+                {categories.map((cat) => {
+                  const open = openCategory === cat.id;
+                  return (
+                    <div
+                      key={cat.id}
+                      className={`rounded-2xl border transition-all ${
+                        open
+                          ? "border-wisdom-cyan/45 bg-wisdom-cyan/5 shadow-lg shadow-cyan-500/5"
+                          : "border-white/10 bg-wisdom-dark/50 hover:border-white/20"
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setOpenCategory(open ? null : cat.id)}
+                        className="w-full flex items-center gap-3 px-4 py-3.5 text-left"
+                        aria-expanded={open}
+                      >
+                        <span className="text-wisdom-cyan shrink-0 scale-90">{iconMap[cat.icon]}</span>
+                        <span className="flex-1 text-sm font-semibold text-white/95">{cat.name}</span>
+                        <span className="text-[10px] text-wisdom-muted hidden sm:inline">
+                          {cat.services.length} roles
+                        </span>
+                        <ChevronDown
+                          className={`w-4 h-4 text-wisdom-muted transition-transform duration-300 ${
+                            open ? "rotate-180 text-wisdom-cyan" : ""
+                          }`}
+                        />
+                      </button>
                       <div
-                        key={cat.id}
-                        className={`rounded-xl border transition-colors ${
-                          open
-                            ? "border-wisdom-cyan/40 bg-wisdom-cyan/5"
-                            : "border-white/10 bg-wisdom-dark/40 hover:border-white/20"
+                        className={`grid transition-all duration-300 ${
+                          open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
                         }`}
                       >
-                        <button
-                          type="button"
-                          onClick={() => setOpenCategory(open ? null : cat.id)}
-                          className="w-full flex items-center gap-3 px-3.5 py-3 text-left"
-                          aria-expanded={open}
-                        >
-                          <span className="text-wisdom-cyan shrink-0 scale-75 origin-left">
-                            {iconMap[cat.icon]}
-                          </span>
-                          <span className="flex-1 text-sm font-semibold text-white/95 leading-snug">
-                            {cat.name}
-                          </span>
-                          <ChevronDown
-                            className={`w-4 h-4 text-wisdom-muted shrink-0 transition-transform duration-300 ${
-                              open ? "rotate-180 text-wisdom-cyan" : ""
-                            }`}
-                          />
-                        </button>
-                        <div
-                          className={`grid transition-all duration-300 ease-out ${
-                            open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-                          }`}
-                        >
-                          <div className="overflow-hidden">
-                            <ul className="px-2 pb-3 space-y-1 border-t border-white/8 pt-2">
-                              {cat.services.map((svc) => (
-                                <li key={svc.id}>
-                                  <Link
-                                    href={`/request?service=${encodeURIComponent(svc.name)}&category=${encodeURIComponent(cat.name)}&intent=apply`}
-                                    className="flex items-start gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-wisdom-muted hover:text-white hover:bg-white/5 transition-colors group/svc"
-                                  >
-                                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5 text-wisdom-cyan/50 group-hover/svc:text-wisdom-cyan" />
-                                    <span className="leading-snug">{svc.name}</span>
-                                  </Link>
-                                </li>
-                              ))}
-                            </ul>
+                        <div className="overflow-hidden">
+                          <div className="px-3 pb-3 grid grid-cols-1 sm:grid-cols-2 gap-1.5 border-t border-white/8 pt-2">
+                            {cat.services.map((svc) => (
+                              <Link
+                                key={svc.id}
+                                href={`/apply?service=${encodeURIComponent(svc.name)}&category=${encodeURIComponent(cat.name)}`}
+                                className="flex items-start gap-2 rounded-xl px-3 py-2.5 text-left text-xs text-wisdom-muted hover:text-white hover:bg-wisdom-cyan/10 border border-transparent hover:border-wisdom-cyan/25 transition-all group/svc"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5 text-wisdom-cyan/40 group-hover/svc:text-wisdom-cyan" />
+                                <span className="leading-snug">{svc.name}</span>
+                              </Link>
+                            ))}
                           </div>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
+                  );
+                })}
+              </div>
 
-                <div className="mt-5 pt-4 border-t border-white/10 space-y-3">
-                  <p className="text-[11px] text-wisdom-muted leading-relaxed flex gap-2">
-                    <FileText className="w-3.5 h-3.5 shrink-0 mt-0.5 text-wisdom-cyan/70" />
-                    After you select a service, describe your experience and attach or link previous
-                    work in the form. Incomplete applications are not reviewed.
-                  </p>
-                  <Link
-                    href="/contact"
-                    className="inline-flex items-center gap-1.5 text-xs font-medium text-wisdom-cyan hover:underline"
-                  >
-                    Questions before applying?
-                    <ArrowRight className="w-3 h-3" />
-                  </Link>
-                </div>
-              </article>
+              <p className="mt-5 text-[11px] text-wisdom-muted flex gap-2 leading-relaxed">
+                <FileText className="w-3.5 h-3.5 shrink-0 mt-0.5 text-wisdom-cyan/70" />
+                On the form: letter of interest, portfolio link, experience, availability, and
+                requirement confirmations.
+              </p>
             </div>
 
-            <div className="mt-10 rounded-2xl border border-white/10 bg-gradient-to-br from-wisdom-cyan/10 via-wisdom-card to-wisdom-card px-6 py-6 sm:px-8 text-center sm:text-left sm:flex sm:items-center sm:justify-between gap-6">
-              <div className="max-w-xl">
-                <p className="font-display font-bold text-lg mb-1">We review for fit, not volume</p>
-                <p className="text-sm text-wisdom-muted leading-relaxed">
-                  Applying to many lines at once does not help. Choose the one service you can defend
-                  with samples. Quality of match beats quantity of applications.
-                </p>
-              </div>
-              <a
+            <div className="mt-8 rounded-2xl border border-white/10 bg-gradient-to-br from-wisdom-cyan/10 via-wisdom-card to-wisdom-card px-6 py-5 sm:flex sm:items-center sm:justify-between gap-4">
+              <p className="text-sm text-wisdom-muted leading-relaxed max-w-xl">
+                <span className="font-semibold text-white">We review for fit, not volume.</span>{" "}
+                One strong application beats many weak ones.
+              </p>
+              <Link
                 href="#work-with-us"
-                className="mt-4 sm:mt-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-wisdom-cyan/30 bg-wisdom-cyan/10 text-wisdom-cyan text-sm font-semibold hover:bg-wisdom-cyan/20 transition-colors shrink-0"
+                className="mt-3 sm:mt-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-wisdom-cyan/30 bg-wisdom-cyan/10 text-wisdom-cyan text-sm font-semibold hover:bg-wisdom-cyan/20 transition-colors shrink-0"
               >
                 <Target className="w-4 h-4" />
-                Apply above
-              </a>
+                Pick a role above
+              </Link>
             </div>
           </section>
         </div>
