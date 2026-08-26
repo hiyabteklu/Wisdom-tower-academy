@@ -77,7 +77,6 @@ h1, h2, h3, h4, .font-display {
   transition-duration: 0.15s;
 }
 
-/* Soft ambient sheen on cards */
 .card-3d::after {
   content: "";
   position: absolute;
@@ -98,7 +97,6 @@ h1, h2, h3, h4, .font-display {
   opacity: 1;
 }
 
-/* Stagger children */
 .stagger-children > * {
   animation: fade-up 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -125,7 +123,6 @@ h1, h2, h3, h4, .font-display {
   }
 }
 
-/* Stats */
 @keyframes stat-in {
   0% {
     opacity: 0;
@@ -160,6 +157,20 @@ h1, h2, h3, h4, .font-display {
   animation: value-glow 2s ease-in-out infinite;
 }
 
+/* Testimonials infinite scroll left */
+@keyframes marquee-left {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.testimonial-marquee {
+  animation: marquee-left 32s linear infinite;
+}
+
+.testimonial-marquee:hover {
+  animation-play-state: paused;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .stat-card {
     animation: stat-in 0.75s cubic-bezier(0.22, 1, 0.36, 1) both,
@@ -174,14 +185,14 @@ h1, h2, h3, h4, .font-display {
   .card-3d,
   .card-3d:hover,
   .stagger-children > *,
-  .stat-card {
+  .stat-card,
+  .testimonial-marquee {
     animation: none !important;
     transition: none !important;
     transform: none !important;
   }
 }
 
-/* Form field polish */
 .field-input {
   @apply w-full px-4 py-3.5 rounded-xl bg-wisdom-dark/80 border border-white/15
     text-white placeholder:text-wisdom-muted/70

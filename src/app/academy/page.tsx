@@ -14,6 +14,8 @@ import {
   Library,
   GraduationCap as GradCap,
 } from "lucide-react";
+import VoiceMessageCard from "@/components/VoiceMessageCard";
+import TestimonialMarquee from "@/components/TestimonialMarquee";
 
 const programs = [
   {
@@ -138,6 +140,34 @@ const freeResources = [
   },
 ];
 
+const voiceStudents = [
+  {
+    name: "Hana G.",
+    program: "UAT · Voice note",
+    duration: "0:42",
+    accent: "text-emerald-400",
+    // audioSrc: "/audio/testimonials/hana.mp3",
+  },
+  {
+    name: "Yonas D.",
+    program: "Grade 12 · Voice note",
+    duration: "0:38",
+    accent: "text-sky-400",
+  },
+  {
+    name: "Meron K.",
+    program: "Freshman · Voice note",
+    duration: "0:51",
+    accent: "text-purple-400",
+  },
+  {
+    name: "Samuel B.",
+    program: "Exit Exam · Voice note",
+    duration: "0:35",
+    accent: "text-fuchsia-400",
+  },
+];
+
 export default function AcademyPage() {
   return (
     <div className="relative">
@@ -160,7 +190,6 @@ export default function AcademyPage() {
             </p>
           </div>
 
-          {/* —— Academic branches —— */}
           <div className="mb-4 flex items-center gap-3">
             <span className="h-px flex-1 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
             <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-wisdom-muted">
@@ -204,7 +233,7 @@ export default function AcademyPage() {
             ))}
           </div>
 
-          {/* —— Free resources (distinct design) —— */}
+          {/* Free resources */}
           <div className="mt-24 md:mt-28 relative">
             <div className="absolute -inset-x-4 -inset-y-8 rounded-[2rem] border border-teal-500/15 bg-gradient-to-b from-teal-500/[0.06] via-transparent to-transparent pointer-events-none" />
 
@@ -270,6 +299,38 @@ export default function AcademyPage() {
               })}
             </div>
           </div>
+
+          {/* What students say */}
+          <section className="mt-24 md:mt-28">
+            <div className="text-center mb-10">
+              <p className="text-sm font-semibold tracking-[0.2em] uppercase text-amber-400/90 mb-3">
+                Real voices
+              </p>
+              <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
+                What students say about us
+              </h2>
+              <p className="text-wisdom-muted max-w-xl mx-auto">
+                Short voice notes and written feedback from learners across our programs.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+              {voiceStudents.map((s) => (
+                <VoiceMessageCard
+                  key={s.name}
+                  name={s.name}
+                  program={s.program}
+                  duration={s.duration}
+                  accent={s.accent}
+                />
+              ))}
+            </div>
+
+            <TestimonialMarquee />
+            <p className="mt-3 text-center text-[11px] text-wisdom-muted">
+              Quotes auto-scroll · hover to pause · replace with your real feedback anytime
+            </p>
+          </section>
 
           <div className="mt-16 relative overflow-hidden rounded-3xl border border-white/12 shadow-card-3d">
             <div className="absolute inset-0 bg-gradient-to-br from-amber-500/12 via-wisdom-card to-orange-500/8" />
