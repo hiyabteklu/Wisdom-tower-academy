@@ -18,7 +18,7 @@ import {
   Users,
   ListOrdered,
   Send,
-  Sparkle,
+  Target,
   Eye,
   Laptop,
   Shield,
@@ -158,7 +158,7 @@ export default function DigitalPage() {
             </p>
           </div>
 
-          {/* Equal 8-card grid */}
+          {/* Equal 8-card grid — 4 columns on large screens so custom sits as card 8 */}
           <div className="perspective-scene grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6 stagger-children">
             {categories.map((category) => (
               <Link
@@ -194,7 +194,6 @@ export default function DigitalPage() {
               </Link>
             ))}
 
-            {/* Custom — same footprint as the other seven */}
             <Link
               href="/services/custom"
               className="card-3d group relative flex flex-col overflow-hidden rounded-2xl border border-wisdom-cyan/30 bg-wisdom-card hover:border-wisdom-cyan/55 h-full"
@@ -231,7 +230,7 @@ export default function DigitalPage() {
             </Link>
           </div>
 
-          {/* ═══════════ Work with us ═══════════ */}
+          {/* Work with us */}
           <section className="mt-24 md:mt-32" id="work-with-us">
             <div className="text-center mb-12 md:mb-14">
               <p className="text-sm font-semibold tracking-[0.2em] uppercase text-wisdom-cyan/90 mb-3">
@@ -248,7 +247,7 @@ export default function DigitalPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-7">
-              {/* Card 1 — Requirements */}
+              {/* Requirements */}
               <article className="rounded-3xl border border-white/12 bg-wisdom-card p-6 sm:p-7 shadow-card-3d flex flex-col">
                 <div className="flex items-center gap-3 mb-5">
                   <div className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-400/25 text-emerald-300">
@@ -281,7 +280,7 @@ export default function DigitalPage() {
                 </p>
               </article>
 
-              {/* Card 2 — Steps */}
+              {/* Steps */}
               <article className="rounded-3xl border border-white/12 bg-wisdom-card p-6 sm:p-7 shadow-card-3d flex flex-col">
                 <div className="flex items-center gap-3 mb-5">
                   <div className="p-2.5 rounded-xl bg-amber-500/15 border border-amber-400/25 text-amber-300">
@@ -315,8 +314,8 @@ export default function DigitalPage() {
                 </div>
               </article>
 
-              {/* Card 3 — Start application */}
-              <article className="rounded-3xl border border-wisdom-cyan/25 bg-wisdom-card p-6 sm:p-7 shadow-card-3d flex flex-col lg:col-span-1">
+              {/* Start application */}
+              <article className="rounded-3xl border border-wisdom-cyan/25 bg-wisdom-card p-6 sm:p-7 shadow-card-3d flex flex-col">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="p-2.5 rounded-xl bg-wisdom-cyan/15 border border-wisdom-cyan/30 text-wisdom-cyan">
                     <Send className="w-5 h-5" />
@@ -331,7 +330,7 @@ export default function DigitalPage() {
                   a request form pre-filled with that focus so we know exactly where you fit.
                 </p>
 
-                <div className="space-y-2 flex-1 max-h-[28rem] overflow-y-auto pr-1 custom-scrollbar">
+                <div className="space-y-2 flex-1 max-h-[28rem] overflow-y-auto pr-1">
                   {categories.map((cat) => {
                     const open = openCategory === cat.id;
                     return (
@@ -349,7 +348,9 @@ export default function DigitalPage() {
                           className="w-full flex items-center gap-3 px-3.5 py-3 text-left"
                           aria-expanded={open}
                         >
-                          <span className="text-wisdom-cyan shrink-0">{iconMap[cat.icon]}</span>
+                          <span className="text-wisdom-cyan shrink-0 scale-75 origin-left">
+                            {iconMap[cat.icon]}
+                          </span>
                           <span className="flex-1 text-sm font-semibold text-white/95 leading-snug">
                             {cat.name}
                           </span>
@@ -402,7 +403,6 @@ export default function DigitalPage() {
               </article>
             </div>
 
-            {/* Bottom note */}
             <div className="mt-10 rounded-2xl border border-white/10 bg-gradient-to-br from-wisdom-cyan/10 via-wisdom-card to-wisdom-card px-6 py-6 sm:px-8 text-center sm:text-left sm:flex sm:items-center sm:justify-between gap-6">
               <div className="max-w-xl">
                 <p className="font-display font-bold text-lg mb-1">We review for fit, not volume</p>
@@ -411,17 +411,13 @@ export default function DigitalPage() {
                   with samples. Quality of match beats quantity of applications.
                 </p>
               </div>
-              <Link
+              <a
                 href="#work-with-us"
-                onClick={() => {
-                  const el = document.getElementById("work-with-us");
-                  el?.scrollIntoView({ behavior: "smooth" });
-                }}
                 className="mt-4 sm:mt-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-wisdom-cyan/30 bg-wisdom-cyan/10 text-wisdom-cyan text-sm font-semibold hover:bg-wisdom-cyan/20 transition-colors shrink-0"
               >
-                <Sparkle className="w-4 h-4" />
-                Back to application
-              </Link>
+                <Target className="w-4 h-4" />
+                Apply above
+              </a>
             </div>
           </section>
         </div>
