@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const platformHint = searchParams.get("platform");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -19,7 +21,7 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -30,7 +32,14 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/");
+    const platform = data.user?.user_metadata?.platform as string | undefined;
+    if (platform === "academy") {
+      router.push("/academy");
+    } else if (platform === "digital") {
+      router.push("/digital");
+    } else {
+      router.push("/");
+    }
     router.refresh();
   };
 
@@ -56,11 +65,16 @@ export default function LoginPage() {
             WT
           </div>
           <h1 className="text-3xl font-bold mb-2">Welcome back</h1>
-          <p className="text-wisdom-muted">Sign in to your Wisdom Tower account</p>
+          <p className="text-wisdom-muted">
+            {platformHint === "academy"
+              ? "Sign in to Wisdom Academy"
+              : platformHint === "digital"
+                ? "Sign in to Wisdom Digital"
+                : "Sign in to your Wisdom Tower account"}
+          </p>
         </div>
 
         <div className="bg-wisdom-card border border-white/5 rounded-2xl p-8 shadow-xl">
-          {/* Google Button */}
           <button
             onClick={handleGoogleLogin}
             disabled={loading}
@@ -150,7 +164,9 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-wisdom-cyan text-wisdom-dark font-semibold hover:bg-wisdom-cyan-dark transition-colors disabled:opacity-60"
             >
-              {loading ? "Signing in..." : (
+              {loading ? (
+                "Signing in..."
+              ) : (
                 <>
                   Sign In
                   <ArrowRight className="w-4 h-4" />
@@ -161,12 +177,23 @@ export default function LoginPage() {
 
           <p className="mt-6 text-center text-sm text-wisdom-muted">
             Don&apos;t have an account?{" "}
-            <Link href="/signup" className="text-wisdom-cyan hover:underline font-medium">
+            <Link
+              href={platformHint ? `/signup?platform=${platformHint}` : "/signup"}
+              className="text-wisdom-cyan hover:underline font-medium"
+            >
               Sign up
             </Link>
           </p>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[80vh] flex items-center justify-center text-wisdom-muted">Loading...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

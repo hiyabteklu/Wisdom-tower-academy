@@ -1,13 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { Mail, Lock, User, Eye, EyeOff, ArrowRight } from "lucide-react";
+import {
+  Mail,
+  Lock,
+  User,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  GraduationCap,
+  Monitor,
+} from "lucide-react";
 
-export default function SignupPage() {
-  const router = useRouter();
+type Platform = "academy" | "digital";
+
+function SignupForm() {
+  const searchParams = useSearchParams();
+  const preset = searchParams.get("platform");
+  const [platform, setPlatform] = useState<Platform | null>(
+    preset === "academy" || preset === "digital" ? preset : null
+  );
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -16,8 +31,16 @@ export default function SignupPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
+  useEffect(() => {
+    if (preset === "academy" || preset === "digital") setPlatform(preset);
+  }, [preset]);
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!platform) {
+      setError("Choose Academy or Digital to continue");
+      return;
+    }
     setLoading(true);
     setError("");
 
@@ -33,6 +56,7 @@ export default function SignupPage() {
       options: {
         data: {
           full_name: fullName,
+          platform,
         },
       },
     });
@@ -48,11 +72,21 @@ export default function SignupPage() {
   };
 
   const handleGoogleSignup = async () => {
+    if (!platform) {
+      setError("Choose Academy or Digital before continuing with Google");
+      return;
+    }
     setLoading(true);
+    // Store platform for callback to attach to user metadata
+    try {
+      sessionStorage.setItem("wt_signup_platform", platform);
+    } catch {
+      /* ignore */
+    }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback?platform=${platform}`,
       },
     });
     if (error) {
@@ -72,13 +106,17 @@ export default function SignupPage() {
               </svg>
             </div>
             <h2 className="text-2xl font-bold mb-2">Check your email</h2>
-            <p className="text-wisdom-muted mb-6">
-              We sent a confirmation link to <strong className="text-white">{email}</strong>. Click the link to activate your account.
+            <p className="text-wisdom-muted mb-2">
+              We sent a confirmation link to <strong className="text-white">{email}</strong>.
             </p>
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-2 text-wisdom-cyan hover:underline"
-            >
+            <p className="text-sm text-wisdom-muted mb-6">
+              You registered for{" "}
+              <span className={platform === "academy" ? "text-amber-400" : "text-cyan-400"}>
+                {platform === "academy" ? "Wisdom Academy" : "Wisdom Digital"}
+              </span>
+              .
+            </p>
+            <Link href={`/login?platform=${platform}`} className="inline-flex items-center gap-2 text-wisdom-cyan hover:underline">
               Back to Sign In
             </Link>
           </div>
@@ -95,13 +133,54 @@ export default function SignupPage() {
             WT
           </div>
           <h1 className="text-3xl font-bold mb-2">Create account</h1>
-          <p className="text-wisdom-muted">Join Wisdom Tower and start building</p>
+          <p className="text-wisdom-muted">Choose your platform — Academy and Digital are separate</p>
         </div>
 
         <div className="bg-wisdom-card border border-white/5 rounded-2xl p-8 shadow-xl">
+          {/* Platform picker */}
+          <div className="mb-6">
+            <p className="text-sm font-medium mb-3">I want to join</p>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setPlatform("academy")}
+                className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${
+                  platform === "academy"
+                    ? "border-amber-400/60 bg-amber-500/10 ring-1 ring-amber-400/40"
+                    : "border-white/10 hover:border-white/25"
+                }`}
+              >
+                <GraduationCap className={`w-7 h-7 ${platform === "academy" ? "text-amber-400" : "text-wisdom-muted"}`} />
+                <span className={`text-sm font-semibold ${platform === "academy" ? "text-amber-400" : ""}`}>
+                  Academy
+                </span>
+                <span className="text-[10px] text-wisdom-muted text-center leading-tight">
+                  Grades, exams, learning
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPlatform("digital")}
+                className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${
+                  platform === "digital"
+                    ? "border-cyan-400/60 bg-cyan-500/10 ring-1 ring-cyan-400/40"
+                    : "border-white/10 hover:border-white/25"
+                }`}
+              >
+                <Monitor className={`w-7 h-7 ${platform === "digital" ? "text-cyan-400" : "text-wisdom-muted"}`} />
+                <span className={`text-sm font-semibold ${platform === "digital" ? "text-cyan-400" : ""}`}>
+                  Digital
+                </span>
+                <span className="text-[10px] text-wisdom-muted text-center leading-tight">
+                  Services & projects
+                </span>
+              </button>
+            </div>
+          </div>
+
           <button
             onClick={handleGoogleSignup}
-            disabled={loading}
+            disabled={loading || !platform}
             className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-white text-gray-900 font-medium hover:bg-gray-100 transition-colors mb-6 disabled:opacity-60"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -183,12 +262,14 @@ export default function SignupPage() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !platform}
               className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-wisdom-cyan text-wisdom-dark font-semibold hover:bg-wisdom-cyan-dark transition-colors disabled:opacity-60"
             >
-              {loading ? "Creating account..." : (
+              {loading ? (
+                "Creating account..."
+              ) : (
                 <>
-                  Create Account
+                  Create {platform === "academy" ? "Academy" : platform === "digital" ? "Digital" : ""} Account
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -197,12 +278,23 @@ export default function SignupPage() {
 
           <p className="mt-6 text-center text-sm text-wisdom-muted">
             Already have an account?{" "}
-            <Link href="/login" className="text-wisdom-cyan hover:underline font-medium">
+            <Link
+              href={platform ? `/login?platform=${platform}` : "/login"}
+              className="text-wisdom-cyan hover:underline font-medium"
+            >
               Sign in
             </Link>
           </p>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[80vh] flex items-center justify-center text-wisdom-muted">Loading...</div>}>
+      <SignupForm />
+    </Suspense>
   );
 }

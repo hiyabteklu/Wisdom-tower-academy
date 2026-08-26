@@ -1,33 +1,63 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
-export default function AuthCallbackPage() {
+function CallbackInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [msg, setMsg] = useState("Finishing sign-in…");
 
   useEffect(() => {
-    const handleCallback = async () => {
-      const { error } = await supabase.auth.getSession();
-      if (error) {
-        console.error("Auth callback error:", error);
-        router.push("/login?error=auth");
-        return;
+    const run = async () => {
+      const platformParam = searchParams.get("platform");
+      let platform = platformParam;
+      try {
+        if (!platform) platform = sessionStorage.getItem("wt_signup_platform");
+        sessionStorage.removeItem("wt_signup_platform");
+      } catch {
+        /* ignore */
       }
-      router.push("/");
-      router.refresh();
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session?.user && (platform === "academy" || platform === "digital")) {
+        const current = session.user.user_metadata?.platform;
+        if (current !== platform) {
+          await supabase.auth.updateUser({
+            data: { platform },
+          });
+        }
+      }
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const p = user?.user_metadata?.platform;
+
+      if (p === "academy") router.replace("/academy");
+      else if (p === "digital") router.replace("/digital");
+      else router.replace("/");
     };
 
-    handleCallback();
-  }, [router]);
+    run().catch(() => {
+      setMsg("Something went wrong. Redirecting…");
+      router.replace("/login");
+    });
+  }, [router, searchParams]);
 
   return (
-    <div className="min-h-[60vh] flex items-center justify-center">
-      <div className="text-center">
-        <div className="w-10 h-10 border-2 border-wisdom-cyan border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-        <p className="text-wisdom-muted">Completing sign in...</p>
-      </div>
-    </div>
+    <div className="min-h-[60vh] flex items-center justify-center text-wisdom-muted">{msg}</div>
+  );
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[60vh] flex items-center justify-center text-wisdom-muted">Loading…</div>}>
+      <CallbackInner />
+    </Suspense>
   );
 }

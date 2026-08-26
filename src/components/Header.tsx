@@ -1,13 +1,26 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Menu, X, LogOut, User, Shield, LayoutDashboard } from "lucide-react";
+import {
+  Menu,
+  X,
+  LogOut,
+  Shield,
+  LayoutDashboard,
+  HelpCircle,
+  Trophy,
+  BookOpen,
+  Sparkles,
+  GraduationCap,
+  Monitor,
+} from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { isAdminEmail } from "@/lib/admin";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
-const navLinks = [
+const mainNavLinks = [
   { href: "/", label: "Home" },
   { href: "/academy", label: "Academy" },
   { href: "/digital", label: "Digital" },
@@ -16,21 +29,40 @@ const navLinks = [
   { href: "/contact", label: "Contact" },
 ];
 
+const academyMenuLinks = [
+  { href: "/academy/faq", label: "FAQ", icon: HelpCircle },
+  { href: "/academy/success-stories", label: "Success Stories", icon: Sparkles },
+  { href: "/academy/leaderboard", label: "Leaderboard", icon: Trophy },
+  { href: "/academy/study-techniques", label: "Study Techniques", icon: BookOpen },
+];
+
+function getPlatform(user: SupabaseUser | null): "academy" | "digital" | null {
+  const p = user?.user_metadata?.platform;
+  if (p === "academy" || p === "digital") return p;
+  return null;
+}
+
 export default function Header() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [academyMenuOpen, setAcademyMenuOpen] = useState(false);
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<{ type: "in" | "out"; msg: string } | null>(null);
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       setUser(user);
       setLoading(false);
     };
     getUser();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       if (event === "SIGNED_IN") {
         setToast({ type: "in", msg: "Signed in successfully" });
@@ -49,10 +81,16 @@ export default function Header() {
     return () => clearTimeout(t);
   }, [toast]);
 
+  useEffect(() => {
+    setIsOpen(false);
+    setAcademyMenuOpen(false);
+  }, [pathname]);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setUser(null);
     setIsOpen(false);
+    setAcademyMenuOpen(false);
   };
 
   const displayName =
@@ -65,6 +103,11 @@ export default function Header() {
     user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
 
   const isAdmin = isAdminEmail(user?.email);
+  const platform = getPlatform(user);
+  const onAcademyRoute = pathname.startsWith("/academy");
+  /** Academy chrome when user registered for Academy, or browsing Academy while logged in as academy */
+  const showAcademyChrome =
+    Boolean(user) && (platform === "academy" || (onAcademyRoute && platform !== "digital"));
 
   return (
     <>
@@ -83,29 +126,86 @@ export default function Header() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-wisdom-dark/90 backdrop-blur-md border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-wisdom-cyan to-wisdom-cyan-dark flex items-center justify-center font-bold text-wisdom-dark text-sm">
-                WT
-              </div>
-              <span className="font-semibold text-lg tracking-tight group-hover:text-wisdom-cyan transition-colors">
-                Wisdom Tower
-              </span>
-            </Link>
-
-            <nav className="hidden md:flex items-center gap-5">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="text-sm text-wisdom-muted hover:text-wisdom-cyan transition-colors"
+            {/* Left: Academy hamburger OR logo */}
+            <div className="flex items-center gap-2 min-w-0">
+              {showAcademyChrome && (
+                <button
+                  type="button"
+                  aria-label="Academy menu"
+                  className="p-2 rounded-lg text-wisdom-muted hover:text-white hover:bg-white/5 transition-colors"
+                  onClick={() => setAcademyMenuOpen((v) => !v)}
                 >
-                  {link.label}
-                </Link>
-              ))}
+                  {academyMenuOpen ? <X size={22} /> : <Menu size={22} />}
+                </button>
+              )}
 
-              {!loading && (
-                user ? (
+              <Link href={showAcademyChrome ? "/academy" : "/"} className="flex items-center gap-2 group min-w-0">
+                <div
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm shrink-0 ${
+                    showAcademyChrome
+                      ? "bg-gradient-to-br from-amber-400 to-orange-500 text-wisdom-dark"
+                      : "bg-gradient-to-br from-wisdom-cyan to-wisdom-cyan-dark text-wisdom-dark"
+                  }`}
+                >
+                  {showAcademyChrome ? "WA" : "WT"}
+                </div>
+                <span className="font-semibold text-lg tracking-tight group-hover:text-wisdom-cyan transition-colors truncate">
+                  {showAcademyChrome ? "Wisdom Academy" : "Wisdom Tower"}
+                </span>
+              </Link>
+            </div>
+
+            {/* Desktop nav — hide main site links in pure academy chrome; show academy shortcuts */}
+            <nav className="hidden md:flex items-center gap-5">
+              {showAcademyChrome ? (
+                <>
+                  {academyMenuLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className="text-sm text-wisdom-muted hover:text-amber-400 transition-colors"
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                  <Link
+                    href="/academy"
+                    className="text-sm text-wisdom-muted hover:text-amber-400 transition-colors"
+                  >
+                    Programs
+                  </Link>
+                </>
+              ) : (
+                mainNavLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="text-sm text-wisdom-muted hover:text-wisdom-cyan transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                ))
+              )}
+
+              {!loading &&
+                (user ? (
                   <div className="flex items-center gap-2 ml-2">
+                    {platform && (
+                      <span
+                        className={`hidden lg:inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${
+                          platform === "academy"
+                            ? "border-amber-400/40 text-amber-400 bg-amber-500/10"
+                            : "border-cyan-400/40 text-cyan-400 bg-cyan-500/10"
+                        }`}
+                      >
+                        {platform === "academy" ? (
+                          <GraduationCap className="w-3 h-3" />
+                        ) : (
+                          <Monitor className="w-3 h-3" />
+                        )}
+                        {platform}
+                      </span>
+                    )}
                     {isAdmin && (
                       <Link
                         href="/admin"
@@ -155,32 +255,84 @@ export default function Header() {
                       Get Started
                     </Link>
                   </div>
-                )
-              )}
+                ))}
             </nav>
 
+            {/* Mobile: main menu toggle (when not only academy hamburger) */}
             <button
               className="md:hidden p-2 text-wisdom-muted hover:text-white"
               onClick={() => setIsOpen(!isOpen)}
+              aria-label="Menu"
             >
               {isOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
         </div>
 
+        {/* Academy slide-down from hamburger */}
+        {showAcademyChrome && academyMenuOpen && (
+          <div className="border-t border-white/5 bg-wisdom-navy/95 backdrop-blur-md">
+            <div className="max-w-7xl mx-auto px-4 py-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {academyMenuLinks.map((link) => {
+                const Icon = link.icon;
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setAcademyMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl border border-white/8 hover:border-amber-400/40 hover:bg-amber-500/5 transition-colors"
+                  >
+                    <Icon className="w-5 h-5 text-amber-400" />
+                    <span className="font-medium">{link.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {isOpen && (
           <div className="md:hidden bg-wisdom-navy border-t border-white/5">
             <div className="px-4 py-4 space-y-3">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="block text-wisdom-muted hover:text-wisdom-cyan transition-colors"
-                  onClick={() => setIsOpen(false)}
-                >
-                  {link.label}
-                </Link>
-              ))}
+              {showAcademyChrome ? (
+                <>
+                  {academyMenuLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className="block text-wisdom-muted hover:text-amber-400 transition-colors"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                  <Link
+                    href="/academy"
+                    className="block text-wisdom-muted hover:text-amber-400"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Programs
+                  </Link>
+                  <Link
+                    href="/"
+                    className="block text-wisdom-muted hover:text-wisdom-cyan"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Main site
+                  </Link>
+                </>
+              ) : (
+                mainNavLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="block text-wisdom-muted hover:text-wisdom-cyan transition-colors"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {link.label}
+                  </Link>
+                ))
+              )}
 
               <div className="pt-3 border-t border-white/5 space-y-3">
                 {user ? (
@@ -197,6 +349,11 @@ export default function Header() {
                       <div>
                         <p className="text-sm font-medium">{displayName}</p>
                         <p className="text-xs text-wisdom-muted">{user.email}</p>
+                        {platform && (
+                          <p className="text-[10px] uppercase tracking-wider text-amber-400/90 mt-0.5">
+                            {platform} account
+                          </p>
+                        )}
                       </div>
                     </div>
                     <Link
