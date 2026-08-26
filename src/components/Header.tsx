@@ -92,7 +92,6 @@ export default function Header() {
     setAcademyMenuOpen(false);
   }, [pathname]);
 
-  // Close mobile menu on scroll
   useEffect(() => {
     if (!isOpen) return;
     const onScroll = () => setIsOpen(false);
@@ -100,7 +99,6 @@ export default function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, [isOpen]);
 
-  // Close on outside click
   useEffect(() => {
     if (!isOpen) return;
     const onPointer = (e: MouseEvent | TouchEvent) => {
@@ -152,7 +150,7 @@ export default function Header() {
         </div>
       )}
 
-      <header className="fixed top-0 left-0 right-0 z-50 bg-wisdom-dark/90 backdrop-blur-md border-b border-white/5">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-wisdom-dark/95 backdrop-blur-md border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-2 min-w-0">
@@ -279,7 +277,7 @@ export default function Header() {
                 ))}
             </nav>
 
-            {/* Mobile: hamburger + dropdown panel (top-right, not full-width) */}
+            {/* Mobile menu — solid panel, no see-through content */}
             <div className="md:hidden relative" ref={menuRef}>
               <button
                 type="button"
@@ -293,15 +291,16 @@ export default function Header() {
 
               {isOpen && (
                 <div
-                  className="absolute right-0 top-full mt-2 w-[min(18.5rem,calc(100vw-1.5rem))] rounded-2xl border border-white/12 bg-wisdom-navy/98 backdrop-blur-xl shadow-2xl shadow-black/50 overflow-hidden z-50 animate-scale-in"
+                  className="absolute right-0 top-full mt-2 w-[min(18.5rem,calc(100vw-1.5rem))] rounded-2xl border border-white/15 bg-[#0a0f1a] shadow-2xl shadow-black/60 overflow-hidden z-[60] animate-scale-in"
                   role="menu"
+                  style={{ backgroundColor: "#0a0f1a" }}
                 >
-                  <nav className="py-2 max-h-[min(70vh,28rem)] overflow-y-auto">
+                  <nav className="py-2 max-h-[min(70vh,28rem)] overflow-y-auto bg-[#0a0f1a]">
                     {showAcademyChrome ? (
                       <>
                         <Link
                           href="/academy"
-                          className="block px-4 py-2.5 text-sm text-wisdom-muted hover:text-amber-400 hover:bg-white/5"
+                          className="block px-4 py-2.5 text-sm text-white/90 hover:text-amber-400 hover:bg-white/5"
                           onClick={() => setIsOpen(false)}
                         >
                           Programs
@@ -310,7 +309,7 @@ export default function Header() {
                           <Link
                             key={link.href}
                             href={link.href}
-                            className="block px-4 py-2.5 text-sm text-wisdom-muted hover:text-amber-400 hover:bg-white/5"
+                            className="block px-4 py-2.5 text-sm text-white/90 hover:text-amber-400 hover:bg-white/5"
                             onClick={() => setIsOpen(false)}
                           >
                             {link.label}
@@ -318,7 +317,7 @@ export default function Header() {
                         ))}
                         <Link
                           href="/"
-                          className="block px-4 py-2.5 text-sm text-wisdom-muted hover:text-wisdom-cyan hover:bg-white/5"
+                          className="block px-4 py-2.5 text-sm text-white/90 hover:text-wisdom-cyan hover:bg-white/5"
                           onClick={() => setIsOpen(false)}
                         >
                           Main site
@@ -329,7 +328,7 @@ export default function Header() {
                         <Link
                           key={link.href}
                           href={link.href}
-                          className="block px-4 py-2.5 text-sm text-wisdom-muted hover:text-wisdom-cyan hover:bg-white/5"
+                          className="block px-4 py-2.5 text-sm text-white/90 hover:text-wisdom-cyan hover:bg-white/5"
                           onClick={() => setIsOpen(false)}
                         >
                           {link.label}
@@ -338,7 +337,7 @@ export default function Header() {
                     )}
                   </nav>
 
-                  <div className="border-t border-white/10 px-4 py-3 space-y-2 bg-black/20">
+                  <div className="border-t border-white/10 px-4 py-3 space-y-2 bg-[#050810]">
                     {user ? (
                       <>
                         <div className="flex items-center gap-3 pb-2">
@@ -351,13 +350,13 @@ export default function Header() {
                             )}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-medium truncate">{displayName}</p>
+                            <p className="text-sm font-medium text-white truncate">{displayName}</p>
                             <p className="text-[11px] text-wisdom-muted truncate">{user.email}</p>
                           </div>
                         </div>
                         <Link
                           href="/account"
-                          className="flex items-center gap-2 text-sm text-wisdom-muted hover:text-wisdom-cyan py-1.5"
+                          className="flex items-center gap-2 text-sm text-white/85 hover:text-wisdom-cyan py-1.5"
                           onClick={() => setIsOpen(false)}
                         >
                           <LayoutDashboard className="w-4 h-4" />
@@ -386,7 +385,7 @@ export default function Header() {
                       <div className="flex flex-col gap-2">
                         <Link
                           href="/login"
-                          className="block text-center text-sm text-wisdom-muted hover:text-wisdom-cyan py-2"
+                          className="block text-center text-sm text-white/85 hover:text-wisdom-cyan py-2"
                           onClick={() => setIsOpen(false)}
                         >
                           Sign In
@@ -408,7 +407,7 @@ export default function Header() {
         </div>
 
         {showAcademyChrome && academyMenuOpen && (
-          <div className="border-t border-white/5 bg-wisdom-navy/95 backdrop-blur-md">
+          <div className="border-t border-white/5 bg-wisdom-dark border-b border-white/5">
             <div className="max-w-7xl mx-auto px-4 py-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
               {academyMenuLinks.map((link) => {
                 const Icon = link.icon;
