@@ -7,7 +7,7 @@ import {
   Award,
   BadgeCheck,
   FileCheck2,
-  Sparkles,
+  Trophy,
   Lightbulb,
   Building2,
   Library,
@@ -99,7 +99,7 @@ const freeResources = [
     href: "/academy/success-stories",
     name: "Success Stories",
     blurb: "Journeys of students who leveled up with Academy",
-    icon: Sparkles,
+    icon: Trophy,
   },
   {
     href: "/academy/study-techniques",
@@ -139,7 +139,6 @@ const voiceStudents = [
     program: "UAT · Voice note",
     duration: "0:42",
     accent: "text-emerald-400",
-    // audioSrc: "/audio/testimonials/hana.mp3",
   },
   {
     name: "Yonas D.",
@@ -226,7 +225,6 @@ export default function AcademyPage() {
             ))}
           </div>
 
-          {/* Free resources */}
           <div className="mt-24 md:mt-28 relative">
             <div className="absolute -inset-x-4 -inset-y-8 rounded-[2rem] border border-teal-500/15 bg-gradient-to-b from-teal-500/[0.06] via-transparent to-transparent pointer-events-none" />
 
@@ -293,7 +291,6 @@ export default function AcademyPage() {
             </div>
           </div>
 
-          {/* What students say */}
           <section className="mt-24 md:mt-28">
             <div className="text-center mb-10">
               <p className="text-sm font-semibold tracking-[0.2em] uppercase text-amber-400/90 mb-3">
