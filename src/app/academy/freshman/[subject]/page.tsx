@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { freshmanSubjects, getFreshmanSubject } from "@/data/freshman";
 import CategoryBackButton from "@/components/CategoryBackButton";
+import SubjectHeroImage from "@/components/SubjectHeroImage";
 import { BookOpen, Construction } from "lucide-react";
 
 export function generateStaticParams() {
@@ -29,15 +30,7 @@ export default async function FreshmanSubjectPage({
 
         <div className="rounded-3xl border border-white/15 bg-wisdom-card shadow-card-3d overflow-hidden animate-fade-up">
           <div className="relative h-44 sm:h-52 bg-wisdom-navy overflow-hidden border-b border-white/10">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={subject.image}
-              alt={subject.name}
-              className="absolute inset-0 h-full w-full object-cover opacity-60"
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-              }}
-            />
+            <SubjectHeroImage src={subject.image} alt={subject.name} />
             <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card via-wisdom-card/50 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 px-6 sm:px-8 pb-6">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-purple-300/80 mb-2">
