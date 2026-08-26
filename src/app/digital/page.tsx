@@ -9,6 +9,7 @@ import {
   Briefcase,
   BookOpen,
   ArrowRight,
+  Sparkles,
 } from "lucide-react";
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -55,7 +56,8 @@ export default function DigitalPage() {
               {totalServices}+ Professional Services
             </h1>
             <p className="text-wisdom-muted max-w-2xl mx-auto text-lg">
-              Seven powerful categories. One integrated partner for all your digital, creative and professional needs.
+              Seven powerful categories — plus custom work when your project doesn&apos;t fit a list.
+              One integrated partner for digital, creative, and professional needs.
             </p>
           </div>
 
@@ -73,7 +75,9 @@ export default function DigitalPage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card via-wisdom-card/70 to-transparent" />
                   <div className="absolute bottom-3 left-4">
-                    <div className={`p-2.5 rounded-xl bg-gradient-to-br ${gradientMap[category.id]} border border-white/10 text-wisdom-cyan`}>
+                    <div
+                      className={`p-2.5 rounded-xl bg-gradient-to-br ${gradientMap[category.id]} border border-white/10 text-wisdom-cyan`}
+                    >
                       {iconMap[category.icon]}
                     </div>
                   </div>
@@ -83,18 +87,50 @@ export default function DigitalPage() {
                   <h3 className="font-semibold text-lg mb-1 group-hover:text-wisdom-cyan transition-colors">
                     {category.name}
                   </h3>
-                  <p className="text-sm text-wisdom-muted line-clamp-2 mb-3">
-                    {category.tagline}
-                  </p>
+                  <p className="text-sm text-wisdom-muted line-clamp-2 mb-3">{category.tagline}</p>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-wisdom-cyan">
-                      {category.services.length} services
-                    </span>
+                    <span className="text-xs text-wisdom-cyan">{category.services.length} services</span>
                     <ArrowRight className="w-4 h-4 text-wisdom-muted group-hover:text-wisdom-cyan group-hover:translate-x-1 transition-all" />
                   </div>
                 </div>
               </Link>
             ))}
+
+            {/* Custom order card */}
+            <Link
+              href="/services/custom"
+              className="group relative overflow-hidden rounded-2xl border border-wisdom-cyan/25 bg-wisdom-card hover:border-wisdom-cyan/50 transition-all duration-300 hover:shadow-xl hover:shadow-wisdom-cyan/10 hover:-translate-y-1 md:col-span-2 lg:col-span-1"
+            >
+              <div className="relative h-40 overflow-hidden">
+                <div
+                  className="absolute inset-0 bg-cover bg-center opacity-40 group-hover:scale-110 transition-transform duration-700"
+                  style={{
+                    backgroundImage:
+                      "url(https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600&q=80)",
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card via-wisdom-card/80 to-wisdom-cyan/10" />
+                <div className="absolute bottom-3 left-4">
+                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-wisdom-cyan/30 to-cyan-600/15 border border-wisdom-cyan/30 text-wisdom-cyan">
+                    <Sparkles className="w-7 h-7" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-5">
+                <h3 className="font-semibold text-lg mb-1 group-hover:text-wisdom-cyan transition-colors">
+                  Need something custom?
+                </h3>
+                <p className="text-sm text-wisdom-muted line-clamp-2 mb-3">
+                  Tell us who you are and what you need. We&apos;ll shape a package that isn&apos;t on the
+                  standard list.
+                </p>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-wisdom-cyan font-medium">Submit a custom request</span>
+                  <ArrowRight className="w-4 h-4 text-wisdom-muted group-hover:text-wisdom-cyan group-hover:translate-x-1 transition-all" />
+                </div>
+              </div>
+            </Link>
           </div>
         </div>
       </div>
