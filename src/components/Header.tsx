@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Menu,
   X,
@@ -31,7 +31,6 @@ const mainNavLinks = [
   { href: "/contact", label: "Contact" },
 ];
 
-/** Leaderboard lives inside each branch — not in global menu */
 const academyMenuLinks = [
   { href: "/academy/faq", label: "FAQ", icon: HelpCircle },
   { href: "/academy/success-stories", label: "Success Stories", icon: Trophy },
@@ -55,6 +54,7 @@ export default function Header() {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<{ type: "in" | "out"; msg: string } | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const getUser = async () => {
@@ -91,6 +91,30 @@ export default function Header() {
     setIsOpen(false);
     setAcademyMenuOpen(false);
   }, [pathname]);
+
+  // Close mobile menu on scroll
+  useEffect(() => {
+    if (!isOpen) return;
+    const onScroll = () => setIsOpen(false);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [isOpen]);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!isOpen) return;
+    const onPointer = (e: MouseEvent | TouchEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("touchstart", onPointer);
+    return () => {
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("touchstart", onPointer);
+    };
+  }, [isOpen]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -255,13 +279,131 @@ export default function Header() {
                 ))}
             </nav>
 
-            <button
-              className="md:hidden p-2 text-wisdom-muted hover:text-white"
-              onClick={() => setIsOpen(!isOpen)}
-              aria-label="Menu"
-            >
-              {isOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+            {/* Mobile: hamburger + dropdown panel (top-right, not full-width) */}
+            <div className="md:hidden relative" ref={menuRef}>
+              <button
+                type="button"
+                className="p-2 rounded-lg text-wisdom-muted hover:text-white hover:bg-white/5"
+                onClick={() => setIsOpen((v) => !v)}
+                aria-label="Menu"
+                aria-expanded={isOpen}
+              >
+                {isOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
+
+              {isOpen && (
+                <div
+                  className="absolute right-0 top-full mt-2 w-[min(18.5rem,calc(100vw-1.5rem))] rounded-2xl border border-white/12 bg-wisdom-navy/98 backdrop-blur-xl shadow-2xl shadow-black/50 overflow-hidden z-50 animate-scale-in"
+                  role="menu"
+                >
+                  <nav className="py-2 max-h-[min(70vh,28rem)] overflow-y-auto">
+                    {showAcademyChrome ? (
+                      <>
+                        <Link
+                          href="/academy"
+                          className="block px-4 py-2.5 text-sm text-wisdom-muted hover:text-amber-400 hover:bg-white/5"
+                          onClick={() => setIsOpen(false)}
+                        >
+                          Programs
+                        </Link>
+                        {academyMenuLinks.map((link) => (
+                          <Link
+                            key={link.href}
+                            href={link.href}
+                            className="block px-4 py-2.5 text-sm text-wisdom-muted hover:text-amber-400 hover:bg-white/5"
+                            onClick={() => setIsOpen(false)}
+                          >
+                            {link.label}
+                          </Link>
+                        ))}
+                        <Link
+                          href="/"
+                          className="block px-4 py-2.5 text-sm text-wisdom-muted hover:text-wisdom-cyan hover:bg-white/5"
+                          onClick={() => setIsOpen(false)}
+                        >
+                          Main site
+                        </Link>
+                      </>
+                    ) : (
+                      mainNavLinks.map((link) => (
+                        <Link
+                          key={link.href}
+                          href={link.href}
+                          className="block px-4 py-2.5 text-sm text-wisdom-muted hover:text-wisdom-cyan hover:bg-white/5"
+                          onClick={() => setIsOpen(false)}
+                        >
+                          {link.label}
+                        </Link>
+                      ))
+                    )}
+                  </nav>
+
+                  <div className="border-t border-white/10 px-4 py-3 space-y-2 bg-black/20">
+                    {user ? (
+                      <>
+                        <div className="flex items-center gap-3 pb-2">
+                          <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-wisdom-cyan to-cyan-700 flex items-center justify-center text-sm font-bold text-wisdom-dark shrink-0">
+                            {avatarUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              displayName.charAt(0).toUpperCase()
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate">{displayName}</p>
+                            <p className="text-[11px] text-wisdom-muted truncate">{user.email}</p>
+                          </div>
+                        </div>
+                        <Link
+                          href="/account"
+                          className="flex items-center gap-2 text-sm text-wisdom-muted hover:text-wisdom-cyan py-1.5"
+                          onClick={() => setIsOpen(false)}
+                        >
+                          <LayoutDashboard className="w-4 h-4" />
+                          My Account
+                        </Link>
+                        {isAdmin && (
+                          <Link
+                            href="/admin"
+                            className="flex items-center gap-2 text-sm text-wisdom-cyan py-1.5"
+                            onClick={() => setIsOpen(false)}
+                          >
+                            <Shield className="w-4 h-4" />
+                            Admin Dashboard
+                          </Link>
+                        )}
+                        <button
+                          type="button"
+                          onClick={handleLogout}
+                          className="flex items-center gap-2 text-sm text-red-400 py-1.5 w-full text-left"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          Logout
+                        </button>
+                      </>
+                    ) : (
+                      <div className="flex flex-col gap-2">
+                        <Link
+                          href="/login"
+                          className="block text-center text-sm text-wisdom-muted hover:text-wisdom-cyan py-2"
+                          onClick={() => setIsOpen(false)}
+                        >
+                          Sign In
+                        </Link>
+                        <Link
+                          href="/signup"
+                          className="block w-full text-center px-4 py-2.5 rounded-xl bg-wisdom-cyan text-wisdom-dark text-sm font-semibold"
+                          onClick={() => setIsOpen(false)}
+                        >
+                          Get Started
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -282,92 +424,6 @@ export default function Header() {
                   </Link>
                 );
               })}
-            </div>
-          </div>
-        )}
-
-        {isOpen && (
-          <div className="md:hidden bg-wisdom-navy border-t border-white/5">
-            <div className="px-4 py-4 space-y-3">
-              {showAcademyChrome ? (
-                <>
-                  <Link href="/academy" className="block text-wisdom-muted hover:text-amber-400" onClick={() => setIsOpen(false)}>
-                    Programs
-                  </Link>
-                  {academyMenuLinks.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className="block text-wisdom-muted hover:text-amber-400 transition-colors"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-                  <Link href="/" className="block text-wisdom-muted hover:text-wisdom-cyan" onClick={() => setIsOpen(false)}>
-                    Main site
-                  </Link>
-                </>
-              ) : (
-                mainNavLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="block text-wisdom-muted hover:text-wisdom-cyan transition-colors"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    {link.label}
-                  </Link>
-                ))
-              )}
-
-              <div className="pt-3 border-t border-white/5 space-y-3">
-                {user ? (
-                  <>
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-wisdom-cyan to-cyan-700 flex items-center justify-center font-bold text-wisdom-dark">
-                        {avatarUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          displayName.charAt(0).toUpperCase()
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">{displayName}</p>
-                        <p className="text-xs text-wisdom-muted">{user.email}</p>
-                      </div>
-                    </div>
-                    <Link href="/account" className="flex items-center gap-2 text-wisdom-muted hover:text-wisdom-cyan" onClick={() => setIsOpen(false)}>
-                      <LayoutDashboard className="w-4 h-4" />
-                      My Account
-                    </Link>
-                    {isAdmin && (
-                      <Link href="/admin" className="flex items-center gap-2 text-wisdom-cyan" onClick={() => setIsOpen(false)}>
-                        <Shield className="w-4 h-4" />
-                        Admin Dashboard
-                      </Link>
-                    )}
-                    <button onClick={handleLogout} className="flex items-center gap-2 text-red-400">
-                      <LogOut className="w-4 h-4" />
-                      Logout
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <Link href="/login" className="block text-wisdom-muted hover:text-wisdom-cyan" onClick={() => setIsOpen(false)}>
-                      Sign In
-                    </Link>
-                    <Link
-                      href="/signup"
-                      className="block w-full text-center px-4 py-2 rounded-lg bg-wisdom-cyan text-wisdom-dark text-sm font-medium"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      Get Started
-                    </Link>
-                  </>
-                )}
-              </div>
             </div>
           </div>
         )}
