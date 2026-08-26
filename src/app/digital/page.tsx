@@ -9,7 +9,7 @@ import {
   Briefcase,
   BookOpen,
   ArrowRight,
-  Sparkles,
+  ClipboardList,
 } from "lucide-react";
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -47,26 +47,27 @@ export default function DigitalPage() {
     <div className="relative">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-wisdom-cyan/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-0 w-72 h-72 bg-violet-500/5 rounded-full blur-3xl" />
       </div>
 
       <div className="relative py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
+          <div className="text-center mb-16 animate-fade-up">
+            <h1 className="font-display text-4xl md:text-5xl font-extrabold mb-4 tracking-tight">
               {totalServices}+ Professional Services
             </h1>
-            <p className="text-wisdom-muted max-w-2xl mx-auto text-lg">
-              Seven powerful categories — plus custom work when your project doesn&apos;t fit a list.
-              One integrated partner for digital, creative, and professional needs.
+            <p className="text-wisdom-muted max-w-2xl mx-auto text-lg leading-relaxed">
+              Seven categories — plus custom work when your project doesn&apos;t fit a list. One partner
+              for digital, creative, and professional needs.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="perspective-scene grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children">
             {categories.map((category) => (
               <Link
                 key={category.id}
                 href={`/services/${category.id}`}
-                className="group relative overflow-hidden rounded-2xl border border-white/5 bg-wisdom-card hover:border-wisdom-cyan/30 transition-all duration-300 hover:shadow-xl hover:shadow-wisdom-cyan/5 hover:-translate-y-1"
+                className="card-3d group relative overflow-hidden rounded-2xl border border-white/10 bg-wisdom-card hover:border-wisdom-cyan/35"
               >
                 <div className="relative h-40 overflow-hidden">
                   <div
@@ -96,10 +97,9 @@ export default function DigitalPage() {
               </Link>
             ))}
 
-            {/* Custom order card */}
             <Link
               href="/services/custom"
-              className="group relative overflow-hidden rounded-2xl border border-wisdom-cyan/25 bg-wisdom-card hover:border-wisdom-cyan/50 transition-all duration-300 hover:shadow-xl hover:shadow-wisdom-cyan/10 hover:-translate-y-1 md:col-span-2 lg:col-span-1"
+              className="card-3d group relative overflow-hidden rounded-2xl border border-wisdom-cyan/30 bg-wisdom-card hover:border-wisdom-cyan/55 md:col-span-2 lg:col-span-1"
             >
               <div className="relative h-40 overflow-hidden">
                 <div
@@ -112,7 +112,7 @@ export default function DigitalPage() {
                 <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card via-wisdom-card/80 to-wisdom-cyan/10" />
                 <div className="absolute bottom-3 left-4">
                   <div className="p-2.5 rounded-xl bg-gradient-to-br from-wisdom-cyan/30 to-cyan-600/15 border border-wisdom-cyan/30 text-wisdom-cyan">
-                    <Sparkles className="w-7 h-7" />
+                    <ClipboardList className="w-7 h-7" />
                   </div>
                 </div>
               </div>

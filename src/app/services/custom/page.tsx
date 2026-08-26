@@ -8,7 +8,7 @@ import {
   Send,
   ArrowLeft,
   CheckCircle2,
-  Sparkles,
+  ClipboardList,
   User,
   FileText,
 } from "lucide-react";
@@ -141,7 +141,7 @@ export default function CustomOrderPage() {
         <div className="rounded-3xl border border-white/15 bg-wisdom-card shadow-card-3d overflow-hidden animate-fade-up">
           <div className="px-6 sm:px-8 pt-7 pb-5 border-b border-white/10 bg-gradient-to-br from-wisdom-cyan/12 via-transparent to-transparent">
             <div className="inline-flex p-2.5 rounded-xl bg-wisdom-cyan/15 border border-wisdom-cyan/30 text-wisdom-cyan mb-4">
-              <Sparkles className="w-5 h-5" />
+              <ClipboardList className="w-5 h-5" />
             </div>
             <h1 className="font-display text-2xl sm:text-3xl font-bold mb-2 tracking-tight">
               Custom order
@@ -153,7 +153,6 @@ export default function CustomOrderPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="px-6 sm:px-8 py-7 space-y-8">
-            {/* Profile */}
             <fieldset className="space-y-5">
               <legend className="flex items-center gap-2 text-sm font-semibold text-white/90 mb-1">
                 <User className="w-4 h-4 text-wisdom-cyan" />
@@ -251,7 +250,6 @@ export default function CustomOrderPage() {
               </div>
             </fieldset>
 
-            {/* Project */}
             <fieldset className="space-y-5 pt-2 border-t border-white/10">
               <legend className="flex items-center gap-2 text-sm font-semibold text-white/90 mb-1 pt-5">
                 <FileText className="w-4 h-4 text-wisdom-cyan" />
