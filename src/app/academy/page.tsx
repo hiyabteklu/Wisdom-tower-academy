@@ -13,6 +13,7 @@ import {
   Building2,
   Library,
   GraduationCap as GradCap,
+  Trees,
 } from "lucide-react";
 import VoiceMessageCard from "@/components/VoiceMessageCard";
 import TestimonialMarquee from "@/components/TestimonialMarquee";
@@ -119,6 +120,12 @@ const freeResources = [
     name: "Study Techniques",
     blurb: "Methods to learn faster and retain under pressure",
     icon: Lightbulb,
+  },
+  {
+    href: "/academy/campus-life",
+    name: "Campus Life",
+    blurb: "Friends, focus, burnout, lectures, facilities & group work",
+    icon: Trees,
   },
   {
     href: "/academy/universities",
@@ -258,8 +265,8 @@ export default function AcademyPage() {
                 className="text-wisdom-muted max-w-lg mx-auto text-base leading-relaxed"
                 style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
               >
-                Guidance beyond the seven academic branches — stories, techniques, universities,
-                departments, and scholarships.
+                Guidance beyond the seven academic branches — stories, techniques, campus life,
+                universities, departments, and scholarships.
               </p>
             </div>
 

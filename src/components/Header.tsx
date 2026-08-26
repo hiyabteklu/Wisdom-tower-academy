@@ -16,6 +16,7 @@ import {
   Monitor,
   Building2,
   Library,
+  Trees,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { isAdminEmail } from "@/lib/admin";
@@ -35,6 +36,7 @@ const academyMenuLinks = [
   { href: "/academy/faq", label: "FAQ", icon: HelpCircle },
   { href: "/academy/success-stories", label: "Success Stories", icon: Sparkles },
   { href: "/academy/study-techniques", label: "Study Techniques", icon: BookOpen },
+  { href: "/academy/campus-life", label: "Campus Life", icon: Trees },
   { href: "/academy/universities", label: "Universities", icon: Building2 },
   { href: "/academy/departments", label: "Departments", icon: Library },
   { href: "/academy/scholarships", label: "Scholarships", icon: GraduationCap },
