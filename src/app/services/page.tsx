@@ -8,7 +8,6 @@ import {
   Briefcase,
   BookOpen,
   ArrowRight,
-  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -45,15 +44,14 @@ export default function ServicesPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="text-center mb-20">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-wisdom-cyan/10 border border-wisdom-cyan/20 text-wisdom-cyan text-sm mb-6">
-              <Sparkles className="w-4 h-4" />
-              {totalServices}+ Professional Services
-            </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-5 tracking-tight">
               Our Services
             </h1>
             <p className="text-wisdom-muted max-w-2xl mx-auto text-lg leading-relaxed">
               Explore our comprehensive portfolio across seven powerful categories. One partner for everything you need.
+            </p>
+            <p className="mt-3 text-sm text-wisdom-cyan font-medium">
+              {totalServices}+ professional services
             </p>
           </div>
 

@@ -9,7 +9,6 @@ import {
   Briefcase,
   BookOpen,
   ArrowRight,
-  Sparkles,
 } from "lucide-react";
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -52,10 +51,6 @@ export default function DigitalPage() {
       <div className="relative py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-wisdom-cyan/10 border border-wisdom-cyan/20 text-wisdom-cyan text-sm mb-6">
-              <Sparkles className="w-4 h-4" />
-              Wisdom Tower Digital
-            </div>
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
               {totalServices}+ Professional Services
             </h1>

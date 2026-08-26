@@ -1,5 +1,12 @@
 import Link from "next/link";
-import { ArrowRight, GraduationCap, Laptop, Sparkles } from "lucide-react";
+import { ArrowRight, GraduationCap, Laptop } from "lucide-react";
+
+const stats = [
+  { value: "30K+", label: "Users" },
+  { value: "10+", label: "Partners" },
+  { value: "70+", label: "Services" },
+  { value: "∞", label: "Possibilities" },
+];
 
 export default function HomePage() {
   return (
@@ -11,11 +18,6 @@ export default function HomePage() {
         <div className="absolute bottom-10 right-1/4 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28 text-center relative">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-wisdom-cyan/10 border border-wisdom-cyan/20 text-wisdom-cyan text-sm mb-6">
-            <Sparkles className="w-4 h-4" />
-            One Ecosystem. Two Powerful Pillars.
-          </div>
-
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
             <span className="text-white">Wisdom</span>{" "}
             <span className="text-wisdom-cyan">Tower</span>
@@ -31,7 +33,7 @@ export default function HomePage() {
       </section>
 
       {/* Two Main Cards */}
-      <section className="pb-24 md:pb-32">
+      <section className="pb-16 md:pb-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
 
@@ -40,7 +42,6 @@ export default function HomePage() {
               href="/academy"
               className="group relative overflow-hidden rounded-3xl border border-white/10 bg-wisdom-card hover:border-wisdom-cyan/40 transition-all duration-500 hover:shadow-2xl hover:shadow-wisdom-cyan/10 hover:-translate-y-1"
             >
-              {/* Placeholder Image Area */}
               <div className="relative h-56 md:h-64 bg-gradient-to-br from-amber-500/20 via-orange-500/10 to-wisdom-card overflow-hidden">
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="w-full h-full bg-[url('https://images.unsplash.com/photo-1523240795612-9a054b0db26a?w=800&q=80')] bg-cover bg-center opacity-40 group-hover:scale-105 transition-transform duration-700" />
@@ -72,7 +73,6 @@ export default function HomePage() {
               href="/digital"
               className="group relative overflow-hidden rounded-3xl border border-white/10 bg-wisdom-card hover:border-wisdom-cyan/40 transition-all duration-500 hover:shadow-2xl hover:shadow-wisdom-cyan/10 hover:-translate-y-1"
             >
-              {/* Placeholder Image Area */}
               <div className="relative h-56 md:h-64 bg-gradient-to-br from-cyan-500/20 via-blue-500/10 to-wisdom-card overflow-hidden">
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="w-full h-full bg-[url('https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80')] bg-cover bg-center opacity-40 group-hover:scale-105 transition-transform duration-700" />
@@ -99,6 +99,31 @@ export default function HomePage() {
               </div>
             </Link>
 
+          </div>
+        </div>
+      </section>
+
+      {/* Stats */}
+      <section className="pb-20 md:pb-28">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            {stats.map((stat, i) => (
+              <div
+                key={stat.label}
+                className="stat-card group relative overflow-hidden rounded-2xl border border-white/10 bg-wisdom-card/80 backdrop-blur-sm p-6 md:p-8 text-center hover:border-wisdom-cyan/40 transition-all duration-500 hover:-translate-y-1 hover:shadow-xl hover:shadow-wisdom-cyan/10"
+                style={{ animationDelay: `${i * 120}ms` }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-wisdom-cyan/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="relative">
+                  <div className="stat-value text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white mb-2 group-hover:text-wisdom-cyan transition-colors duration-300">
+                    {stat.value}
+                  </div>
+                  <div className="text-sm md:text-base text-wisdom-muted font-medium uppercase tracking-wider">
+                    {stat.label}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>

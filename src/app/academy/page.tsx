@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, BookOpen, GraduationCap, Users, Award, Target, Sparkles } from "lucide-react";
+import { ArrowRight, BookOpen, GraduationCap, Users, Award, Target } from "lucide-react";
 
 const programs = [
   {
@@ -55,10 +55,6 @@ export default function AcademyPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm mb-6">
-              <Sparkles className="w-4 h-4" />
-              Wisdom Tower Academy
-            </div>
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
               Academic Excellence Pathways
             </h1>
