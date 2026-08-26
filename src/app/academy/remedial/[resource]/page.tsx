@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getResource, resourceHubs } from "@/data/academy";
 import CategoryBackButton from "@/components/CategoryBackButton";
+import AcademicResultSaver from "@/components/AcademicResultSaver";
 import { BookOpen, Construction } from "lucide-react";
 
 export function generateStaticParams() {
@@ -27,25 +28,32 @@ export default async function RemedialResourcePage({
       <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
         <CategoryBackButton fallback="/academy/remedial" />
 
-        <div className="rounded-3xl border border-white/15 bg-wisdom-card shadow-card-3d overflow-hidden animate-fade-up">
-          <div className="px-6 sm:px-8 pt-8 pb-6 border-b border-white/10 bg-gradient-to-br from-amber-500/20 via-orange-500/5 to-transparent">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-wisdom-muted mb-2">
-              Remedial · Learning hub
-            </p>
-            <h1 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight mb-2">
-              <span className={resource.accent}>{resource.name}</span>
-            </h1>
-            <p className="text-wisdom-muted">{resource.description}</p>
-          </div>
+        <div className="mb-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-wisdom-muted mb-2">
+            Remedial · Learning hub
+          </p>
+          <h1 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight mb-2">
+            <span className={resource.accent}>{resource.name}</span>
+          </h1>
+          <p className="text-wisdom-muted">{resource.description}</p>
+        </div>
 
+        <div className="mb-8">
+          <AcademicResultSaver
+            scopeId={`remedial-${resource.id}`}
+            scopeLabel={`Remedial · ${resource.name}`}
+            accent={resource.accent}
+          />
+        </div>
+
+        <div className="rounded-3xl border border-white/15 bg-wisdom-card shadow-card-3d overflow-hidden animate-fade-up">
           <div className="px-6 sm:px-8 py-10 text-center">
             <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-wisdom-dark/60 text-wisdom-muted">
               <Construction className="w-8 h-8" />
             </div>
             <h2 className="font-display text-xl font-bold mb-2">Content coming soon</h2>
             <p className="text-wisdom-muted text-sm max-w-md mx-auto leading-relaxed mb-8">
-              We&apos;re preparing remedial {resource.name.toLowerCase()}. The structure is ready —
-              materials will appear here as they are published.
+              Remedial {resource.name.toLowerCase()} materials will appear here. Track scores above.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getGrade, grades, resourceHubs } from "@/data/academy";
 import CategoryBackButton from "@/components/CategoryBackButton";
+import AcademicResultSaver from "@/components/AcademicResultSaver";
 import {
   BookOpen,
   Library,
@@ -44,7 +45,7 @@ export default async function GradeDetailPage({
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
         <CategoryBackButton fallback="/academy/grades" />
 
-        <div className="mb-12 md:mb-14 animate-fade-up">
+        <div className="mb-10 animate-fade-up">
           <div className="flex flex-wrap items-center gap-3 mb-4">
             <span
               className={`inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/15 bg-wisdom-card font-display font-extrabold ${grade.accent}`}
@@ -59,9 +60,14 @@ export default async function GradeDetailPage({
             <span className={grade.accent}>{grade.label}</span> resources
           </h1>
           <p className="text-wisdom-muted text-lg max-w-2xl leading-relaxed">{grade.subtitle}</p>
-          <p className="mt-3 text-sm text-wisdom-muted/80">
-            Pick a hub below. Structure is identical across Grades 9–12.
-          </p>
+        </div>
+
+        <div className="max-w-3xl mb-12">
+          <AcademicResultSaver
+            scopeId={`grade-${grade.id}`}
+            scopeLabel={grade.label}
+            accent={grade.accent}
+          />
         </div>
 
         <div className="perspective-scene grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 stagger-children">
@@ -86,7 +92,6 @@ export default async function GradeDetailPage({
           ))}
         </div>
 
-        {/* Quick switch grades */}
         <div className="mt-14 pt-10 border-t border-white/10">
           <p className="text-sm text-wisdom-muted mb-4 font-medium">Switch grade</p>
           <div className="flex flex-wrap gap-2">

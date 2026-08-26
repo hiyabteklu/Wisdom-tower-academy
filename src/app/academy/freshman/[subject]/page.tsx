@@ -3,6 +3,7 @@ import Link from "next/link";
 import { freshmanSubjects, getFreshmanSubject } from "@/data/freshman";
 import CategoryBackButton from "@/components/CategoryBackButton";
 import SubjectHeroImage from "@/components/SubjectHeroImage";
+import AcademicResultSaver from "@/components/AcademicResultSaver";
 import { BookOpen, Construction } from "lucide-react";
 
 export function generateStaticParams() {
@@ -28,7 +29,7 @@ export default async function FreshmanSubjectPage({
       <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
         <CategoryBackButton fallback="/academy/freshman" />
 
-        <div className="rounded-3xl border border-white/15 bg-wisdom-card shadow-card-3d overflow-hidden animate-fade-up">
+        <div className="rounded-3xl border border-white/15 bg-wisdom-card shadow-card-3d overflow-hidden animate-fade-up mb-8">
           <div className="relative h-44 sm:h-52 bg-wisdom-navy overflow-hidden border-b border-white/10">
             <SubjectHeroImage src={subject.image} alt={subject.name} />
             <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card via-wisdom-card/50 to-transparent" />
@@ -49,8 +50,7 @@ export default async function FreshmanSubjectPage({
             </div>
             <h2 className="font-display text-xl font-bold mb-2">Content coming soon</h2>
             <p className="text-wisdom-muted text-sm max-w-md mx-auto leading-relaxed mb-8">
-              Materials for {subject.name} will appear here — notes, practice, and resources for
-              first-year success.
+              Materials for {subject.name} will appear here. Track every quiz and exam below.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
@@ -69,6 +69,12 @@ export default async function FreshmanSubjectPage({
             </div>
           </div>
         </div>
+
+        <AcademicResultSaver
+          scopeId={`freshman-${subject.id}`}
+          scopeLabel={`Freshman · ${subject.name}`}
+          accent="text-purple-400"
+        />
       </div>
     </div>
   );

@@ -7,6 +7,7 @@ import {
   resourceHubs,
 } from "@/data/academy";
 import CategoryBackButton from "@/components/CategoryBackButton";
+import AcademicResultSaver from "@/components/AcademicResultSaver";
 import { BookOpen, Construction } from "lucide-react";
 
 export function generateStaticParams() {
@@ -39,25 +40,33 @@ export default async function GradeResourcePage({
       <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
         <CategoryBackButton fallback={`/academy/grades/${grade.id}`} />
 
-        <div className="rounded-3xl border border-white/15 bg-wisdom-card shadow-card-3d overflow-hidden animate-fade-up">
-          <div className={`px-6 sm:px-8 pt-8 pb-6 border-b border-white/10 bg-gradient-to-br ${grade.gradient}`}>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-wisdom-muted mb-2">
-              {grade.label} · Learning hub
-            </p>
-            <h1 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight mb-2">
-              <span className={resource.accent}>{resource.name}</span>
-            </h1>
-            <p className="text-wisdom-muted">{resource.description}</p>
-          </div>
+        <div className="mb-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-wisdom-muted mb-2">
+            {grade.label} · Learning hub
+          </p>
+          <h1 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight mb-2">
+            <span className={resource.accent}>{resource.name}</span>
+          </h1>
+          <p className="text-wisdom-muted">{resource.description}</p>
+        </div>
 
+        <div className="mb-8">
+          <AcademicResultSaver
+            scopeId={`grade-${grade.id}-${resource.id}`}
+            scopeLabel={`${grade.label} · ${resource.name}`}
+            accent={resource.accent}
+          />
+        </div>
+
+        <div className="rounded-3xl border border-white/15 bg-wisdom-card shadow-card-3d overflow-hidden animate-fade-up">
           <div className="px-6 sm:px-8 py-10 text-center">
             <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-wisdom-dark/60 text-wisdom-muted">
               <Construction className="w-8 h-8" />
             </div>
             <h2 className="font-display text-xl font-bold mb-2">Content coming soon</h2>
             <p className="text-wisdom-muted text-sm max-w-md mx-auto leading-relaxed mb-8">
-              We&apos;re preparing {resource.name.toLowerCase()} for {grade.label}. The structure is
-              ready — materials will appear here as they are published.
+              Materials for {resource.name.toLowerCase()} ({grade.label}) will appear here. Log
+              practice scores above in the meantime.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
