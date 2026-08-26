@@ -20,19 +20,21 @@ const programs = [
     gradient: "from-sky-500/30 to-cyan-500/10",
     accent: "text-sky-400",
     border: "hover:border-sky-400/40",
+    cta: "Open grades",
     featured: true,
   },
   {
     id: "remedial",
-    href: "/contact?topic=Remedial",
+    href: "/academy/remedial",
     name: "Remedial Programs",
     description:
-      "Targeted catch-up courses designed to strengthen foundational knowledge and close learning gaps.",
+      "Catch-up learning hubs — books, references, videos, flashcards, question banks, and exams. No grade selection.",
     icon: <Target className="w-7 h-7" />,
     image: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=800&q=80",
     gradient: "from-amber-500/30 to-orange-500/10",
     accent: "text-amber-400",
     border: "hover:border-amber-400/40",
+    cta: "Open resources",
     featured: false,
   },
   {
@@ -46,6 +48,7 @@ const programs = [
     gradient: "from-purple-500/30 to-pink-500/10",
     accent: "text-purple-400",
     border: "hover:border-purple-400/40",
+    cta: "Learn more",
     featured: false,
   },
   {
@@ -59,6 +62,7 @@ const programs = [
     gradient: "from-emerald-500/30 to-teal-500/10",
     accent: "text-emerald-400",
     border: "hover:border-emerald-400/40",
+    cta: "Learn more",
     featured: false,
   },
   {
@@ -72,6 +76,7 @@ const programs = [
     gradient: "from-rose-500/30 to-red-500/10",
     accent: "text-rose-400",
     border: "hover:border-rose-400/40",
+    cta: "Learn more",
     featured: false,
   },
 ];
@@ -134,7 +139,7 @@ export default function AcademyPage() {
                   </h3>
                   <p className="text-sm text-wisdom-muted leading-relaxed mb-5">{program.description}</p>
                   <div className={`flex items-center gap-2 text-sm font-semibold ${program.accent}`}>
-                    {program.featured ? "Open grades" : "Learn more"}
+                    {program.cta}
                     <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1.5" />
                   </div>
                 </div>
