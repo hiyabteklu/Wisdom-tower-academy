@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
+import { isAdminEmail } from "@/lib/admin";
 import type { User } from "@supabase/supabase-js";
 import {
   Inbox,
@@ -92,11 +93,12 @@ export default function AdminPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session?.user) {
-        router.replace("/login");
+      const u = session?.user ?? null;
+      if (!u || !isAdminEmail(u.email)) {
+        router.replace(u ? "/account" : "/login");
         return;
       }
-      setUser(session.user);
+      setUser(u);
       setLoading(false);
     });
   }, [router]);
@@ -234,7 +236,6 @@ export default function AdminPage() {
       )}
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 md:py-12">
-        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
           <div className="flex items-start gap-3">
             <div className="p-2.5 rounded-xl bg-wisdom-cyan/10 text-wisdom-cyan">
@@ -264,15 +265,12 @@ export default function AdminPage() {
               <Download className="w-4 h-4" />
               Export CSV
             </button>
-            <Link
-              href="/"
-              className="inline-flex items-center min-h-[40px] px-4 py-2 rounded-full border border-white/15 bg-white/5 text-sm font-medium hover:bg-white/10"
-            >
-              Portal
+            <Link href="/account" className="inline-flex items-center min-h-[40px] px-4 py-2 rounded-full border border-white/15 bg-white/5 text-sm font-medium hover:bg-white/10">
+              Profile
             </Link>
             <button
               onClick={handleLogout}
-              className="inline-flex items-center gap-2 min-h-[40px] px-4 py-2 rounded-full border border-white/15 bg-white/5 text-sm font-medium hover:bg-white/10"
+              className="inline-flex items-center gap-2 min-h-[40px] px-4 py-2 rounded-full border border-red-500/30 bg-red-500/10 text-sm font-medium text-red-400 hover:bg-red-500/20"
             >
               <LogOut className="w-4 h-4" />
               Logout
@@ -285,35 +283,30 @@ export default function AdminPage() {
             <p className="font-semibold">Load error</p>
             <p className="mt-1 opacity-90">{error}</p>
             <p className="mt-2 text-xs text-wisdom-muted">
-              If rows exist in Supabase Table Editor but not here, check RLS SELECT policy for authenticated users.
+              If rows exist in Supabase but not here, run the SELECT policy for authenticated users.
             </p>
           </div>
         )}
 
-        {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
           {[
-            { label: "Total", value: stats.total, icon: <Inbox className="w-4 h-4" />, color: "text-wisdom-cyan" },
-            { label: "New", value: stats.new, icon: <Mail className="w-4 h-4" />, color: "text-green-400" },
-            { label: "Read", value: stats.read, icon: <Clock className="w-4 h-4" />, color: "text-amber-400" },
-            { label: "Replied", value: stats.replied, icon: <CheckCircle2 className="w-4 h-4" />, color: "text-blue-400" },
-            { label: "Closed", value: stats.closed, icon: <CheckCircle2 className="w-4 h-4" />, color: "text-wisdom-muted" },
+            { label: "Total", value: stats.total, color: "text-wisdom-cyan", filter: "all" },
+            { label: "New", value: stats.new, color: "text-green-400", filter: "new" },
+            { label: "Read", value: stats.read, color: "text-amber-400", filter: "read" },
+            { label: "Replied", value: stats.replied, color: "text-blue-400", filter: "replied" },
+            { label: "Closed", value: stats.closed, color: "text-wisdom-muted", filter: "closed" },
           ].map((s) => (
             <button
               key={s.label}
-              onClick={() => setStatusFilter(s.label === "Total" ? "all" : s.label.toLowerCase())}
+              onClick={() => setStatusFilter(s.filter)}
               className="p-4 rounded-2xl bg-wisdom-card border border-white/5 text-left hover:border-white/15 transition-colors"
             >
-              <div className="flex items-center gap-2 mb-1">
-                <span className={s.color}>{s.icon}</span>
-                <span className="text-xs text-wisdom-muted">{s.label}</span>
-              </div>
+              <span className="text-xs text-wisdom-muted">{s.label}</span>
               <div className={`text-2xl font-bold tabular-nums ${s.color}`}>{s.value}</div>
             </button>
           ))}
         </div>
 
-        {/* Charts */}
         <div className="grid lg:grid-cols-5 gap-4 mb-8">
           <div className="lg:col-span-3 rounded-2xl border border-white/5 bg-wisdom-card p-5">
             <div className="flex items-center justify-between mb-4">
@@ -360,7 +353,6 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Search + Filter */}
         <div className="flex flex-col sm:flex-row gap-2 mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-wisdom-muted" />
@@ -384,14 +376,13 @@ export default function AdminPage() {
           </select>
         </div>
 
-        {/* Inquiries */}
         {dataLoading ? (
           <p className="py-16 text-center text-wisdom-muted">Loading…</p>
         ) : filtered.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-white/10 px-6 py-16 text-center">
             <Inbox className="w-12 h-12 text-wisdom-muted mx-auto mb-4 opacity-40" />
-            <p className="text-wisdom-muted">No inquiries match</p>
-            <p className="text-sm text-wisdom-muted mt-1">Submissions from contact & service request forms appear here</p>
+            <p className="text-wisdom-muted">No inquiries yet</p>
+            <p className="text-sm text-wisdom-muted mt-1">Submit a test from Contact or a service request form</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -404,11 +395,7 @@ export default function AdminPage() {
                   className="rounded-2xl border border-white/5 border-l-4 border-l-wisdom-cyan bg-wisdom-card p-4 sm:p-5"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-2">
-                    <button
-                      type="button"
-                      className="min-w-0 flex-1 text-left"
-                      onClick={() => setExpandedId(open ? "" : inquiry.id)}
-                    >
+                    <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setExpandedId(open ? "" : inquiry.id)}>
                       <h3 className="font-semibold text-white">{inquiry.name}</h3>
                       <p className="text-sm text-wisdom-muted mt-0.5">
                         {[inquiry.email, inquiry.service].filter(Boolean).join(" · ")}
@@ -418,15 +405,8 @@ export default function AdminPage() {
                       {inquiry.status || "new"}
                     </span>
                   </div>
-
-                  <p className="mt-2 text-sm text-wisdom-muted leading-relaxed whitespace-pre-wrap line-clamp-3">
-                    {inquiry.message}
-                  </p>
-
-                  <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-wisdom-muted">
-                    <span>{formatDate(inquiry.created_at)}</span>
-                  </div>
-
+                  <p className="mt-2 text-sm text-wisdom-muted leading-relaxed whitespace-pre-wrap line-clamp-3">{inquiry.message}</p>
+                  <div className="mt-3 text-xs text-wisdom-muted">{formatDate(inquiry.created_at)}</div>
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     <select
                       value={inquiry.status || "new"}
@@ -453,7 +433,6 @@ export default function AdminPage() {
                       {open ? "Hide" : "Notes"}
                     </button>
                   </div>
-
                   {open && (
                     <div className="mt-3 space-y-2 border-t border-white/10 pt-3">
                       <p className="text-sm text-white whitespace-pre-wrap">{inquiry.message}</p>
@@ -461,7 +440,7 @@ export default function AdminPage() {
                         value={noteVal}
                         onChange={(e) => setNoteDraft((d) => ({ ...d, [inquiry.id]: e.target.value }))}
                         rows={3}
-                        placeholder="Internal admin notes (customer won’t see these)…"
+                        placeholder="Internal admin notes…"
                         className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none focus:border-wisdom-cyan"
                       />
                       <button
