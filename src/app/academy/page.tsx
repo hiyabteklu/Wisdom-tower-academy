@@ -17,7 +17,7 @@ import {
   Package,
   ClipboardCheck,
   Mail,
-  Sparkles,
+  CheckCircle2,
   Briefcase,
 } from "lucide-react";
 import VoiceMessageCard from "@/components/VoiceMessageCard";
@@ -212,7 +212,6 @@ export default function AcademyPage() {
 
       <div className="relative py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Clean hero — title only */}
           <div className="text-center mb-14 md:mb-16 animate-fade-up">
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white">
               Wisdom Tower Academy
@@ -330,7 +329,6 @@ export default function AcademyPage() {
             </p>
           </section>
 
-          {/* Partnership & collaboration */}
           <section className="mt-24 md:mt-28" id="partnership">
             <div className="text-center mb-10 md:mb-12">
               <p className="text-sm font-semibold tracking-[0.2em] uppercase text-amber-400/90 mb-3">
@@ -379,35 +377,35 @@ export default function AcademyPage() {
                     <div className="p-2.5 rounded-xl bg-amber-500/15 border border-amber-400/30 text-amber-300">
                       <Briefcase className="w-5 h-5" />
                     </div>
-                    <h3 className="font-display text-xl font-bold">We&apos;re open</h3>
+                    <h3 className="font-display text-xl font-bold">We're open</h3>
                   </div>
                   <p className="text-wisdom-muted leading-relaxed mb-5">
                     Bring premade courses, cohort ideas, or institutional packages. Tell us who you
-                    serve, what you&apos;ve already built, and how it could sit beside our pathways.
+                    serve, what you've already built, and how it could sit beside our pathways.
                     Incomplete pitches are fine — clarity beats polish.
                   </p>
                   <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-white/85">
                     <li className="flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+                      <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
                       Student-first content
                     </li>
                     <li className="flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
-                      Business &amp; tech upskilling
+                      <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+                      Business & tech upskilling
                     </li>
                     <li className="flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+                      <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
                       Personal development tracks
                     </li>
                     <li className="flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+                      <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
                       Co-branded or hosted delivery
                     </li>
                   </ul>
                 </div>
                 <div className="lg:col-span-2 p-7 sm:p-9 flex flex-col justify-center bg-gradient-to-br from-amber-500/10 via-transparent to-transparent">
                   <p className="text-sm text-wisdom-muted mb-4 leading-relaxed">
-                    Prefer a direct line? Reach the Academy team and we&apos;ll route your message.
+                    Prefer a direct line? Reach the Academy team and we'll route your message.
                   </p>
                   <Link
                     href="/contact?topic=partnership"
