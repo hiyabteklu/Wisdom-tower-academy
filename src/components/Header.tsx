@@ -1,1 +1,1 @@
-PLACEHOLDER_WILL_REPLACE
+from pathlib import Path; print(Path('/tmp/Header.tsx').read_text()[:100])
