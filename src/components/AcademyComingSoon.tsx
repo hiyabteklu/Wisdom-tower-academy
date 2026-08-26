@@ -43,7 +43,7 @@ export default function AcademyComingSoon({
             </div>
             <h2 className="font-display text-xl font-bold mb-2">Coming soon</h2>
             <p className="text-wisdom-muted text-sm max-w-md mx-auto leading-relaxed mb-8">
-              We&apos;re building the full {title} experience. Materials and enrollment options will
+              We're building the full {title} experience. Materials and enrollment options will
               appear here shortly.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -55,7 +55,7 @@ export default function AcademyComingSoon({
               </Link>
               <Link
                 href="/contact"
-                className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-wisdom-dark transition-opacity hover:opacity-90 ${accentClass.replace("text-", "bg-")}`}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 text-wisdom-dark text-sm font-semibold hover:bg-amber-400 transition-colors"
               >
                 <MessageCircle className="w-4 h-4" />
                 Contact us
