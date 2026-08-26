@@ -51,7 +51,6 @@ export default function DigitalPage() {
 
       <div className="relative py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-wisdom-cyan/10 border border-wisdom-cyan/20 text-wisdom-cyan text-sm mb-6">
               <Sparkles className="w-4 h-4" />
@@ -65,21 +64,19 @@ export default function DigitalPage() {
             </p>
           </div>
 
-          {/* Categories Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {categories.map((category) => (
               <Link
                 key={category.id}
-                href={`/services#${category.id}`}
+                href={`/services/${category.id}`}
                 className="group relative overflow-hidden rounded-2xl border border-white/5 bg-wisdom-card hover:border-wisdom-cyan/30 transition-all duration-300 hover:shadow-xl hover:shadow-wisdom-cyan/5 hover:-translate-y-1"
               >
-                {/* Image */}
                 <div className="relative h-40 overflow-hidden">
                   <div
                     className="absolute inset-0 bg-cover bg-center opacity-50 group-hover:scale-110 transition-transform duration-700"
                     style={{ backgroundImage: `url(${imageMap[category.id]})` }}
                   />
-                  <div className={`absolute inset-0 bg-gradient-to-t from-wisdom-card via-wisdom-card/70 to-transparent`} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card via-wisdom-card/70 to-transparent" />
                   <div className="absolute bottom-3 left-4">
                     <div className={`p-2.5 rounded-xl bg-gradient-to-br ${gradientMap[category.id]} border border-white/10 text-wisdom-cyan`}>
                       {iconMap[category.icon]}
@@ -103,17 +100,6 @@ export default function DigitalPage() {
                 </div>
               </Link>
             ))}
-          </div>
-
-          {/* CTA */}
-          <div className="mt-16 text-center">
-            <Link
-              href="/services"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-wisdom-cyan/30 text-wisdom-cyan hover:bg-wisdom-cyan hover:text-wisdom-dark transition-colors font-medium"
-            >
-              View All Services
-              <ArrowRight className="w-4 h-4" />
-            </Link>
           </div>
         </div>
       </div>

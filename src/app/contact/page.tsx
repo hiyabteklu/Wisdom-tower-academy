@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Send } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -12,36 +12,45 @@ export default function ContactPage() {
     message: "",
   });
   const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus("sending");
-
-    // Safety check
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      console.error("Supabase environment variables are missing");
-      setStatus("error");
-      return;
-    }
+    setErrorMsg("");
 
     try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+      if (!supabaseUrl || !supabaseKey) {
+        setErrorMsg("Configuration error. Please try again later.");
+        setStatus("error");
+        return;
+      }
+
+      const supabase = createClient(supabaseUrl, supabaseKey);
+
       const { error } = await supabase.from("inquiries").insert({
-        name: formData.name,
-        email: formData.email,
+        name: formData.name.trim(),
+        email: formData.email.trim(),
         service: formData.service || null,
-        message: formData.message,
+        message: formData.message.trim(),
+        status: "new",
       });
 
       if (error) {
-        console.error("Supabase error:", error);
+        console.error("Supabase insert error:", error);
+        setErrorMsg(error.message || "Failed to submit. Please try again.");
         setStatus("error");
         return;
       }
 
       setStatus("success");
       setFormData({ name: "", email: "", service: "", message: "" });
-    } catch (err) {
+    } catch (err: any) {
       console.error("Unexpected error:", err);
+      setErrorMsg("Something went wrong. Please try again.");
       setStatus("error");
     }
   };
@@ -58,9 +67,7 @@ export default function ContactPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium mb-2">
-              Full Name
-            </label>
+            <label htmlFor="name" className="block text-sm font-medium mb-2">Full Name</label>
             <input
               type="text"
               id="name"
@@ -73,9 +80,7 @@ export default function ContactPage() {
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium mb-2">
-              Email Address
-            </label>
+            <label htmlFor="email" className="block text-sm font-medium mb-2">Email Address</label>
             <input
               type="email"
               id="email"
@@ -88,9 +93,7 @@ export default function ContactPage() {
           </div>
 
           <div>
-            <label htmlFor="service" className="block text-sm font-medium mb-2">
-              Service Interest (optional)
-            </label>
+            <label htmlFor="service" className="block text-sm font-medium mb-2">Service Interest (optional)</label>
             <select
               id="service"
               value={formData.service}
@@ -105,14 +108,13 @@ export default function ContactPage() {
               <option value="web-marketing">Web & Digital Marketing</option>
               <option value="business">Business Strategy & Admin</option>
               <option value="education">Education & Multimedia</option>
+              <option value="academy">Wisdom Tower Academy</option>
               <option value="other">Other / Custom</option>
             </select>
           </div>
 
           <div>
-            <label htmlFor="message" className="block text-sm font-medium mb-2">
-              Project Details
-            </label>
+            <label htmlFor="message" className="block text-sm font-medium mb-2">Project Details</label>
             <textarea
               id="message"
               required
@@ -129,9 +131,7 @@ export default function ContactPage() {
             disabled={status === "sending"}
             className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-lg bg-wisdom-cyan text-wisdom-dark font-medium hover:bg-wisdom-cyan-dark transition-colors disabled:opacity-60"
           >
-            {status === "sending" ? (
-              "Sending..."
-            ) : (
+            {status === "sending" ? "Sending..." : (
               <>
                 Send Message
                 <Send className="w-4 h-4" />
@@ -146,7 +146,7 @@ export default function ContactPage() {
           )}
           {status === "error" && (
             <p className="text-center text-red-400 text-sm">
-              Something went wrong. Please try again.
+              {errorMsg || "Something went wrong. Please try again."}
             </p>
           )}
         </form>
