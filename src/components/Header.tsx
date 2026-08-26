@@ -8,7 +8,9 @@ import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 const navLinks = [
   { href: "/", label: "Home" },
-  { href: "/services", label: "Services" },
+  { href: "/academy", label: "Academy" },
+  { href: "/digital", label: "Digital" },
+  { href: "/services", label: "All Services" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
 ];
@@ -52,7 +54,7 @@ export default function Header() {
             </span>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-6">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -65,7 +67,7 @@ export default function Header() {
 
             {!loading && (
               user ? (
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 ml-2">
                   <div className="flex items-center gap-2 text-sm text-wisdom-muted">
                     <User className="w-4 h-4" />
                     <span className="max-w-[120px] truncate">
@@ -81,7 +83,7 @@ export default function Header() {
                   </button>
                 </div>
               ) : (
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 ml-2">
                   <Link
                     href="/login"
                     className="text-sm text-wisdom-muted hover:text-wisdom-cyan transition-colors"
