@@ -6,6 +6,8 @@ import {
   Users,
   Award,
   Target,
+  BadgeCheck,
+  FileCheck2,
 } from "lucide-react";
 
 const programs = [
@@ -53,7 +55,7 @@ const programs = [
   },
   {
     id: "uat",
-    href: "/contact?topic=UAT",
+    href: "/academy/uat",
     name: "UAT",
     description:
       "University Admission Test preparation with focused practice, mock exams, and expert strategies.",
@@ -67,7 +69,7 @@ const programs = [
   },
   {
     id: "gat",
-    href: "/contact?topic=GAT",
+    href: "/academy/gat",
     name: "GAT",
     description:
       "Graduate Admission Test coaching covering quantitative, verbal, and analytical sections.",
@@ -76,6 +78,34 @@ const programs = [
     gradient: "from-rose-500/30 to-red-500/10",
     accent: "text-rose-400",
     border: "hover:border-rose-400/40",
+    cta: "Learn more",
+    featured: false,
+  },
+  {
+    id: "coc",
+    href: "/academy/coc",
+    name: "COC",
+    description:
+      "Certificate of Competency preparation — practical skills assessment and exam readiness.",
+    icon: <BadgeCheck className="w-7 h-7" />,
+    image: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&q=80",
+    gradient: "from-indigo-500/30 to-blue-500/10",
+    accent: "text-indigo-400",
+    border: "hover:border-indigo-400/40",
+    cta: "Learn more",
+    featured: false,
+  },
+  {
+    id: "exit-exam",
+    href: "/academy/exit-exam",
+    name: "Exit Exam",
+    description:
+      "University exit exam preparation with structured review, practice tests, and strategies.",
+    icon: <FileCheck2 className="w-7 h-7" />,
+    image: "https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?w=800&q=80",
+    gradient: "from-fuchsia-500/30 to-pink-500/10",
+    accent: "text-fuchsia-400",
+    border: "hover:border-fuchsia-400/40",
     cta: "Learn more",
     featured: false,
   },
