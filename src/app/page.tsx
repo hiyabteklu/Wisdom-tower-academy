@@ -11,7 +11,6 @@ const stats = [
 export default function HomePage() {
   return (
     <>
-      {/* Hero */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-wisdom-cyan/5 via-transparent to-transparent" />
         <div className="absolute top-20 left-1/4 w-72 h-72 bg-wisdom-cyan/10 rounded-full blur-3xl pointer-events-none" />
@@ -32,7 +31,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Two Main Cards */}
       <section className="pb-16 md:pb-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 perspective-scene">
           <div className="grid md:grid-cols-2 gap-8 lg:gap-10">
@@ -40,17 +38,18 @@ export default function HomePage() {
               href="/academy"
               className="card-3d group relative overflow-hidden rounded-3xl border border-white/12 bg-wisdom-card"
             >
-              <div className="relative h-56 md:h-64 bg-gradient-to-br from-amber-500/20 via-orange-500/10 to-wisdom-card overflow-hidden">
+              <div className="relative h-56 md:h-64 overflow-hidden">
                 <div
-                  className="absolute inset-0 bg-cover bg-center opacity-45 transition-transform duration-700 group-hover:scale-110"
+                  className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
                   style={{
                     backgroundImage:
                       "url('https://images.unsplash.com/photo-1523240795612-9a054b0db26a?w=800&q=80')",
                   }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card via-wisdom-card/50 to-transparent" />
+                {/* Bottom fade only — keeps photo vivid */}
+                <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card via-wisdom-card/40 to-transparent" />
                 <div className="absolute bottom-5 left-6">
-                  <div className="p-3.5 rounded-2xl bg-amber-500/20 border border-amber-500/35 text-amber-400">
+                  <div className="p-3.5 rounded-2xl bg-amber-500/25 border border-amber-500/40 text-amber-300 shadow-lg backdrop-blur-sm">
                     <GraduationCap className="w-7 h-7" />
                   </div>
                 </div>
@@ -75,17 +74,17 @@ export default function HomePage() {
               href="/digital"
               className="card-3d group relative overflow-hidden rounded-3xl border border-white/12 bg-wisdom-card"
             >
-              <div className="relative h-56 md:h-64 bg-gradient-to-br from-cyan-500/20 via-blue-500/10 to-wisdom-card overflow-hidden">
+              <div className="relative h-56 md:h-64 overflow-hidden">
                 <div
-                  className="absolute inset-0 bg-cover bg-center opacity-45 transition-transform duration-700 group-hover:scale-110"
+                  className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
                   style={{
                     backgroundImage:
                       "url('https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80')",
                   }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card via-wisdom-card/50 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card via-wisdom-card/40 to-transparent" />
                 <div className="absolute bottom-5 left-6">
-                  <div className="p-3.5 rounded-2xl bg-wisdom-cyan/20 border border-wisdom-cyan/35 text-wisdom-cyan">
+                  <div className="p-3.5 rounded-2xl bg-wisdom-cyan/25 border border-wisdom-cyan/40 text-wisdom-cyan shadow-lg backdrop-blur-sm">
                     <Laptop className="w-7 h-7" />
                   </div>
                 </div>
@@ -96,7 +95,7 @@ export default function HomePage() {
                   Wisdom Tower Digital
                 </h2>
                 <p className="text-wisdom-muted mb-7 leading-relaxed">
-                  70+ professional services across design, writing, academic support, data, marketing,
+                  Professional services across design, writing, academic support, data, marketing,
                   business and multimedia.
                 </p>
                 <div className="flex items-center gap-2 text-wisdom-cyan font-semibold">
@@ -109,14 +108,13 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Stats */}
       <section className="pb-20 md:pb-28">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             {stats.map((stat) => (
               <div
                 key={stat.label}
-                className="stat-card card-3d group relative overflow-hidden rounded-2xl border border-white/12 bg-wisdom-card/90 p-6 md:p-8 text-center"
+                className="stat-card card-3d group relative overflow-hidden rounded-2xl border border-white/12 bg-wisdom-card p-6 md:p-8 text-center"
               >
                 <div className="relative">
                   <div className="stat-value font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-2 group-hover:text-wisdom-cyan transition-colors duration-300">
@@ -132,19 +130,18 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA */}
       <section className="pb-28">
         <div className="max-w-3xl mx-auto px-4 text-center">
           <h2 className="font-display text-2xl md:text-4xl font-bold mb-4">Not sure where to start?</h2>
           <p className="text-wisdom-muted mb-9 text-lg">
-            Tell us your goal and we&apos;ll guide you to the right path.
+            Tell us your goal and we'll guide you to the right path.
           </p>
           <Link
             href="/contact"
             className="inline-flex items-center gap-2 px-9 py-4 rounded-2xl bg-wisdom-cyan text-wisdom-dark font-semibold text-lg
               hover:bg-wisdom-cyan-dark hover:shadow-glow hover:scale-105 active:scale-100 transition-all duration-300"
           >
-            Let&apos;s Build Together
+            Let's Build Together
             <ArrowRight className="w-5 h-5" />
           </Link>
         </div>
