@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { Lock, Eye, EyeOff, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Lock, Eye, EyeOff, ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -14,22 +14,104 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [sessionReady, setSessionReady] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
 
   useEffect(() => {
-    // Handle the recovery token from the URL hash
-    const handleRecovery = async () => {
-      const hash = window.location.hash;
-      if (hash) {
-        // Supabase automatically handles the token when getSession is called
-        await supabase.auth.getSession();
+    const establishRecoverySession = async () => {
+      try {
+        // 1. Try PKCE flow: ?code=...
+        const searchParams = new URLSearchParams(window.location.search);
+        const code = searchParams.get("code");
+
+        if (code) {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) {
+            setError(error.message || "Invalid or expired reset link. Please request a new one.");
+            setCheckingSession(false);
+            return;
+          }
+          // Clean the URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+          setSessionReady(true);
+          setCheckingSession(false);
+          return;
+        }
+
+        // 2. Try hash fragment flow: #access_token=...&refresh_token=...&type=recovery
+        const hash = window.location.hash.substring(1);
+        if (hash) {
+          const params = new URLSearchParams(hash);
+          const accessToken = params.get("access_token");
+          const refreshToken = params.get("refresh_token");
+          const type = params.get("type");
+
+          if (accessToken && refreshToken && (type === "recovery" || type === "invite" || !type)) {
+            const { error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+
+            if (error) {
+              setError(error.message || "Invalid or expired reset link. Please request a new one.");
+              setCheckingSession(false);
+              return;
+            }
+
+            // Clean the URL (remove the sensitive hash)
+            window.history.replaceState({}, document.title, window.location.pathname);
+            setSessionReady(true);
+            setCheckingSession(false);
+            return;
+          }
+
+          // 3. token_hash style (some email templates)
+          const tokenHash = params.get("token_hash") || searchParams.get("token_hash");
+          if (tokenHash) {
+            const { error } = await supabase.auth.verifyOtp({
+              token_hash: tokenHash,
+              type: "recovery",
+            });
+
+            if (error) {
+              setError(error.message || "Invalid or expired reset link. Please request a new one.");
+              setCheckingSession(false);
+              return;
+            }
+
+            window.history.replaceState({}, document.title, window.location.pathname);
+            setSessionReady(true);
+            setCheckingSession(false);
+            return;
+          }
+        }
+
+        // 4. Fallback: check if a session already exists (e.g. user refreshed the page)
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          setSessionReady(true);
+        } else {
+          setError("Reset link is invalid or has expired. Please request a new password reset.");
+        }
+      } catch (err) {
+        console.error("Recovery session error:", err);
+        setError("Something went wrong while validating the reset link. Please try again.");
+      } finally {
+        setCheckingSession(false);
       }
     };
-    handleRecovery();
+
+    establishRecoverySession();
   }, []);
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (!sessionReady) {
+      setError("No valid recovery session. Please request a new password reset link.");
+      return;
+    }
 
     if (password.length < 6) {
       setError("Password must be at least 6 characters");
@@ -52,6 +134,9 @@ export default function ResetPasswordPage() {
       setLoading(false);
       return;
     }
+
+    // Optional: sign out so they must log in with the new password
+    await supabase.auth.signOut();
 
     setSuccess(true);
     setLoading(false);
@@ -91,67 +176,82 @@ export default function ResetPasswordPage() {
         </div>
 
         <div className="bg-wisdom-card border border-white/5 rounded-2xl p-8 shadow-xl">
-          <form onSubmit={handleReset} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium mb-2">New Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-wisdom-muted" />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-11 pr-12 py-3 rounded-xl bg-wisdom-dark border border-white/10 focus:border-wisdom-cyan focus:outline-none focus:ring-1 focus:ring-wisdom-cyan transition-colors"
-                  placeholder="At least 6 characters"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-wisdom-muted hover:text-white"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
+          {checkingSession ? (
+            <div className="flex flex-col items-center justify-center py-8 gap-3">
+              <Loader2 className="w-8 h-8 text-wisdom-cyan animate-spin" />
+              <p className="text-wisdom-muted text-sm">Validating reset link...</p>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Confirm Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-wisdom-muted" />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  required
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-wisdom-dark border border-white/10 focus:border-wisdom-cyan focus:outline-none focus:ring-1 focus:ring-wisdom-cyan transition-colors"
-                  placeholder="Repeat your password"
-                />
+          ) : (
+            <form onSubmit={handleReset} className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium mb-2">New Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-wisdom-muted" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={!sessionReady}
+                    className="w-full pl-11 pr-12 py-3 rounded-xl bg-wisdom-dark border border-white/10 focus:border-wisdom-cyan focus:outline-none focus:ring-1 focus:ring-wisdom-cyan transition-colors disabled:opacity-50"
+                    placeholder="At least 6 characters"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-wisdom-muted hover:text-white"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
               </div>
-            </div>
 
-            {error && (
-              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-                {error}
+              <div>
+                <label className="block text-sm font-medium mb-2">Confirm Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-wisdom-muted" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    disabled={!sessionReady}
+                    className="w-full pl-11 pr-4 py-3 rounded-xl bg-wisdom-dark border border-white/10 focus:border-wisdom-cyan focus:outline-none focus:ring-1 focus:ring-wisdom-cyan transition-colors disabled:opacity-50"
+                    placeholder="Repeat your password"
+                  />
+                </div>
               </div>
-            )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-wisdom-cyan text-wisdom-dark font-semibold hover:bg-wisdom-cyan-dark transition-colors disabled:opacity-60"
-            >
-              {loading ? "Updating..." : (
-                <>
-                  Update Password
-                  <ArrowRight className="w-4 h-4" />
-                </>
+              {error && (
+                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                  {error}
+                </div>
               )}
-            </button>
-          </form>
+
+              <button
+                type="submit"
+                disabled={loading || !sessionReady}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-wisdom-cyan text-wisdom-dark font-semibold hover:bg-wisdom-cyan-dark transition-colors disabled:opacity-60"
+              >
+                {loading ? (
+                  "Updating..."
+                ) : (
+                  <>
+                    Update Password
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            </form>
+          )}
 
           <p className="mt-6 text-center text-sm text-wisdom-muted">
             <Link href="/login" className="text-wisdom-cyan hover:underline">
               Back to Sign In
+            </Link>
+            {" · "}
+            <Link href="/forgot-password" className="text-wisdom-cyan hover:underline">
+              Request new link
             </Link>
           </p>
         </div>
