@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Send } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -16,10 +17,26 @@ export default function ContactPage() {
     e.preventDefault();
     setStatus("sending");
 
-    // TODO: Connect to Supabase or API route later
-    await new Promise((r) => setTimeout(r, 1000));
-    setStatus("success");
-    setFormData({ name: "", email: "", service: "", message: "" });
+    try {
+      const { error } = await supabase.from("inquiries").insert({
+        name: formData.name,
+        email: formData.email,
+        service: formData.service || null,
+        message: formData.message,
+      });
+
+      if (error) {
+        console.error("Supabase error:", error);
+        setStatus("error");
+        return;
+      }
+
+      setStatus("success");
+      setFormData({ name: "", email: "", service: "", message: "" });
+    } catch (err) {
+      console.error("Unexpected error:", err);
+      setStatus("error");
+    }
   };
 
   return (
