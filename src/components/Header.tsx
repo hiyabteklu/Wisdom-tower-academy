@@ -10,11 +10,12 @@ import {
   Shield,
   LayoutDashboard,
   HelpCircle,
-  Trophy,
   BookOpen,
   Sparkles,
   GraduationCap,
   Monitor,
+  Building2,
+  Library,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { isAdminEmail } from "@/lib/admin";
@@ -29,11 +30,14 @@ const mainNavLinks = [
   { href: "/contact", label: "Contact" },
 ];
 
+/** Leaderboard lives inside each branch — not in global menu */
 const academyMenuLinks = [
   { href: "/academy/faq", label: "FAQ", icon: HelpCircle },
   { href: "/academy/success-stories", label: "Success Stories", icon: Sparkles },
-  { href: "/academy/leaderboard", label: "Leaderboard", icon: Trophy },
   { href: "/academy/study-techniques", label: "Study Techniques", icon: BookOpen },
+  { href: "/academy/universities", label: "Universities", icon: Building2 },
+  { href: "/academy/departments", label: "Departments", icon: Library },
+  { href: "/academy/scholarships", label: "Scholarships", icon: GraduationCap },
 ];
 
 function getPlatform(user: SupabaseUser | null): "academy" | "digital" | null {
@@ -105,7 +109,6 @@ export default function Header() {
   const isAdmin = isAdminEmail(user?.email);
   const platform = getPlatform(user);
   const onAcademyRoute = pathname.startsWith("/academy");
-  /** Academy chrome when user registered for Academy, or browsing Academy while logged in as academy */
   const showAcademyChrome =
     Boolean(user) && (platform === "academy" || (onAcademyRoute && platform !== "digital"));
 
@@ -126,7 +129,6 @@ export default function Header() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-wisdom-dark/90 backdrop-blur-md border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Left: Academy hamburger OR logo */}
             <div className="flex items-center gap-2 min-w-0">
               {showAcademyChrome && (
                 <button
@@ -155,11 +157,13 @@ export default function Header() {
               </Link>
             </div>
 
-            {/* Desktop nav — hide main site links in pure academy chrome; show academy shortcuts */}
             <nav className="hidden md:flex items-center gap-5">
               {showAcademyChrome ? (
                 <>
-                  {academyMenuLinks.map((link) => (
+                  <Link href="/academy" className="text-sm text-wisdom-muted hover:text-amber-400 transition-colors">
+                    Programs
+                  </Link>
+                  {academyMenuLinks.slice(0, 3).map((link) => (
                     <Link
                       key={link.href}
                       href={link.href}
@@ -168,12 +172,6 @@ export default function Header() {
                       {link.label}
                     </Link>
                   ))}
-                  <Link
-                    href="/academy"
-                    className="text-sm text-wisdom-muted hover:text-amber-400 transition-colors"
-                  >
-                    Programs
-                  </Link>
                 </>
               ) : (
                 mainNavLinks.map((link) => (
@@ -242,10 +240,7 @@ export default function Header() {
                   </div>
                 ) : (
                   <div className="flex items-center gap-3 ml-2">
-                    <Link
-                      href="/login"
-                      className="text-sm text-wisdom-muted hover:text-wisdom-cyan transition-colors"
-                    >
+                    <Link href="/login" className="text-sm text-wisdom-muted hover:text-wisdom-cyan transition-colors">
                       Sign In
                     </Link>
                     <Link
@@ -258,7 +253,6 @@ export default function Header() {
                 ))}
             </nav>
 
-            {/* Mobile: main menu toggle (when not only academy hamburger) */}
             <button
               className="md:hidden p-2 text-wisdom-muted hover:text-white"
               onClick={() => setIsOpen(!isOpen)}
@@ -269,7 +263,6 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Academy slide-down from hamburger */}
         {showAcademyChrome && academyMenuOpen && (
           <div className="border-t border-white/5 bg-wisdom-navy/95 backdrop-blur-md">
             <div className="max-w-7xl mx-auto px-4 py-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -296,6 +289,9 @@ export default function Header() {
             <div className="px-4 py-4 space-y-3">
               {showAcademyChrome ? (
                 <>
+                  <Link href="/academy" className="block text-wisdom-muted hover:text-amber-400" onClick={() => setIsOpen(false)}>
+                    Programs
+                  </Link>
                   {academyMenuLinks.map((link) => (
                     <Link
                       key={link.href}
@@ -306,18 +302,7 @@ export default function Header() {
                       {link.label}
                     </Link>
                   ))}
-                  <Link
-                    href="/academy"
-                    className="block text-wisdom-muted hover:text-amber-400"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Programs
-                  </Link>
-                  <Link
-                    href="/"
-                    className="block text-wisdom-muted hover:text-wisdom-cyan"
-                    onClick={() => setIsOpen(false)}
-                  >
+                  <Link href="/" className="block text-wisdom-muted hover:text-wisdom-cyan" onClick={() => setIsOpen(false)}>
                     Main site
                   </Link>
                 </>
@@ -349,46 +334,26 @@ export default function Header() {
                       <div>
                         <p className="text-sm font-medium">{displayName}</p>
                         <p className="text-xs text-wisdom-muted">{user.email}</p>
-                        {platform && (
-                          <p className="text-[10px] uppercase tracking-wider text-amber-400/90 mt-0.5">
-                            {platform} account
-                          </p>
-                        )}
                       </div>
                     </div>
-                    <Link
-                      href="/account"
-                      className="flex items-center gap-2 text-wisdom-muted hover:text-wisdom-cyan"
-                      onClick={() => setIsOpen(false)}
-                    >
+                    <Link href="/account" className="flex items-center gap-2 text-wisdom-muted hover:text-wisdom-cyan" onClick={() => setIsOpen(false)}>
                       <LayoutDashboard className="w-4 h-4" />
                       My Account
                     </Link>
                     {isAdmin && (
-                      <Link
-                        href="/admin"
-                        className="flex items-center gap-2 text-wisdom-cyan"
-                        onClick={() => setIsOpen(false)}
-                      >
+                      <Link href="/admin" className="flex items-center gap-2 text-wisdom-cyan" onClick={() => setIsOpen(false)}>
                         <Shield className="w-4 h-4" />
                         Admin Dashboard
                       </Link>
                     )}
-                    <button
-                      onClick={handleLogout}
-                      className="flex items-center gap-2 text-red-400"
-                    >
+                    <button onClick={handleLogout} className="flex items-center gap-2 text-red-400">
                       <LogOut className="w-4 h-4" />
                       Logout
                     </button>
                   </>
                 ) : (
                   <>
-                    <Link
-                      href="/login"
-                      className="block text-wisdom-muted hover:text-wisdom-cyan"
-                      onClick={() => setIsOpen(false)}
-                    >
+                    <Link href="/login" className="block text-wisdom-muted hover:text-wisdom-cyan" onClick={() => setIsOpen(false)}>
                       Sign In
                     </Link>
                     <Link

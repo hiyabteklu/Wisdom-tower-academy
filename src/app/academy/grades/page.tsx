@@ -2,6 +2,7 @@ import Link from "next/link";
 import { grades } from "@/data/academy";
 import { ChevronRight } from "lucide-react";
 import CategoryBackButton from "@/components/CategoryBackButton";
+import BranchLeaderboard from "@/components/BranchLeaderboard";
 
 export default function GradesPage() {
   return (
@@ -14,7 +15,7 @@ export default function GradesPage() {
       <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
         <CategoryBackButton fallback="/academy" />
 
-        <div className="mb-12 md:mb-16 animate-fade-up">
+        <div className="mb-8 animate-fade-up">
           <p className="text-sm font-semibold tracking-[0.2em] uppercase text-sky-400/90 mb-3">
             Secondary path
           </p>
@@ -26,6 +27,8 @@ export default function GradesPage() {
             flashcards, question banks, and exams.
           </p>
         </div>
+
+        <BranchLeaderboard branchName="Grade 9–12" accent="text-sky-400" />
 
         <div className="perspective-scene grid grid-cols-1 sm:grid-cols-2 gap-5 md:gap-6 stagger-children">
           {grades.map((grade) => (
