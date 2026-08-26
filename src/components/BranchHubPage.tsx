@@ -1,6 +1,7 @@
 import Link from "next/link";
 import CategoryBackButton from "@/components/CategoryBackButton";
 import BranchLeaderboard from "@/components/BranchLeaderboard";
+import AcademicResultSaver from "@/components/AcademicResultSaver";
 import { Construction, MessageCircle } from "lucide-react";
 
 type Props = {
@@ -8,6 +9,7 @@ type Props = {
   subtitle: string;
   accentClass: string;
   gradientClass: string;
+  scopeId: string;
 };
 
 export default function BranchHubPage({
@@ -15,6 +17,7 @@ export default function BranchHubPage({
   subtitle,
   accentClass,
   gradientClass,
+  scopeId,
 }: Props) {
   return (
     <div className="relative min-h-[75vh]">
@@ -39,6 +42,10 @@ export default function BranchHubPage({
 
         <BranchLeaderboard branchName={title} accent={accentClass} />
 
+        <div className="mb-10">
+          <AcademicResultSaver scopeId={scopeId} scopeLabel={title} accent={accentClass} />
+        </div>
+
         <div className="rounded-3xl border border-white/15 bg-wisdom-card shadow-card-3d overflow-hidden">
           <div className={`px-6 sm:px-8 pt-8 pb-6 border-b border-white/10 bg-gradient-to-br ${gradientClass}`}>
             <h2 className="font-display text-xl font-bold">Learning materials</h2>
@@ -49,8 +56,8 @@ export default function BranchHubPage({
               <Construction className="w-7 h-7" />
             </div>
             <p className="text-wisdom-muted text-sm max-w-md mx-auto leading-relaxed mb-6">
-              Full {title} content is coming soon. The leaderboard above will rank learners as
-              materials go live.
+              Full {title} content is coming soon. Use Result Saver above to track every practice
+              attempt.
             </p>
             <Link
               href="/contact"
