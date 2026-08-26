@@ -1,8 +1,8 @@
-import AcademyComingSoon from "@/components/AcademyComingSoon";
+import BranchHubPage from "@/components/BranchHubPage";
 
 export default function CocPage() {
   return (
-    <AcademyComingSoon
+    <BranchHubPage
       title="COC"
       subtitle="Certificate of Competency preparation — practical skills assessment and exam readiness."
       accentClass="text-indigo-400"

@@ -1,8 +1,8 @@
-import AcademyComingSoon from "@/components/AcademyComingSoon";
+import BranchHubPage from "@/components/BranchHubPage";
 
 export default function ExitExamPage() {
   return (
-    <AcademyComingSoon
+    <BranchHubPage
       title="Exit Exam"
       subtitle="University exit exam preparation with structured review, practice tests, and strategies."
       accentClass="text-fuchsia-400"

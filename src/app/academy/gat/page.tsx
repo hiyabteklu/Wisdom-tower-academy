@@ -1,8 +1,8 @@
-import AcademyComingSoon from "@/components/AcademyComingSoon";
+import BranchHubPage from "@/components/BranchHubPage";
 
 export default function GatPage() {
   return (
-    <AcademyComingSoon
+    <BranchHubPage
       title="GAT"
       subtitle="Graduate Admission Test coaching covering quantitative, verbal, and analytical sections."
       accentClass="text-rose-400"

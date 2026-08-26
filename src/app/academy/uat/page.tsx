@@ -1,8 +1,8 @@
-import AcademyComingSoon from "@/components/AcademyComingSoon";
+import BranchHubPage from "@/components/BranchHubPage";
 
 export default function UatPage() {
   return (
-    <AcademyComingSoon
+    <BranchHubPage
       title="UAT"
       subtitle="University Admission Test preparation with focused practice, mock exams, and expert strategies."
       accentClass="text-emerald-400"
