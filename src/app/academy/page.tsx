@@ -5,7 +5,6 @@ import {
   GraduationCap,
   Users,
   Award,
-  Target,
   BadgeCheck,
   FileCheck2,
   Sparkles,
@@ -31,19 +30,6 @@ const programs = [
     accent: "text-sky-400",
     border: "hover:border-sky-400/40",
     cta: "Open grades",
-  },
-  {
-    id: "remedial",
-    href: "/academy/remedial",
-    name: "Remedial Programs",
-    description:
-      "Catch-up learning hubs — books, references, videos, flashcards, question banks, and exams.",
-    icon: <Target className="w-7 h-7" />,
-    image: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=800&q=80",
-    gradient: "from-amber-500/30 to-orange-500/10",
-    accent: "text-amber-400",
-    border: "hover:border-amber-400/40",
-    cta: "Open resources",
   },
   {
     id: "freshman",
@@ -193,7 +179,7 @@ export default function AcademyPage() {
               Academic Excellence Pathways
             </h1>
             <p className="text-wisdom-muted max-w-2xl mx-auto text-lg leading-relaxed">
-              Seven structured branches — each with its own leaderboard when you open it.
+              Six structured branches — each with its own leaderboard when you open it.
             </p>
           </div>
 
@@ -265,7 +251,7 @@ export default function AcademyPage() {
                 className="text-wisdom-muted max-w-lg mx-auto text-base leading-relaxed"
                 style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
               >
-                Guidance beyond the seven academic branches — stories, techniques, campus life,
+                Guidance beyond the six academic branches — stories, techniques, campus life,
                 universities, departments, and scholarships.
               </p>
             </div>
