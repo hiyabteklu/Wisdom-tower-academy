@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { isAdminEmail } from "@/lib/admin";
+import { ensureProfile } from "@/lib/profile";
 import type { User } from "@supabase/supabase-js";
 import {
   LayoutDashboard,
@@ -42,11 +43,12 @@ export default function AccountPage() {
   const [tab, setTab] = useState<"overview" | "requests">("overview");
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session?.user) {
         router.replace("/login");
         return;
       }
+      await ensureProfile(session.user);
       setUser(session.user);
       setLoading(false);
     });
@@ -107,7 +109,6 @@ export default function AccountPage() {
   return (
     <div className="py-10 md:py-16">
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
-        {/* Profile card */}
         <div className="mb-8 overflow-hidden rounded-2xl border border-white/10 bg-wisdom-card">
           <div className="h-20 sm:h-24 bg-gradient-to-r from-wisdom-cyan/30 via-cyan-500/10 to-transparent" />
           <div className="-mt-10 flex flex-col gap-4 px-5 pb-6 sm:flex-row sm:items-end sm:px-8">
@@ -153,7 +154,6 @@ export default function AccountPage() {
           </div>
         </div>
 
-        {/* Tabs */}
         <div className="mb-6 flex gap-2 border-b border-white/10">
           {[
             { id: "overview" as const, label: "Overview" },
