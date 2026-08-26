@@ -15,7 +15,7 @@ export default function ServiceCard({ service, categoryName }: Props) {
   return (
     <Link
       href={`/request?service=${encodeURIComponent(service.name)}&category=${encodeURIComponent(categoryName)}`}
-      className="group flex flex-col overflow-hidden rounded-xl border border-white/10 bg-wisdom-card hover:border-wisdom-cyan/40 transition-all duration-300 hover:shadow-lg hover:shadow-wisdom-cyan/10 hover:-translate-y-0.5"
+      className="card-3d group relative flex flex-col overflow-hidden rounded-2xl border border-white/12 bg-wisdom-card"
     >
       <div className="relative aspect-square w-full overflow-hidden bg-wisdom-navy">
         {!imgFailed ? (
@@ -23,7 +23,7 @@ export default function ServiceCard({ service, categoryName }: Props) {
           <img
             src={service.image}
             alt={service.name}
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-spring group-hover:scale-110"
             onError={() => setImgFailed(true)}
           />
         ) : (
@@ -33,11 +33,11 @@ export default function ServiceCard({ service, categoryName }: Props) {
             </span>
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card/80 via-transparent to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card via-wisdom-card/20 to-transparent pointer-events-none" />
       </div>
 
-      <div className="p-2.5 sm:p-3 flex-1 flex flex-col">
-        <h3 className="text-[11px] sm:text-sm font-medium leading-snug text-white group-hover:text-wisdom-cyan transition-colors line-clamp-3">
+      <div className="relative p-3 sm:p-3.5 flex-1 flex flex-col border-t border-white/8">
+        <h3 className="text-[11px] sm:text-sm font-semibold leading-snug text-white group-hover:text-wisdom-cyan transition-colors duration-300 line-clamp-3">
           {service.name}
         </h3>
       </div>
