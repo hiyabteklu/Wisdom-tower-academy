@@ -17,6 +17,13 @@ export default function ContactPage() {
     e.preventDefault();
     setStatus("sending");
 
+    // Safety check
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      console.error("Supabase environment variables are missing");
+      setStatus("error");
+      return;
+    }
+
     try {
       const { error } = await supabase.from("inquiries").insert({
         name: formData.name,
