@@ -147,7 +147,6 @@ export default function DigitalPage() {
 
       <div className="relative py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Hero */}
           <div className="text-center mb-14 md:mb-16 animate-fade-up">
             <h1 className="font-display text-4xl md:text-5xl font-extrabold mb-4 tracking-tight">
               Our Services
@@ -158,7 +157,6 @@ export default function DigitalPage() {
             </p>
           </div>
 
-          {/* Equal 8-card grid — 4 columns on large screens so custom sits as card 8 */}
           <div className="perspective-scene grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6 stagger-children">
             {categories.map((category) => (
               <Link
@@ -168,13 +166,13 @@ export default function DigitalPage() {
               >
                 <div className="relative h-36 sm:h-40 overflow-hidden shrink-0">
                   <div
-                    className="absolute inset-0 bg-cover bg-center opacity-50 group-hover:scale-110 transition-transform duration-700"
+                    className="absolute inset-0 bg-cover bg-center group-hover:scale-110 transition-transform duration-700"
                     style={{ backgroundImage: `url(${imageMap[category.id]})` }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card via-wisdom-card/70 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card via-wisdom-card/30 to-transparent" />
                   <div className="absolute bottom-3 left-4">
                     <div
-                      className={`p-2.5 rounded-xl bg-gradient-to-br ${gradientMap[category.id]} border border-white/10 text-wisdom-cyan`}
+                      className={`p-2.5 rounded-xl bg-gradient-to-br ${gradientMap[category.id]} border border-white/15 text-wisdom-cyan shadow-md backdrop-blur-sm`}
                     >
                       {iconMap[category.icon]}
                     </div>
@@ -200,15 +198,15 @@ export default function DigitalPage() {
             >
               <div className="relative h-36 sm:h-40 overflow-hidden shrink-0">
                 <div
-                  className="absolute inset-0 bg-cover bg-center opacity-40 group-hover:scale-110 transition-transform duration-700"
+                  className="absolute inset-0 bg-cover bg-center group-hover:scale-110 transition-transform duration-700"
                   style={{
                     backgroundImage:
                       "url(https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600&q=80)",
                   }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card via-wisdom-card/80 to-wisdom-cyan/10" />
+                <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card via-wisdom-card/35 to-transparent" />
                 <div className="absolute bottom-3 left-4">
-                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-wisdom-cyan/30 to-cyan-600/15 border border-wisdom-cyan/30 text-wisdom-cyan">
+                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-wisdom-cyan/30 to-cyan-600/15 border border-wisdom-cyan/30 text-wisdom-cyan shadow-md backdrop-blur-sm">
                     <ClipboardList className="w-7 h-7" />
                   </div>
                 </div>
@@ -230,7 +228,6 @@ export default function DigitalPage() {
             </Link>
           </div>
 
-          {/* Work with us */}
           <section className="mt-24 md:mt-32" id="work-with-us">
             <div className="text-center mb-12 md:mb-14">
               <p className="text-sm font-semibold tracking-[0.2em] uppercase text-wisdom-cyan/90 mb-3">
@@ -247,7 +244,6 @@ export default function DigitalPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-7">
-              {/* Requirements */}
               <article className="rounded-3xl border border-white/12 bg-wisdom-card p-6 sm:p-7 shadow-card-3d flex flex-col">
                 <div className="flex items-center gap-3 mb-5">
                   <div className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-400/25 text-emerald-300">
@@ -280,7 +276,6 @@ export default function DigitalPage() {
                 </p>
               </article>
 
-              {/* Steps */}
               <article className="rounded-3xl border border-white/12 bg-wisdom-card p-6 sm:p-7 shadow-card-3d flex flex-col">
                 <div className="flex items-center gap-3 mb-5">
                   <div className="p-2.5 rounded-xl bg-amber-500/15 border border-amber-400/25 text-amber-300">
@@ -314,7 +309,6 @@ export default function DigitalPage() {
                 </div>
               </article>
 
-              {/* Start application */}
               <article className="rounded-3xl border border-wisdom-cyan/25 bg-wisdom-card p-6 sm:p-7 shadow-card-3d flex flex-col">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="p-2.5 rounded-xl bg-wisdom-cyan/15 border border-wisdom-cyan/30 text-wisdom-cyan">
