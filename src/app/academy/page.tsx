@@ -39,16 +39,16 @@ const programs = [
   },
   {
     id: "freshman",
-    href: "/contact?topic=Freshman",
+    href: "/academy/freshman",
     name: "Freshman",
     description:
-      "University entrance preparation and first-year success programs for incoming college students.",
+      "Nineteen first-year subjects — math, sciences, languages, civics, tech, and more — each with its own hub.",
     icon: <GraduationCap className="w-7 h-7" />,
     image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&q=80",
     gradient: "from-purple-500/30 to-pink-500/10",
     accent: "text-purple-400",
     border: "hover:border-purple-400/40",
-    cta: "Learn more",
+    cta: "Open subjects",
     featured: false,
   },
   {
