@@ -129,10 +129,8 @@ export default function AcademyPage() {
                 </div>
 
                 <div className="p-6 md:p-7">
-                  <h3
-                    className={`font-display text-xl font-bold mb-2 transition-colors group-hover:${program.accent.replace("text-", "")}`}
-                  >
-                    <span className={`group-hover:text-inherit ${program.accent} group-hover:opacity-100`}program.name}</span>
+                  <h3 className={`font-display text-xl font-bold mb-2 ${program.accent}`}>
+                    {program.name}
                   </h3>
                   <p className="text-sm text-wisdom-muted leading-relaxed mb-5">{program.description}</p>
                   <div className={`flex items-center gap-2 text-sm font-semibold ${program.accent}`}>
