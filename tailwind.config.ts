@@ -11,12 +11,13 @@ const config: Config = {
     extend: {
       colors: {
         wisdom: {
-          dark: "var(--wt-dark)",
-          navy: "var(--wt-navy)",
-          card: "var(--wt-card)",
+          // Channel form enables bg-wisdom-dark/80 etc. with CSS vars
+          dark: "rgb(var(--wt-dark-rgb) / <alpha-value>)",
+          navy: "rgb(var(--wt-navy-rgb) / <alpha-value>)",
+          card: "rgb(var(--wt-card-rgb) / <alpha-value>)",
           cyan: "#00d4ff",
           "cyan-dark": "#00b4d8",
-          muted: "var(--wt-muted)",
+          muted: "rgb(var(--wt-muted-rgb) / <alpha-value>)",
         },
       },
       fontFamily: {
