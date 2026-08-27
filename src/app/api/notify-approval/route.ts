@@ -6,6 +6,12 @@ export const maxDuration = 20;
 
 type NotifyType = "approved" | "rejected";
 
+type ChannelResult = {
+  sent: boolean;
+  skipped?: boolean;
+  error?: string;
+};
+
 function siteUrl() {
   return (
     process.env.NEXT_PUBLIC_SITE_URL ||
@@ -31,7 +37,7 @@ async function sendEmailResend(opts: {
   subject: string;
   html: string;
   text: string;
-}): Promise<{ sent: boolean; skipped?: boolean; error?: string }> {
+}): Promise<ChannelResult> {
   const key = process.env.RESEND_API_KEY;
   if (!key) return { sent: false, skipped: true, error: "RESEND_API_KEY not set" };
 
@@ -70,11 +76,10 @@ async function sendEmailResend(opts: {
 async function sendSms(opts: {
   to: string;
   message: string;
-}): Promise<{ sent: boolean; skipped?: boolean; error?: string }> {
+}): Promise<ChannelResult> {
   const e164 = toE164(opts.to);
   if (!e164) return { sent: false, skipped: true, error: "Invalid phone" };
 
-  // Prefer Africa's Talking (common in Ethiopia / East Africa)
   const atKey = process.env.AFRICASTALKING_API_KEY;
   const atUser = process.env.AFRICASTALKING_USERNAME;
   if (atKey && atUser) {
@@ -104,7 +109,6 @@ async function sendSms(opts: {
     }
   }
 
-  // Twilio fallback
   const sid = process.env.TWILIO_ACCOUNT_SID;
   const token = process.env.TWILIO_AUTH_TOKEN;
   const from = process.env.TWILIO_FROM;
@@ -189,16 +193,8 @@ export async function POST(req: NextRequest) {
     const learningUrl = `${siteUrl()}/learning`;
     const ordersUrl = `${siteUrl()}/orders`;
 
-    let emailResult = {
-      sent: false as boolean,
-      skipped: true as boolean | undefined,
-      error: undefined as string | undefined,
-    };
-    let smsResult = {
-      sent: false as boolean,
-      skipped: true as boolean | undefined,
-      error: undefined as string | undefined,
-    };
+    let emailResult: ChannelResult = { sent: false, skipped: true };
+    let smsResult: ChannelResult = { sent: false, skipped: true };
 
     if (type === "approved") {
       const subject = `Payment approved — ${packageName} is unlocked`;
@@ -295,8 +291,8 @@ Please contact us with your receipt or try again from checkout.
 
 function escapeHtml(s: string) {
   return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+    .replace(/&/g, "&")
+    .replace(/</g, "<")
+    .replace(/>/g, ">")
+    .replace(/"/g, """);
 }
