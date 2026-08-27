@@ -21,7 +21,7 @@ function siteUrl() {
   ).replace(/\/$/, "");
 }
 
-/** Ethiopia-friendly E.164: 09xxxxxxxx → +2519xxxxxxxx */
+/** Ethiopia-friendly E.164: 09xxxxxxxx to +2519xxxxxxxx */
 function toE164(phone: string): string | null {
   const d = phone.replace(/[^\d+]/g, "");
   if (!d) return null;
@@ -30,6 +30,19 @@ function toE164(phone: string): string | null {
   if (d.startsWith("0") && d.length === 10) return `+251${d.slice(1)}`;
   if (d.length === 9 && d.startsWith("9")) return `+251${d}`;
   return d.startsWith("+") ? d : `+${d}`;
+}
+
+/** Safe HTML escape without embedding raw entity literals that APIs may decode. */
+function escapeHtml(s: string): string {
+  const amp = ["&", "amp;"].join("");
+  const lt = ["&", "lt;"].join("");
+  const gt = ["&", "gt;"].join("");
+  const quot = ["&", "quot;"].join("");
+  return s
+    .replace(/&/g, amp)
+    .replace(/</g, lt)
+    .replace(/>/g, gt)
+    .replace(/"/g, quot);
 }
 
 async function sendEmailResend(opts: {
@@ -197,7 +210,7 @@ export async function POST(req: NextRequest) {
     let smsResult: ChannelResult = { sent: false, skipped: true };
 
     if (type === "approved") {
-      const subject = `Payment approved — ${packageName} is unlocked`;
+      const subject = `Payment approved - ${packageName} is unlocked`;
       const text = `Hi ${name},
 
 Your payment for ${packageName}${amount ? ` (${amount})` : ""} was verified.
@@ -205,21 +218,31 @@ Your payment for ${packageName}${amount ? ` (${amount})` : ""} was verified.
 Order: ${orderId}
 Open My Learning: ${learningUrl}
 
-— Wisdom Tower`;
-      const html = `
-        <div style="font-family:system-ui,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#0f172a">
-          <h1 style="font-size:20px;margin:0 0 12px">Payment approved ✓</h1>
-          <p>Hi ${escapeHtml(name)},</p>
-          <p>Your payment for <strong>${escapeHtml(packageName)}</strong>${
-            amount ? ` (${escapeHtml(amount)})` : ""
-          } was verified.</p>
-          <p style="font-family:ui-monospace,monospace;background:#f1f5f9;padding:10px 12px;border-radius:8px">Order: ${escapeHtml(
-            orderId
-          )}</p>
-          <p><a href="${learningUrl}" style="display:inline-block;background:#00d4ff;color:#0a0f1a;padding:12px 18px;border-radius:10px;text-decoration:none;font-weight:700">Open My Learning</a></p>
-          <p style="color:#64748b;font-size:13px">Or view orders: <a href="${ordersUrl}">${ordersUrl}</a></p>
-          <p style="color:#64748b;font-size:13px;margin-top:24px">— Wisdom Tower</p>
-        </div>`;
+- Wisdom Tower`;
+      const html =
+        '<div style="font-family:system-ui,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#0f172a">' +
+        '<h1 style="font-size:20px;margin:0 0 12px">Payment approved</h1>' +
+        "<p>Hi " +
+        escapeHtml(name) +
+        ",</p>" +
+        "<p>Your payment for <strong>" +
+        escapeHtml(packageName) +
+        "</strong>" +
+        (amount ? " (" + escapeHtml(amount) + ")" : "") +
+        " was verified.</p>" +
+        '<p style="font-family:ui-monospace,monospace;background:#f1f5f9;padding:10px 12px;border-radius:8px">Order: ' +
+        escapeHtml(orderId) +
+        "</p>" +
+        "<p><a href=\"" +
+        learningUrl +
+        '\" style="display:inline-block;background:#00d4ff;color:#0a0f1a;padding:12px 18px;border-radius:10px;text-decoration:none;font-weight:700">Open My Learning</a></p>' +
+        '<p style="color:#64748b;font-size:13px">Or view orders: <a href=\"' +
+        ordersUrl +
+        '\">" +
+        ordersUrl +
+        "</a></p>" +
+        '<p style="color:#64748b;font-size:13px;margin-top:24px">- Wisdom Tower</p>' +
+        "</div>";
 
       if (order.email) {
         emailResult = await sendEmailResend({
@@ -239,23 +262,27 @@ Open My Learning: ${learningUrl}
         smsResult = { sent: false, skipped: true, error: "No phone on order" };
       }
     } else {
-      const subject = `Payment update — ${packageName}`;
+      const subject = `Payment update - ${packageName}`;
       const text = `Hi ${name},
 
 We could not verify your payment for ${packageName} (order ${orderId}).
 Please contact us with your receipt or try again from checkout.
 
-— Wisdom Tower`;
-      const html = `
-        <div style="font-family:system-ui,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#0f172a">
-          <h1 style="font-size:20px;margin:0 0 12px">Payment needs attention</h1>
-          <p>Hi ${escapeHtml(name)},</p>
-          <p>We could not verify your payment for <strong>${escapeHtml(
-            packageName
-          )}</strong> (order <code>${escapeHtml(orderId)}</code>).</p>
-          <p>Reply with your receipt or contact support from the website.</p>
-          <p style="color:#64748b;font-size:13px;margin-top:24px">— Wisdom Tower</p>
-        </div>`;
+- Wisdom Tower`;
+      const html =
+        '<div style="font-family:system-ui,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#0f172a">' +
+        '<h1 style="font-size:20px;margin:0 0 12px">Payment needs attention</h1>' +
+        "<p>Hi " +
+        escapeHtml(name) +
+        ",</p>" +
+        "<p>We could not verify your payment for <strong>" +
+        escapeHtml(packageName) +
+        "</strong> (order <code>" +
+        escapeHtml(orderId) +
+        "</code>).</p>" +
+        "<p>Reply with your receipt or contact support from the website.</p>" +
+        '<p style="color:#64748b;font-size:13px;margin-top:24px">- Wisdom Tower</p>' +
+        "</div>";
 
       if (order.email) {
         emailResult = await sendEmailResend({
@@ -287,12 +314,4 @@ Please contact us with your receipt or try again from checkout.
       { status: 500 }
     );
   }
-}
-
-function escapeHtml(s: string) {
-  return s
-    .replace(/&/g, "&")
-    .replace(/</g, "<")
-    .replace(/>/g, ">")
-    .replace(/"/g, """);
 }
