@@ -33,7 +33,7 @@ export default function CartPage() {
             <p className="mt-1 text-sm text-wisdom-muted">
               {items.length === 0
                 ? "No items yet"
-                : `${items.length} item${items.length === 1 ? "" : "s"} · checkout per package`}
+                : `${items.length} item${items.length === 1 ? "" : "s"} · pay per package`}
             </p>
           </div>
           <Link
@@ -117,4 +117,20 @@ export default function CartPage() {
 
             <div className="rounded-2xl border border-white/10 bg-wisdom-dark/50 p-5 mt-6">
               <p className="text-sm text-wisdom-muted leading-relaxed mb-4">
-                Checkout is{
+                Each package is paid separately (500 ETB). Choose Telebirr, CBE, or another bank on
+                the checkout page, then submit your transaction ID for manual verification.
+              </p>
+              <Link
+                href="/packages"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 text-wisdom-dark text-sm font-semibold hover:bg-amber-400"
+              >
+                All packages
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
