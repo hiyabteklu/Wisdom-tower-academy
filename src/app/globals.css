@@ -4,13 +4,28 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
-:root {
+:root,
+.theme-dark {
   --background: #060a12;
   --foreground: #f8fafc;
   --cyan: #00d4ff;
   --card: #1a2436;
+  --wt-dark: #0a0f1a;
+  --wt-navy: #0f172a;
+  --wt-card: #1e293b;
+  --wt-muted: #94a3b8;
   --font-display: 'Outfit', system-ui, sans-serif;
   --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+.theme-light {
+  --background: #f0f4f8;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --wt-dark: #e8eef5;
+  --wt-navy: #f8fafc;
+  --wt-card: #ffffff;
+  --wt-muted: #64748b;
 }
 
 html {
@@ -22,11 +37,11 @@ body {
   background: var(--background);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.35s ease, color 0.35s ease;
 }
 
-/* ——— Site atmosphere (fixed depth field) ——— */
 .site-bg {
-  background: #060a12;
+  background: var(--background);
 }
 
 .site-atmosphere {
@@ -47,10 +62,22 @@ body {
     linear-gradient(180deg, #080d18 0%, #060a12 40%, #050810 100%);
 }
 
+.theme-light .atm-base {
+  background:
+    radial-gradient(ellipse 120% 80% at 50% -20%, #cfe8f8 0%, transparent 55%),
+    radial-gradient(ellipse 90% 60% at 100% 50%, #e0e7ff 0%, transparent 50%),
+    radial-gradient(ellipse 80% 50% at 0% 80%, #dbeafe 0%, transparent 45%),
+    linear-gradient(180deg, #f8fafc 0%, #f0f4f8 40%, #e8eef5 100%);
+}
+
 .atm-vignette {
   position: absolute;
   inset: 0;
   background: radial-gradient(ellipse 75% 70% at 50% 45%, transparent 35%, rgba(0, 0, 0, 0.55) 100%);
+}
+
+.theme-light .atm-vignette {
+  background: radial-gradient(ellipse 75% 70% at 50% 45%, transparent 40%, rgba(15, 23, 42, 0.08) 100%);
 }
 
 .atm-glow {
@@ -58,6 +85,10 @@ body {
   border-radius: 50%;
   filter: blur(80px);
   opacity: 0.45;
+}
+
+.theme-light .atm-glow {
+  opacity: 0.35;
 }
 
 .atm-glow-1 {
@@ -70,6 +101,10 @@ body {
   background: rgba(0, 100, 160, 0.35);
 }
 
+.theme-light .atm-glow-1 {
+  background: rgba(0, 180, 220, 0.25);
+}
+
 .atm-glow-2 {
   width: 36vw;
   height: 36vw;
@@ -78,6 +113,10 @@ body {
   top: 35%;
   right: -5%;
   background: rgba(80, 50, 140, 0.28);
+}
+
+.theme-light .atm-glow-2 {
+  background: rgba(129, 140, 248, 0.22);
 }
 
 .atm-glow-3 {
@@ -98,7 +137,10 @@ body {
   background-size: 200px 200px;
 }
 
-/* Recessed wells under card sections — darker “floor” so cards lift off */
+.theme-light .atm-noise {
+  opacity: 0.03;
+}
+
 .depth-well {
   position: absolute;
   left: 50%;
@@ -113,6 +155,12 @@ body {
     inset 0 0 80px rgba(0, 0, 0, 0.35),
     inset 0 1px 0 rgba(255, 255, 255, 0.03);
   pointer-events: none;
+}
+
+.theme-light .depth-well {
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 40%, rgba(15, 23, 42, 0.06) 0%, transparent 70%);
+  box-shadow: inset 0 0 40px rgba(15, 23, 42, 0.04);
 }
 
 .depth-well-soft {
@@ -132,6 +180,10 @@ h1, h2, h3, h4, .font-display {
     0 0 60px rgba(0, 212, 255, 0.08);
 }
 
+.theme-light .text-depth-title {
+  text-shadow: 0 2px 20px rgba(15, 23, 42, 0.08);
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
@@ -144,9 +196,15 @@ h1, h2, h3, h4, .font-display {
 ::-webkit-scrollbar-track {
   background: #0f172a;
 }
+.theme-light ::-webkit-scrollbar-track {
+  background: #e2e8f0;
+}
 ::-webkit-scrollbar-thumb {
   background: #334155;
   border-radius: 4px;
+}
+.theme-light ::-webkit-scrollbar-thumb {
+  background: #94a3b8;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #00d4ff;
@@ -157,7 +215,6 @@ h1, h2, h3, h4, .font-display {
   perspective-origin: 50% 40%;
 }
 
-/* Elevated surface: contact shadow + ambient + top rim light */
 .card-elevated {
   background: linear-gradient(165deg, #243044 0%, #1a2436 48%, #151e2e 100%);
   box-shadow:
@@ -167,6 +224,15 @@ h1, h2, h3, h4, .font-display {
     0 18px 40px -12px rgba(0, 0, 0, 0.65),
     0 40px 80px -24px rgba(0, 0, 0, 0.55),
     0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.theme-light .card-elevated {
+  background: linear-gradient(165deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.9) inset,
+    0 4px 6px -2px rgba(15, 23, 42, 0.06),
+    0 18px 40px -12px rgba(15, 23, 42, 0.12),
+    0 0 0 1px rgba(15, 23, 42, 0.08);
 }
 
 .card-3d {
@@ -493,6 +559,12 @@ h1, h2, h3, h4, .font-display {
   animation: menu-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+.theme-light .mobile-menu-panel {
+  background: #ffffff !important;
+  border-color: rgba(15, 23, 42, 0.1);
+  box-shadow: 0 20px 50px -12px rgba(15, 23, 42, 0.2);
+}
+
 .cta-panel {
   box-shadow:
     0 1px 0 0 rgba(255, 255, 255, 0.08) inset,
@@ -500,7 +572,6 @@ h1, h2, h3, h4, .font-display {
     0 40px 80px -30px rgba(0, 0, 0, 0.5);
 }
 
-/* ——— Infinity Possibilities card ——— */
 .infinity-card {
   isolation: isolate;
   background:
@@ -511,6 +582,12 @@ h1, h2, h3, h4, .font-display {
     0 0 0 1px rgba(0, 212, 255, 0.14),
     0 18px 40px -12px rgba(0, 0, 0, 0.65),
     0 40px 80px -24px rgba(0, 212, 255, 0.2);
+}
+
+.theme-light .infinity-card {
+  background:
+    radial-gradient(ellipse 80% 70% at 50% 40%, rgba(0, 180, 220, 0.15) 0%, transparent 55%),
+    linear-gradient(165deg, #e0f2fe 0%, #f0f9ff 50%, #ffffff 100%);
 }
 
 .infinity-card:hover {
@@ -670,6 +747,11 @@ h1, h2, h3, h4, .font-display {
   backface-visibility: hidden;
 }
 
+.theme-light .infinity-symbol {
+  color: #0369a1;
+  text-shadow: 0 0 20px rgba(0, 180, 220, 0.35);
+}
+
 .infinity-symbol-ghost {
   transform: rotateY(180deg);
   color: #c4b5fd;
@@ -712,7 +794,8 @@ h1, h2, h3, h4, .font-display {
   .stat-card-solid.is-visible:nth-child(3) { animation-delay: 1.4s; }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce),
+html.force-reduced-motion {
   .card-3d,
   .card-3d:hover,
   .card-tilt,
@@ -757,6 +840,14 @@ h1, h2, h3, h4, .font-display {
     transition-all duration-300;
 }
 
+.theme-light .field-input {
+  @apply bg-white border-slate-200 text-slate-900 placeholder:text-slate-400;
+}
+
 .field-input:hover {
   border-color: rgba(255, 255, 255, 0.22);
+}
+
+.theme-light .field-input:hover {
+  border-color: rgba(15, 23, 42, 0.2);
 }
