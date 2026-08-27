@@ -34,6 +34,7 @@ export default function CheckoutPage() {
   const [copied, setCopied] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const pay = paymentMethods.find((m) => m.id === method)!;
 
@@ -47,7 +48,7 @@ export default function CheckoutPage() {
     }
   }
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     if (!pkg) return;
@@ -56,6 +57,7 @@ export default function CheckoutPage() {
       return;
     }
 
+    setSubmitting(true);
     const order: ManualOrder = {
       id: orderRef,
       packageId: pkg.id,
@@ -70,7 +72,14 @@ export default function CheckoutPage() {
       note: note.trim() || undefined,
       createdAt: new Date().toISOString(),
     };
-    saveOrder(order);
+
+    const result = await saveOrder(order);
+    setSubmitting(false);
+
+    if (!result.ok && result.error) {
+      setError("Could not save order online. It was saved on this device — contact us with your order reference.");
+      // still show success so student has the ref
+    }
     setDone(true);
   }
 
@@ -96,7 +105,7 @@ export default function CheckoutPage() {
           <p className="text-sm text-wisdom-muted leading-relaxed mb-4">
             Order <span className="text-white font-mono font-semibold">{orderRef}</span> for{" "}
             <span className="text-white">{pkg.name}</span> ({formatEtb(pkg.priceEtb)}) is pending
-            manual confirmation. You’ll get access in My Learning after we verify the transfer.
+            manual confirmation. You&apos;ll get access in My Learning after we verify the transfer.
           </p>
           <p className="text-xs text-wisdom-muted mb-6">
             Keep your receipt. Reference: {txRef}
@@ -256,7 +265,7 @@ export default function CheckoutPage() {
             </label>
           </div>
           <label className="block">
-            <span className="text-xs text-wisdom-muted">Email (optional)</span>
+            <span className="text-xs text-wisdom-muted">Email (recommended — unlocks My Learning)</span>
             <input
               type="email"
               value={email}
@@ -292,15 +301,16 @@ export default function CheckoutPage() {
             <Shield className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
             <p>
               We verify payments manually. Access unlocks after confirmation — not instantly. Fake
-              references will be rejected.
+              references will be rejected. Use the same email as your account for fastest unlock.
             </p>
           </div>
 
           <button
             type="submit"
-            className="w-full py-3.5 rounded-xl bg-amber-500 text-wisdom-dark text-sm font-bold hover:bg-amber-400 transition-colors"
+            disabled={submitting}
+            className="w-full py-3.5 rounded-xl bg-amber-500 text-wisdom-dark text-sm font-bold hover:bg-amber-400 transition-colors disabled:opacity-60"
           >
-            I’ve paid · Submit for verification
+            {submitting ? "Submitting…" : "I’ve paid · Submit for verification"}
           </button>
         </form>
 

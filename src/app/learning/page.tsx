@@ -1,157 +1,88 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   BookOpen,
   GraduationCap,
-  Monitor,
   Play,
   CheckCircle2,
   Clock,
   ShoppingBag,
   ArrowRight,
   Sparkles,
+  LogIn,
 } from "lucide-react";
-import { demoLearning, type LearningItem } from "@/data/learning";
+import { getPackage } from "@/data/packages";
+import { listMyEnrollments } from "@/lib/orders";
+import { supabase } from "@/lib/supabase";
 
-type Tab = "all" | "in_progress" | "completed" | "academy" | "digital";
-
-const tabs: { id: Tab; label: string }[] = [
-  { id: "all", label: "All" },
-  { id: "in_progress", label: "In progress" },
-  { id: "completed", label: "Completed" },
-  { id: "academy", label: "Academy" },
-  { id: "digital", label: "Digital" },
-];
-
-function ProgressBar({ value, accent }: { value: number; accent: string }) {
-  return (
-    <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
-      <div
-        className={`h-full rounded-full transition-all duration-500 ${accent}`}
-        style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
-      />
-    </div>
-  );
-}
-
-function LearningCard({ item }: { item: LearningItem }) {
-  const isAcademy = item.space === "academy";
-  const bar = isAcademy ? "bg-amber-400" : "bg-cyan-400";
-  const chip =
-    item.status === "completed"
-      ? "border-emerald-400/35 text-emerald-300 bg-emerald-500/10"
-      : item.status === "in_progress"
-        ? isAcademy
-          ? "border-amber-400/35 text-amber-300 bg-amber-500/10"
-          : "border-cyan-400/35 text-cyan-300 bg-cyan-500/10"
-        : "border-white/15 text-white/70 bg-white/5";
-
-  return (
-    <Link
-      href={item.href}
-      className="group flex flex-col sm:flex-row overflow-hidden rounded-2xl border border-white/12 bg-wisdom-card hover:border-white/25 transition-all duration-300 shadow-card-3d"
-    >
-      <div className="relative sm:w-44 h-36 sm:h-auto shrink-0 overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-          style={{ backgroundImage: `url(${item.image})` }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t sm:bg-gradient-to-r from-wisdom-card via-wisdom-card/40 to-transparent" />
-        <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4">
-          <span
-            className={`inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-              isAcademy
-                ? "border-amber-400/40 bg-amber-500/15 text-amber-200"
-                : "border-cyan-400/40 bg-cyan-500/15 text-cyan-200"
-            }`}
-          >
-            {isAcademy ? (
-              <GraduationCap className="w-3 h-3" />
-            ) : (
-              <Monitor className="w-3 h-3" />
-            )}
-            {item.space}
-          </span>
-        </div>
-      </div>
-
-      <div className="flex-1 p-4 sm:p-5 flex flex-col justify-center min-w-0">
-        <div className="flex items-start justify-between gap-2 mb-1">
-          <h3 className="font-display font-bold text-white group-hover:text-wisdom-cyan transition-colors leading-snug">
-            {item.title}
-          </h3>
-          {item.badge && (
-            <span className={`shrink-0 rounded-md border px-2 py-0.5 text-[10px] font-semibold ${chip}`}>
-              {item.badge}
-            </span>
-          )}
-        </div>
-        <p className="text-sm text-wisdom-muted mb-3 line-clamp-2">{item.subtitle}</p>
-
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-[11px] text-wisdom-muted">
-            <span className="flex items-center gap-1">
-              {item.status === "completed" ? (
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-              ) : (
-                <Clock className="w-3.5 h-3.5" />
-              )}
-              {item.status === "completed"
-                ? "Completed"
-                : item.status === "not_started"
-                  ? "Not started"
-                  : `${item.progress}% complete`}
-            </span>
-            {item.lastAccess && <span>{item.lastAccess}</span>}
-          </div>
-          <ProgressBar value={item.progress} accent={bar} />
-        </div>
-
-        <div className="mt-3 flex items-center gap-2 text-xs font-semibold text-wisdom-cyan">
-          {item.status === "completed" ? (
-            <>
-              Review
-              <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-            </>
-          ) : item.status === "not_started" ? (
-            <>
-              Start
-              <Play className="w-3.5 h-3.5 fill-current" />
-            </>
-          ) : (
-            <>
-              Continue
-              <Play className="w-3.5 h-3.5 fill-current" />
-            </>
-          )}
-        </div>
-      </div>
-    </Link>
-  );
-}
+type LearningRow = {
+  id: string;
+  title: string;
+  subtitle: string;
+  href: string;
+  image: string;
+  progress: number;
+  status: "in_progress" | "not_started" | "completed";
+  lastAccess?: string;
+};
 
 export default function LearningPage() {
-  const [tab, setTab] = useState<Tab>("all");
+  const [rows, setRows] = useState<LearningRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loggedIn, setLoggedIn] = useState(false);
 
-  const filtered = useMemo(() => {
-    return demoLearning.filter((item) => {
-      if (tab === "all") return true;
-      if (tab === "in_progress") return item.status === "in_progress";
-      if (tab === "completed") return item.status === "completed";
-      if (tab === "academy") return item.space === "academy";
-      if (tab === "digital") return item.space === "digital";
-      return true;
-    });
-  }, [tab]);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (cancelled) return;
+      setLoggedIn(Boolean(session?.user));
 
-  const continueItem = demoLearning.find((i) => i.status === "in_progress");
-  const stats = {
-    total: demoLearning.length,
-    active: demoLearning.filter((i) => i.status === "in_progress").length,
-    done: demoLearning.filter((i) => i.status === "completed").length,
-  };
+      if (!session?.user) {
+        setRows([]);
+        setLoading(false);
+        return;
+      }
+
+      const enrollments = await listMyEnrollments();
+      if (cancelled) return;
+
+      const mapped: LearningRow[] = enrollments.map((e) => {
+        const pkg = getPackage(e.packageId);
+        return {
+          id: e.packageId,
+          title: pkg?.name || e.packageName,
+          subtitle: pkg?.description || "Enrolled package",
+          href: pkg?.href || "/academy",
+          image:
+            pkg?.image ||
+            "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=600&q=80",
+          progress: 0,
+          status: "not_started" as const,
+          lastAccess: new Date(e.createdAt).toLocaleDateString(),
+        };
+      });
+
+      setRows(mapped);
+      setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const stats = useMemo(
+    () => ({
+      total: rows.length,
+      active: rows.filter((i) => i.status === "in_progress").length,
+      done: rows.filter((i) => i.status === "completed").length,
+    }),
+    [rows]
+  );
 
   return (
     <div className="relative min-h-[80vh]">
@@ -161,7 +92,6 @@ export default function LearningPage() {
       </div>
 
       <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-        {/* Hero */}
         <div className="mb-10 md:mb-12">
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-400/90 mb-2">
             Your library
@@ -172,8 +102,7 @@ export default function LearningPage() {
                 My Learning
               </h1>
               <p className="mt-2 text-wisdom-muted max-w-lg text-sm sm:text-base leading-relaxed">
-                Courses, exam paths, and digital work you’ve enrolled in or purchased — one place,
-                clear progress.
+                Packages you’ve purchased and we’ve verified appear here.
               </p>
             </div>
             <Link
@@ -204,95 +133,100 @@ export default function LearningPage() {
           </div>
         </div>
 
-        {/* Continue learning spotlight */}
-        {continueItem && (
-          <div className="mb-10 rounded-3xl border border-cyan-400/25 bg-gradient-to-br from-cyan-500/10 via-wisdom-card to-wisdom-card overflow-hidden shadow-card-3d">
-            <div className="flex flex-col md:flex-row">
-              <div className="relative md:w-56 h-40 md:h-auto shrink-0">
-                <div
-                  className="absolute inset-0 bg-cover bg-center"
-                  style={{ backgroundImage: `url(${continueItem.image})` }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-wisdom-card to-transparent" />
-              </div>
-              <div className="p-6 md:p-8 flex-1">
-                <p className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-cyan-300 mb-2">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  Pick up where you left off
-                </p>
-                <h2 className="font-display text-xl md:text-2xl font-bold text-white mb-1">
-                  {continueItem.title}
-                </h2>
-                <p className="text-sm text-wisdom-muted mb-4">{continueItem.subtitle}</p>
-                <ProgressBar value={continueItem.progress} accent="bg-cyan-400" />
-                <p className="text-xs text-wisdom-muted mt-2 mb-5">
-                  {continueItem.progress}% complete
-                  {continueItem.lastAccess ? ` · ${continueItem.lastAccess}` : ""}
-                </p>
-                <Link
-                  href={continueItem.href}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-wisdom-cyan text-wisdom-dark text-sm font-semibold hover:bg-cyan-300 transition-colors"
-                >
-                  <Play className="w-4 h-4 fill-current" />
-                  Continue learning
-                </Link>
-              </div>
+        {loading ? (
+          <p className="text-center text-wisdom-muted py-16">Loading…</p>
+        ) : !loggedIn ? (
+          <div className="rounded-3xl border border-white/10 bg-wisdom-card p-10 text-center">
+            <LogIn className="w-10 h-10 text-white/20 mx-auto mb-3" />
+            <p className="text-white font-semibold mb-1">Sign in to see your library</p>
+            <p className="text-sm text-wisdom-muted mb-6 max-w-sm mx-auto">
+              Use the same email you put on checkout so verified packages unlock here.
+            </p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Link
+                href="/login"
+                className="px-4 py-2 rounded-xl bg-wisdom-cyan text-wisdom-dark text-sm font-semibold"
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/packages"
+                className="px-4 py-2 rounded-xl border border-amber-400/40 text-amber-300 text-sm font-semibold"
+              >
+                Browse packages
+              </Link>
             </div>
           </div>
-        )}
-
-        {/* Tabs */}
-        <div className="flex gap-2 overflow-x-auto pb-2 mb-6 scrollbar-none">
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setTab(t.id)}
-              className={`shrink-0 px-4 py-2 rounded-full text-sm font-semibold border transition-colors ${
-                tab === t.id
-                  ? "border-cyan-400/50 bg-cyan-500/15 text-cyan-200"
-                  : "border-white/10 bg-white/[0.03] text-wisdom-muted hover:text-white hover:border-white/20"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        {/* List */}
-        {filtered.length === 0 ? (
+        ) : rows.length === 0 ? (
           <div className="rounded-3xl border border-white/10 bg-wisdom-card p-10 text-center">
             <BookOpen className="w-10 h-10 text-white/20 mx-auto mb-3" />
             <p className="text-white font-semibold mb-1">Nothing here yet</p>
             <p className="text-sm text-wisdom-muted mb-6 max-w-sm mx-auto">
-              Explore Academy programs or Digital services — enrolled and purchased items will show
-              up in this library.
+              After you pay and we verify your transfer, packages appear in this library.
             </p>
             <div className="flex flex-wrap justify-center gap-3">
               <Link
-                href="/academy"
+                href="/packages"
                 className="px-4 py-2 rounded-xl bg-amber-500 text-wisdom-dark text-sm font-semibold"
               >
-                Browse Academy
+                Browse packages
               </Link>
               <Link
-                href="/digital"
+                href="/academy"
                 className="px-4 py-2 rounded-xl border border-cyan-400/40 text-cyan-300 text-sm font-semibold"
               >
-                Browse Digital
+                Explore Academy
               </Link>
             </div>
           </div>
         ) : (
           <div className="space-y-4">
-            {filtered.map((item) => (
-              <LearningCard key={item.id} item={item} />
+            {rows.map((item) => (
+              <Link
+                key={item.id}
+                href={item.href}
+                className="group flex flex-col sm:flex-row overflow-hidden rounded-2xl border border-white/12 bg-wisdom-card hover:border-white/25 transition-all duration-300 shadow-card-3d"
+              >
+                <div className="relative sm:w-44 h-36 sm:h-auto shrink-0 overflow-hidden">
+                  <div
+                    className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
+                    style={{ backgroundImage: `url(${item.image})` }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t sm:bg-gradient-to-r from-wisdom-card via-wisdom-card/40 to-transparent" />
+                  <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4">
+                    <span className="inline-flex items-center gap-1 rounded-lg border border-amber-400/40 bg-amber-500/15 text-amber-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                      <GraduationCap className="w-3 h-3" />
+                      Academy
+                    </span>
+                  </div>
+                </div>
+                <div className="flex-1 p-4 sm:p-5 flex flex-col justify-center min-w-0">
+                  <h3 className="font-display font-bold text-white group-hover:text-wisdom-cyan transition-colors leading-snug">
+                    {item.title}
+                  </h3>
+                  <p className="text-sm text-wisdom-muted mb-3 line-clamp-2">{item.subtitle}</p>
+                  <div className="flex items-center gap-2 text-[11px] text-wisdom-muted mb-2">
+                    {item.status === "completed" ? (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    ) : (
+                      <Clock className="w-3.5 h-3.5" />
+                    )}
+                    Enrolled{item.lastAccess ? ` · ${item.lastAccess}` : ""}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs font-semibold text-wisdom-cyan">
+                    Open path
+                    <Play className="w-3.5 h-3.5 fill-current" />
+                    <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                  </div>
+                </div>
+              </Link>
             ))}
           </div>
         )}
 
-        <p className="mt-10 text-center text-[11px] text-wisdom-muted">
-          Demo library — real purchases and enrollments will sync here from your account.
+        <p className="mt-10 text-center text-[11px] text-wisdom-muted flex items-center justify-center gap-1">
+          <Sparkles className="w-3 h-3" />
+          Verified purchases sync from your account email
         </p>
       </div>
     </div>
