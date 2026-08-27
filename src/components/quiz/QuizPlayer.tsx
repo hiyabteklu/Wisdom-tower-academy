@@ -3,19 +3,22 @@
 import { useMemo, useState } from "react";
 import { CheckCircle2, XCircle, ChevronRight, RotateCcw } from "lucide-react";
 import type { QuizQuestion } from "@/data/sample-questions";
-import ExplainButton from "./ExplainButton";
+import SolutionPanel from "./SolutionPanel";
 
 type Props = {
   questions: QuizQuestion[];
   title?: string;
-  /** When true, show Explain after each answered question */
-  enableExplain?: boolean;
+  /** Premade Solution button (default on when question has `solution`) */
+  enableSolution?: boolean;
+  /** Optional AI explain button (default on) */
+  enableAiExplain?: boolean;
 };
 
 export default function QuizPlayer({
   questions,
   title = "Practice quiz",
-  enableExplain = true,
+  enableSolution = true,
+  enableAiExplain = true,
 }: Props) {
   const list = useMemo(() => questions, [questions]);
   const [index, setIndex] = useState(0);
@@ -87,7 +90,9 @@ export default function QuizPlayer({
           <p className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted">{title}</p>
           <p className="text-sm text-white/80">
             Question {index + 1} of {list.length}
-            <span className="text-wisdom-muted"> · {q.subject} · {q.difficulty}</span>
+            <span className="text-wisdom-muted">
+              {" "}· {q.subject} · {q.difficulty}
+            </span>
           </p>
         </div>
         <span className="text-xs font-semibold tabular-nums text-cyan-300/90">
@@ -96,7 +101,9 @@ export default function QuizPlayer({
       </div>
 
       <div className="px-5 sm:px-6 py-6">
-        <p className="text-base sm:text-lg font-medium text-white leading-relaxed mb-5">{q.question}</p>
+        <p className="text-base sm:text-lg font-medium text-white leading-relaxed mb-5">
+          {q.question}
+        </p>
 
         <ul className="space-y-2.5">
           {q.choices.map((choice, i) => {
@@ -123,7 +130,9 @@ export default function QuizPlayer({
                     {String.fromCharCode(65 + i)}.
                   </span>
                   {choice}
-                  {isCorrect && <CheckCircle2 className="inline w-4 h-4 ml-2 text-emerald-400" />}
+                  {isCorrect && (
+                    <CheckCircle2 className="inline w-4 h-4 ml-2 text-emerald-400" />
+                  )}
                   {isWrong && <XCircle className="inline w-4 h-4 ml-2 text-rose-400" />}
                 </button>
               </li>
@@ -131,8 +140,10 @@ export default function QuizPlayer({
           })}
         </ul>
 
-        {revealed && enableExplain && selected !== null && (
-          <ExplainButton
+        {revealed && selected !== null && (
+          <SolutionPanel
+            solution={enableSolution ? q.solution : undefined}
+            enableAi={enableAiExplain}
             questionId={q.id}
             question={q.question}
             choices={q.choices}

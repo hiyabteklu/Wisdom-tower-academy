@@ -5,7 +5,7 @@ import { sampleQuestions } from "@/data/sample-questions";
 
 export const metadata = {
   title: "Quiz demo | Wisdom Tower Academy",
-  description: "Pilot quiz with AI explanations",
+  description: "Pilot quiz with official solutions and optional AI explanations",
 };
 
 export default function QuizDemoPage() {
@@ -22,13 +22,20 @@ export default function QuizDemoPage() {
             Quiz demo
           </h1>
           <p className="text-wisdom-muted text-sm leading-relaxed max-w-lg">
-            Practice a few sample questions. After you answer, use{" "}
-            <span className="text-cyan-300/90 font-medium">Explain</span> to get a concise tutor-style
-            explanation (cached so we do not call AI for the same question twice).
+            After you check an answer you get two options:{" "}
+            <span className="text-emerald-300/90 font-medium">Solution</span> (our premade
+            write-up — free, no AI) and{" "}
+            <span className="text-cyan-300/90 font-medium">Explain with AI</span> (optional extra
+            tutoring when you want more).
           </p>
         </div>
 
-        <QuizPlayer questions={sampleQuestions} title="Sample bank" enableExplain />
+        <QuizPlayer
+          questions={sampleQuestions}
+          title="Sample bank"
+          enableSolution
+          enableAiExplain
+        />
 
         <p className="mt-8 text-center text-xs text-wisdom-muted">
           Real subject banks will replace this demo.{" "}
