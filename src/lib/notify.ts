@@ -18,7 +18,13 @@ export async function notifyApproval(orderId: string): Promise<NotifyResult> {
       body: JSON.stringify({ orderId, type: "approved" }),
     });
     const data = (await res.json()) as NotifyResult;
-    if (!res.ok) return { ok: false, error: data.error || "Notify failed", ...data };
+    if (!res.ok) {
+      return {
+        ...data,
+        ok: false,
+        error: data.error || "Notify failed",
+      };
+    }
     return data;
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Network error" };
@@ -33,7 +39,13 @@ export async function notifyRejection(orderId: string): Promise<NotifyResult> {
       body: JSON.stringify({ orderId, type: "rejected" }),
     });
     const data = (await res.json()) as NotifyResult;
-    if (!res.ok) return { ok: false, error: data.error || "Notify failed", ...data };
+    if (!res.ok) {
+      return {
+        ...data,
+        ok: false,
+        error: data.error || "Notify failed",
+      };
+    }
     return data;
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Network error" };
