@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { CheckCircle2, XCircle, ChevronRight, RotateCcw } from "lucide-react";
 import type { QuizQuestion } from "@/data/sample-questions";
 import SolutionPanel from "./SolutionPanel";
+import MathText from "@/components/MathText";
 
 type Props = {
   questions: QuizQuestion[];
@@ -102,7 +103,7 @@ export default function QuizPlayer({
 
       <div className="px-5 sm:px-6 py-6">
         <p className="text-base sm:text-lg font-medium text-white leading-relaxed mb-5">
-          {q.question}
+          <MathText text={q.question} />
         </p>
 
         <ul className="space-y-2.5">
@@ -129,7 +130,7 @@ export default function QuizPlayer({
                   <span className="font-semibold text-wisdom-muted mr-2">
                     {String.fromCharCode(65 + i)}.
                   </span>
-                  {choice}
+                  <MathText text={choice} />
                   {isCorrect && (
                     <CheckCircle2 className="inline w-4 h-4 ml-2 text-emerald-400" />
                   )}

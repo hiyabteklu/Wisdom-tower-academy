@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { BookOpen, Lightbulb, Loader2 } from "lucide-react";
+import MathText from "@/components/MathText";
 
 type Props = {
   /** Premade solution written/uploaded by you (no AI) */
@@ -133,9 +134,9 @@ export default function SolutionPanel({
             </span>
             <span className="text-[10px] text-wisdom-muted ml-auto">official</span>
           </div>
-          <p className="text-sm text-white/85 leading-relaxed whitespace-pre-wrap">
-            {solution}
-          </p>
+          <div className="text-sm text-white/85 leading-relaxed">
+            <MathText text={solution || ""} />
+          </div>
         </div>
       )}
 
@@ -155,7 +156,9 @@ export default function SolutionPanel({
               <span className="text-[10px] text-amber-400/80 ml-auto">offline tip</span>
             )}
           </div>
-          <p className="text-sm text-white/85 leading-relaxed whitespace-pre-wrap">{aiText}</p>
+          <div className="text-sm text-white/85 leading-relaxed">
+            <MathText text={aiText} />
+          </div>
         </div>
       )}
     </div>

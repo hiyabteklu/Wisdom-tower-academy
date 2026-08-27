@@ -17,12 +17,14 @@
     "lucide-react": "^0.460.0",
     "class-variance-authority": "^0.7.0",
     "@supabase/supabase-js": "^2.47.10",
-    "ai": "^5.0.0"
+    "ai": "^5.0.0",
+    "katex": "^0.16.11"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@types/katex": "^0.16.7",
     "typescript": "^5.6.3",
     "tailwindcss": "^3.4.15",
     "postcss": "^8.4.49",

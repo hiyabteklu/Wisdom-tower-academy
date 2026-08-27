@@ -67,6 +67,7 @@ Write a concise educational explanation (max ~180 words):
 - Explain why the correct answer is right.
 - If the student was wrong, briefly say why their choice does not fit (no shame).
 - Teach the underlying idea so they can solve similar questions.
+- For math, use LaTeX with delimiters \\(...\\) for inline and \\[...\\] for display. Example: \\(2^{3} = 8\\).
 - Do NOT only restate the answer. No markdown headings. Plain paragraphs only.`;
 }
 
