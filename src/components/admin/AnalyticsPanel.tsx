@@ -17,6 +17,8 @@ import {
   Percent,
   Wallet,
   Clock,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 function StatCard({
@@ -141,6 +143,7 @@ function timeAgo(iso: string) {
 export default function AnalyticsPanel() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activityOpen, setActivityOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -224,7 +227,6 @@ export default function AnalyticsPanel() {
         </button>
       </div>
 
-      {/* Primary money metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <StatCard
           large
@@ -325,27 +327,47 @@ export default function AnalyticsPanel() {
         />
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-wisdom-card p-4 sm:p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Activity className="w-4 h-4 text-wisdom-cyan" />
-          <h3 className="font-semibold text-white">Recent activity</h3>
-        </div>
-        {topActivity.length === 0 ? (
-          <p className="text-sm text-wisdom-muted py-8 text-center">
-            No activity yet. New checkouts, sign-ups, and contact messages will show here.
-          </p>
-        ) : (
-          <ul className="divide-y divide-white/8">
-            {topActivity.map((a) => (
-              <li
-                key={a.id}
-                className="py-3 flex flex-wrap items-start justify-between gap-2 text-sm"
-              >
-                <span className="text-white/85 leading-snug">{a.text}</span>
-                <span className="text-xs text-wisdom-muted shrink-0">{timeAgo(a.when)}</span>
-              </li>
-            ))}
-          </ul>
+      <div className="rounded-2xl border border-white/10 bg-wisdom-card overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setActivityOpen((v) => !v)}
+          className="w-full flex items-center justify-between gap-3 p-4 sm:p-5 text-left hover:bg-white/[0.03] transition-colors"
+          aria-expanded={activityOpen}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <Activity className="w-4 h-4 text-wisdom-cyan shrink-0" />
+            <h3 className="font-semibold text-white">Recent activity</h3>
+            <span className="text-xs text-wisdom-muted tabular-nums">
+              ({topActivity.length})
+            </span>
+          </div>
+          {activityOpen ? (
+            <ChevronUp className="w-5 h-5 text-wisdom-muted shrink-0" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-wisdom-muted shrink-0" />
+          )}
+        </button>
+
+        {activityOpen && (
+          <div className="px-4 sm:px-5 pb-4 sm:pb-5 border-t border-white/8">
+            {topActivity.length === 0 ? (
+              <p className="text-sm text-wisdom-muted py-8 text-center">
+                No activity yet. New checkouts, sign-ups, and contact messages will show here.
+              </p>
+            ) : (
+              <ul className="divide-y divide-white/8">
+                {topActivity.map((a) => (
+                  <li
+                    key={a.id}
+                    className="py-3 flex flex-wrap items-start justify-between gap-2 text-sm"
+                  >
+                    <span className="text-white/85 leading-snug">{a.text}</span>
+                    <span className="text-xs text-wisdom-muted shrink-0">{timeAgo(a.when)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         )}
       </div>
     </div>

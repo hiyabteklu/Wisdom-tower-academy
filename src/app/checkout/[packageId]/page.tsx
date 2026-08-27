@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
@@ -14,6 +14,7 @@ import {
   FileText,
   Image as ImageIcon,
   X,
+  LogIn,
 } from "lucide-react";
 import {
   getPackage,
@@ -28,6 +29,7 @@ import {
   type ManualOrder,
 } from "@/lib/orders";
 import { removeFromCart } from "@/lib/cart";
+import { supabase } from "@/lib/supabase";
 
 type ConfirmMode = "receipt" | "details";
 
@@ -35,6 +37,10 @@ export default function CheckoutPage() {
   const params = useParams();
   const packageId = String(params.packageId || "");
   const pkg = useMemo(() => getPackage(packageId), [packageId]);
+
+  const [authLoading, setAuthLoading] = useState(true);
+  const [signedIn, setSignedIn] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
   const [method, setMethod] = useState<PaymentMethodId>("telebirr");
   const [orderRef] = useState(() => generateOrderRef());
@@ -53,6 +59,33 @@ export default function CheckoutPage() {
   const [submittedReceipt, setSubmittedReceipt] = useState<string | undefined>();
 
   const pay = paymentMethods.find((m) => m.id === method)!;
+  const loginHref = `/login?next=${encodeURIComponent(`/checkout/${packageId}`)}`;
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (cancelled) return;
+      if (session?.user) {
+        setSignedIn(true);
+        setUserId(session.user.id);
+        if (session.user.email) setEmail(session.user.email);
+        const metaName =
+          (session.user.user_metadata?.full_name as string | undefined) ||
+          (session.user.user_metadata?.name as string | undefined);
+        if (metaName) setName(metaName);
+      } else {
+        setSignedIn(false);
+        setUserId(null);
+      }
+      setAuthLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function copyText(label: string, value: string) {
     try {
@@ -73,6 +106,11 @@ export default function CheckoutPage() {
     e.preventDefault();
     setError("");
     if (!pkg) return;
+
+    if (!signedIn) {
+      setError("Please sign in first to submit payment for verification.");
+      return;
+    }
 
     if (confirmMode === "receipt") {
       if (!file) {
@@ -127,6 +165,7 @@ export default function CheckoutPage() {
           : note.trim() || undefined,
       receiptUrl,
       createdAt: new Date().toISOString(),
+      userId,
     };
 
     const result = await saveOrder(order);
@@ -151,6 +190,56 @@ export default function CheckoutPage() {
         <Link href="/packages" className="text-cyan-400 text-sm hover:underline">
           Back to packages
         </Link>
+      </div>
+    );
+  }
+
+  if (authLoading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-wisdom-cyan border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!signedIn) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-16">
+        <Link
+          href="/packages"
+          className="inline-flex items-center gap-1.5 text-sm text-wisdom-muted hover:text-white mb-6"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Packages
+        </Link>
+        <div className="rounded-3xl border border-white/12 bg-wisdom-card p-8 text-center shadow-card-3d">
+          <div className="mx-auto w-14 h-14 rounded-full bg-cyan-500/15 border border-cyan-400/40 flex items-center justify-center mb-4">
+            <LogIn className="w-7 h-7 text-cyan-400" />
+          </div>
+          <h1 className="font-display text-2xl font-bold text-white mb-2">Sign in to checkout</h1>
+          <p className="text-sm text-wisdom-muted leading-relaxed mb-2">
+            <span className="text-white/90 font-medium">{pkg.name}</span> ·{" "}
+            {formatEtb(pkg.priceEtb)}
+          </p>
+          <p className="text-sm text-wisdom-muted leading-relaxed mb-6">
+            Create an account or sign in first so we can unlock this package in My Learning after
+            payment is verified.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              href={loginHref}
+              className="px-5 py-2.5 rounded-xl bg-wisdom-cyan text-wisdom-dark text-sm font-semibold"
+            >
+              Sign in
+            </Link>
+            <Link
+              href={`/signup?next=${encodeURIComponent(`/checkout/${packageId}`)}`}
+              className="px-5 py-2.5 rounded-xl border border-white/15 text-sm font-semibold text-white/90"
+            >
+              Create account
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
@@ -199,7 +288,7 @@ export default function CheckoutPage() {
               href="/orders"
               className="px-5 py-2.5 rounded-xl border border-white/15 text-sm font-semibold text-white/90"
             >
-              My orders (this device)
+              My orders
             </Link>
             <Link
               href="/packages"
@@ -372,7 +461,9 @@ export default function CheckoutPage() {
                     <label className="flex flex-col items-center justify-center gap-2 min-h-[120px] rounded-xl border border-dashed border-white/20 bg-wisdom-dark/40 px-4 py-6 cursor-pointer hover:border-cyan-400/40 hover:bg-wisdom-dark/60 transition-colors">
                       <ImageIcon className="w-8 h-8 text-cyan-400/80" />
                       <span className="text-sm text-white/85 font-medium">Tap to choose file</span>
-                      <span className="text-[11px] text-wisdom-muted">JPG, PNG, WebP or PDF · max 8 MB</span>
+                      <span className="text-[11px] text-wisdom-muted">
+                        JPG, PNG, WebP or PDF · max 8 MB
+                      </span>
                       <input
                         type="file"
                         accept="image/jpeg,image/png,image/webp,image/heic,application/pdf,.pdf,.jpg,.jpeg,.png"
@@ -418,9 +509,7 @@ export default function CheckoutPage() {
               </label>
 
               <label className="block">
-                <span className="text-xs text-wisdom-muted">
-                  Email (recommended — unlocks My Learning)
-                </span>
+                <span className="text-xs text-wisdom-muted">Email (from your account)</span>
                 <input
                   type="email"
                   value={email}
@@ -481,9 +570,7 @@ export default function CheckoutPage() {
                 </label>
               </div>
               <label className="block">
-                <span className="text-xs text-wisdom-muted">
-                  Email (recommended — unlocks My Learning)
-                </span>
+                <span className="text-xs text-wisdom-muted">Email (from your account)</span>
                 <input
                   type="email"
                   value={email}
@@ -520,8 +607,8 @@ export default function CheckoutPage() {
           <div className="flex items-start gap-2 text-xs text-wisdom-muted">
             <Shield className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
             <p>
-              We verify payments manually. Access unlocks after confirmation — not instantly. Use the
-              same email as your account for fastest unlock.
+              We verify payments manually. Access unlocks after confirmation — not instantly. Keep
+              the same account email for My Learning.
             </p>
           </div>
 
