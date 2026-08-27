@@ -151,7 +151,7 @@ export function packageIdForGrade(gradeId: string): string {
   return `grade-${gradeId}`;
 }
 
-export type PaymentMethodId = "telebirr" | "cbe" | "awash" | "dashen" | "other";
+export type PaymentMethodId = "telebirr" | "cbe" | "abyssinia" | "other";
 
 export type PaymentMethod = {
   id: PaymentMethodId;
@@ -163,70 +163,59 @@ export type PaymentMethod = {
   accountName: string;
 };
 
+const ACCOUNT_NAME = "Hiyab Teklu";
+
 export const paymentMethods: PaymentMethod[] = [
   {
     id: "telebirr",
     name: "Telebirr",
     shortLabel: "Telebirr",
     accountLabel: "Telebirr number",
-    accountValue: "09XX XXX XXXX",
-    accountName: "Wisdom Tower Digital",
+    accountValue: "0900763030",
+    accountName: ACCOUNT_NAME,
     instructions: [
-      "Open Telebirr and send the exact package amount.",
-      "Use the order reference in the remark / reason field.",
-      "Keep the SMS confirmation — enter the transaction ID below.",
+      "Open Telebirr and send the exact package amount (500 ETB).",
+      "Put the order reference in the remark / reason field.",
+      "Keep the SMS confirmation — enter the transaction ID on the form below.",
     ],
   },
   {
     id: "cbe",
     name: "Commercial Bank of Ethiopia (CBE)",
-    shortLabel: "CBE Birr",
+    shortLabel: "CBE",
     accountLabel: "Account number",
-    accountValue: "1000XXXXXXXX",
-    accountName: "Wisdom Tower Digital",
+    accountValue: "1000665070654",
+    accountName: ACCOUNT_NAME,
     instructions: [
-      "Transfer via CBE Birr or branch using the account below.",
+      "Transfer via CBE Birr, mobile, or branch to the account below.",
       "Put the order reference in the transfer narration.",
-      "Save the receipt number / transaction ID.",
+      "Save the receipt / transaction ID and submit it below.",
     ],
   },
   {
-    id: "awash",
-    name: "Awash Bank",
-    shortLabel: "Awash",
+    id: "abyssinia",
+    name: "Bank of Abyssinia",
+    shortLabel: "Abyssinia",
     accountLabel: "Account number",
-    accountValue: "0XXXXXXXXX",
-    accountName: "Wisdom Tower Digital",
+    accountValue: "211958545",
+    accountName: ACCOUNT_NAME,
     instructions: [
-      "Transfer the exact amount to the Awash account.",
+      "Transfer via Abyssinia mobile or branch to the account below.",
       "Include the order reference in the remark.",
-      "Submit the transaction reference on this page.",
-    ],
-  },
-  {
-    id: "dashen",
-    name: "Dashen Bank",
-    shortLabel: "Dashen",
-    accountLabel: "Account number",
-    accountValue: "5XXXXXXXXX",
-    accountName: "Wisdom Tower Digital",
-    instructions: [
-      "Transfer via Dashen mobile or branch.",
-      "Write the order reference on the transfer.",
-      "Enter the transaction ID after you pay.",
+      "Submit the transaction reference on this page after paying.",
     ],
   },
   {
     id: "other",
     name: "Other local bank",
     shortLabel: "Other bank",
-    accountLabel: "Use CBE or Telebirr preferred",
-    accountValue: "Contact us if needed",
-    accountName: "Wisdom Tower Digital",
+    accountLabel: "Prefer Telebirr, CBE, or Abyssinia",
+    accountValue: "See Telebirr / CBE / Abyssinia",
+    accountName: ACCOUNT_NAME,
     instructions: [
-      "Prefer Telebirr or CBE for faster manual verification.",
-      "If you must use another bank, pay and note the full receipt details.",
-      "Submit transaction reference + bank name below.",
+      "Prefer Telebirr, CBE, or Abyssinia for faster verification.",
+      "If you use another bank, transfer to one of the accounts above when possible.",
+      "Submit transaction reference + bank name in the note field.",
     ],
   },
 ];
