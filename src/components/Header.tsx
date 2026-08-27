@@ -25,10 +25,12 @@ import {
   FileText,
   MessageSquare,
   Sparkles,
+  ShoppingBag,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { isAdminEmail } from "@/lib/admin";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
+import HeaderLibraryLinks from "@/components/HeaderLibraryLinks";
 
 const mainNavLinks = [
   { href: "/", label: "Home" },
@@ -258,10 +260,6 @@ export default function Header() {
     );
   };
 
-  /**
-   * Fixed on mobile so the panel stays inside the viewport (right-aligned).
-   * Absolute under the bell on desktop.
-   */
   const NotifPanel = () => (
     <div
       className="mobile-menu-panel fixed z-[70] top-[4.25rem] right-3 left-3
@@ -420,168 +418,193 @@ export default function Header() {
                 ))
               )}
 
-              {!loading &&
-                (user ? (
-                  <div className="flex items-center gap-1.5 ml-1">
-                    <div className="relative" ref={notifRef}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setNotifOpen((v) => !v);
-                          setProfileOpen(false);
-                        }}
-                        aria-expanded={notifOpen}
-                        aria-label={unread ? `${unread} unread notifications` : "Notifications"}
-                        className={`relative p-2 rounded-full border transition-all duration-200 ${
-                          notifOpen
-                            ? "border-wisdom-cyan/40 bg-wisdom-cyan/10 text-wisdom-cyan"
-                            : "border-transparent text-wisdom-muted hover:text-white hover:bg-white/5 hover:border-white/10"
-                        }`}
-                      >
-                        <Bell className="w-[18px] h-[18px]" />
-                        {unread > 0 && (
-                          <span className="absolute top-1 right-1 min-w-[14px] h-3.5 px-0.5 rounded-full bg-wisdom-cyan text-[9px] font-bold text-wisdom-dark flex items-center justify-center leading-none ring-2 ring-wisdom-dark">
-                            {unread > 9 ? "9+" : unread}
-                          </span>
-                        )}
-                      </button>
-                      {notifOpen && <NotifPanel />}
-                    </div>
+              {!loading && (
+                <div className="flex items-center gap-1.5 ml-1">
+                  <HeaderLibraryLinks />
 
-                    <div className="relative" ref={profileRef}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setProfileOpen((v) => !v);
-                          setNotifOpen(false);
-                        }}
-                        aria-expanded={profileOpen}
-                        aria-haspopup="menu"
-                        className={`flex items-center gap-1.5 rounded-full p-0.5 pr-1.5 border transition-all duration-200 ${
-                          profileOpen
-                            ? "border-wisdom-cyan/50 bg-wisdom-cyan/10 ring-2 ring-wisdom-cyan/20"
-                            : "border-white/10 hover:border-white/25 hover:bg-white/5"
-                        }`}
-                      >
-                        <Avatar size="sm" />
-                        <ChevronDown
-                          className={`w-3.5 h-3.5 text-wisdom-muted transition-transform duration-200 ${
-                            profileOpen ? "rotate-180 text-wisdom-cyan" : ""
+                  {user ? (
+                    <>
+                      <div className="relative" ref={notifRef}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNotifOpen((v) => !v);
+                            setProfileOpen(false);
+                          }}
+                          aria-expanded={notifOpen}
+                          aria-label={unread ? `${unread} unread notifications` : "Notifications"}
+                          className={`relative p-2 rounded-full border transition-all duration-200 ${
+                            notifOpen
+                              ? "border-wisdom-cyan/40 bg-wisdom-cyan/10 text-wisdom-cyan"
+                              : "border-transparent text-wisdom-muted hover:text-white hover:bg-white/5 hover:border-white/10"
                           }`}
-                        />
-                      </button>
-
-                      {profileOpen && (
-                        <div
-                          className="mobile-menu-panel absolute right-0 top-full mt-2.5 w-[17.5rem] rounded-2xl border border-white/12 bg-[#0a0f1a] shadow-2xl shadow-black/70 overflow-hidden z-[70]"
-                          role="menu"
                         >
-                          <div className="px-4 py-3.5 border-b border-white/10 bg-gradient-to-br from-wisdom-cyan/10 via-transparent to-transparent">
-                            <div className="flex items-center gap-3">
-                              <Avatar size="lg" />
-                              <div className="min-w-0 flex-1">
-                                <p className="text-sm font-semibold text-white truncate">{displayName}</p>
-                                <p className="text-[11px] text-wisdom-muted truncate">{user.email}</p>
-                                <div className="mt-1.5 flex flex-wrap gap-1">
-                                  {isAdmin && (
-                                    <span className="inline-flex items-center gap-0.5 rounded-md border border-wisdom-cyan/35 bg-wisdom-cyan/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-wisdom-cyan">
-                                      <Shield className="w-2.5 h-2.5" />
-                                      Admin
-                                    </span>
-                                  )}
-                                  {platform && (
-                                    <span
-                                      className={`inline-flex items-center gap-0.5 rounded-md border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
-                                        platform === "academy"
-                                          ? "border-amber-400/35 text-amber-400 bg-amber-500/10"
-                                          : "border-cyan-400/35 text-cyan-400 bg-cyan-500/10"
-                                      }`}
-                                    >
-                                      {platform === "academy" ? (
-                                        <GraduationCap className="w-2.5 h-2.5" />
-                                      ) : (
-                                        <Monitor className="w-2.5 h-2.5" />
-                                      )}
-                                      {platform}
-                                    </span>
-                                  )}
+                          <Bell className="w-[18px] h-[18px]" />
+                          {unread > 0 && (
+                            <span className="absolute top-1 right-1 min-w-[14px] h-3.5 px-0.5 rounded-full bg-wisdom-cyan text-[9px] font-bold text-wisdom-dark flex items-center justify-center leading-none ring-2 ring-wisdom-dark">
+                              {unread > 9 ? "9+" : unread}
+                            </span>
+                          )}
+                        </button>
+                        {notifOpen && <NotifPanel />}
+                      </div>
+
+                      <div className="relative" ref={profileRef}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProfileOpen((v) => !v);
+                            setNotifOpen(false);
+                          }}
+                          aria-expanded={profileOpen}
+                          aria-haspopup="menu"
+                          className={`flex items-center gap-1.5 rounded-full p-0.5 pr-1.5 border transition-all duration-200 ${
+                            profileOpen
+                              ? "border-wisdom-cyan/50 bg-wisdom-cyan/10 ring-2 ring-wisdom-cyan/20"
+                              : "border-white/10 hover:border-white/25 hover:bg-white/5"
+                          }`}
+                        >
+                          <Avatar size="sm" />
+                          <ChevronDown
+                            className={`w-3.5 h-3.5 text-wisdom-muted transition-transform duration-200 ${
+                              profileOpen ? "rotate-180 text-wisdom-cyan" : ""
+                            }`}
+                          />
+                        </button>
+
+                        {profileOpen && (
+                          <div
+                            className="mobile-menu-panel absolute right-0 top-full mt-2.5 w-[17.5rem] rounded-2xl border border-white/12 bg-[#0a0f1a] shadow-2xl shadow-black/70 overflow-hidden z-[70]"
+                            role="menu"
+                          >
+                            <div className="px-4 py-3.5 border-b border-white/10 bg-gradient-to-br from-wisdom-cyan/10 via-transparent to-transparent">
+                              <div className="flex items-center gap-3">
+                                <Avatar size="lg" />
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-sm font-semibold text-white truncate">{displayName}</p>
+                                  <p className="text-[11px] text-wisdom-muted truncate">{user.email}</p>
+                                  <div className="mt-1.5 flex flex-wrap gap-1">
+                                    {isAdmin && (
+                                      <span className="inline-flex items-center gap-0.5 rounded-md border border-wisdom-cyan/35 bg-wisdom-cyan/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-wisdom-cyan">
+                                        <Shield className="w-2.5 h-2.5" />
+                                        Admin
+                                      </span>
+                                    )}
+                                    {platform && (
+                                      <span
+                                        className={`inline-flex items-center gap-0.5 rounded-md border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
+                                          platform === "academy"
+                                            ? "border-amber-400/35 text-amber-400 bg-amber-500/10"
+                                            : "border-cyan-400/35 text-cyan-400 bg-cyan-500/10"
+                                        }`}
+                                      >
+                                        {platform === "academy" ? (
+                                          <GraduationCap className="w-2.5 h-2.5" />
+                                        ) : (
+                                          <Monitor className="w-2.5 h-2.5" />
+                                        )}
+                                        {platform}
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
 
-                          <div className="py-1.5">
-                            <Link
-                              href="/account"
-                              role="menuitem"
-                              className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/90 hover:bg-white/5 hover:text-wisdom-cyan transition-colors"
-                              onClick={() => setProfileOpen(false)}
-                            >
-                              <User className="w-4 h-4 text-wisdom-muted" />
-                              My Account
-                            </Link>
-                            <Link
-                              href="/settings"
-                              role="menuitem"
-                              className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/90 hover:bg-white/5 hover:text-wisdom-cyan transition-colors"
-                              onClick={() => setProfileOpen(false)}
-                            >
-                              <Settings className="w-4 h-4 text-wisdom-muted" />
-                              Settings
-                            </Link>
-                            {isAdmin && (
+                            <div className="py-1.5">
                               <Link
-                                href="/admin"
+                                href="/learning"
                                 role="menuitem"
-                                className="flex items-center gap-3 px-4 py-2.5 text-sm text-wisdom-cyan hover:bg-wisdom-cyan/10 transition-colors"
+                                className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/90 hover:bg-white/5 hover:text-wisdom-cyan transition-colors"
                                 onClick={() => setProfileOpen(false)}
                               >
-                                <Shield className="w-4 h-4" />
-                                Admin Dashboard
+                                <BookOpen className="w-4 h-4 text-wisdom-muted" />
+                                My Learning
                               </Link>
-                            )}
-                            <Link
-                              href={platform === "academy" ? "/academy" : "/digital"}
-                              role="menuitem"
-                              className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/90 hover:bg-white/5 hover:text-wisdom-cyan transition-colors"
-                              onClick={() => setProfileOpen(false)}
-                            >
-                              <LayoutDashboard className="w-4 h-4 text-wisdom-muted" />
-                              {platform === "academy" ? "Academy Hub" : "Digital Services"}
-                            </Link>
-                          </div>
+                              <Link
+                                href="/cart"
+                                role="menuitem"
+                                className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/90 hover:bg-white/5 hover:text-wisdom-cyan transition-colors"
+                                onClick={() => setProfileOpen(false)}
+                              >
+                                <ShoppingBag className="w-4 h-4 text-wisdom-muted" />
+                                Cart
+                              </Link>
+                              <Link
+                                href="/account"
+                                role="menuitem"
+                                className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/90 hover:bg-white/5 hover:text-wisdom-cyan transition-colors"
+                                onClick={() => setProfileOpen(false)}
+                              >
+                                <User className="w-4 h-4 text-wisdom-muted" />
+                                My Account
+                              </Link>
+                              <Link
+                                href="/settings"
+                                role="menuitem"
+                                className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/90 hover:bg-white/5 hover:text-wisdom-cyan transition-colors"
+                                onClick={() => setProfileOpen(false)}
+                              >
+                                <Settings className="w-4 h-4 text-wisdom-muted" />
+                                Settings
+                              </Link>
+                              {isAdmin && (
+                                <Link
+                                  href="/admin"
+                                  role="menuitem"
+                                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-wisdom-cyan hover:bg-wisdom-cyan/10 transition-colors"
+                                  onClick={() => setProfileOpen(false)}
+                                >
+                                  <Shield className="w-4 h-4" />
+                                  Admin Dashboard
+                                </Link>
+                              )}
+                              <Link
+                                href={platform === "academy" ? "/academy" : "/digital"}
+                                role="menuitem"
+                                className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/90 hover:bg-white/5 hover:text-wisdom-cyan transition-colors"
+                                onClick={() => setProfileOpen(false)}
+                              >
+                                <LayoutDashboard className="w-4 h-4 text-wisdom-muted" />
+                                {platform === "academy" ? "Academy Hub" : "Digital Services"}
+                              </Link>
+                            </div>
 
-                          <div className="border-t border-white/10 py-1.5 bg-[#050810]">
-                            <button
-                              type="button"
-                              role="menuitem"
-                              onClick={handleLogout}
-                              className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors text-left"
-                            >
-                              <LogOut className="w-4 h-4" />
-                              Sign out
-                            </button>
+                            <div className="border-t border-white/10 py-1.5 bg-[#050810]">
+                              <button
+                                type="button"
+                                role="menuitem"
+                                onClick={handleLogout}
+                                className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors text-left"
+                              >
+                                <LogOut className="w-4 h-4" />
+                                Sign out
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex items-center gap-3 ml-1">
+                      <Link href="/login" className="text-sm text-wisdom-muted hover:text-wisdom-cyan transition-colors">
+                        Sign In
+                      </Link>
+                      <Link
+                        href="/signup"
+                        className="px-4 py-2 rounded-lg bg-wisdom-cyan text-wisdom-dark text-sm font-medium hover:bg-wisdom-cyan-dark hover:scale-105 active:scale-100 transition-all duration-300"
+                      >
+                        Get Started
+                      </Link>
                     </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-3 ml-2">
-                    <Link href="/login" className="text-sm text-wisdom-muted hover:text-wisdom-cyan transition-colors">
-                      Sign In
-                    </Link>
-                    <Link
-                      href="/signup"
-                      className="px-4 py-2 rounded-lg bg-wisdom-cyan text-wisdom-dark text-sm font-medium hover:bg-wisdom-cyan-dark hover:scale-105 active:scale-100 transition-all duration-300"
-                    >
-                      Get Started
-                    </Link>
-                  </div>
-                ))}
+                  )}
+                </div>
+              )}
             </nav>
 
             <div className="md:hidden flex items-center gap-0.5">
+              <HeaderLibraryLinks size="lg" onNavigate={() => setIsOpen(false)} />
+
               {user && (
                 <div className="relative" ref={notifRef}>
                   <button
@@ -676,6 +699,22 @@ export default function Header() {
                               <p className="text-[11px] text-wisdom-muted truncate">{user.email}</p>
                             </div>
                           </div>
+                          <Link
+                            href="/learning"
+                            className="flex items-center gap-2 text-sm text-white/85 hover:text-wisdom-cyan py-1.5"
+                            onClick={() => setIsOpen(false)}
+                          >
+                            <BookOpen className="w-4 h-4" />
+                            My Learning
+                          </Link>
+                          <Link
+                            href="/cart"
+                            className="flex items-center gap-2 text-sm text-white/85 hover:text-wisdom-cyan py-1.5"
+                            onClick={() => setIsOpen(false)}
+                          >
+                            <ShoppingBag className="w-4 h-4" />
+                            Cart
+                          </Link>
                           <Link
                             href="/account"
                             className="flex items-center gap-2 text-sm text-white/85 hover:text-wisdom-cyan py-1.5"
