@@ -16,7 +16,8 @@
     "tailwind-merge": "^2.5.4",
     "lucide-react": "^0.460.0",
     "class-variance-authority": "^0.7.0",
-    "@supabase/supabase-js": "^2.47.10"
+    "@supabase/supabase-js": "^2.47.10",
+    "ai": "^5.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",
