@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import {
   ArrowLeft,
   Copy,
@@ -21,7 +21,6 @@ import { generateOrderRef, saveOrder, type ManualOrder } from "@/lib/orders";
 
 export default function CheckoutPage() {
   const params = useParams();
-  const router = useRouter();
   const packageId = String(params.packageId || "");
   const pkg = useMemo(() => getPackage(packageId), [packageId]);
 
@@ -157,15 +156,18 @@ export default function CheckoutPage() {
               onClick={() => copyText("ref", orderRef)}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/15 text-xs font-semibold text-white/90 hover:bg-white/5"
             >
-              {copied === "ref" ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              {copied === "ref" ? (
+                <Check className="w-3.5 h-3.5 text-emerald-400" />
+              ) : (
+                <Copy className="w-3.5 h-3.5" />
+              )}
               Copy reference
             </button>
           </div>
         </div>
 
-        {/* Payment method picker */}
         <h2 className="font-display text-lg font-bold text-white mb-3">1. Pay with</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6">
           {paymentMethods.map((m) => (
             <button
               key={m.id}
@@ -214,9 +216,6 @@ export default function CheckoutPage() {
               </button>
             </div>
             <p className="text-xs text-wisdom-muted mt-2">Account name: {pay.accountName}</p>
-            <p className="text-[10px] text-amber-400/80 mt-2">
-              Placeholder numbers — replace with real Telebirr / CBE details before public launch.
-            </p>
           </div>
 
           <ol className="space-y-2">
@@ -230,7 +229,10 @@ export default function CheckoutPage() {
         </div>
 
         <h2 className="font-display text-lg font-bold text-white mb-3">2. Confirm payment</h2>
-        <form onSubmit={submit} className="rounded-2xl border border-white/12 bg-wisdom-card p-5 sm:p-6 space-y-4">
+        <form
+          onSubmit={submit}
+          className="rounded-2xl border border-white/12 bg-wisdom-card p-5 sm:p-6 space-y-4"
+        >
           <div className="grid sm:grid-cols-2 gap-4">
             <label className="block">
               <span className="text-xs text-wisdom-muted">Full name *</span>
