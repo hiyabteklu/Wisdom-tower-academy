@@ -1,6 +1,6 @@
 /**
  * Demo library for My Learning / Cart.
- * Replace with Supabase enrollments + orders when payments go live.
+ * Orders from manual checkout live in localStorage (see src/lib/orders.ts).
  */
 
 export type LearningKind = "course" | "service" | "bundle";
@@ -10,9 +10,8 @@ export type LearningItem = {
   kind: LearningKind;
   title: string;
   subtitle: string;
-  /** academy | digital */
   space: "academy" | "digital";
-  progress: number; // 0–100
+  progress: number;
   status: "in_progress" | "not_started" | "completed";
   href: string;
   image: string;
@@ -28,9 +27,9 @@ export type CartItem = {
   priceLabel: string;
   image: string;
   href: string;
+  packageId?: string;
 };
 
-/** Demo enrollments — shows how a student’s library looks */
 export const demoLearning: LearningItem[] = [
   {
     id: "l1",
@@ -109,23 +108,26 @@ export const demoLearning: LearningItem[] = [
   },
 ];
 
+/** Cart defaults to Academy packages at 500 ETB */
 export const demoCart: CartItem[] = [
   {
     id: "c1",
-    title: "GAT Full Prep",
-    subtitle: "Academy · entrance track",
+    packageId: "gat",
+    title: "GAT Package",
+    subtitle: "Academy · 500 ETB",
     space: "academy",
-    priceLabel: "Coming soon",
+    priceLabel: "500 ETB",
     image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400&q=80",
-    href: "/academy/gat",
+    href: "/checkout/gat",
   },
   {
     id: "c2",
-    title: "Landing page design",
-    subtitle: "Digital · web package",
-    space: "digital",
-    priceLabel: "Request quote",
-    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&q=80",
-    href: "/services/web-digital-marketing",
+    packageId: "freshman",
+    title: "Freshman Package",
+    subtitle: "Academy · 500 ETB",
+    space: "academy",
+    priceLabel: "500 ETB",
+    image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400&q=80",
+    href: "/checkout/freshman",
   },
 ];
