@@ -13,10 +13,10 @@ export default function FreshmanPage() {
         <div className="absolute top-0 right-1/4 w-[28rem] h-[28rem] rounded-full blur-3xl opacity-30 bg-gradient-to-br from-purple-500/25 via-pink-500/10 to-transparent" />
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-12 md:py-20">
+      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
         <CategoryBackButton fallback="/academy" />
 
-        <div className="mb-8 animate-fade-up">
+        <div className="mb-10 md:mb-12 animate-fade-up">
           <div className="flex flex-wrap items-center gap-3 mb-4">
             <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-purple-400/30 bg-wisdom-card text-purple-400">
               <GraduationCap className="w-5 h-5" />
@@ -32,7 +32,7 @@ export default function FreshmanPage() {
             Core first-year courses. Open any subject for materials and support — or build a custom
             semester GPA below.
           </p>
-          <p className="mt-2 text-sm text-purple-400/90 font-medium">
+          <p className="mt-3 text-sm text-purple-400/90 font-medium">
             {freshmanSubjects.length} subjects
           </p>
         </div>
@@ -46,11 +46,20 @@ export default function FreshmanPage() {
         </div>
 
         {/* GPA calculator */}
-        <div className="max-w-4xl mx-auto mb-14">
+        <div className="max-w-4xl mx-auto mb-14 md:mb-16">
           <GpaCalculator />
         </div>
 
-        <div className="perspective-scene grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-5 stagger-children">
+        <div className="mb-5 flex items-end justify-between gap-4">
+          <p className="text-sm font-semibold tracking-[0.15em] uppercase text-wisdom-muted">
+            Subject catalog
+          </p>
+          <p className="text-xs text-wisdom-muted/80 hidden sm:block">
+            Select a course to open learning hubs
+          </p>
+        </div>
+
+        <div className="perspective-scene grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6 lg:gap-7 stagger-children">
           {freshmanSubjects.map((subject) => (
             <SubjectCard
               key={subject.id}
