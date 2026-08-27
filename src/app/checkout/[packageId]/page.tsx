@@ -18,6 +18,7 @@ import {
   type PaymentMethodId,
 } from "@/data/packages";
 import { generateOrderRef, saveOrder, type ManualOrder } from "@/lib/orders";
+import { removeFromCart } from "@/lib/cart";
 
 export default function CheckoutPage() {
   const params = useParams();
@@ -74,11 +75,15 @@ export default function CheckoutPage() {
     };
 
     const result = await saveOrder(order);
+    // Always remove this package from cart after submit attempt
+    removeFromCart(pkg.id);
     setSubmitting(false);
 
-    if (!result.ok && result.error) {
-      setError("Could not save order online. It was saved on this device — contact us with your order reference.");
-      // still show success so student has the ref
+    if (result.error) {
+      setError(
+        "Saved on this device. If it does not appear in Admin → Payments, contact support with order " +
+          orderRef
+      );
     }
     setDone(true);
   }
@@ -107,8 +112,11 @@ export default function CheckoutPage() {
             <span className="text-white">{pkg.name}</span> ({formatEtb(pkg.priceEtb)}) is pending
             manual confirmation. You&apos;ll get access in My Learning after we verify the transfer.
           </p>
-          <p className="text-xs text-wisdom-muted mb-6">
+          <p className="text-xs text-wisdom-muted mb-2">
             Keep your receipt. Reference: {txRef}
+          </p>
+          <p className="text-xs text-wisdom-muted mb-6">
+            Admin: open <span className="text-cyan-300">/admin/payments</span> to approve.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
@@ -116,6 +124,12 @@ export default function CheckoutPage() {
               className="px-5 py-2.5 rounded-xl bg-wisdom-cyan text-wisdom-dark text-sm font-semibold"
             >
               Open My Learning
+            </Link>
+            <Link
+              href="/orders"
+              className="px-5 py-2.5 rounded-xl border border-white/15 text-sm font-semibold text-white/90"
+            >
+              My orders (this device)
             </Link>
             <Link
               href="/packages"
@@ -300,8 +314,8 @@ export default function CheckoutPage() {
           <div className="flex items-start gap-2 text-xs text-wisdom-muted">
             <Shield className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
             <p>
-              We verify payments manually. Access unlocks after confirmation — not instantly. Fake
-              references will be rejected. Use the same email as your account for fastest unlock.
+              We verify payments manually. Access unlocks after confirmation — not instantly. Use the
+              same email as your account for fastest unlock.
             </p>
           </div>
 
