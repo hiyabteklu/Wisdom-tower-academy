@@ -3,10 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 
 export function useInView<T extends HTMLElement = HTMLDivElement>(
-  options: IntersectionObserverInit = { threshold: 0.2, rootMargin: "0px 0px -40px 0px" }
+  options?: IntersectionObserverInit
 ) {
   const ref = useRef<T | null>(null);
   const [inView, setInView] = useState(false);
+  const threshold = options?.threshold ?? 0.2;
+  const rootMargin = options?.rootMargin ?? "0px 0px -40px 0px";
 
   useEffect(() => {
     const el = ref.current;
@@ -17,16 +19,19 @@ export function useInView<T extends HTMLElement = HTMLDivElement>(
       return;
     }
 
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setInView(true);
-        observer.unobserve(el);
-      }
-    }, options);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+          observer.unobserve(el);
+        }
+      },
+      { threshold, rootMargin }
+    );
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, [options.threshold, options.rootMargin]);
+  }, [threshold, rootMargin]);
 
   return { ref, inView };
 }
