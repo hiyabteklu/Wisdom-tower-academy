@@ -47,6 +47,11 @@ function getPlatform(user: SupabaseUser | null): "academy" | "digital" | null {
   return null;
 }
 
+function isActivePath(pathname: string, href: string) {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(href + "/");
+}
+
 export default function Header() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
@@ -184,14 +189,19 @@ export default function Header() {
             <nav className="hidden md:flex items-center gap-5">
               {showAcademyChrome ? (
                 <>
-                  <Link href="/academy" className="text-sm text-wisdom-muted hover:text-amber-400 transition-colors">
+                  <Link
+                    href="/academy"
+                    className="nav-link text-sm text-wisdom-muted hover:text-amber-400 transition-colors"
+                    data-active={isActivePath(pathname, "/academy") && pathname === "/academy" ? "true" : undefined}
+                  >
                     Programs
                   </Link>
                   {academyMenuLinks.slice(0, 3).map((link) => (
                     <Link
                       key={link.href}
                       href={link.href}
-                      className="text-sm text-wisdom-muted hover:text-amber-400 transition-colors"
+                      className="nav-link text-sm text-wisdom-muted hover:text-amber-400 transition-colors"
+                      data-active={isActivePath(pathname, link.href) ? "true" : undefined}
                     >
                       {link.label}
                     </Link>
@@ -202,7 +212,8 @@ export default function Header() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="text-sm text-wisdom-muted hover:text-wisdom-cyan transition-colors"
+                    className="nav-link text-sm text-wisdom-muted hover:text-wisdom-cyan transition-colors"
+                    data-active={isActivePath(pathname, link.href) ? "true" : undefined}
                   >
                     {link.label}
                   </Link>
@@ -269,7 +280,7 @@ export default function Header() {
                     </Link>
                     <Link
                       href="/signup"
-                      className="px-4 py-2 rounded-lg bg-wisdom-cyan text-wisdom-dark text-sm font-medium hover:bg-wisdom-cyan-dark transition-colors"
+                      className="px-4 py-2 rounded-lg bg-wisdom-cyan text-wisdom-dark text-sm font-medium hover:bg-wisdom-cyan-dark hover:scale-105 active:scale-100 transition-all duration-300"
                     >
                       Get Started
                     </Link>
@@ -277,7 +288,7 @@ export default function Header() {
                 ))}
             </nav>
 
-            {/* Mobile menu — solid panel, no see-through content */}
+            {/* Mobile menu */}
             <div className="md:hidden relative" ref={menuRef}>
               <button
                 type="button"
@@ -291,7 +302,7 @@ export default function Header() {
 
               {isOpen && (
                 <div
-                  className="absolute right-0 top-full mt-2 w-[min(18.5rem,calc(100vw-1.5rem))] rounded-2xl border border-white/15 bg-[#0a0f1a] shadow-2xl shadow-black/60 overflow-hidden z-[60] animate-scale-in"
+                  className="mobile-menu-panel absolute right-0 top-full mt-2 w-[min(18.5rem,calc(100vw-1.5rem))] rounded-2xl border border-white/15 bg-[#0a0f1a] shadow-2xl shadow-black/60 overflow-hidden z-[60]"
                   role="menu"
                   style={{ backgroundColor: "#0a0f1a" }}
                 >
