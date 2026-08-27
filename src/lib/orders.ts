@@ -204,6 +204,46 @@ export async function listOrdersFromDb(): Promise<ManualOrder[]> {
   }
 }
 
+/** Orders for the signed-in user (by user_id or email) + local merge */
+export async function listMyOrders(): Promise<ManualOrder[]> {
+  const local = listLocalOrders();
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session?.user) return local;
+
+    const email = session.user.email;
+    let q = supabase
+      .from("orders")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (email) {
+      q = q.or(`user_id.eq.${session.user.id},email.eq.${email}`);
+    } else {
+      q = q.eq("user_id", session.user.id);
+    }
+
+    const { data, error } = await q;
+    if (error) {
+      console.warn("[my-orders]", error.message);
+      return local;
+    }
+
+    const fromDb = (data || []).map((r) => rowToOrder(r as Record<string, unknown>));
+    const map = new Map<string, ManualOrder>();
+    for (const o of [...fromDb, ...local]) {
+      const prev = map.get(o.id);
+      if (!prev || o.createdAt >= prev.createdAt) map.set(o.id, o);
+    }
+    return Array.from(map.values()).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  } catch {
+    return local;
+  }
+}
+
 /** Approve order + create enrollment */
 export async function verifyOrder(
   orderId: string,
@@ -284,22 +324,38 @@ export async function listMyEnrollments(): Promise<
     } = await supabase.auth.getSession();
     if (!session?.user) return [];
 
-    const { data, error } = await supabase
+    const email = session.user.email;
+    let query = supabase
       .from("enrollments")
       .select("package_id, package_name, created_at")
-      .or(`user_id.eq.${session.user.id},email.eq.${session.user.email}`)
       .order("created_at", { ascending: false });
+
+    if (email) {
+      query = query.or(`user_id.eq.${session.user.id},email.eq.${email}`);
+    } else {
+      query = query.eq("user_id", session.user.id);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.warn("[enrollments]", error.message);
       return [];
     }
 
-    return (data || []).map((r) => ({
-      packageId: String(r.package_id),
-      packageName: String(r.package_name),
-      createdAt: String(r.created_at),
-    }));
+    const seen = new Set<string>();
+    const out: { packageId: string; packageName: string; createdAt: string }[] = [];
+    for (const r of data || []) {
+      const id = String(r.package_id);
+      if (seen.has(id)) continue;
+      seen.add(id);
+      out.push({
+        packageId: id,
+        packageName: String(r.package_name),
+        createdAt: String(r.created_at),
+      });
+    }
+    return out;
   } catch {
     return [];
   }
