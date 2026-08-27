@@ -20,17 +20,21 @@ const FALLBACK =
   "Explanation is temporarily unavailable. Review the correct option, compare it with your choice, and try a similar practice question to lock in the idea.";
 
 /**
- * Groq free/developer models (llama-3.1-8b-instant is often Enterprise-only).
- * Override with AI_EXPLAIN_MODEL env if needed.
+ * Ordered fallback chain. Retired/dead models removed.
+ * gpt-oss-20b is tried first (currently working on Groq).
+ * Gateway is last — only reached if both Groq attempts fail.
+ * Override first model with AI_EXPLAIN_MODEL if needed.
  */
 const GROQ_MODELS = [
   process.env.AI_EXPLAIN_MODEL,
   "openai/gpt-oss-20b",
   "llama-3.3-70b-versatile",
-  "llama-3.1-8b-instant",
 ].filter((m): m is string => Boolean(m && m.trim()));
 
-const GATEWAY_MODEL = process.env.AI_EXPLAIN_MODEL || "openai/gpt-oss-20b";
+const GATEWAY_MODEL = process.env.AI_EXPLAIN_MODEL || "openai/gpt-4o-mini";
+
+/** Fail fast per attempt so one dead path cannot eat the full 30s budget. */
+const PER_ATTEMPT_TIMEOUT_MS = 8000;
 
 function clientIp(req: NextRequest): string {
   const forwarded = req.headers.get("x-forwarded-for");
@@ -80,6 +84,23 @@ function isCardRequiredError(msg: string): boolean {
   return /credit card|customer_verification|add a card|unlock your free credits/i.test(msg);
 }
 
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(`${label} timed out after ${ms}ms`));
+    }, ms);
+    promise
+      .then((v) => {
+        clearTimeout(timer);
+        resolve(v);
+      })
+      .catch((e) => {
+        clearTimeout(timer);
+        reject(e);
+      });
+  });
+}
+
 async function groqChat(model: string, prompt: string, key: string): Promise<string> {
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
@@ -112,7 +133,7 @@ async function groqChat(model: string, prompt: string, key: string): Promise<str
   return text;
 }
 
-/** Free path: Groq OpenAI-compatible API (tries several model ids). */
+/** Free path: Groq OpenAI-compatible API (ordered chain, fail-fast per model). */
 async function generateWithGroq(prompt: string): Promise<{ text: string; model: string }> {
   const key = process.env.GROQ_API_KEY;
   if (!key) throw new Error("GROQ_API_KEY not set");
@@ -124,7 +145,11 @@ async function generateWithGroq(prompt: string): Promise<{ text: string; model: 
     if (tried.includes(model)) continue;
     tried.push(model);
     try {
-      const text = await groqChat(model, prompt, key);
+      const text = await withTimeout(
+        groqChat(model, prompt, key),
+        PER_ATTEMPT_TIMEOUT_MS,
+        `Groq ${model}`
+      );
       return { text, model: `groq/${model}` };
     } catch (e) {
       lastErr = errorMessage(e);
@@ -135,17 +160,21 @@ async function generateWithGroq(prompt: string): Promise<{ text: string; model: 
   throw new Error(lastErr || "All Groq models failed");
 }
 
-/** Vercel AI Gateway (needs card on file to unlock free $5 credits). */
+/** Vercel AI Gateway (needs card on file to unlock free credits) — last resort. */
 async function generateWithGateway(prompt: string): Promise<{ text: string; model: string }> {
   if (!process.env.AI_GATEWAY_API_KEY) {
     throw new Error("AI_GATEWAY_API_KEY not configured");
   }
 
-  const { text } = await generateText({
-    model: GATEWAY_MODEL,
-    prompt,
-    temperature: 0.4,
-  });
+  const { text } = await withTimeout(
+    generateText({
+      model: GATEWAY_MODEL,
+      prompt,
+      temperature: 0.4,
+    }),
+    PER_ATTEMPT_TIMEOUT_MS,
+    `Gateway ${GATEWAY_MODEL}`
+  );
 
   const trimmed = (text || "").trim();
   if (!trimmed) throw new Error("AI Gateway returned empty content");
@@ -250,7 +279,7 @@ export async function POST(req: NextRequest) {
 
   let lastError = "";
 
-  // 1) Prefer Groq when available (works without Vercel card)
+  // 1) Prefer Groq (works without Vercel card) — ordered chain with per-attempt timeout
   if (hasGroq) {
     try {
       const result = await generateWithGroq(prompt);
@@ -282,7 +311,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // 2) AI Gateway
+  // 2) AI Gateway last resort
   if (hasGateway) {
     try {
       const result = await generateWithGateway(prompt);
