@@ -19,8 +19,9 @@ type ExplainBody = {
 const FALLBACK =
   "Explanation is temporarily unavailable. Review the correct option, compare it with your choice, and try a similar practice question to lock in the idea.";
 
-/** Cheap default that works on AI Gateway free credits; override with AI_EXPLAIN_MODEL */
-const DEFAULT_MODEL = "meta/llama-3.1-8b";
+/** Prefer Groq when GROQ_API_KEY is set (free tier, no Vercel card). Else AI Gateway. */
+const GROQ_MODEL = process.env.AI_EXPLAIN_MODEL || "llama-3.1-8b-instant";
+const GATEWAY_MODEL = process.env.AI_EXPLAIN_MODEL || "meta/llama-3.1-8b";
 
 function clientIp(req: NextRequest): string {
   const forwarded = req.headers.get("x-forwarded-for");
@@ -28,35 +29,30 @@ function clientIp(req: NextRequest): string {
   return req.headers.get("x-real-ip") || "unknown";
 }
 
-function buildPrompt(
-  body: Required<
-    Pick<
-      ExplainBody,
-      | "question"
-      | "choices"
-      | "studentAnswer"
-      | "correctAnswer"
-      | "subject"
-      | "difficulty"
-    >
-  >
-) {
-  const choicesList = body.choices
+function buildPrompt(input: {
+  question: string;
+  choices: string[];
+  studentAnswer: string;
+  correctAnswer: string;
+  subject: string;
+  difficulty: string;
+}) {
+  const choicesList = input.choices
     .map((c, i) => `${String.fromCharCode(65 + i)}. ${c}`)
     .join("\n");
   return `You are a patient tutor for Ethiopian university / secondary students on Wisdom Tower Academy.
 
-Subject: ${body.subject}
-Difficulty: ${body.difficulty}
+Subject: ${input.subject}
+Difficulty: ${input.difficulty}
 
 Question:
-${body.question}
+${input.question}
 
 Choices:
 ${choicesList}
 
-Student's answer: ${body.studentAnswer}
-Correct answer: ${body.correctAnswer}
+Student's answer: ${input.studentAnswer}
+Correct answer: ${input.correctAnswer}
 
 Write a concise educational explanation (max ~180 words):
 - Explain why the correct answer is right.
@@ -66,8 +62,70 @@ Write a concise educational explanation (max ~180 words):
 }
 
 function errorMessage(e: unknown): string {
-  if (e instanceof Error) return e.message.slice(0, 300);
-  return String(e).slice(0, 300);
+  if (e instanceof Error) return e.message.slice(0, 400);
+  return String(e).slice(0, 400);
+}
+
+function isCardRequiredError(msg: string): boolean {
+  return /credit card|customer_verification|add a card|unlock your free credits/i.test(msg);
+}
+
+/** Free path: Groq OpenAI-compatible API (no Vercel AI Gateway / no card). */
+async function generateWithGroq(prompt: string): Promise<{ text: string; model: string }> {
+  const key = process.env.GROQ_API_KEY;
+  if (!key) throw new Error("GROQ_API_KEY not set");
+
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${key}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: GROQ_MODEL,
+      temperature: 0.4,
+      max_tokens: 400,
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+    }),
+  });
+
+  const raw = await res.text();
+  if (!res.ok) {
+    throw new Error(`Groq ${res.status}: ${raw.slice(0, 280)}`);
+  }
+
+  let data: { choices?: { message?: { content?: string } }[] };
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    throw new Error("Groq returned invalid JSON");
+  }
+
+  const text = data.choices?.[0]?.message?.content?.trim() || "";
+  if (!text) throw new Error("Groq returned empty content");
+  return { text, model: `groq/${GROQ_MODEL}` };
+}
+
+/** Vercel AI Gateway (needs card on file to unlock free $5 credits). */
+async function generateWithGateway(prompt: string): Promise<{ text: string; model: string }> {
+  if (!process.env.AI_GATEWAY_API_KEY) {
+    throw new Error("AI_GATEWAY_API_KEY not configured");
+  }
+
+  const { text } = await generateText({
+    model: GATEWAY_MODEL,
+    prompt,
+    temperature: 0.4,
+  });
+
+  const trimmed = (text || "").trim();
+  if (!trimmed) throw new Error("AI Gateway returned empty content");
+  return { text: trimmed, model: GATEWAY_MODEL };
 }
 
 export async function POST(req: NextRequest) {
@@ -122,7 +180,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 1) Cache hit
+  // Cache hit
   if (supabase) {
     try {
       const { data: cached } = await supabase
@@ -143,66 +201,114 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // 2) Generate with AI Gateway (credentials stay server-side)
-  const model = process.env.AI_EXPLAIN_MODEL || DEFAULT_MODEL;
+  const prompt = buildPrompt({
+    question,
+    choices,
+    studentAnswer,
+    correctAnswer,
+    subject,
+    difficulty,
+  });
 
-  if (!process.env.AI_GATEWAY_API_KEY) {
-    console.error("[explain] AI_GATEWAY_API_KEY missing in runtime env");
+  const hasGroq = Boolean(process.env.GROQ_API_KEY);
+  const hasGateway = Boolean(process.env.AI_GATEWAY_API_KEY);
+
+  if (!hasGroq && !hasGateway) {
+    console.error("[explain] no AI provider keys configured");
     return NextResponse.json({
       explanation: FALLBACK,
       cached: false,
       fallback: true,
-      reason: "AI_GATEWAY_API_KEY not configured",
+      reason: "no_provider",
+      detail: "Set GROQ_API_KEY (free) or AI_GATEWAY_API_KEY on Vercel",
     });
   }
 
-  try {
-    const { text } = await generateText({
-      model,
-      prompt: buildPrompt({
-        question,
-        choices,
-        studentAnswer,
-        correctAnswer,
-        subject,
-        difficulty,
-      }),
-      temperature: 0.4,
-    });
+  let lastError = "";
+  let usedModel = "";
 
-    const explanation = (text || "").trim() || FALLBACK;
+  // 1) Prefer Groq when available (works without Vercel card)
+  if (hasGroq) {
+    try {
+      const result = await generateWithGroq(prompt);
+      usedModel = result.model;
 
-    if (supabase && explanation !== FALLBACK) {
-      try {
-        await supabase.from("question_explanations").upsert({
-          question_id: questionId,
-          explanation,
-          subject,
-          difficulty,
-          model,
-          updated_at: new Date().toISOString(),
+      if (supabase) {
+        try {
+          await supabase.from("question_explanations").upsert({
+            question_id: questionId,
+            explanation: result.text,
+            subject,
+            difficulty,
+            model: usedModel,
+            updated_at: new Date().toISOString(),
+          });
+        } catch (e) {
+          console.warn("[explain] cache write failed:", e);
+        }
+      }
+
+      return NextResponse.json({
+        explanation: result.text,
+        cached: false,
+        fallback: false,
+        model: usedModel,
+      });
+    } catch (e) {
+      lastError = errorMessage(e);
+      console.error("[explain] Groq failed:", lastError);
+    }
+  }
+
+  // 2) AI Gateway
+  if (hasGateway) {
+    try {
+      const result = await generateWithGateway(prompt);
+      usedModel = result.model;
+
+      if (supabase) {
+        try {
+          await supabase.from("question_explanations").upsert({
+            question_id: questionId,
+            explanation: result.text,
+            subject,
+            difficulty,
+            model: usedModel,
+            updated_at: new Date().toISOString(),
+          });
+        } catch (e) {
+          console.warn("[explain] cache write failed:", e);
+        }
+      }
+
+      return NextResponse.json({
+        explanation: result.text,
+        cached: false,
+        fallback: false,
+        model: usedModel,
+      });
+    } catch (e) {
+      lastError = errorMessage(e);
+      console.error("[explain] Gateway failed:", lastError);
+
+      if (isCardRequiredError(lastError)) {
+        return NextResponse.json({
+          explanation: FALLBACK,
+          cached: false,
+          fallback: true,
+          reason: "card_required",
+          detail:
+            "Vercel AI Gateway needs a card on file to unlock free credits. Add GROQ_API_KEY for a free alternative, or add a card in Vercel AI settings.",
         });
-      } catch (e) {
-        console.warn("[explain] cache write failed:", e);
       }
     }
-
-    return NextResponse.json({
-      explanation,
-      cached: false,
-      fallback: explanation === FALLBACK,
-      model,
-    });
-  } catch (e) {
-    const msg = errorMessage(e);
-    console.error("[explain] AI error:", msg, e);
-    return NextResponse.json({
-      explanation: FALLBACK,
-      cached: false,
-      fallback: true,
-      reason: "ai_unavailable",
-      detail: msg,
-      model,
-    });
   }
+
+  return NextResponse.json({
+    explanation: FALLBACK,
+    cached: false,
+    fallback: true,
+    reason: "ai_unavailable",
+    detail: lastError || "All providers failed",
+  });
 }

@@ -1,52 +1,49 @@
-# AI Explain feature — setup (do this once)
+# AI Explain — setup
 
-Code is already in the repo. You only need cloud keys + one SQL script.
+## Why Explain showed “offline tip”
 
-## 1. Supabase (do this first)
+Vercel runtime logs showed:
 
-1. Open [supabase.com](https://supabase.com) → your project (or create a free one).
-2. **SQL Editor** → New query → paste everything from `docs/supabase-setup.sql` → **Run**.
-3. **Project Settings → API** copy:
-   - Project URL → `NEXT_PUBLIC_SUPABASE_URL`
-   - `anon` `public` key → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `service_role` key → `SUPABASE_SERVICE_ROLE_KEY` (secret; never put in client code)
+> AI Gateway requires a valid credit card on file to service requests… unlock your free credits.
 
-## 2. Vercel AI Gateway
+So the **code is fine**. Gateway free credits are locked until a card is verified (Hobby). You may not be charged if you stay under the free allowance, but a card is still required.
 
-1. Open [vercel.com](https://vercel.com) → your team/account.
-2. Go to **AI Gateway** (or AI section) → create an **API key**.
-3. Copy it → `AI_GATEWAY_API_KEY`.
-4. Free tier includes about **$5 credits / month** — enough for development and early traffic when explanations are cached.
+## Two ways to make Explain work ($0 preferred)
 
-Optional: set `AI_EXPLAIN_MODEL` to any Gateway model slug (default in code: `openai/gpt-oss-20b`).
+### Option A — Groq (no Vercel card) ★ recommended for now
 
-## 3. Put env vars on Vercel
+1. Open [https://console.groq.com](https://console.groq.com) → sign up → **API Keys** → create key.
+2. Vercel → Project → **Settings → Environment Variables**:
+   - Name: `GROQ_API_KEY`
+   - Value: your Groq key
+   - Environments: Production + Preview
+3. **Redeploy**.
 
-Project → **Settings → Environment Variables** → add for Production + Preview:
+The API prefers Groq when `GROQ_API_KEY` is set.
 
-| Name | Value |
-|------|--------|
-| `NEXT_PUBLIC_SUPABASE_URL` | from Supabase |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | from Supabase |
-| `SUPABASE_SERVICE_ROLE_KEY` | from Supabase |
-| `AI_GATEWAY_API_KEY` | from AI Gateway |
+### Option B — Vercel AI Gateway
 
-Redeploy after saving.
+1. Vercel → **AI** / AI Gateway → add a **credit card** to unlock free monthly credits.
+2. Keep `AI_GATEWAY_API_KEY` set (you already did).
+3. Redeploy if needed.
 
-## 4. Local dev
+## Already configured
 
-```bash
-cp .env.example .env.local
-# fill in the same values
-npm install
-npm run dev
-```
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `AI_GATEWAY_API_KEY`
+- SQL tables from `docs/supabase-setup.sql`
 
-Open: [http://localhost:3000/academy/quiz-demo](http://localhost:3000/academy/quiz-demo)
+## Test
 
-## How it works
+https://wisdom-tower-digital.vercel.app/academy/quiz-demo  
+Answer → Check → **Explain** → real tutor text (not “temporarily unavailable”).
 
-- Student answers → **Explain** → `POST /api/explain`
-- Server checks rate limit → Supabase cache by `question_id` → else Vercel AI SDK / Gateway
-- Keys never leave the server
-- If AI is down or unconfigured → polite fallback text; quiz still works
+## How the route works
+
+1. Rate limit
+2. Supabase cache by `question_id`
+3. Generate: **Groq first** (if key), else **AI Gateway**
+4. Save cache
+5. Fallback message if both fail (quiz still works)
