@@ -4,10 +4,11 @@ export default function GatPage() {
   return (
     <BranchHubPage
       title="GAT"
-      subtitle="Graduate Admission Test coaching covering quantitative, verbal, and analytical sections."
+      subtitle="Graduate Admission Test coaching — quantitative, verbal, and analytical."
       accentClass="text-rose-400"
-      gradientClass="from-rose-500/25 via-red-500/10 to-transparent"
-      scopeId="branch-gat"
+      gradientClass="from-rose-500/20 via-red-500/5 to-transparent"
+      scopeId="gat"
+      packageId="gat"
     />
   );
 }

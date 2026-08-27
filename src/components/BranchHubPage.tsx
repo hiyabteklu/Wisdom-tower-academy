@@ -2,6 +2,7 @@ import Link from "next/link";
 import CategoryBackButton from "@/components/CategoryBackButton";
 import BranchLeaderboard from "@/components/BranchLeaderboard";
 import AcademicResultSaver from "@/components/AcademicResultSaver";
+import PackageOfferBanner from "@/components/PackageOfferBanner";
 import { Construction, MessageCircle } from "lucide-react";
 
 type Props = {
@@ -10,6 +11,8 @@ type Props = {
   accentClass: string;
   gradientClass: string;
   scopeId: string;
+  /** Sellable package id e.g. uat, gat, coc, exit-exam */
+  packageId?: string;
 };
 
 export default function BranchHubPage({
@@ -18,6 +21,7 @@ export default function BranchHubPage({
   accentClass,
   gradientClass,
   scopeId,
+  packageId,
 }: Props) {
   return (
     <div className="relative min-h-[75vh]">
@@ -40,6 +44,12 @@ export default function BranchHubPage({
           <p className="text-wisdom-muted">{subtitle}</p>
         </div>
 
+        {packageId && (
+          <div className="mb-8">
+            <PackageOfferBanner packageId={packageId} />
+          </div>
+        )}
+
         <BranchLeaderboard branchName={title} accent={accentClass} />
 
         <div className="mb-10">
@@ -47,7 +57,9 @@ export default function BranchHubPage({
         </div>
 
         <div className="rounded-3xl border border-white/15 bg-wisdom-card shadow-card-3d overflow-hidden">
-          <div className={`px-6 sm:px-8 pt-8 pb-6 border-b border-white/10 bg-gradient-to-br ${gradientClass}`}>
+          <div
+            className={`px-6 sm:px-8 pt-8 pb-6 border-b border-white/10 bg-gradient-to-br ${gradientClass}`}
+          >
             <h2 className="font-display text-xl font-bold">Learning materials</h2>
             <p className="text-sm text-wisdom-muted mt-1">Practice sets and guides for {title}</p>
           </div>

@@ -2,6 +2,7 @@ import { freshmanSubjects } from "@/data/freshman";
 import CategoryBackButton from "@/components/CategoryBackButton";
 import SubjectCard from "@/components/SubjectCard";
 import BranchLeaderboard from "@/components/BranchLeaderboard";
+import PackageOfferBanner from "@/components/PackageOfferBanner";
 import { GraduationCap } from "lucide-react";
 
 export default function FreshmanPage() {
@@ -32,6 +33,10 @@ export default function FreshmanPage() {
           <p className="mt-2 text-sm text-purple-400/90 font-medium">
             {freshmanSubjects.length} subjects
           </p>
+        </div>
+
+        <div className="max-w-3xl mx-auto mb-8">
+          <PackageOfferBanner packageId="freshman" />
         </div>
 
         <div className="max-w-3xl mx-auto mb-2">
