@@ -12,16 +12,15 @@ type ChannelResult = {
   error?: string;
 };
 
-function siteUrl() {
-  return (
+function siteUrl(): string {
+  const fromEnv =
     process.env.NEXT_PUBLIC_SITE_URL ||
     process.env.VERCEL_PROJECT_PRODUCTION_URL ||
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "") ||
-    "https://wisdom-tower-digital.vercel.app"
-  ).replace(/\/$/, "");
+    "https://wisdom-tower-digital.vercel.app";
+  return fromEnv.replace(/\/$/, "");
 }
 
-/** Ethiopia-friendly E.164: 09xxxxxxxx to +2519xxxxxxxx */
 function toE164(phone: string): string | null {
   const d = phone.replace(/[^\d+]/g, "");
   if (!d) return null;
@@ -29,20 +28,15 @@ function toE164(phone: string): string | null {
   if (d.startsWith("251") && d.length >= 12) return `+${d}`;
   if (d.startsWith("0") && d.length === 10) return `+251${d.slice(1)}`;
   if (d.length === 9 && d.startsWith("9")) return `+251${d}`;
-  return d.startsWith("+") ? d : `+${d}`;
+  return `+${d}`;
 }
 
-/** Safe HTML escape without embedding raw entity literals that APIs may decode. */
 function escapeHtml(s: string): string {
-  const amp = ["&", "amp;"].join("");
-  const lt = ["&", "lt;"].join("");
-  const gt = ["&", "gt;"].join("");
-  const quot = ["&", "quot;"].join("");
   return s
-    .replace(/&/g, amp)
-    .replace(/</g, lt)
-    .replace(/>/g, gt)
-    .replace(/"/g, quot);
+    .replace(/&/g, "\u0026amp;")
+    .replace(/</g, "\u0026lt;")
+    .replace(/>/g, "\u0026gt;")
+    .replace(/"/g, "\u0026quot;");
 }
 
 async function sendEmailResend(opts: {
@@ -52,11 +46,11 @@ async function sendEmailResend(opts: {
   text: string;
 }): Promise<ChannelResult> {
   const key = process.env.RESEND_API_KEY;
-  if (!key) return { sent: false, skipped: true, error: "RESEND_API_KEY not set" };
+  if (!key) {
+    return { sent: false, skipped: true, error: "RESEND_API_KEY not set" };
+  }
 
-  const from =
-    process.env.RESEND_FROM ||
-    "Wisdom Tower <onboarding@resend.dev>";
+  const from = process.env.RESEND_FROM || "Wisdom Tower <onboarding@resend.dev>";
 
   try {
     const res = await fetch("https://api.resend.com/emails", {
@@ -73,12 +67,9 @@ async function sendEmailResend(opts: {
         text: opts.text,
       }),
     });
-    const body = await res.json().catch(() => ({}));
+    const body = (await res.json().catch(() => ({}))) as { message?: string };
     if (!res.ok) {
-      return {
-        sent: false,
-        error: (body as { message?: string }).message || `HTTP ${res.status}`,
-      };
+      return { sent: false, error: body.message || `HTTP ${res.status}` };
     }
     return { sent: true };
   } catch (e) {
@@ -86,10 +77,7 @@ async function sendEmailResend(opts: {
   }
 }
 
-async function sendSms(opts: {
-  to: string;
-  message: string;
-}): Promise<ChannelResult> {
+async function sendSms(opts: { to: string; message: string }): Promise<ChannelResult> {
   const e164 = toE164(opts.to);
   if (!e164) return { sent: false, skipped: true, error: "Invalid phone" };
 
@@ -115,7 +103,9 @@ async function sendSms(opts: {
         body,
       });
       const text = await res.text();
-      if (!res.ok) return { sent: false, error: text.slice(0, 200) || `HTTP ${res.status}` };
+      if (!res.ok) {
+        return { sent: false, error: text.slice(0, 200) || `HTTP ${res.status}` };
+      }
       return { sent: true };
     } catch (e) {
       return { sent: false, error: e instanceof Error ? e.message : "SMS failed" };
@@ -144,12 +134,9 @@ async function sendSms(opts: {
           body,
         }
       );
-      const data = await res.json().catch(() => ({}));
+      const data = (await res.json().catch(() => ({}))) as { message?: string };
       if (!res.ok) {
-        return {
-          sent: false,
-          error: (data as { message?: string }).message || `HTTP ${res.status}`,
-        };
+        return { sent: false, error: data.message || `HTTP ${res.status}` };
       }
       return { sent: true };
     } catch (e) {
@@ -164,11 +151,82 @@ async function sendSms(opts: {
   };
 }
 
+function buildApprovedEmail(opts: {
+  name: string;
+  packageName: string;
+  amount: string;
+  orderId: string;
+  learningUrl: string;
+  ordersUrl: string;
+}): { subject: string; text: string; html: string } {
+  const { name, packageName, amount, orderId, learningUrl, ordersUrl } = opts;
+  const subject = `Payment approved - ${packageName} is unlocked`;
+  const text = [
+    `Hi ${name},`,
+    ``,
+    `Your payment for ${packageName}${amount ? ` (${amount})` : ""} was verified.`,
+    ``,
+    `Order: ${orderId}`,
+    `Open My Learning: ${learningUrl}`,
+    ``,
+    `- Wisdom Tower`,
+  ].join("\n");
+
+  const html = [
+    `<div style="font-family:system-ui,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#0f172a">`,
+    `<h1 style="font-size:20px;margin:0 0 12px">Payment approved</h1>`,
+    `<p>Hi ${escapeHtml(name)},</p>`,
+    `<p>Your payment for <strong>${escapeHtml(packageName)}</strong>${
+      amount ? ` (${escapeHtml(amount)})` : ""
+    } was verified.</p>`,
+    `<p style="font-family:ui-monospace,monospace;background:#f1f5f9;padding:10px 12px;border-radius:8px">Order: ${escapeHtml(
+      orderId
+    )}</p>`,
+    `<p><a href="${learningUrl}" style="display:inline-block;background:#00d4ff;color:#0a0f1a;padding:12px 18px;border-radius:10px;text-decoration:none;font-weight:700">Open My Learning</a></p>`,
+    `<p style="color:#64748b;font-size:13px">Or view orders: <a href="${ordersUrl}">${ordersUrl}</a></p>`,
+    `<p style="color:#64748b;font-size:13px;margin-top:24px">- Wisdom Tower</p>`,
+    `</div>`,
+  ].join("");
+
+  return { subject, text, html };
+}
+
+function buildRejectedEmail(opts: {
+  name: string;
+  packageName: string;
+  orderId: string;
+}): { subject: string; text: string; html: string } {
+  const { name, packageName, orderId } = opts;
+  const subject = `Payment update - ${packageName}`;
+  const text = [
+    `Hi ${name},`,
+    ``,
+    `We could not verify your payment for ${packageName} (order ${orderId}).`,
+    `Please contact us with your receipt or try again from checkout.`,
+    ``,
+    `- Wisdom Tower`,
+  ].join("\n");
+
+  const html = [
+    `<div style="font-family:system-ui,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#0f172a">`,
+    `<h1 style="font-size:20px;margin:0 0 12px">Payment needs attention</h1>`,
+    `<p>Hi ${escapeHtml(name)},</p>`,
+    `<p>We could not verify your payment for <strong>${escapeHtml(
+      packageName
+    )}</strong> (order <code>${escapeHtml(orderId)}</code>).</p>`,
+    `<p>Reply with your receipt or contact support from the website.</p>`,
+    `<p style="color:#64748b;font-size:13px;margin-top:24px">- Wisdom Tower</p>`,
+    `</div>`,
+  ].join("");
+
+  return { subject, text, html };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const orderId = String(body.orderId || "").trim();
-    const type = (body.type === "rejected" ? "rejected" : "approved") as NotifyType;
+    const type: NotifyType = body.type === "rejected" ? "rejected" : "approved";
 
     if (!orderId) {
       return NextResponse.json({ ok: false, error: "orderId required" }, { status: 400 });
@@ -176,14 +234,10 @@ export async function POST(req: NextRequest) {
 
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
     const key =
-      process.env.SUPABASE_SERVICE_ROLE_KEY ||
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     if (!url || !key) {
-      return NextResponse.json(
-        { ok: false, error: "Supabase env missing" },
-        { status: 500 }
-      );
+      return NextResponse.json({ ok: false, error: "Supabase env missing" }, { status: 500 });
     }
 
     const supabase = createClient(url, key);
@@ -210,46 +264,21 @@ export async function POST(req: NextRequest) {
     let smsResult: ChannelResult = { sent: false, skipped: true };
 
     if (type === "approved") {
-      const subject = `Payment approved - ${packageName} is unlocked`;
-      const text = `Hi ${name},
-
-Your payment for ${packageName}${amount ? ` (${amount})` : ""} was verified.
-
-Order: ${orderId}
-Open My Learning: ${learningUrl}
-
-- Wisdom Tower`;
-      const html =
-        '<div style="font-family:system-ui,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#0f172a">' +
-        '<h1 style="font-size:20px;margin:0 0 12px">Payment approved</h1>' +
-        "<p>Hi " +
-        escapeHtml(name) +
-        ",</p>" +
-        "<p>Your payment for <strong>" +
-        escapeHtml(packageName) +
-        "</strong>" +
-        (amount ? " (" + escapeHtml(amount) + ")" : "") +
-        " was verified.</p>" +
-        '<p style="font-family:ui-monospace,monospace;background:#f1f5f9;padding:10px 12px;border-radius:8px">Order: ' +
-        escapeHtml(orderId) +
-        "</p>" +
-        "<p><a href=\"" +
-        learningUrl +
-        '\" style="display:inline-block;background:#00d4ff;color:#0a0f1a;padding:12px 18px;border-radius:10px;text-decoration:none;font-weight:700">Open My Learning</a></p>' +
-        '<p style="color:#64748b;font-size:13px">Or view orders: <a href=\"' +
-        ordersUrl +
-        '\">" +
-        ordersUrl +
-        "</a></p>" +
-        '<p style="color:#64748b;font-size:13px;margin-top:24px">- Wisdom Tower</p>' +
-        "</div>";
+      const mail = buildApprovedEmail({
+        name,
+        packageName,
+        amount,
+        orderId,
+        learningUrl,
+        ordersUrl,
+      });
 
       if (order.email) {
         emailResult = await sendEmailResend({
           to: String(order.email),
-          subject,
-          html,
-          text,
+          subject: mail.subject,
+          html: mail.html,
+          text: mail.text,
         });
       } else {
         emailResult = { sent: false, skipped: true, error: "No email on order" };
@@ -262,34 +291,14 @@ Open My Learning: ${learningUrl}
         smsResult = { sent: false, skipped: true, error: "No phone on order" };
       }
     } else {
-      const subject = `Payment update - ${packageName}`;
-      const text = `Hi ${name},
-
-We could not verify your payment for ${packageName} (order ${orderId}).
-Please contact us with your receipt or try again from checkout.
-
-- Wisdom Tower`;
-      const html =
-        '<div style="font-family:system-ui,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#0f172a">' +
-        '<h1 style="font-size:20px;margin:0 0 12px">Payment needs attention</h1>' +
-        "<p>Hi " +
-        escapeHtml(name) +
-        ",</p>" +
-        "<p>We could not verify your payment for <strong>" +
-        escapeHtml(packageName) +
-        "</strong> (order <code>" +
-        escapeHtml(orderId) +
-        "</code>).</p>" +
-        "<p>Reply with your receipt or contact support from the website.</p>" +
-        '<p style="color:#64748b;font-size:13px;margin-top:24px">- Wisdom Tower</p>' +
-        "</div>";
+      const mail = buildRejectedEmail({ name, packageName, orderId });
 
       if (order.email) {
         emailResult = await sendEmailResend({
           to: String(order.email),
-          subject,
-          html,
-          text,
+          subject: mail.subject,
+          html: mail.html,
+          text: mail.text,
         });
       } else {
         emailResult = { sent: false, skipped: true, error: "No email on order" };
