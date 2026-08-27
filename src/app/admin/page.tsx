@@ -8,6 +8,9 @@ import { isAdminEmail } from "@/lib/admin";
 import { ensureProfile } from "@/lib/profile";
 import type { User } from "@supabase/supabase-js";
 import PaymentsPanel from "@/components/admin/PaymentsPanel";
+import AnalyticsPanel from "@/components/admin/AnalyticsPanel";
+import UsersPanel from "@/components/admin/UsersPanel";
+import InquiriesPanel from "@/components/admin/InquiriesPanel";
 import {
   Shield,
   LogOut,
@@ -15,15 +18,16 @@ import {
   Inbox,
   Users,
   LayoutDashboard,
+  ExternalLink,
 } from "lucide-react";
 
-type AdminTab = "payments" | "overview";
+type AdminTab = "overview" | "payments" | "users" | "inquiries";
 
 export default function AdminPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<AdminTab>("payments");
+  const [tab, setTab] = useState<AdminTab>("overview");
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -51,9 +55,16 @@ export default function AdminPage() {
     );
   }
 
+  const tabs: { id: AdminTab; label: string; icon: typeof LayoutDashboard }[] = [
+    { id: "overview", label: "Overview", icon: LayoutDashboard },
+    { id: "payments", label: "Payments", icon: CreditCard },
+    { id: "users", label: "Users", icon: Users },
+    { id: "inquiries", label: "Inquiries", icon: Inbox },
+  ];
+
   return (
     <div className="min-h-screen bg-wisdom-dark text-white">
-      <div className="max-w-4xl mx-auto px-4 py-8 md:py-10">
+      <div className="max-w-5xl mx-auto px-4 py-8 md:py-10">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-8">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-xl bg-gradient-to-br from-wisdom-cyan/20 to-cyan-600/10 text-wisdom-cyan border border-wisdom-cyan/20">
@@ -67,6 +78,15 @@ export default function AdminPage() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
+            <a
+              href="https://supabase.com/dashboard"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 min-h-[40px] px-4 py-2 rounded-xl border border-white/12 bg-white/5 text-sm font-medium hover:bg-white/10"
+            >
+              Supabase
+              <ExternalLink className="w-3.5 h-3.5 opacity-70" />
+            </a>
             <Link
               href="/account"
               className="inline-flex items-center min-h-[40px] px-4 py-2 rounded-xl border border-white/12 bg-white/5 text-sm font-medium hover:bg-white/10"
@@ -85,66 +105,31 @@ export default function AdminPage() {
         </div>
 
         <div className="flex flex-wrap gap-2 mb-6">
-          <button
-            type="button"
-            onClick={() => setTab("payments")}
-            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border ${
-              tab === "payments"
-                ? "border-amber-400/50 bg-amber-500/15 text-amber-200"
-                : "border-white/10 text-wisdom-muted hover:text-white"
-            }`}
-          >
-            <CreditCard className="w-4 h-4" />
-            Payments
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab("overview")}
-            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border ${
-              tab === "overview"
-                ? "border-wisdom-cyan/50 bg-wisdom-cyan/15 text-wisdom-cyan"
-                : "border-white/10 text-wisdom-muted hover:text-white"
-            }`}
-          >
-            <LayoutDashboard className="w-4 h-4" />
-            More
-          </button>
+          {tabs.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setTab(id)}
+              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border ${
+                tab === id
+                  ? id === "payments"
+                    ? "border-amber-400/50 bg-amber-500/15 text-amber-200"
+                    : "border-wisdom-cyan/50 bg-wisdom-cyan/15 text-wisdom-cyan"
+                  : "border-white/10 text-wisdom-muted hover:text-white"
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              {label}
+            </button>
+          ))}
         </div>
 
+        {tab === "overview" && <AnalyticsPanel />}
         {tab === "payments" && user.email && (
           <PaymentsPanel adminEmail={user.email} />
         )}
-
-        {tab === "overview" && (
-          <div className="grid sm:grid-cols-2 gap-4">
-            <Link
-              href="/admin/payments"
-              className="rounded-2xl border border-white/10 bg-wisdom-card p-5 hover:border-amber-500/40 transition"
-            >
-              <CreditCard className="w-8 h-8 text-amber-400 mb-3" />
-              <h2 className="font-semibold">Payments (full page)</h2>
-              <p className="mt-1 text-sm text-wisdom-muted">Same list · Approve & unlock</p>
-            </Link>
-            <a
-              href="https://supabase.com/dashboard"
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-2xl border border-white/10 bg-wisdom-card p-5 hover:border-cyan-500/40 transition"
-            >
-              <Users className="w-8 h-8 text-purple-400 mb-3" />
-              <h2 className="font-semibold">Supabase</h2>
-              <p className="mt-1 text-sm text-wisdom-muted">Users, tables, orders</p>
-            </a>
-            <div className="rounded-2xl border border-white/10 bg-wisdom-card p-5 sm:col-span-2">
-              <Inbox className="w-8 h-8 text-wisdom-cyan mb-3" />
-              <h2 className="font-semibold">Inquiries inbox</h2>
-              <p className="mt-1 text-sm text-wisdom-muted">
-                Contact form messages still work in the database. Full inbox UI can be restored later
-                — priority is payment approval for now.
-              </p>
-            </div>
-          </div>
-        )}
+        {tab === "users" && <UsersPanel />}
+        {tab === "inquiries" && <InquiriesPanel />}
       </div>
     </div>
   );
