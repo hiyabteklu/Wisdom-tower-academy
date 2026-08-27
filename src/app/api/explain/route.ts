@@ -19,14 +19,31 @@ type ExplainBody = {
 const FALLBACK =
   "Explanation is temporarily unavailable. Review the correct option, compare it with your choice, and try a similar practice question to lock in the idea.";
 
+/** Cheap default that works on AI Gateway free credits; override with AI_EXPLAIN_MODEL */
+const DEFAULT_MODEL = "meta/llama-3.1-8b";
+
 function clientIp(req: NextRequest): string {
   const forwarded = req.headers.get("x-forwarded-for");
   if (forwarded) return forwarded.split(",")[0]?.trim() || "unknown";
   return req.headers.get("x-real-ip") || "unknown";
 }
 
-function buildPrompt(body: Required<Pick<ExplainBody, "question" | "choices" | "studentAnswer" | "correctAnswer" | "subject" | "difficulty">>) {
-  const choicesList = body.choices.map((c, i) => `${String.fromCharCode(65 + i)}. ${c}`).join("\n");
+function buildPrompt(
+  body: Required<
+    Pick<
+      ExplainBody,
+      | "question"
+      | "choices"
+      | "studentAnswer"
+      | "correctAnswer"
+      | "subject"
+      | "difficulty"
+    >
+  >
+) {
+  const choicesList = body.choices
+    .map((c, i) => `${String.fromCharCode(65 + i)}. ${c}`)
+    .join("\n");
   return `You are a patient tutor for Ethiopian university / secondary students on Wisdom Tower Academy.
 
 Subject: ${body.subject}
@@ -48,6 +65,11 @@ Write a concise educational explanation (max ~180 words):
 - Do NOT only restate the answer. No markdown headings. Plain paragraphs only.`;
 }
 
+function errorMessage(e: unknown): string {
+  if (e instanceof Error) return e.message.slice(0, 300);
+  return String(e).slice(0, 300);
+}
+
 export async function POST(req: NextRequest) {
   let body: ExplainBody;
   try {
@@ -59,10 +81,13 @@ export async function POST(req: NextRequest) {
   const questionId = typeof body.questionId === "string" ? body.questionId.trim() : "";
   const question = typeof body.question === "string" ? body.question.trim() : "";
   const choices = Array.isArray(body.choices) ? body.choices.map(String) : [];
-  const studentAnswer = typeof body.studentAnswer === "string" ? body.studentAnswer.trim() : "";
-  const correctAnswer = typeof body.correctAnswer === "string" ? body.correctAnswer.trim() : "";
+  const studentAnswer =
+    typeof body.studentAnswer === "string" ? body.studentAnswer.trim() : "";
+  const correctAnswer =
+    typeof body.correctAnswer === "string" ? body.correctAnswer.trim() : "";
   const subject = typeof body.subject === "string" ? body.subject.trim() : "General";
-  const difficulty = typeof body.difficulty === "string" ? body.difficulty.trim() : "medium";
+  const difficulty =
+    typeof body.difficulty === "string" ? body.difficulty.trim() : "medium";
 
   if (!questionId || !question || choices.length < 2 || !studentAnswer || !correctAnswer) {
     return NextResponse.json(
@@ -119,11 +144,10 @@ export async function POST(req: NextRequest) {
   }
 
   // 2) Generate with AI Gateway (credentials stay server-side)
-  const model =
-    process.env.AI_EXPLAIN_MODEL ||
-    "openai/gpt-oss-20b"; /* cheap / free-tier friendly; override via env */
+  const model = process.env.AI_EXPLAIN_MODEL || DEFAULT_MODEL;
 
   if (!process.env.AI_GATEWAY_API_KEY) {
+    console.error("[explain] AI_GATEWAY_API_KEY missing in runtime env");
     return NextResponse.json({
       explanation: FALLBACK,
       cached: false,
@@ -143,7 +167,6 @@ export async function POST(req: NextRequest) {
         subject,
         difficulty,
       }),
-      maxOutputTokens: 400,
       temperature: 0.4,
     });
 
@@ -168,14 +191,18 @@ export async function POST(req: NextRequest) {
       explanation,
       cached: false,
       fallback: explanation === FALLBACK,
+      model,
     });
   } catch (e) {
-    console.error("[explain] AI error:", e);
+    const msg = errorMessage(e);
+    console.error("[explain] AI error:", msg, e);
     return NextResponse.json({
       explanation: FALLBACK,
       cached: false,
       fallback: true,
       reason: "ai_unavailable",
+      detail: msg,
+      model,
     });
   }
 }
