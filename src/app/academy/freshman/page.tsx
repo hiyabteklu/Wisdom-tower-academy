@@ -3,6 +3,7 @@ import CategoryBackButton from "@/components/CategoryBackButton";
 import SubjectCard from "@/components/SubjectCard";
 import BranchLeaderboard from "@/components/BranchLeaderboard";
 import PackageOfferBanner from "@/components/PackageOfferBanner";
+import GpaCalculator from "@/components/freshman/GpaCalculator";
 import { GraduationCap } from "lucide-react";
 
 export default function FreshmanPage() {
@@ -28,7 +29,8 @@ export default function FreshmanPage() {
             <span className="text-purple-400">Freshman</span> subjects
           </h1>
           <p className="text-wisdom-muted text-lg max-w-2xl leading-relaxed">
-            Core first-year courses. Open any subject for materials and support.
+            Core first-year courses. Open any subject for materials and support — or build a custom
+            semester GPA below.
           </p>
           <p className="mt-2 text-sm text-purple-400/90 font-medium">
             {freshmanSubjects.length} subjects
@@ -39,8 +41,13 @@ export default function FreshmanPage() {
           <PackageOfferBanner packageId="freshman" />
         </div>
 
-        <div className="max-w-3xl mx-auto mb-2">
+        <div className="max-w-3xl mx-auto mb-10">
           <BranchLeaderboard branchName="Freshman" accent="text-purple-400" />
+        </div>
+
+        {/* GPA calculator */}
+        <div className="max-w-4xl mx-auto mb-14">
+          <GpaCalculator />
         </div>
 
         <div className="perspective-scene grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-5 stagger-children">
