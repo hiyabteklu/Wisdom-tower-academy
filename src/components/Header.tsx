@@ -258,13 +258,20 @@ export default function Header() {
     );
   };
 
+  /**
+   * Fixed on mobile so the panel stays inside the viewport (right-aligned).
+   * Absolute under the bell on desktop.
+   */
   const NotifPanel = () => (
     <div
-      className="mobile-menu-panel absolute right-0 top-full mt-2.5 w-[min(22rem,calc(100vw-1.25rem))] rounded-2xl border border-white/12 bg-[#0a0f1a] shadow-2xl shadow-black/70 overflow-hidden z-[70]"
+      className="mobile-menu-panel fixed z-[70] top-[4.25rem] right-3 left-3
+        sm:left-auto sm:right-3 sm:w-[22rem]
+        md:absolute md:left-auto md:right-0 md:top-full md:mt-2.5 md:w-[22rem] md:max-w-none
+        rounded-2xl border border-white/12 bg-[#0a0f1a] shadow-2xl shadow-black/70 overflow-hidden"
       role="menu"
     >
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-        <div>
+      <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-white/10">
+        <div className="min-w-0">
           <p className="text-sm font-semibold text-white">Notifications</p>
           <p className="text-[11px] text-wisdom-muted">
             {unread ? `${unread} unread` : "You're all caught up"}
@@ -274,7 +281,7 @@ export default function Header() {
           <button
             type="button"
             onClick={markAllRead}
-            className="inline-flex items-center gap-1 text-[11px] font-semibold text-wisdom-cyan hover:text-cyan-300 transition-colors"
+            className="inline-flex items-center gap-1 shrink-0 text-[11px] font-semibold text-wisdom-cyan hover:text-cyan-300 transition-colors"
           >
             <CheckCheck className="w-3.5 h-3.5" />
             Mark all read
@@ -282,7 +289,7 @@ export default function Header() {
         )}
       </div>
 
-      <div className="max-h-[min(22rem,50vh)] overflow-y-auto">
+      <div className="max-h-[min(22rem,55vh)] overflow-y-auto overscroll-contain">
         {notifs.length === 0 ? (
           <div className="px-4 py-10 text-center">
             <Bell className="w-8 h-8 text-white/20 mx-auto mb-2" />
