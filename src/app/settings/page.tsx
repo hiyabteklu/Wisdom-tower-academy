@@ -150,14 +150,15 @@ export default function SettingsPage() {
 
   const themes: { id: ThemeMode; label: string; icon: typeof Moon; hint: string }[] = [
     { id: "dark", label: "Dark", icon: Moon, hint: "Deep navy · default" },
-    { id: "light", label: "Light", icon: Sun, hint: "Bright workspace" },
+    { id: "light", label: "Azure Day", icon: Sun, hint: "Soft blue workspace" },
     { id: "system", label: "System", icon: Monitor, hint: "Match device" },
   ];
+
+  const resolvedLabel = resolved === "light" ? "Azure Day" : "Dark";
 
   return (
     <div className="py-8 md:py-12 min-h-[70vh]">
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
-        {/* Header */}
         <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
           <div>
             <Link
@@ -186,7 +187,6 @@ export default function SettingsPage() {
         </div>
 
         <div className="grid lg:grid-cols-[240px_1fr] gap-6 lg:gap-8">
-          {/* Side nav */}
           <nav className="flex lg:flex-col gap-1.5 overflow-x-auto pb-1 lg:pb-0 -mx-1 px-1">
             {SECTIONS.map((s) => {
               const Icon = s.icon;
@@ -213,14 +213,12 @@ export default function SettingsPage() {
             })}
           </nav>
 
-          {/* Panels */}
           <div className="rounded-3xl border border-white/12 bg-wisdom-card/90 backdrop-blur-sm overflow-hidden card-elevated">
-            {/* APPEARANCE */}
             {section === "appearance" && (
               <div className="p-5 sm:p-8">
                 <h2 className="font-display text-xl font-bold mb-1">Appearance</h2>
                 <p className="text-sm text-wisdom-muted mb-6">
-                  Active theme: <span className="text-white font-medium capitalize">{resolved}</span>
+                  Active theme: <span className="font-medium text-foreground">{resolvedLabel}</span>
                   {theme === "system" ? " (following system)" : ""}
                 </p>
 
@@ -261,7 +259,6 @@ export default function SettingsPage() {
                   })}
                 </div>
 
-                {/* Preview strip */}
                 <div className="rounded-2xl border border-white/10 overflow-hidden">
                   <div className="px-4 py-2.5 border-b border-white/10 flex items-center gap-2 bg-black/25">
                     <Laptop className="w-4 h-4 text-wisdom-muted" />
@@ -281,12 +278,10 @@ export default function SettingsPage() {
               </div>
             )}
 
-            {/* NOTIFICATIONS */}
             {section === "notifications" && (
               <div className="p-5 sm:p-8">
                 <h2 className="font-display text-xl font-bold mb-1">Notifications</h2>
                 <p className="text-sm text-wisdom-muted mb-6">Choose what reaches you in-app and by email.</p>
-
                 <div className="space-y-1">
                   {(
                     [
@@ -320,15 +315,10 @@ export default function SettingsPage() {
                         <p className="text-sm font-semibold">{row.title}</p>
                         <p className="text-xs text-wisdom-muted mt-0.5">{row.body}</p>
                       </div>
-                      <Toggle
-                        label={row.title}
-                        on={prefs[row.key]}
-                        onChange={(v) => updatePref(row.key, v)}
-                      />
+                      <Toggle label={row.title} on={prefs[row.key]} onChange={(v) => updatePref(row.key, v)} />
                     </div>
                   ))}
                 </div>
-
                 <div className="mt-6 pt-6 border-t border-white/10">
                   <p className="text-sm font-semibold mb-3 flex items-center gap-2">
                     <Globe className="w-4 h-4 text-wisdom-cyan" />
@@ -354,21 +344,15 @@ export default function SettingsPage() {
               </div>
             )}
 
-            {/* PROFILE */}
             {section === "profile" && (
               <div className="p-5 sm:p-8">
                 <h2 className="font-display text-xl font-bold mb-1">Profile</h2>
                 <p className="text-sm text-wisdom-muted mb-6">How you appear across Wisdom Tower.</p>
-
                 <div className="flex items-center gap-4 mb-8">
                   <div className="w-16 h-16 rounded-2xl overflow-hidden bg-gradient-to-br from-wisdom-cyan to-cyan-800 flex items-center justify-center text-2xl font-bold text-wisdom-dark border border-white/15">
                     {user.user_metadata?.avatar_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={user.user_metadata.avatar_url}
-                        alt=""
-                        className="w-full h-full object-cover"
-                      />
+                      <img src={user.user_metadata.avatar_url} alt="" className="w-full h-full object-cover" />
                     ) : (
                       (displayName || "U").charAt(0).toUpperCase()
                     )}
@@ -378,7 +362,6 @@ export default function SettingsPage() {
                     <p className="text-xs text-wisdom-muted">{user.email}</p>
                   </div>
                 </div>
-
                 <label className="block text-xs font-semibold uppercase tracking-wider text-wisdom-muted mb-2">
                   Display name
                 </label>
@@ -389,7 +372,6 @@ export default function SettingsPage() {
                   placeholder="Your name"
                   maxLength={80}
                 />
-
                 <label className="block text-xs font-semibold uppercase tracking-wider text-wisdom-muted mb-2">
                   Language
                 </label>
@@ -414,7 +396,6 @@ export default function SettingsPage() {
                     </button>
                   ))}
                 </div>
-
                 <button
                   type="button"
                   onClick={saveProfile}
@@ -424,25 +405,19 @@ export default function SettingsPage() {
                   <Save className="w-4 h-4" />
                   {savingProfile ? "Saving…" : "Save profile"}
                 </button>
-                {profileMsg && (
-                  <p className="mt-3 text-sm text-wisdom-muted">{profileMsg}</p>
-                )}
+                {profileMsg && <p className="mt-3 text-sm text-wisdom-muted">{profileMsg}</p>}
               </div>
             )}
 
-            {/* ACCESSIBILITY */}
             {section === "accessibility" && (
               <div className="p-5 sm:p-8">
                 <h2 className="font-display text-xl font-bold mb-1">Accessibility</h2>
                 <p className="text-sm text-wisdom-muted mb-6">Comfort and clarity controls.</p>
-
                 <div className="space-y-1">
                   <div className="flex items-center justify-between gap-4 rounded-xl border border-white/8 px-4 py-3.5">
                     <div>
                       <p className="text-sm font-semibold">Reduce motion</p>
-                      <p className="text-xs text-wisdom-muted mt-0.5">
-                        Minimize animations and floating effects
-                      </p>
+                      <p className="text-xs text-wisdom-muted mt-0.5">Minimize animations and floating effects</p>
                     </div>
                     <Toggle
                       label="Reduce motion"
@@ -453,30 +428,20 @@ export default function SettingsPage() {
                   <div className="flex items-center justify-between gap-4 rounded-xl border border-white/8 px-4 py-3.5">
                     <div>
                       <p className="text-sm font-semibold">Compact UI</p>
-                      <p className="text-xs text-wisdom-muted mt-0.5">
-                        Tighter spacing on dashboards (coming soon)
-                      </p>
+                      <p className="text-xs text-wisdom-muted mt-0.5">Tighter spacing on dashboards (coming soon)</p>
                     </div>
-                    <Toggle
-                      label="Compact UI"
-                      on={prefs.compactUI}
-                      onChange={(v) => updatePref("compactUI", v)}
-                    />
+                    <Toggle label="Compact UI" on={prefs.compactUI} onChange={(v) => updatePref("compactUI", v)} />
                   </div>
                 </div>
               </div>
             )}
 
-            {/* ACCOUNT */}
             {section === "account" && (
               <div className="p-5 sm:p-8">
                 <h2 className="font-display text-xl font-bold mb-1">Account</h2>
                 <p className="text-sm text-wisdom-muted mb-6">Security and session.</p>
-
                 <div className="rounded-2xl border border-white/10 bg-black/25 p-4 mb-4">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-wisdom-muted mb-1">
-                    Signed in as
-                  </p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-wisdom-muted mb-1">Signed in as</p>
                   <p className="text-sm font-medium">{user.email}</p>
                   <p className="text-xs text-wisdom-muted mt-1">
                     Member since{" "}
@@ -489,7 +454,6 @@ export default function SettingsPage() {
                       : "—"}
                   </p>
                 </div>
-
                 <div className="space-y-2">
                   <Link
                     href="/account"
