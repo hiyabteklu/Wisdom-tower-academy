@@ -8,6 +8,7 @@ import {
   statusLabel,
   type ManualOrder,
 } from "@/lib/orders";
+import { notifyApproval, notifyRejection, formatNotifyToast } from "@/lib/notify";
 import { formatEtb } from "@/data/packages";
 import { Check, X, RefreshCw, Phone, Mail, CreditCard, ExternalLink } from "lucide-react";
 
@@ -33,7 +34,7 @@ export default function PaymentsPanel({ adminEmail }: { adminEmail: string }) {
 
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(() => setToast(""), 3000);
+    const t = setTimeout(() => setToast(""), 4500);
     return () => clearTimeout(t);
   }, [toast]);
 
@@ -45,26 +46,32 @@ export default function PaymentsPanel({ adminEmail }: { adminEmail: string }) {
   async function onVerify(id: string) {
     setBusyId(id);
     const res = await verifyOrder(id, adminEmail);
-    setBusyId("");
-    if (res.ok) {
-      setToast("Verified — student enrolled");
-      load();
-    } else {
+    if (!res.ok) {
+      setBusyId("");
       setToast(res.error || "Verify failed");
+      return;
     }
+    const n = await notifyApproval(id);
+    setBusyId("");
+    setToast(formatNotifyToast(n, "Approved"));
+    load();
   }
 
   async function onReject(id: string) {
-    if (!window.confirm("Reject this payment?")) return;
+    if (!window.confirm("Reject this payment? Student will be notified if email/SMS is configured.")) {
+      return;
+    }
     setBusyId(id);
     const res = await rejectOrder(id, adminEmail);
-    setBusyId("");
-    if (res.ok) {
-      setToast("Rejected");
-      load();
-    } else {
+    if (!res.ok) {
+      setBusyId("");
       setToast(res.error || "Reject failed");
+      return;
     }
+    const n = await notifyRejection(id);
+    setBusyId("");
+    setToast(formatNotifyToast(n, "Rejected"));
+    load();
   }
 
   return (
@@ -82,7 +89,7 @@ export default function PaymentsPanel({ adminEmail }: { adminEmail: string }) {
             Manual payments
           </h2>
           <p className="text-sm text-wisdom-muted mt-0.5">
-            {pendingCount} pending verification
+            {pendingCount} pending · approve sends email + SMS when configured
           </p>
         </div>
         <button
@@ -196,7 +203,7 @@ export default function PaymentsPanel({ adminEmail }: { adminEmail: string }) {
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500 text-wisdom-dark text-sm font-bold hover:bg-emerald-400 disabled:opacity-50"
                   >
                     <Check className="w-4 h-4" />
-                    Approve & unlock
+                    Approve & notify
                   </button>
                   <button
                     type="button"
