@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { categories } from "@/data/services";
+import TalentPath from "@/components/TalentPath";
 import {
   Palette,
   PenTool,
@@ -25,12 +26,6 @@ import {
   MessageSquare,
   FileText,
   Award,
-  Handshake,
-  Search,
-  FileCheck,
-  MessageCircle,
-  GraduationCap as Train,
-  BadgeCheck,
 } from "lucide-react";
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -102,16 +97,6 @@ const requirements = [
   },
 ];
 
-const lifecycle = [
-  { n: "1", title: "Focus", body: "Pick category + service", icon: Target, color: "bg-cyan-500/20 border-cyan-400/40 text-cyan-300" },
-  { n: "2", title: "Apply", body: "Letter + portfolio", icon: FileText, color: "bg-sky-500/20 border-sky-400/40 text-sky-300" },
-  { n: "3", title: "Assess", body: "Practical task", icon: FileCheck, color: "bg-violet-500/20 border-violet-400/40 text-violet-300" },
-  { n: "4", title: "Interview", body: "Fit & standards", icon: MessageCircle, color: "bg-amber-500/20 border-amber-400/40 text-amber-300" },
-  { n: "5", title: "Train", body: "Workflows & quality", icon: Train, color: "bg-orange-500/20 border-orange-400/40 text-orange-300" },
-  { n: "6", title: "Intern", body: "Paid live work", icon: Handshake, color: "bg-emerald-500/20 border-emerald-400/40 text-emerald-300" },
-  { n: "7", title: "Join", body: "Contributor role", icon: BadgeCheck, color: "bg-teal-500/20 border-teal-400/40 text-teal-300" },
-];
-
 export default function DigitalPage() {
   const [openCategory, setOpenCategory] = useState<string | null>(null);
 
@@ -129,7 +114,7 @@ export default function DigitalPage() {
               Our Services
             </h1>
             <p className="text-wisdom-muted max-w-2xl mx-auto text-lg leading-relaxed">
-              Seven focused categories — plus custom work when your project doesn't fit a list.
+              Seven focused categories — plus custom work when your project doesn&apos;t fit a list.
               One partner for digital, creative, and professional needs.
             </p>
           </div>
@@ -192,7 +177,7 @@ export default function DigitalPage() {
                   Custom order
                 </h3>
                 <p className="text-sm text-wisdom-muted line-clamp-2 mb-3 flex-1">
-                  Tell us who you are and what you need. We'll shape a package that isn't on the
+                  Tell us who you are and what you need. We&apos;ll shape a package that isn&apos;t on the
                   standard list.
                 </p>
                 <div className="flex items-center justify-between mt-auto">
@@ -205,7 +190,7 @@ export default function DigitalPage() {
 
           {/* ═══════ Work with us ═══════ */}
           <section className="mt-24 md:mt-32" id="work-with-us">
-            <div className="text-center mb-12 md:mb-14">
+            <div className="text-center mb-10 md:mb-12">
               <p className="text-sm font-semibold tracking-[0.2em] uppercase text-wisdom-cyan/90 mb-3">
                 Contributors & talent
               </p>
@@ -213,55 +198,13 @@ export default function DigitalPage() {
                 Work with us?
               </h2>
               <p className="text-wisdom-muted max-w-2xl mx-auto text-base md:text-lg leading-relaxed">
-                Built by people who ship. Meet the bar, follow the path, then apply to one service
-                line — not a client order form.
+                Built by people who ship. Walk the path stage by stage, meet the bar, then apply to
+                one service line — not a client order form.
               </p>
             </div>
 
-            {/* Lifecycle path */}
-            <div className="mb-12 md:mb-16 rounded-3xl border border-white/12 bg-wisdom-card/90 p-5 sm:p-8 shadow-card-3d overflow-hidden relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-wisdom-cyan/5 via-transparent to-emerald-500/5 pointer-events-none" />
-              <div className="relative flex items-center gap-2 mb-6">
-                <div className="p-2 rounded-xl bg-wisdom-cyan/15 border border-wisdom-cyan/30 text-wisdom-cyan">
-                  <Search className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="font-display text-lg font-bold">Your path</h3>
-                  <p className="text-xs text-wisdom-muted">From interest to paid contribution</p>
-                </div>
-              </div>
-
-              <div className="relative grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 sm:gap-2">
-                {/* connector line desktop */}
-                <div className="hidden lg:block absolute top-[2.15rem] left-[7%] right-[7%] h-0.5 bg-gradient-to-r from-cyan-500/40 via-amber-400/30 to-teal-400/40" />
-
-                {lifecycle.map((step, i) => {
-                  const Icon = step.icon;
-                  return (
-                    <div key={step.n} className="relative flex flex-col items-center text-center group">
-                      <div
-                        className={`relative z-10 w-14 h-14 rounded-2xl border-2 flex items-center justify-center mb-2 transition-transform duration-300 group-hover:scale-110 group-hover:-translate-y-1 shadow-lg ${step.color}`}
-                      >
-                        <Icon className="w-6 h-6" />
-                        <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-wisdom-dark border border-white/20 text-[10px] font-black flex items-center justify-center text-white/90">
-                          {step.n}
-                        </span>
-                      </div>
-                      <p className="text-sm font-bold text-white/95">{step.title}</p>
-                      <p className="text-[11px] text-wisdom-muted mt-0.5 leading-snug px-1">{step.body}</p>
-                      {i < lifecycle.length - 1 && (
-                        <ArrowRight className="lg:hidden w-3.5 h-3.5 text-white/20 absolute -right-1.5 top-5 sm:hidden" />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              <p className="relative mt-6 text-center text-xs text-wisdom-muted flex flex-wrap items-center justify-center gap-1.5">
-                <Handshake className="w-3.5 h-3.5 text-emerald-400" />
-                Internships are <span className="text-emerald-300 font-medium">paid</span> on live
-                work. Progression follows delivery, not tenure alone.
-              </p>
+            <div className="mb-12 md:mb-16">
+              <TalentPath />
             </div>
 
             {/* Requirements grid */}
@@ -293,12 +236,15 @@ export default function DigitalPage() {
                 })}
               </div>
               <p className="mt-4 text-xs text-wisdom-muted text-center sm:text-left">
-                Can't show these yet? Build them first — then return.
+                Can&apos;t show these yet? Build them first — then return.
               </p>
             </div>
 
             {/* Start application picker */}
-            <div className="rounded-3xl border border-wisdom-cyan/25 bg-wisdom-card p-6 sm:p-8 shadow-card-3d">
+            <div
+              id="start-application"
+              className="rounded-3xl border border-wisdom-cyan/25 bg-wisdom-card p-6 sm:p-8 shadow-card-3d scroll-mt-24"
+            >
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
                 <div className="flex items-start gap-3">
                   <div className="p-2.5 rounded-xl bg-wisdom-cyan/15 border border-wisdom-cyan/30 text-wisdom-cyan shrink-0">
@@ -307,7 +253,7 @@ export default function DigitalPage() {
                   <div>
                     <h3 className="font-display text-xl font-bold">Start application</h3>
                     <p className="text-sm text-wisdom-muted mt-1 max-w-lg leading-relaxed">
-                      Expand a category, then pick the exact service line. You'll open the{" "}
+                      Expand a category, then pick the exact service line. You&apos;ll open the{" "}
                       <strong className="text-white/90">talent application form</strong> (not a client
                       quote request).
                     </p>
@@ -381,13 +327,13 @@ export default function DigitalPage() {
                 <span className="font-semibold text-white">We review for fit, not volume.</span>{" "}
                 One strong application beats many weak ones.
               </p>
-              <Link
-                href="#work-with-us"
+              <a
+                href="#start-application"
                 className="mt-3 sm:mt-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-wisdom-cyan/30 bg-wisdom-cyan/10 text-wisdom-cyan text-sm font-semibold hover:bg-wisdom-cyan/20 transition-colors shrink-0"
               >
                 <Target className="w-4 h-4" />
                 Pick a role above
-              </Link>
+              </a>
             </div>
           </section>
         </div>
