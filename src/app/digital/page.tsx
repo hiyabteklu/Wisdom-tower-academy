@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { categories } from "@/data/services";
 import TalentPath from "@/components/TalentPath";
+import WelcomeVideoCard from "@/components/WelcomeVideoCard";
 import {
   Palette,
   PenTool,
@@ -109,7 +110,7 @@ export default function DigitalPage() {
 
       <div className="relative py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14 md:mb-16 animate-fade-up">
+          <div className="text-center mb-10 md:mb-12 animate-fade-up">
             <h1 className="font-display text-4xl md:text-5xl font-extrabold mb-4 tracking-tight">
               Our Services
             </h1>
@@ -117,6 +118,16 @@ export default function DigitalPage() {
               Seven focused categories — plus custom work when your project doesn&apos;t fit a list.
               One partner for digital, creative, and professional needs.
             </p>
+          </div>
+
+          {/* Welcome video — 16:9 framed */}
+          <div className="mb-14 md:mb-16">
+            <WelcomeVideoCard
+              variant="digital"
+              title="How we work with you"
+              subtitle="A short intro to our service lines, custom work, and what to expect when you start a project."
+              /* Pass youtubeId="VIDEO_ID" when the real welcome video is ready */
+            />
           </div>
 
           <div className="perspective-scene grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6 stagger-children">
@@ -188,7 +199,6 @@ export default function DigitalPage() {
             </Link>
           </div>
 
-          {/* ═══════ Work with us ═══════ */}
           <section className="mt-24 md:mt-32" id="work-with-us">
             <div className="text-center mb-10 md:mb-12">
               <p className="text-sm font-semibold tracking-[0.2em] uppercase text-wisdom-cyan/90 mb-3">
@@ -207,7 +217,6 @@ export default function DigitalPage() {
               <TalentPath />
             </div>
 
-            {/* Requirements grid */}
             <div className="mb-12">
               <div className="flex items-center gap-3 mb-5">
                 <div className="p-2 rounded-xl bg-emerald-500/15 border border-emerald-400/25 text-emerald-300">
@@ -240,7 +249,6 @@ export default function DigitalPage() {
               </p>
             </div>
 
-            {/* Start application picker */}
             <div
               id="start-application"
               className="rounded-3xl border border-wisdom-cyan/25 bg-wisdom-card p-6 sm:p-8 shadow-card-3d scroll-mt-24"

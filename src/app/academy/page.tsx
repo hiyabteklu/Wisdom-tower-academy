@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import VoiceMessageCard from "@/components/VoiceMessageCard";
 import TestimonialMarquee from "@/components/TestimonialMarquee";
+import WelcomeVideoCard from "@/components/WelcomeVideoCard";
 
 const programs = [
   {
@@ -212,13 +213,23 @@ export default function AcademyPage() {
 
       <div className="relative py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14 md:mb-16 animate-fade-up">
+          <div className="text-center mb-10 md:mb-12 animate-fade-up">
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white">
               Wisdom Tower Academy
             </h1>
             <p className="mt-4 text-wisdom-muted max-w-2xl mx-auto text-lg leading-relaxed">
               Six structured branches — each with its own path when you open it.
             </p>
+          </div>
+
+          {/* Welcome video — 16:9 framed */}
+          <div className="mb-14 md:mb-16">
+            <WelcomeVideoCard
+              variant="academy"
+              title="What you’ll find here"
+              subtitle="A short look at how Academy is organized — pathways, practice, and support for real study goals."
+              /* Pass youtubeId="VIDEO_ID" when the real welcome video is ready */
+            />
           </div>
 
           <div className="perspective-scene grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-7">
