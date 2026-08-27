@@ -416,7 +416,6 @@ export default function Header() {
               {!loading &&
                 (user ? (
                   <div className="flex items-center gap-1.5 ml-1">
-                    {/* Notifications */}
                     <div className="relative" ref={notifRef}>
                       <button
                         type="button"
@@ -442,7 +441,6 @@ export default function Header() {
                       {notifOpen && <NotifPanel />}
                     </div>
 
-                    {/* Profile */}
                     <div className="relative" ref={profileRef}>
                       <button
                         type="button"
@@ -516,7 +514,7 @@ export default function Header() {
                               My Account
                             </Link>
                             <Link
-                              href="/account"
+                              href="/settings"
                               role="menuitem"
                               className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/90 hover:bg-white/5 hover:text-wisdom-cyan transition-colors"
                               onClick={() => setProfileOpen(false)}
@@ -576,7 +574,6 @@ export default function Header() {
                 ))}
             </nav>
 
-            {/* Mobile: bell + menu */}
             <div className="md:hidden flex items-center gap-0.5">
               {user && (
                 <div className="relative" ref={notifRef}>
@@ -681,7 +678,7 @@ export default function Header() {
                             My Account
                           </Link>
                           <Link
-                            href="/account"
+                            href="/settings"
                             className="flex items-center gap-2 text-sm text-white/85 hover:text-wisdom-cyan py-1.5"
                             onClick={() => setIsOpen(false)}
                           >
