@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { ensureProfile } from "@/lib/profile";
-import { useTheme, type ThemeMode } from "@/components/ThemeProvider";
 import {
   loadPreferences,
   savePreferences,
@@ -19,24 +18,19 @@ import {
   Check,
   ChevronRight,
   Globe,
-  Laptop,
   Lock,
   LogOut,
-  Monitor,
   Moon,
-  Palette,
   Save,
   Settings2,
   Shield,
-  Sun,
   User as UserIcon,
   Zap,
 } from "lucide-react";
 
-type Section = "appearance" | "notifications" | "profile" | "accessibility" | "account";
+type Section = "notifications" | "profile" | "accessibility" | "account";
 
-const SECTIONS: { id: Section; label: string; icon: typeof Palette; desc: string }[] = [
-  { id: "appearance", label: "Appearance", icon: Palette, desc: "Theme & visual style" },
+const SECTIONS: { id: Section; label: string; icon: typeof Bell; desc: string }[] = [
   { id: "notifications", label: "Notifications", icon: Bell, desc: "Alerts & digests" },
   { id: "profile", label: "Profile", icon: UserIcon, desc: "Name & identity" },
   { id: "accessibility", label: "Accessibility", icon: Zap, desc: "Motion & density" },
@@ -74,10 +68,9 @@ function Toggle({
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { theme, resolved, setTheme } = useTheme();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [section, setSection] = useState<Section>("appearance");
+  const [section, setSection] = useState<Section>("notifications");
   const [prefs, setPrefs] = useState<UserPreferences>(DEFAULT_PREFS);
   const [displayName, setDisplayName] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
@@ -148,14 +141,6 @@ export default function SettingsPage() {
     );
   }
 
-  const themes: { id: ThemeMode; label: string; icon: typeof Moon; hint: string }[] = [
-    { id: "dark", label: "Dark", icon: Moon, hint: "Deep navy · default" },
-    { id: "light", label: "Azure Day", icon: Sun, hint: "Soft blue workspace" },
-    { id: "system", label: "System", icon: Monitor, hint: "Match device" },
-  ];
-
-  const resolvedLabel = resolved === "light" ? "Azure Day" : "Dark";
-
   return (
     <div className="py-8 md:py-12 min-h-[70vh]">
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
@@ -175,7 +160,7 @@ export default function SettingsPage() {
               Settings
             </h1>
             <p className="text-wisdom-muted mt-2 text-sm md:text-base">
-              Control how Wisdom Tower looks, notifies you, and feels.
+              Notifications, profile, and accessibility.
             </p>
           </div>
           {savedFlash && (
@@ -184,6 +169,17 @@ export default function SettingsPage() {
               Saved
             </div>
           )}
+        </div>
+
+        {/* Site is dark-only */}
+        <div className="mb-6 flex items-center gap-3 rounded-2xl border border-white/10 bg-wisdom-card/80 px-4 py-3">
+          <div className="w-9 h-9 rounded-xl bg-wisdom-cyan/15 border border-wisdom-cyan/30 flex items-center justify-center text-wisdom-cyan shrink-0">
+            <Moon className="w-4 h-4" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-white">Dark theme</p>
+            <p className="text-xs text-wisdom-muted">Site default — designed for clarity and focus.</p>
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-[240px_1fr] gap-6 lg:gap-8">
@@ -214,70 +210,6 @@ export default function SettingsPage() {
           </nav>
 
           <div className="rounded-3xl border border-white/12 bg-wisdom-card/90 backdrop-blur-sm overflow-hidden card-elevated">
-            {section === "appearance" && (
-              <div className="p-5 sm:p-8">
-                <h2 className="font-display text-xl font-bold mb-1">Appearance</h2>
-                <p className="text-sm text-wisdom-muted mb-6">
-                  Active theme: <span className="font-medium text-foreground">{resolvedLabel}</span>
-                  {theme === "system" ? " (following system)" : ""}
-                </p>
-
-                <div className="grid sm:grid-cols-3 gap-3 mb-8">
-                  {themes.map((t) => {
-                    const Icon = t.icon;
-                    const active = theme === t.id;
-                    return (
-                      <button
-                        key={t.id}
-                        type="button"
-                        onClick={() => {
-                          setTheme(t.id);
-                          setSavedFlash(true);
-                        }}
-                        className={`relative rounded-2xl border p-4 text-left transition-all ${
-                          active
-                            ? "border-wisdom-cyan/50 bg-wisdom-cyan/10 ring-2 ring-wisdom-cyan/20"
-                            : "border-white/12 bg-black/20 hover:border-white/25"
-                        }`}
-                      >
-                        <div
-                          className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${
-                            active ? "bg-wisdom-cyan text-wisdom-dark" : "bg-white/10 text-white/80"
-                          }`}
-                        >
-                          <Icon className="w-5 h-5" />
-                        </div>
-                        <p className="font-semibold text-sm">{t.label}</p>
-                        <p className="text-[11px] text-wisdom-muted mt-0.5">{t.hint}</p>
-                        {active && (
-                          <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-wisdom-cyan text-wisdom-dark flex items-center justify-center">
-                            <Check className="w-3 h-3" />
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="rounded-2xl border border-white/10 overflow-hidden">
-                  <div className="px-4 py-2.5 border-b border-white/10 flex items-center gap-2 bg-black/25">
-                    <Laptop className="w-4 h-4 text-wisdom-muted" />
-                    <span className="text-xs font-semibold text-wisdom-muted">Live preview</span>
-                  </div>
-                  <div className="p-5 grid grid-cols-2 gap-3">
-                    <div className="rounded-xl border border-white/10 bg-wisdom-card p-4">
-                      <div className="h-2 w-16 rounded bg-wisdom-cyan/40 mb-2" />
-                      <div className="h-2 w-full rounded bg-white/10 mb-1.5" />
-                      <div className="h-2 w-3/4 rounded bg-white/10" />
-                    </div>
-                    <div className="rounded-xl border border-white/10 bg-black/30 p-4 flex items-center justify-center">
-                      <span className="text-2xl font-display font-bold text-wisdom-cyan">∞</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {section === "notifications" && (
               <div className="p-5 sm:p-8">
                 <h2 className="font-display text-xl font-bold mb-1">Notifications</h2>

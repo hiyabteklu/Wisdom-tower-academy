@@ -24,11 +24,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className="theme-dark dark">
+    <html lang="en" suppressHydrationWarning className="theme-dark dark" data-theme="dark" style={{ colorScheme: "dark" }}>
       <head>
+        {/* Force dark — wipe any old light preference so users don't stay inverted */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('wt-theme');var r=t==='light'?'light':t==='system'?(window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'):'dark';var d=document.documentElement;d.classList.remove('theme-dark','theme-light','dark','light');d.classList.add(r==='light'?'theme-light':'theme-dark',r);d.style.colorScheme=r;d.setAttribute('data-theme',r);}catch(e){}})();`,
+            __html: `(function(){try{localStorage.setItem('wt-theme','dark');var d=document.documentElement;d.classList.remove('theme-light','light');d.classList.add('theme-dark','dark');d.style.colorScheme='dark';d.setAttribute('data-theme','dark');}catch(e){}})();`,
           }}
         />
       </head>
