@@ -94,7 +94,7 @@ function TiltCard({
       const y = (e.clientY - rect.top) / rect.height;
       const rotY = (x - 0.5) * 14;
       const rotX = (0.5 - y) * 10;
-      el.style.transform = `perspective(1200px) rotateX(${rotX}deg) rotateY(${rotY}deg) translateY(-10px) scale(1.02)`;
+      el.style.transform = `perspective(1400px) rotateX(${rotX}deg) rotateY(${rotY}deg) translateY(-14px) translateZ(24px) scale(1.02)`;
     },
     [reduced]
   );
@@ -111,7 +111,7 @@ function TiltCard({
       href={href}
       onMouseMove={onMove}
       onMouseLeave={onLeave}
-      className={`card-3d card-tilt group relative overflow-hidden rounded-3xl border border-white/12 bg-wisdom-card reveal-item ${
+      className={`card-3d card-elevated card-tilt group relative overflow-hidden rounded-3xl border border-white/14 bg-wisdom-card reveal-item ${
         visible ? "is-visible" : ""
       } ${className}`}
       style={{ transitionDelay: visible ? `${delay}ms` : undefined }}
@@ -163,31 +163,31 @@ export default function LandingPage() {
   };
 
   return (
-    <>
+    <div className="landing-depth">
       <section ref={heroRef} className="relative overflow-hidden hero-scene">
-        <div className="absolute inset-0 bg-gradient-to-b from-wisdom-cyan/5 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-wisdom-cyan/[0.07] via-transparent to-transparent" />
         <div className="hero-grain" aria-hidden />
 
         <div
-          className="absolute top-16 left-[12%] w-80 h-80 bg-wisdom-cyan/12 rounded-full blur-3xl pointer-events-none orb-float"
+          className="absolute top-16 left-[12%] w-80 h-80 bg-wisdom-cyan/14 rounded-full blur-3xl pointer-events-none orb-float"
           style={blob1}
         />
         <div
-          className="absolute bottom-8 right-[10%] w-72 h-72 bg-purple-500/12 rounded-full blur-3xl pointer-events-none orb-float-delayed"
+          className="absolute bottom-8 right-[10%] w-72 h-72 bg-purple-500/14 rounded-full blur-3xl pointer-events-none orb-float-delayed"
           style={blob2}
         />
-        <div className="absolute top-1/3 right-1/3 w-40 h-40 bg-wisdom-cyan/8 rounded-full blur-2xl pointer-events-none orb-pulse" />
+        <div className="absolute top-1/3 right-1/3 w-40 h-40 bg-wisdom-cyan/10 rounded-full blur-2xl pointer-events-none orb-pulse" />
 
         <div className="hero-mesh" aria-hidden />
 
         <div
-          className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32 text-center relative ${loaded ? "hero-loaded" : "hero-loading"}`}
+          className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32 text-center relative z-10 ${loaded ? "hero-loaded" : "hero-loading"}`}
         >
-          <p className="hero-eyebrow text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] text-wisdom-cyan/90 mb-5">
+          <p className="hero-eyebrow text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] text-wisdom-cyan/90 mb-5 drop-shadow-sm">
             Education · Digital · Excellence
           </p>
 
-          <h1 className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tight mb-6">
+          <h1 className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tight mb-6 text-depth-title">
             <span className="hero-word inline-block text-white">Wisdom</span>{" "}
             <span className="hero-word hero-word-accent inline-block text-wisdom-cyan relative">
               Tower
@@ -206,15 +206,16 @@ export default function LandingPage() {
             <Link
               href="/academy"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-wisdom-cyan text-wisdom-dark font-semibold
-                hover:bg-wisdom-cyan-dark hover:shadow-glow hover:scale-105 active:scale-100 transition-all duration-300"
+                hover:bg-wisdom-cyan-dark hover:shadow-glow hover:scale-105 active:scale-100 transition-all duration-300 shadow-lg shadow-cyan-500/20"
             >
               Explore Academy
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
               href="/digital"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-white/20 text-white font-semibold
-                hover:border-wisdom-cyan/50 hover:bg-white/5 hover:scale-105 active:scale-100 transition-all duration-300"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-white/25 text-white font-semibold
+                bg-white/[0.04] backdrop-blur-sm
+                hover:border-wisdom-cyan/50 hover:bg-white/8 hover:scale-105 active:scale-100 transition-all duration-300 shadow-lg shadow-black/30"
             >
               Digital Services
             </Link>
@@ -222,8 +223,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="pb-16 md:pb-24" ref={cardsSection.ref}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 perspective-scene">
+      {/* Path cards — sit in a recessed well so elevation reads clearly */}
+      <section className="pb-16 md:pb-24 relative" ref={cardsSection.ref}>
+        <div className="depth-well" aria-hidden />
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 perspective-scene relative z-10">
           <div className="grid md:grid-cols-2 gap-8 lg:gap-10">
             <TiltCard href="/academy" visible={cardsSection.inView} delay={0}>
               <div className="relative h-56 md:h-64 overflow-hidden">
@@ -292,19 +295,19 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ——— STATS ——— */}
-      <section className="pb-20 md:pb-28" ref={statsSection.ref}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="pb-20 md:pb-28 relative" ref={statsSection.ref}>
+        <div className="depth-well depth-well-soft" aria-hidden />
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             {stats.map((stat, i) => (
               <div
                 key={stat.label}
-                className={`stat-card stat-card-solid group relative overflow-hidden rounded-2xl border border-white/12 bg-wisdom-card p-6 md:p-8 text-center reveal-item ${
+                className={`stat-card stat-card-solid card-elevated group relative overflow-hidden rounded-2xl border border-white/14 bg-wisdom-card p-6 md:p-8 text-center reveal-item ${
                   statsSection.inView ? "is-visible" : ""
                 }`}
                 style={{ transitionDelay: statsSection.inView ? `${i * 90}ms` : undefined }}
               >
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-wisdom-cyan/8 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-wisdom-cyan/10 via-transparent to-transparent pointer-events-none" />
                 <div className="relative">
                   <div className="stat-value font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-2 group-hover:text-wisdom-cyan transition-colors duration-300">
                     <CountUp
@@ -325,24 +328,26 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="pb-28" ref={ctaSection.ref}>
+      <section className="pb-28 relative" ref={ctaSection.ref}>
         <div
-          className={`max-w-3xl mx-auto px-4 text-center reveal-item ${ctaSection.inView ? "is-visible" : ""}`}
+          className={`max-w-3xl mx-auto px-4 text-center relative z-10 reveal-item ${ctaSection.inView ? "is-visible" : ""}`}
         >
-          <h2 className="font-display text-2xl md:text-4xl font-bold mb-4">Not sure where to start?</h2>
-          <p className="text-wisdom-muted mb-9 text-lg">
-            Tell us your goal and we&apos;ll guide you to the right path.
-          </p>
-          <Link
-            href="/contact"
-            className="inline-flex items-center gap-2 px-9 py-4 rounded-2xl bg-wisdom-cyan text-wisdom-dark font-semibold text-lg
-              hover:bg-wisdom-cyan-dark hover:shadow-glow hover:scale-105 active:scale-100 transition-all duration-300"
-          >
-            Let&apos;s Build Together
-            <ArrowRight className="w-5 h-5" />
-          </Link>
+          <div className="cta-panel rounded-3xl border border-white/12 bg-wisdom-card/80 backdrop-blur-md px-6 py-10 md:px-12 md:py-12 card-elevated">
+            <h2 className="font-display text-2xl md:text-4xl font-bold mb-4">Not sure where to start?</h2>
+            <p className="text-wisdom-muted mb-9 text-lg">
+              Tell us your goal and we&apos;ll guide you to the right path.
+            </p>
+            <Link
+              href="/contact"
+              className="inline-flex items-center gap-2 px-9 py-4 rounded-2xl bg-wisdom-cyan text-wisdom-dark font-semibold text-lg
+                hover:bg-wisdom-cyan-dark hover:shadow-glow hover:scale-105 active:scale-100 transition-all duration-300 shadow-lg shadow-cyan-500/25"
+            >
+              Let&apos;s Build Together
+              <ArrowRight className="w-5 h-5" />
+            </Link>
+          </div>
         </div>
       </section>
-    </>
+    </div>
   );
 }
