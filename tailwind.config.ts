@@ -6,16 +6,17 @@ const config: Config = {
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
         wisdom: {
-          dark: "#0a0f1a",
-          navy: "#0f172a",
-          card: "#1e293b",
+          dark: "var(--wt-dark)",
+          navy: "var(--wt-navy)",
+          card: "var(--wt-card)",
           cyan: "#00d4ff",
           "cyan-dark": "#00b4d8",
-          muted: "#94a3b8",
+          muted: "var(--wt-muted)",
         },
       },
       fontFamily: {
