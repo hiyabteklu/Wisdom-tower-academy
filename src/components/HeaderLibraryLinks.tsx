@@ -1,11 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BookOpen, ShoppingBag } from "lucide-react";
-import { demoCart } from "@/data/learning";
+import { cartCount, CART_EVENT } from "@/lib/cart";
 
-/** Compact Learning + Cart icons for the top bar */
 export default function HeaderLibraryLinks({
   onNavigate,
   size = "md",
@@ -14,10 +14,21 @@ export default function HeaderLibraryLinks({
   size?: "md" | "lg";
 }) {
   const pathname = usePathname();
-  const cartCount = demoCart.length;
-  const icon = size === "lg" ? 22 : 18;
-  const pad = size === "lg" ? "p-2" : "p-2";
+  const [count, setCount] = useState(0);
 
+  useEffect(() => {
+    const sync = () => setCount(cartCount());
+    sync();
+    window.addEventListener(CART_EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(CART_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
+
+  const icon = size === "lg" ? 22 : 18;
+  const pad = "p-2";
   const learningActive = pathname.startsWith("/learning");
   const cartActive = pathname.startsWith("/cart");
 
@@ -39,7 +50,7 @@ export default function HeaderLibraryLinks({
       <Link
         href="/cart"
         onClick={onNavigate}
-        aria-label={cartCount ? `Cart, ${cartCount} items` : "Cart"}
+        aria-label={count ? `Cart, ${count} items` : "Cart"}
         title="Cart"
         className={`relative ${pad} rounded-full border transition-all duration-200 ${
           cartActive
@@ -48,9 +59,9 @@ export default function HeaderLibraryLinks({
         }`}
       >
         <ShoppingBag style={{ width: icon, height: icon }} />
-        {cartCount > 0 && (
+        {count > 0 && (
           <span className="absolute top-1 right-1 min-w-[14px] h-3.5 px-0.5 rounded-full bg-wisdom-cyan text-[9px] font-bold text-wisdom-dark flex items-center justify-center leading-none ring-2 ring-wisdom-dark">
-            {cartCount > 9 ? "9+" : cartCount}
+            {count > 9 ? "9+" : count}
           </span>
         )}
       </Link>

@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getGrade, grades, resourceHubs } from "@/data/academy";
+import { packageIdForGrade } from "@/data/packages";
 import CategoryBackButton from "@/components/CategoryBackButton";
 import AcademicResultSaver from "@/components/AcademicResultSaver";
+import PackageOfferBanner from "@/components/PackageOfferBanner";
 import {
   BookOpen,
   Library,
@@ -36,16 +38,20 @@ export default async function GradeDetailPage({
 
   if (!grade) notFound();
 
+  const packageId = packageIdForGrade(grade.id);
+
   return (
     <div className="relative min-h-[80vh]">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className={`absolute top-0 right-1/4 w-[28rem] h-[28rem] rounded-full blur-3xl opacity-30 bg-gradient-to-br ${grade.gradient}`} />
+        <div
+          className={`absolute top-0 right-1/4 w-[28rem] h-[28rem] rounded-full blur-3xl opacity-30 bg-gradient-to-br ${grade.gradient}`}
+        />
       </div>
 
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
         <CategoryBackButton fallback="/academy/grades" />
 
-        <div className="mb-10 animate-fade-up">
+        <div className="mb-8 animate-fade-up">
           <div className="flex flex-wrap items-center gap-3 mb-4">
             <span
               className={`inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/15 bg-wisdom-card font-display font-extrabold ${grade.accent}`}
@@ -60,6 +66,10 @@ export default async function GradeDetailPage({
             <span className={grade.accent}>{grade.label}</span> resources
           </h1>
           <p className="text-wisdom-muted text-lg max-w-2xl leading-relaxed">{grade.subtitle}</p>
+        </div>
+
+        <div className="max-w-3xl mb-10">
+          <PackageOfferBanner packageId={packageId} />
         </div>
 
         <div className="max-w-3xl mb-12">
@@ -77,7 +87,9 @@ export default async function GradeDetailPage({
               href={`/academy/grades/${grade.id}/${hub.id}`}
               className={`card-3d group relative overflow-hidden rounded-3xl border border-white/12 bg-wisdom-card p-6 md:p-7 hover:border-white/25 shadow-lg ${hub.glow}`}
             >
-              <div className={`mb-5 inline-flex p-3.5 rounded-2xl border border-white/10 bg-wisdom-dark/60 ${hub.accent}`}>
+              <div
+                className={`mb-5 inline-flex p-3.5 rounded-2xl border border-white/10 bg-wisdom-dark/60 ${hub.accent}`}
+              >
                 {iconMap[hub.icon]}
               </div>
               <h2 className="font-display text-xl font-bold mb-2 group-hover:text-white transition-colors">
