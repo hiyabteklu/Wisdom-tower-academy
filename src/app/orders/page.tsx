@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { listOrders, statusLabel, type ManualOrder } from "@/lib/orders";
+import { listLocalOrders, statusLabel, type ManualOrder } from "@/lib/orders";
 import { formatEtb } from "@/data/packages";
 import { ClipboardList } from "lucide-react";
 
@@ -10,7 +10,7 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<ManualOrder[]>([]);
 
   useEffect(() => {
-    setOrders(listOrders());
+    setOrders(listLocalOrders());
   }, []);
 
   return (
