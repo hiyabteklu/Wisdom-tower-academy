@@ -23,6 +23,8 @@ export type ManualOrder = {
   email?: string;
   transactionRef: string;
   note?: string;
+  /** Public URL of uploaded receipt (image or PDF) */
+  receiptUrl?: string;
   createdAt: string;
   userId?: string | null;
   verifiedAt?: string | null;
@@ -84,6 +86,7 @@ function rowToOrder(row: Record<string, unknown>): ManualOrder {
     email: row.email ? String(row.email) : undefined,
     transactionRef: String(row.transaction_ref),
     note: row.note ? String(row.note) : undefined,
+    receiptUrl: row.receipt_url ? String(row.receipt_url) : undefined,
     createdAt: String(row.created_at),
     userId: row.user_id ? String(row.user_id) : null,
     verifiedAt: row.verified_at ? String(row.verified_at) : null,
@@ -91,9 +94,48 @@ function rowToOrder(row: Record<string, unknown>): ManualOrder {
   };
 }
 
+/** Upload receipt image/PDF to Supabase Storage. Returns public URL or error. */
+export async function uploadPaymentReceipt(
+  orderId: string,
+  file: File
+): Promise<{ url?: string; error?: string }> {
+  const allowed = [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/heic",
+    "image/heif",
+    "application/pdf",
+  ];
+  if (!allowed.includes(file.type) && !file.name.match(/\.(jpe?g|png|webp|pdf|heic)$/i)) {
+    return { error: "Use a photo (JPG/PNG) or PDF only." };
+  }
+  if (file.size > 8 * 1024 * 1024) {
+    return { error: "File too large (max 8 MB)." };
+  }
+
+  const ext =
+    file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") ||
+    (file.type === "application/pdf" ? "pdf" : "jpg");
+  const path = `${orderId}/${Date.now()}.${ext}`;
+
+  const { error } = await supabase.storage.from("payment-receipts").upload(path, file, {
+    cacheControl: "3600",
+    upsert: true,
+    contentType: file.type || undefined,
+  });
+
+  if (error) {
+    console.warn("[receipt upload]", error.message);
+    return { error: error.message };
+  }
+
+  const { data } = supabase.storage.from("payment-receipts").getPublicUrl(path);
+  return { url: data.publicUrl };
+}
+
 /** Save order to Supabase + localStorage backup */
 export async function saveOrder(order: ManualOrder): Promise<{ ok: boolean; error?: string }> {
-  // Always keep local backup
   const all = readLocal().filter((o) => o.id !== order.id);
   all.unshift(order);
   writeLocal(all);
@@ -118,6 +160,7 @@ export async function saveOrder(order: ManualOrder): Promise<{ ok: boolean; erro
         email: order.email || session?.user?.email || null,
         transaction_ref: order.transactionRef,
         note: order.note || null,
+        receipt_url: order.receiptUrl || null,
         created_at: order.createdAt,
       },
       { onConflict: "id" }
@@ -188,7 +231,6 @@ export async function verifyOrder(
 
     if (updErr) return { ok: false, error: updErr.message };
 
-    // Enrollment (unique on user_id + package_id when user_id present)
     const enrollPayload: Record<string, unknown> = {
       order_id: orderId,
       package_id: order.package_id,
@@ -203,7 +245,6 @@ export async function verifyOrder(
     });
 
     if (enrErr) {
-      // Still mark verified; enrollment may need manual fix
       console.warn("[orders] enrollment:", enrErr.message);
     }
 
@@ -246,9 +287,7 @@ export async function listMyEnrollments(): Promise<
     const { data, error } = await supabase
       .from("enrollments")
       .select("package_id, package_name, created_at")
-      .or(
-        `user_id.eq.${session.user.id},email.eq.${session.user.email}`
-      )
+      .or(`user_id.eq.${session.user.id},email.eq.${session.user.email}`)
       .order("created_at", { ascending: false });
 
     if (error) {

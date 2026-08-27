@@ -9,7 +9,7 @@ import {
   type ManualOrder,
 } from "@/lib/orders";
 import { formatEtb } from "@/data/packages";
-import { Check, X, RefreshCw, Phone, Mail, CreditCard } from "lucide-react";
+import { Check, X, RefreshCw, Phone, Mail, CreditCard, ExternalLink } from "lucide-react";
 
 type Filter = "pending_verification" | "all" | "verified" | "rejected";
 
@@ -170,6 +170,19 @@ export default function PaymentsPanel({ adminEmail }: { adminEmail: string }) {
                   Tx ref:{" "}
                   <span className="font-mono text-cyan-300">{o.transactionRef}</span>
                 </p>
+                {o.receiptUrl && (
+                  <p className="sm:col-span-2">
+                    <a
+                      href={o.receiptUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 text-cyan-300 font-semibold hover:underline"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      View receipt (photo / PDF)
+                    </a>
+                  </p>
+                )}
                 {o.note && <p className="sm:col-span-2">Note: {o.note}</p>}
                 <p className="text-xs">{new Date(o.createdAt).toLocaleString()}</p>
               </div>

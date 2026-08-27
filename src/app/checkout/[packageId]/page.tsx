@@ -10,6 +10,10 @@ import {
   Shield,
   Smartphone,
   Building2,
+  Upload,
+  FileText,
+  Image as ImageIcon,
+  X,
 } from "lucide-react";
 import {
   getPackage,
@@ -17,8 +21,15 @@ import {
   formatEtb,
   type PaymentMethodId,
 } from "@/data/packages";
-import { generateOrderRef, saveOrder, type ManualOrder } from "@/lib/orders";
+import {
+  generateOrderRef,
+  saveOrder,
+  uploadPaymentReceipt,
+  type ManualOrder,
+} from "@/lib/orders";
 import { removeFromCart } from "@/lib/cart";
+
+type ConfirmMode = "receipt" | "details";
 
 export default function CheckoutPage() {
   const params = useParams();
@@ -27,15 +38,19 @@ export default function CheckoutPage() {
 
   const [method, setMethod] = useState<PaymentMethodId>("telebirr");
   const [orderRef] = useState(() => generateOrderRef());
+  const [confirmMode, setConfirmMode] = useState<ConfirmMode>("receipt");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [txRef, setTxRef] = useState("");
   const [note, setNote] = useState("");
+  const [file, setFile] = useState<File | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [submittedTx, setSubmittedTx] = useState("");
+  const [submittedReceipt, setSubmittedReceipt] = useState<string | undefined>();
 
   const pay = paymentMethods.find((m) => m.id === method)!;
 
@@ -49,16 +64,48 @@ export default function CheckoutPage() {
     }
   }
 
+  function onFilePick(f: File | null) {
+    setFile(f);
+    setError("");
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     if (!pkg) return;
-    if (!name.trim() || !phone.trim() || !txRef.trim()) {
-      setError("Name, phone, and transaction reference are required.");
-      return;
+
+    if (confirmMode === "receipt") {
+      if (!file) {
+        setError("Add a screenshot or PDF of your payment receipt.");
+        return;
+      }
+      if (!phone.trim()) {
+        setError("Phone is required so we can reach you if needed.");
+        return;
+      }
+    } else {
+      if (!name.trim() || !phone.trim() || !txRef.trim()) {
+        setError("Name, phone, and transaction reference are required.");
+        return;
+      }
     }
 
     setSubmitting(true);
+    let receiptUrl: string | undefined;
+
+    if (confirmMode === "receipt" && file) {
+      const up = await uploadPaymentReceipt(orderRef, file);
+      if (up.error || !up.url) {
+        setSubmitting(false);
+        setError(
+          up.error ||
+            "Could not upload receipt. Create a public Storage bucket named payment-receipts in Supabase, or use Type details instead."
+        );
+        return;
+      }
+      receiptUrl = up.url;
+    }
+
     const order: ManualOrder = {
       id: orderRef,
       packageId: pkg.id,
@@ -66,18 +113,27 @@ export default function CheckoutPage() {
       amountEtb: pkg.priceEtb,
       status: "pending_verification",
       paymentMethod: method,
-      studentName: name.trim(),
+      studentName: name.trim() || "Receipt upload",
       phone: phone.trim(),
       email: email.trim() || undefined,
-      transactionRef: txRef.trim(),
-      note: note.trim() || undefined,
+      transactionRef:
+        confirmMode === "receipt"
+          ? txRef.trim() || `RECEIPT:${file?.name || "upload"}`
+          : txRef.trim(),
+      note:
+        confirmMode === "receipt"
+          ? [note.trim(), file ? `Attached: ${file.name}` : ""].filter(Boolean).join(" · ") ||
+            undefined
+          : note.trim() || undefined,
+      receiptUrl,
       createdAt: new Date().toISOString(),
     };
 
     const result = await saveOrder(order);
-    // Always remove this package from cart after submit attempt
     removeFromCart(pkg.id);
     setSubmitting(false);
+    setSubmittedTx(order.transactionRef);
+    setSubmittedReceipt(receiptUrl);
 
     if (result.error) {
       setError(
@@ -106,17 +162,31 @@ export default function CheckoutPage() {
           <div className="mx-auto w-14 h-14 rounded-full bg-emerald-500/15 border border-emerald-400/40 flex items-center justify-center mb-4">
             <Check className="w-7 h-7 text-emerald-400" />
           </div>
-          <h1 className="font-display text-2xl font-bold text-white mb-2">Submitted for verification</h1>
+          <h1 className="font-display text-2xl font-bold text-white mb-2">
+            Submitted for verification
+          </h1>
           <p className="text-sm text-wisdom-muted leading-relaxed mb-4">
             Order <span className="text-white font-mono font-semibold">{orderRef}</span> for{" "}
             <span className="text-white">{pkg.name}</span> ({formatEtb(pkg.priceEtb)}) is pending
             manual confirmation. You&apos;ll get access in My Learning after we verify the transfer.
           </p>
-          <p className="text-xs text-wisdom-muted mb-2">
-            Keep your receipt. Reference: {txRef}
-          </p>
+          {submittedReceipt ? (
+            <p className="text-xs text-wisdom-muted mb-2">
+              Receipt uploaded.{" "}
+              <a
+                href={submittedReceipt}
+                target="_blank"
+                rel="noreferrer"
+                className="text-cyan-400 hover:underline"
+              >
+                Open file
+              </a>
+            </p>
+          ) : (
+            <p className="text-xs text-wisdom-muted mb-2">Keep your receipt. Reference: {submittedTx}</p>
+          )}
           <p className="text-xs text-wisdom-muted mb-6">
-            Admin: open <span className="text-cyan-300">/admin/payments</span> to approve.
+            Admin: open <span className="text-cyan-300">/admin</span> → Payments to approve.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
@@ -171,7 +241,9 @@ export default function CheckoutPage() {
 
           <div className="px-5 sm:px-6 py-4 bg-wisdom-dark/40 flex flex-wrap items-center justify-between gap-2">
             <div>
-              <p className="text-[10px] uppercase tracking-wider text-wisdom-muted">Order reference</p>
+              <p className="text-[10px] uppercase tracking-wider text-wisdom-muted">
+                Order reference
+              </p>
               <p className="font-mono text-lg font-bold text-white">{orderRef}</p>
             </div>
             <button
@@ -222,7 +294,9 @@ export default function CheckoutPage() {
           </p>
 
           <div className="rounded-xl bg-wisdom-dark/60 border border-white/10 p-4 mb-4">
-            <p className="text-[10px] uppercase tracking-wider text-wisdom-muted">{pay.accountLabel}</p>
+            <p className="text-[10px] uppercase tracking-wider text-wisdom-muted">
+              {pay.accountLabel}
+            </p>
             <div className="flex items-center justify-between gap-2 mt-1">
               <p className="font-mono text-lg font-bold text-white break-all">{pay.accountValue}</p>
               <button
@@ -252,62 +326,194 @@ export default function CheckoutPage() {
         </div>
 
         <h2 className="font-display text-lg font-bold text-white mb-3">2. Confirm payment</h2>
+
+        <div className="flex gap-2 mb-4">
+          <button
+            type="button"
+            onClick={() => setConfirmMode("receipt")}
+            className={`flex-1 inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold border ${
+              confirmMode === "receipt"
+                ? "border-amber-400/50 bg-amber-500/15 text-amber-100"
+                : "border-white/10 text-wisdom-muted hover:text-white"
+            }`}
+          >
+            <Upload className="w-4 h-4" />
+            Upload receipt
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirmMode("details")}
+            className={`flex-1 inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold border ${
+              confirmMode === "details"
+                ? "border-cyan-400/50 bg-cyan-500/15 text-cyan-100"
+                : "border-white/10 text-wisdom-muted hover:text-white"
+            }`}
+          >
+            <FileText className="w-4 h-4" />
+            Type details
+          </button>
+        </div>
+
         <form
           onSubmit={submit}
           className="rounded-2xl border border-white/12 bg-wisdom-card p-5 sm:p-6 space-y-4"
         >
-          <div className="grid sm:grid-cols-2 gap-4">
-            <label className="block">
-              <span className="text-xs text-wisdom-muted">Full name *</span>
-              <input
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-400/50"
-                placeholder="As on your transfer"
-              />
-            </label>
-            <label className="block">
-              <span className="text-xs text-wisdom-muted">Phone (Telebirr / mobile) *</span>
-              <input
-                required
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-400/50"
-                placeholder="09…"
-              />
-            </label>
-          </div>
-          <label className="block">
-            <span className="text-xs text-wisdom-muted">Email (recommended — unlocks My Learning)</span>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-400/50"
-              placeholder="you@example.com"
-            />
-          </label>
-          <label className="block">
-            <span className="text-xs text-wisdom-muted">Transaction / receipt ID *</span>
-            <input
-              required
-              value={txRef}
-              onChange={(e) => setTxRef(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2.5 text-sm text-white font-mono outline-none focus:border-cyan-400/50"
-              placeholder="From SMS or bank receipt"
-            />
-          </label>
-          <label className="block">
-            <span className="text-xs text-wisdom-muted">Note (optional)</span>
-            <textarea
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              rows={2}
-              className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-400/50 resize-none"
-              placeholder="Bank name if Other, or extra detail"
-            />
-          </label>
+          {confirmMode === "receipt" ? (
+            <>
+              <p className="text-sm text-wisdom-muted">
+                Fastest path: upload a <span className="text-white/90">screenshot or PDF</span> of
+                the SMS / bank receipt. No transaction ID needed.
+              </p>
+
+              <label className="block">
+                <span className="text-xs text-wisdom-muted">Receipt photo or PDF *</span>
+                <div className="mt-1">
+                  {!file ? (
+                    <label className="flex flex-col items-center justify-center gap-2 min-h-[120px] rounded-xl border border-dashed border-white/20 bg-wisdom-dark/40 px-4 py-6 cursor-pointer hover:border-cyan-400/40 hover:bg-wisdom-dark/60 transition-colors">
+                      <ImageIcon className="w-8 h-8 text-cyan-400/80" />
+                      <span className="text-sm text-white/85 font-medium">Tap to choose file</span>
+                      <span className="text-[11px] text-wisdom-muted">JPG, PNG, WebP or PDF · max 8 MB</span>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/heic,application/pdf,.pdf,.jpg,.jpeg,.png"
+                        className="sr-only"
+                        onChange={(e) => onFilePick(e.target.files?.[0] || null)}
+                      />
+                    </label>
+                  ) : (
+                    <div className="flex items-center gap-3 rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-3">
+                      {file.type.startsWith("image/") ? (
+                        <ImageIcon className="w-8 h-8 text-cyan-400 shrink-0" />
+                      ) : (
+                        <FileText className="w-8 h-8 text-amber-400 shrink-0" />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm text-white truncate font-medium">{file.name}</p>
+                        <p className="text-[11px] text-wisdom-muted">
+                          {(file.size / 1024).toFixed(0)} KB
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => onFilePick(null)}
+                        className="p-2 rounded-lg border border-white/12 text-wisdom-muted hover:text-white"
+                        aria-label="Remove file"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </label>
+
+              <label className="block">
+                <span className="text-xs text-wisdom-muted">Phone (Telebirr / mobile) *</span>
+                <input
+                  required
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-400/50"
+                  placeholder="09…"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-xs text-wisdom-muted">
+                  Email (recommended — unlocks My Learning)
+                </span>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-400/50"
+                  placeholder="you@example.com"
+                />
+              </label>
+
+              <details className="text-sm">
+                <summary className="cursor-pointer text-wisdom-muted hover:text-white text-xs font-medium">
+                  Optional: name or extra note
+                </summary>
+                <div className="mt-3 space-y-3">
+                  <label className="block">
+                    <span className="text-xs text-wisdom-muted">Full name</span>
+                    <input
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-400/50"
+                      placeholder="As on your transfer"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs text-wisdom-muted">Note</span>
+                    <input
+                      value={note}
+                      onChange={(e) => setNote(e.target.value)}
+                      className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-400/50"
+                      placeholder="Bank name if Other"
+                    />
+                  </label>
+                </div>
+              </details>
+            </>
+          ) : (
+            <>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <label className="block">
+                  <span className="text-xs text-wisdom-muted">Full name *</span>
+                  <input
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-400/50"
+                    placeholder="As on your transfer"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-xs text-wisdom-muted">Phone (Telebirr / mobile) *</span>
+                  <input
+                    required
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-400/50"
+                    placeholder="09…"
+                  />
+                </label>
+              </div>
+              <label className="block">
+                <span className="text-xs text-wisdom-muted">
+                  Email (recommended — unlocks My Learning)
+                </span>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-400/50"
+                  placeholder="you@example.com"
+                />
+              </label>
+              <label className="block">
+                <span className="text-xs text-wisdom-muted">Transaction / receipt ID *</span>
+                <input
+                  required
+                  value={txRef}
+                  onChange={(e) => setTxRef(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2.5 text-sm text-white font-mono outline-none focus:border-cyan-400/50"
+                  placeholder="From SMS or bank receipt"
+                />
+              </label>
+              <label className="block">
+                <span className="text-xs text-wisdom-muted">Note (optional)</span>
+                <textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  rows={2}
+                  className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-400/50 resize-none"
+                  placeholder="Bank name if Other, or extra detail"
+                />
+              </label>
+            </>
+          )}
 
           {error && <p className="text-sm text-rose-400">{error}</p>}
 
@@ -324,7 +530,11 @@ export default function CheckoutPage() {
             disabled={submitting}
             className="w-full py-3.5 rounded-xl bg-amber-500 text-wisdom-dark text-sm font-bold hover:bg-amber-400 transition-colors disabled:opacity-60"
           >
-            {submitting ? "Submitting…" : "I’ve paid · Submit for verification"}
+            {submitting
+              ? confirmMode === "receipt"
+                ? "Uploading & submitting…"
+                : "Submitting…"
+              : "I’ve paid · Submit for verification"}
           </button>
         </form>
 
