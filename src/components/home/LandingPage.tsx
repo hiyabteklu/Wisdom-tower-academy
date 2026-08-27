@@ -4,12 +4,12 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowRight, GraduationCap, Laptop } from "lucide-react";
 import { useInView } from "@/hooks/useInView";
+import InfinityCard from "@/components/home/InfinityCard";
 
 const stats = [
   { value: 30, suffix: "K+", label: "Users" },
   { value: 10, suffix: "+", label: "Partners" },
   { value: 70, suffix: "+", label: "Services" },
-  { value: null as number | null, suffix: "∞", label: "Possibilities" },
 ];
 
 function usePrefersReducedMotion() {
@@ -30,7 +30,7 @@ function CountUp({
   active,
   duration = 1600,
 }: {
-  target: number | null;
+  target: number;
   suffix: string;
   active: boolean;
   duration?: number;
@@ -39,7 +39,6 @@ function CountUp({
   const reduced = usePrefersReducedMotion();
 
   useEffect(() => {
-    if (target === null) return;
     if (!active) return;
     if (reduced) {
       setDisplay(target);
@@ -61,7 +60,6 @@ function CountUp({
     return () => cancelAnimationFrame(frame);
   }, [active, target, duration, reduced]);
 
-  if (target === null) return <>{suffix}</>;
   return (
     <>
       {display}
@@ -166,12 +164,10 @@ export default function LandingPage() {
 
   return (
     <>
-      {/* ——— HERO ——— */}
       <section ref={heroRef} className="relative overflow-hidden hero-scene">
         <div className="absolute inset-0 bg-gradient-to-b from-wisdom-cyan/5 via-transparent to-transparent" />
         <div className="hero-grain" aria-hidden />
 
-        {/* Ambient floating orbs */}
         <div
           className="absolute top-16 left-[12%] w-80 h-80 bg-wisdom-cyan/12 rounded-full blur-3xl pointer-events-none orb-float"
           style={blob1}
@@ -182,7 +178,6 @@ export default function LandingPage() {
         />
         <div className="absolute top-1/3 right-1/3 w-40 h-40 bg-wisdom-cyan/8 rounded-full blur-2xl pointer-events-none orb-pulse" />
 
-        {/* Soft mesh dots */}
         <div className="hero-mesh" aria-hidden />
 
         <div
@@ -227,7 +222,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ——— PATH CARDS ——— */}
       <section className="pb-16 md:pb-24" ref={cardsSection.ref}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 perspective-scene">
           <div className="grid md:grid-cols-2 gap-8 lg:gap-10">
@@ -305,11 +299,12 @@ export default function LandingPage() {
             {stats.map((stat, i) => (
               <div
                 key={stat.label}
-                className={`stat-card card-3d group relative overflow-hidden rounded-2xl border border-white/12 bg-wisdom-card p-6 md:p-8 text-center reveal-item ${
+                className={`stat-card stat-card-solid group relative overflow-hidden rounded-2xl border border-white/12 bg-wisdom-card p-6 md:p-8 text-center reveal-item ${
                   statsSection.inView ? "is-visible" : ""
                 }`}
                 style={{ transitionDelay: statsSection.inView ? `${i * 90}ms` : undefined }}
               >
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-wisdom-cyan/8 via-transparent to-transparent pointer-events-none" />
                 <div className="relative">
                   <div className="stat-value font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-2 group-hover:text-wisdom-cyan transition-colors duration-300">
                     <CountUp
@@ -324,11 +319,12 @@ export default function LandingPage() {
                 </div>
               </div>
             ))}
+
+            <InfinityCard visible={statsSection.inView} delay={270} />
           </div>
         </div>
       </section>
 
-      {/* ——— CTA ——— */}
       <section className="pb-28" ref={ctaSection.ref}>
         <div
           className={`max-w-3xl mx-auto px-4 text-center reveal-item ${ctaSection.inView ? "is-visible" : ""}`}
