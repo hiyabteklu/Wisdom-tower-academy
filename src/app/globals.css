@@ -14,6 +14,11 @@
   --wt-navy: #0f172a;
   --wt-card: #1e293b;
   --wt-muted: #94a3b8;
+  /* Space-separated RGB for Tailwind opacity modifiers */
+  --wt-dark-rgb: 10 15 26;
+  --wt-navy-rgb: 15 23 42;
+  --wt-card-rgb: 30 41 59;
+  --wt-muted-rgb: 148 163 184;
   --font-display: 'Outfit', system-ui, sans-serif;
   --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
 }
@@ -26,6 +31,10 @@
   --wt-navy: #f8fafc;
   --wt-card: #ffffff;
   --wt-muted: #64748b;
+  --wt-dark-rgb: 232 238 245;
+  --wt-navy-rgb: 248 250 252;
+  --wt-card-rgb: 255 255 255;
+  --wt-muted-rgb: 100 116 139;
 }
 
 html {
@@ -833,19 +842,39 @@ html.force-reduced-motion {
   }
 }
 
+/* Plain CSS — avoid @apply with opacity on CSS-var colors */
 .field-input {
-  @apply w-full px-4 py-3.5 rounded-xl bg-wisdom-dark/80 border border-white/15
-    text-white placeholder:text-wisdom-muted/70
-    focus:border-wisdom-cyan focus:outline-none focus:ring-2 focus:ring-wisdom-cyan/30
-    transition-all duration-300;
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border-radius: 0.75rem;
+  background: rgb(var(--wt-dark-rgb) / 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  transition: all 0.3s ease;
 }
 
-.theme-light .field-input {
-  @apply bg-white border-slate-200 text-slate-900 placeholder:text-slate-400;
+.field-input::placeholder {
+  color: rgb(var(--wt-muted-rgb) / 0.7);
+}
+
+.field-input:focus {
+  outline: none;
+  border-color: #00d4ff;
+  box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.3);
 }
 
 .field-input:hover {
   border-color: rgba(255, 255, 255, 0.22);
+}
+
+.theme-light .field-input {
+  background: #ffffff;
+  border-color: #e2e8f0;
+  color: #0f172a;
+}
+
+.theme-light .field-input::placeholder {
+  color: #94a3b8;
 }
 
 .theme-light .field-input:hover {
