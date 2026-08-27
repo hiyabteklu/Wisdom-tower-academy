@@ -19,9 +19,18 @@ type ExplainBody = {
 const FALLBACK =
   "Explanation is temporarily unavailable. Review the correct option, compare it with your choice, and try a similar practice question to lock in the idea.";
 
-/** Prefer Groq when GROQ_API_KEY is set (free tier, no Vercel card). Else AI Gateway. */
-const GROQ_MODEL = process.env.AI_EXPLAIN_MODEL || "llama-3.1-8b-instant";
-const GATEWAY_MODEL = process.env.AI_EXPLAIN_MODEL || "meta/llama-3.1-8b";
+/**
+ * Groq free/developer models (llama-3.1-8b-instant is often Enterprise-only).
+ * Override with AI_EXPLAIN_MODEL env if needed.
+ */
+const GROQ_MODELS = [
+  process.env.AI_EXPLAIN_MODEL,
+  "openai/gpt-oss-20b",
+  "llama-3.3-70b-versatile",
+  "llama-3.1-8b-instant",
+].filter((m): m is string => Boolean(m && m.trim()));
+
+const GATEWAY_MODEL = process.env.AI_EXPLAIN_MODEL || "openai/gpt-oss-20b";
 
 function clientIp(req: NextRequest): string {
   const forwarded = req.headers.get("x-forwarded-for");
@@ -70,11 +79,7 @@ function isCardRequiredError(msg: string): boolean {
   return /credit card|customer_verification|add a card|unlock your free credits/i.test(msg);
 }
 
-/** Free path: Groq OpenAI-compatible API (no Vercel AI Gateway / no card). */
-async function generateWithGroq(prompt: string): Promise<{ text: string; model: string }> {
-  const key = process.env.GROQ_API_KEY;
-  if (!key) throw new Error("GROQ_API_KEY not set");
-
+async function groqChat(model: string, prompt: string, key: string): Promise<string> {
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -82,33 +87,51 @@ async function generateWithGroq(prompt: string): Promise<{ text: string; model: 
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: GROQ_MODEL,
+      model,
       temperature: 0.4,
       max_tokens: 400,
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
+      messages: [{ role: "user", content: prompt }],
     }),
   });
 
   const raw = await res.text();
   if (!res.ok) {
-    throw new Error(`Groq ${res.status}: ${raw.slice(0, 280)}`);
+    throw new Error(`Groq ${res.status} (${model}): ${raw.slice(0, 220)}`);
   }
 
   let data: { choices?: { message?: { content?: string } }[] };
   try {
     data = JSON.parse(raw);
   } catch {
-    throw new Error("Groq returned invalid JSON");
+    throw new Error(`Groq returned invalid JSON (${model})`);
   }
 
   const text = data.choices?.[0]?.message?.content?.trim() || "";
-  if (!text) throw new Error("Groq returned empty content");
-  return { text, model: `groq/${GROQ_MODEL}` };
+  if (!text) throw new Error(`Groq returned empty content (${model})`);
+  return text;
+}
+
+/** Free path: Groq OpenAI-compatible API (tries several model ids). */
+async function generateWithGroq(prompt: string): Promise<{ text: string; model: string }> {
+  const key = process.env.GROQ_API_KEY;
+  if (!key) throw new Error("GROQ_API_KEY not set");
+
+  const tried: string[] = [];
+  let lastErr = "";
+
+  for (const model of GROQ_MODELS) {
+    if (tried.includes(model)) continue;
+    tried.push(model);
+    try {
+      const text = await groqChat(model, prompt, key);
+      return { text, model: `groq/${model}` };
+    } catch (e) {
+      lastErr = errorMessage(e);
+      console.warn("[explain] Groq model failed:", lastErr);
+    }
+  }
+
+  throw new Error(lastErr || "All Groq models failed");
 }
 
 /** Vercel AI Gateway (needs card on file to unlock free $5 credits). */
@@ -225,13 +248,11 @@ export async function POST(req: NextRequest) {
   }
 
   let lastError = "";
-  let usedModel = "";
 
   // 1) Prefer Groq when available (works without Vercel card)
   if (hasGroq) {
     try {
       const result = await generateWithGroq(prompt);
-      usedModel = result.model;
 
       if (supabase) {
         try {
@@ -240,7 +261,7 @@ export async function POST(req: NextRequest) {
             explanation: result.text,
             subject,
             difficulty,
-            model: usedModel,
+            model: result.model,
             updated_at: new Date().toISOString(),
           });
         } catch (e) {
@@ -252,7 +273,7 @@ export async function POST(req: NextRequest) {
         explanation: result.text,
         cached: false,
         fallback: false,
-        model: usedModel,
+        model: result.model,
       });
     } catch (e) {
       lastError = errorMessage(e);
@@ -264,7 +285,6 @@ export async function POST(req: NextRequest) {
   if (hasGateway) {
     try {
       const result = await generateWithGateway(prompt);
-      usedModel = result.model;
 
       if (supabase) {
         try {
@@ -273,7 +293,7 @@ export async function POST(req: NextRequest) {
             explanation: result.text,
             subject,
             difficulty,
-            model: usedModel,
+            model: result.model,
             updated_at: new Date().toISOString(),
           });
         } catch (e) {
@@ -285,7 +305,7 @@ export async function POST(req: NextRequest) {
         explanation: result.text,
         cached: false,
         fallback: false,
-        model: usedModel,
+        model: result.model,
       });
     } catch (e) {
       lastError = errorMessage(e);
@@ -298,7 +318,7 @@ export async function POST(req: NextRequest) {
           fallback: true,
           reason: "card_required",
           detail:
-            "Vercel AI Gateway needs a card on file to unlock free credits. Add GROQ_API_KEY for a free alternative, or add a card in Vercel AI settings.",
+            "Vercel AI Gateway needs a card on file to unlock free credits. Groq is preferred when GROQ_API_KEY is set.",
         });
       }
     }
