@@ -12,7 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowRight,
-  Sparkles,
+  Route,
   Clock,
   CheckCircle2,
 } from "lucide-react";
@@ -205,7 +205,6 @@ export default function TalentPath() {
         entered ? "opacity-100" : "opacity-0"
       }`}
     >
-      {/* Ambient */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div
           className={`absolute -top-24 -right-16 w-72 h-72 rounded-full blur-3xl opacity-30 bg-gradient-to-br ${stage.bg} transition-all duration-700`}
@@ -214,11 +213,10 @@ export default function TalentPath() {
       </div>
 
       <div className="relative p-5 sm:p-8 md:p-10">
-        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
           <div className="flex items-start gap-3">
-            <div className="p-2.5 rounded-xl bg-wisdom-cyan/15 border border-wisdom-cyan/30 text-wisdom-cyan">
-              <Sparkles className="w-5 h-5" />
+            <div className="p-2.5 rounded-xl bg-white/5 border border-white/12 text-wisdom-muted">
+              <Route className="w-5 h-5" />
             </div>
             <div>
               <h3 className="font-display text-xl md:text-2xl font-bold tracking-tight">Your path</h3>
@@ -240,16 +238,14 @@ export default function TalentPath() {
           </div>
         </div>
 
-        {/* Step rail */}
         <div className="relative mb-8 md:mb-10">
-          {/* Track */}
           <div className="hidden md:block absolute top-7 left-[6%] right-[6%] h-0.5 bg-white/10 rounded-full" />
           <div
             className={`hidden md:block absolute top-7 left-[6%] h-0.5 rounded-full ${stage.bar} transition-all duration-500`}
             style={{ width: `calc(${(active / (stages.length - 1)) * 88}% )` }}
           />
 
-          <div className="flex gap-2 md:gap-0 overflow-x-auto md:overflow-visible pb-2 md:pb-0 snap-x snap-mandatory md:snap-none -mx-1 px-1 scrollbar-thin">
+          <div className="flex gap-2 md:gap-0 overflow-x-auto md:overflow-visible pb-2 md:pb-0 snap-x snap-mandatory md:snap-none -mx-1 px-1">
             {stages.map((s, i) => {
               const SIcon = s.icon;
               const isActive = i === active;
@@ -259,7 +255,7 @@ export default function TalentPath() {
                   key={s.n}
                   type="button"
                   onClick={() => go(i)}
-                  className={`relative flex flex-col items-center text-center shrink-0 snap-center md:flex-1 min-w-[4.5rem] md:min-w-0 group outline-none focus-visible:ring-2 focus-visible:ring-wisdom-cyan/50 rounded-xl`}
+                  className="relative flex flex-col items-center text-center shrink-0 snap-center md:flex-1 min-w-[4.5rem] md:min-w-0 group outline-none focus-visible:ring-2 focus-visible:ring-wisdom-cyan/50 rounded-xl"
                   aria-current={isActive ? "step" : undefined}
                 >
                   <div
@@ -267,8 +263,8 @@ export default function TalentPath() {
                       isActive
                         ? `${s.bg.replace("from-", "bg-gradient-to-br from-")} ${s.border} ${s.text} scale-110 -translate-y-1 shadow-lg ${s.glow} ring-2 ${s.ring}`
                         : isPast
-                          ? `bg-white/10 border-white/25 text-white/80`
-                          : `bg-wisdom-dark/80 border-white/12 text-wisdom-muted group-hover:border-white/30 group-hover:text-white/90 group-hover:scale-105`
+                          ? "bg-white/10 border-white/25 text-white/80"
+                          : "bg-wisdom-dark/80 border-white/12 text-wisdom-muted group-hover:border-white/30 group-hover:text-white/90 group-hover:scale-105"
                     }`}
                   >
                     {isPast && !isActive ? (
@@ -302,7 +298,6 @@ export default function TalentPath() {
           </div>
         </div>
 
-        {/* Active stage panel */}
         <div
           key={stage.n}
           className={`rounded-2xl border ${stage.border} bg-gradient-to-br ${stage.bg} p-5 sm:p-7 transition-all duration-300`}
@@ -361,7 +356,6 @@ export default function TalentPath() {
             </div>
           </div>
 
-          {/* Nav */}
           <div className="mt-6 pt-5 border-t border-white/10 flex flex-wrap items-center justify-between gap-3">
             <button
               type="button"
