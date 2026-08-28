@@ -13,6 +13,7 @@ import {
   ListChecks,
   ClipboardList,
   ChevronRight,
+  BadgeCheck,
 } from "lucide-react";
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -40,30 +41,29 @@ export default async function FreshmanSubjectPage({
 
   return (
     <div className="relative min-h-[80vh]">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-1/4 w-80 h-80 rounded-full blur-3xl opacity-25 bg-gradient-to-br from-purple-500/25 via-pink-500/10 to-transparent" />
-      </div>
-
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
         <CategoryBackButton fallback="/academy/freshman" />
 
-        <div className="rounded-3xl border border-white/15 bg-wisdom-card shadow-card-3d overflow-hidden animate-fade-up mb-10">
-          <div className="relative aspect-video max-h-72 sm:max-h-80 bg-wisdom-navy overflow-hidden border-b border-white/10">
-            <SubjectHeroImage src={subject.image} alt={subject.name} />
-            <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card via-wisdom-card/50 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 px-6 sm:px-8 pb-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-purple-300/80 mb-2">
+        {/* Centered 16:9 hero — no stretch, no gradient overlay */}
+        <div className="max-w-2xl mx-auto mb-8 animate-fade-up">
+          <div className="rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card overflow-hidden shadow-card-3d">
+            <div className="relative aspect-video w-full bg-wisdom-navy">
+              <SubjectHeroImage src={subject.image} alt={subject.name} />
+            </div>
+            <div className="px-5 py-4 sm:px-6 sm:py-5 text-center border-t border-white/8">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-wisdom-muted mb-2">
                 Freshman · Subject
               </p>
-              <h1 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight text-white">
+              <h1 className="inline-flex items-center justify-center gap-2 font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                <BadgeCheck className="w-6 h-6 sm:w-7 sm:h-7 shrink-0 text-sky-400" aria-label="Verified" />
                 {subject.name}
               </h1>
-              <p className="text-wisdom-muted mt-1">{subject.description}</p>
             </div>
           </div>
         </div>
 
-        <div className="max-w-3xl mb-10">
+        {/* Progress tracker centered */}
+        <div className="max-w-2xl mx-auto mb-10">
           <AcademicResultSaver
             scopeId={`freshman-${subject.id}`}
             scopeLabel={`Freshman · ${subject.name}`}
@@ -71,7 +71,7 @@ export default async function FreshmanSubjectPage({
           />
         </div>
 
-        <p className="text-sm font-semibold tracking-[0.15em] uppercase text-wisdom-muted mb-4">
+        <p className="text-sm font-semibold tracking-[0.15em] uppercase text-wisdom-muted mb-4 text-center sm:text-left">
           Learning hubs
         </p>
 
@@ -100,8 +100,10 @@ export default async function FreshmanSubjectPage({
         </div>
 
         <div className="mt-14 pt-10 border-t border-white/10">
-          <p className="text-sm text-wisdom-muted mb-4 font-medium">Other freshman subjects</p>
-          <div className="flex flex-wrap gap-2">
+          <p className="text-sm text-wisdom-muted mb-4 font-medium text-center sm:text-left">
+            Other freshman subjects
+          </p>
+          <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
             {freshmanSubjects.map((s) => (
               <Link
                 key={s.id}

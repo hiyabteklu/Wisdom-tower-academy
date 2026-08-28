@@ -7,13 +7,12 @@ type Props = {
   alt: string;
 };
 
+/** Full 16:9 image, no dimming / no gradient. */
 export default function SubjectHeroImage({ src, alt }: Props) {
   const [failed, setFailed] = useState(false);
 
   if (failed) {
-    return (
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-900/50 via-wisdom-card to-wisdom-dark" />
-    );
+    return <div className="absolute inset-0 bg-wisdom-card" />;
   }
 
   return (
@@ -21,7 +20,7 @@ export default function SubjectHeroImage({ src, alt }: Props) {
     <img
       src={src}
       alt={alt}
-      className="absolute inset-0 h-full w-full object-cover opacity-60"
+      className="absolute inset-0 h-full w-full object-cover"
       onError={() => setFailed(true)}
     />
   );
