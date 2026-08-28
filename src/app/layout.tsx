@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./scroll-zoom.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import ScrollZoom from "@/components/ScrollZoom";
 
 export const metadata: Metadata = {
   title: "Wisdom Tower | Comprehensive Digital & Professional Services",
@@ -26,7 +28,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className="theme-dark dark" data-theme="dark" style={{ colorScheme: "dark" }}>
       <head>
-        {/* Force dark — wipe any old light preference so users don't stay inverted */}
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{localStorage.setItem('wt-theme','dark');var d=document.documentElement;d.classList.remove('theme-light','light');d.classList.add('theme-dark','dark');d.style.colorScheme='dark';d.setAttribute('data-theme','dark');}catch(e){}})();`,
@@ -46,6 +47,7 @@ export default function RootLayout({
           <Header />
           <main className="flex-1 pt-16 relative z-10">{children}</main>
           <Footer />
+          <ScrollZoom />
         </ThemeProvider>
       </body>
     </html>
