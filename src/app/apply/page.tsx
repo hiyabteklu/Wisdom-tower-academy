@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, Suspense, useEffect } from "react";
+import { useState, Suspense, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@supabase/supabase-js";
+import { categories } from "@/data/services";
 import {
   Send,
   ArrowLeft,
@@ -14,6 +15,8 @@ import {
   Link2,
   Clock,
   Shield,
+  ChevronDown,
+  Layers,
 } from "lucide-react";
 
 function BackButton() {
@@ -42,11 +45,22 @@ const REQUIREMENT_KEYS = [
   { id: "ownership", label: "I take ownership of deliverables" },
 ] as const;
 
+type RolePick = { category: string; service: string };
+
 function ApplyForm() {
   const searchParams = useSearchParams();
-  const serviceName = searchParams.get("service") || "";
-  const categoryName = searchParams.get("category") || "";
+  const presetService = searchParams.get("service") || "";
+  const presetCategory = searchParams.get("category") || "";
 
+  const initialRoles = useMemo(() => {
+    if (presetService && presetCategory) {
+      return [{ category: presetCategory, service: presetService }] as RolePick[];
+    }
+    return [] as RolePick[];
+  }, [presetService, presetCategory]);
+
+  const [roles, setRoles] = useState<RolePick[]>(initialRoles);
+  const [openCat, setOpenCat] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -63,19 +77,30 @@ function ApplyForm() {
   const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
-  useEffect(() => {
-    // soft hint if someone lands without service
-  }, []);
-
   const allChecked = REQUIREMENT_KEYS.every((r) => checks[r.id]);
+
+  function roleKey(r: RolePick) {
+    return `${r.category}::${r.service}`;
+  }
+
+  function toggleRole(category: string, service: string) {
+    const pick = { category, service };
+    setRoles((prev) => {
+      const k = roleKey(pick);
+      if (prev.some((p) => roleKey(p) === k)) {
+        return prev.filter((p) => roleKey(p) !== k);
+      }
+      return [...prev, pick];
+    });
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus("sending");
     setErrorMsg("");
 
-    if (!serviceName || !categoryName) {
-      setErrorMsg("Please pick a category and service from the Work with us section first.");
+    if (roles.length === 0) {
+      setErrorMsg("Select at least one service line you want to apply for.");
       setStatus("error");
       return;
     }
@@ -96,14 +121,21 @@ function ApplyForm() {
 
       const supabase = createClient(supabaseUrl, supabaseKey);
 
+      // One row per selected role (or primary + list in letter)
+      const primary = roles[0];
+      const rolesLabel = roles.map((r) => `${r.service} (${r.category})`).join("; ");
+
       const { error } = await supabase.from("talent_applications").insert({
         name: formData.name.trim(),
         email: formData.email.trim(),
         phone: formData.phone.trim() || null,
         city: formData.city.trim() || null,
-        category: categoryName,
-        service: serviceName,
-        letter_of_interest: formData.letter.trim(),
+        category: primary.category,
+        service: primary.service,
+        letter_of_interest:
+          (roles.length > 1
+            ? `Roles applied: ${rolesLabel}\n\n`
+            : "") + formData.letter.trim(),
         portfolio_url: formData.portfolio.trim() || null,
         experience: formData.experience.trim() || null,
         availability: formData.availability.trim() || null,
@@ -138,13 +170,9 @@ function ApplyForm() {
           <h2 className="font-display text-2xl font-bold mb-2">Application received</h2>
           <p className="text-wisdom-muted mb-2 leading-relaxed">
             Thanks — we received your application for{" "}
-            <strong className="text-white">{serviceName}</strong>
-            {categoryName ? (
-              <>
-                {" "}
-                under <strong className="text-white">{categoryName}</strong>
-              </>
-            ) : null}
+            <strong className="text-white">
+              {roles.map((r) => r.service).join(", ")}
+            </strong>
             .
           </p>
           <p className="text-sm text-wisdom-muted mb-8">
@@ -179,30 +207,103 @@ function ApplyForm() {
             <h1 className="font-display text-2xl sm:text-3xl font-bold mb-3 tracking-tight">
               Apply to contribute
             </h1>
-            {(serviceName || categoryName) && (
-              <div className="flex flex-wrap gap-2 mb-3">
-                {categoryName && (
-                  <span className="inline-flex px-3 py-1 rounded-lg text-xs font-semibold bg-white/5 border border-white/12 text-wisdom-muted">
-                    {categoryName}
-                  </span>
-                )}
-                {serviceName && (
-                  <span className="inline-flex px-3 py-1 rounded-lg text-xs font-semibold bg-wisdom-cyan/15 border border-wisdom-cyan/35 text-wisdom-cyan">
-                    {serviceName}
-                  </span>
-                )}
-              </div>
-            )}
             <p className="text-sm text-wisdom-muted leading-relaxed">
-              This is for people who want to <strong className="text-white/90">work with us</strong> —
-              not a client service request. Incomplete applications are not reviewed.
+              Select one or more service lines, then complete the form. This is for people who want
+              to <strong className="text-white/90">work with us</strong> — not a client quote.
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="px-6 sm:px-8 py-7 space-y-8">
-            {/* About you */}
-            <fieldset className="space-y-4">
+            {/* Role multi-select */}
+            <fieldset className="space-y-3">
               <legend className="flex items-center gap-2 text-sm font-semibold text-white/90 mb-1">
+                <Layers className="w-4 h-4 text-wisdom-cyan" />
+                Service lines *
+              </legend>
+              <p className="text-xs text-wisdom-muted mb-2">
+                Expand a category and select one or more roles. Multiple allowed.
+              </p>
+
+              {roles.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {roles.map((r) => (
+                    <button
+                      key={roleKey(r)}
+                      type="button"
+                      onClick={() => toggleRole(r.category, r.service)}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-wisdom-cyan/15 border border-wisdom-cyan/35 text-wisdom-cyan hover:bg-red-500/15 hover:border-red-400/40 hover:text-red-300 transition"
+                      title="Remove"
+                    >
+                      {r.service}
+                      <span className="opacity-60">×</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="space-y-1.5 max-h-[18rem] overflow-y-auto pr-1 rounded-xl border border-white/10 bg-wisdom-dark/40 p-2">
+                {categories.map((cat) => {
+                  const open = openCat === cat.id;
+                  const selectedInCat = roles.filter((r) => r.category === cat.name).length;
+                  return (
+                    <div
+                      key={cat.id}
+                      className={`rounded-xl border transition-all ${
+                        open
+                          ? "border-wisdom-cyan/40 bg-wisdom-cyan/5"
+                          : "border-transparent hover:border-white/10"
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setOpenCat(open ? null : cat.id)}
+                        className="w-full flex items-center gap-2 px-3 py-2.5 text-left"
+                      >
+                        <span className="flex-1 text-sm font-semibold text-white/90">{cat.name}</span>
+                        {selectedInCat > 0 && (
+                          <span className="text-[10px] font-bold text-wisdom-cyan tabular-nums">
+                            {selectedInCat} selected
+                          </span>
+                        )}
+                        <ChevronDown
+                          className={`w-4 h-4 text-wisdom-muted transition-transform ${open ? "rotate-180" : ""}`}
+                        />
+                      </button>
+                      {open && (
+                        <div className="px-2 pb-2 grid grid-cols-1 gap-1 border-t border-white/8 pt-1.5">
+                          {cat.services.map((svc) => {
+                            const on = roles.some(
+                              (r) => r.category === cat.name && r.service === svc.name
+                            );
+                            return (
+                              <label
+                                key={svc.id}
+                                className={`flex items-start gap-2.5 rounded-lg px-2.5 py-2 cursor-pointer text-xs transition-colors ${
+                                  on
+                                    ? "bg-wisdom-cyan/15 text-white border border-wisdom-cyan/30"
+                                    : "text-wisdom-muted hover:bg-white/5 border border-transparent"
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={on}
+                                  onChange={() => toggleRole(cat.name, svc.name)}
+                                  className="mt-0.5 rounded border-white/30 text-wisdom-cyan focus:ring-wisdom-cyan"
+                                />
+                                <span className="leading-snug">{svc.name}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </fieldset>
+
+            <fieldset className="space-y-4 pt-2 border-t border-white/10">
+              <legend className="flex items-center gap-2 text-sm font-semibold text-white/90 mb-1 pt-5">
                 <User className="w-4 h-4 text-wisdom-cyan" />
                 About you
               </legend>
@@ -250,7 +351,6 @@ function ApplyForm() {
               </div>
             </fieldset>
 
-            {/* Letter */}
             <fieldset className="space-y-4 pt-2 border-t border-white/10">
               <legend className="flex items-center gap-2 text-sm font-semibold text-white/90 mb-1 pt-5">
                 <FileText className="w-4 h-4 text-wisdom-cyan" />
@@ -262,11 +362,10 @@ function ApplyForm() {
                 value={formData.letter}
                 onChange={(e) => setFormData({ ...formData, letter: e.target.value })}
                 className="field-input resize-none"
-                placeholder="Who you are, why this service line, and how you work under pressure…"
+                placeholder="Who you are, why these service lines, and how you work under pressure…"
               />
             </fieldset>
 
-            {/* Portfolio & experience */}
             <fieldset className="space-y-4 pt-2 border-t border-white/10">
               <legend className="flex items-center gap-2 text-sm font-semibold text-white/90 mb-1 pt-5">
                 <Link2 className="w-4 h-4 text-wisdom-cyan" />
@@ -299,7 +398,6 @@ function ApplyForm() {
               </div>
             </fieldset>
 
-            {/* Availability */}
             <fieldset className="space-y-4 pt-2 border-t border-white/10">
               <legend className="flex items-center gap-2 text-sm font-semibold text-white/90 mb-1 pt-5">
                 <Clock className="w-4 h-4 text-wisdom-cyan" />
@@ -336,7 +434,6 @@ function ApplyForm() {
               </div>
             </fieldset>
 
-            {/* Requirements checklist */}
             <fieldset className="space-y-3 pt-2 border-t border-white/10">
               <legend className="flex items-center gap-2 text-sm font-semibold text-white/90 mb-1 pt-5">
                 <Shield className="w-4 h-4 text-emerald-400" />
@@ -370,7 +467,7 @@ function ApplyForm() {
 
             <button
               type="submit"
-              disabled={status === "sending" || !allChecked}
+              disabled={status === "sending" || !allChecked || roles.length === 0}
               className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-wisdom-cyan text-wisdom-dark font-semibold text-base
                 hover:bg-wisdom-cyan-dark hover:shadow-glow hover:scale-[1.02] active:scale-[0.98]
                 transition-all duration-300 disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-none"
@@ -388,16 +485,6 @@ function ApplyForm() {
             {status === "error" && (
               <p className="text-center text-red-400 text-sm rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3">
                 {errorMsg}
-              </p>
-            )}
-
-            {!serviceName && (
-              <p className="text-center text-amber-300/90 text-sm">
-                No service selected.{" "}
-                <Link href="/digital#work-with-us" className="underline text-wisdom-cyan">
-                  Choose one under Work with us
-                </Link>
-                .
               </p>
             )}
           </form>

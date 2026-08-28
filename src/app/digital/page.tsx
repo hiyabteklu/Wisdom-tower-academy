@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { categories } from "@/data/services";
 import TalentPath from "@/components/TalentPath";
@@ -15,18 +14,7 @@ import {
   BookOpen,
   ArrowRight,
   ClipboardList,
-  CheckCircle2,
-  ChevronDown,
   Users,
-  Send,
-  Target,
-  Eye,
-  Laptop,
-  Shield,
-  Clock,
-  MessageSquare,
-  FileText,
-  Award,
 } from "lucide-react";
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -59,48 +47,7 @@ const imageMap: Record<string, string> = {
   "education-multimedia": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&q=80",
 };
 
-const requirements = [
-  {
-    icon: Award,
-    title: "Proven skill",
-    body: "Portfolio, samples, or verifiable experience in the line you apply for.",
-    accent: "from-amber-500/20 to-orange-500/5 border-amber-400/30 text-amber-300",
-  },
-  {
-    icon: Eye,
-    title: "Attention to detail",
-    body: "Clean delivery and zero tolerance for sloppy handoffs.",
-    accent: "from-sky-500/20 to-cyan-500/5 border-sky-400/30 text-sky-300",
-  },
-  {
-    icon: Laptop,
-    title: "Digital literacy",
-    body: "Tools of your craft plus remote collaboration platforms.",
-    accent: "from-violet-500/20 to-purple-500/5 border-violet-400/30 text-violet-300",
-  },
-  {
-    icon: Shield,
-    title: "Discipline",
-    body: "Deadlines are commitments clients can depend on.",
-    accent: "from-emerald-500/20 to-teal-500/5 border-emerald-400/30 text-emerald-300",
-  },
-  {
-    icon: MessageSquare,
-    title: "Clear communication",
-    body: "Progress updates, precise questions, early escalation.",
-    accent: "from-rose-500/20 to-pink-500/5 border-rose-400/30 text-rose-300",
-  },
-  {
-    icon: Clock,
-    title: "Ownership",
-    body: "Treat every assignment as if your name is on the deliverable.",
-    accent: "from-cyan-500/20 to-blue-500/5 border-cyan-400/30 text-cyan-300",
-  },
-];
-
 export default function DigitalPage() {
-  const [openCategory, setOpenCategory] = useState<string | null>(null);
-
   return (
     <div className="relative">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -120,13 +67,11 @@ export default function DigitalPage() {
             </p>
           </div>
 
-          {/* Welcome video — 16:9 framed */}
           <div className="mb-14 md:mb-16">
             <WelcomeVideoCard
               variant="digital"
               title="How we work with you"
               subtitle="A short intro to our service lines, custom work, and what to expect when you start a project."
-              /* Pass youtubeId="VIDEO_ID" when the real welcome video is ready */
             />
           </div>
 
@@ -199,150 +144,27 @@ export default function DigitalPage() {
             </Link>
           </div>
 
-          <section className="mt-24 md:mt-32" id="work-with-us">
-            <div className="text-center mb-10 md:mb-12">
+          {/* Work with us — compact path only */}
+          <section className="mt-20 md:mt-24" id="work-with-us">
+            <div className="text-center mb-8 md:mb-10">
               <p className="text-sm font-semibold tracking-[0.2em] uppercase text-wisdom-cyan/90 mb-3">
                 Contributors & talent
               </p>
-              <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight mb-4">
+              <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
                 Work with us?
               </h2>
-              <p className="text-wisdom-muted max-w-2xl mx-auto text-base md:text-lg leading-relaxed">
-                Built by people who ship. Walk the path stage by stage, meet the bar, then apply to
-                one service line — not a client order form.
+              <p className="text-wisdom-muted max-w-xl mx-auto text-base leading-relaxed">
+                Walk the path stage by stage, then apply. Requirements live inside each step — no
+                extra checklist.
               </p>
             </div>
 
-            <div className="mb-12 md:mb-16">
-              <TalentPath />
+            <div className="flex items-center gap-2 mb-4 text-xs text-wisdom-muted justify-center sm:justify-start">
+              <Users className="w-3.5 h-3.5 text-wisdom-cyan" />
+              Built by people who ship · paid internships on live work
             </div>
 
-            <div className="mb-12">
-              <div className="flex items-center gap-3 mb-5">
-                <div className="p-2 rounded-xl bg-emerald-500/15 border border-emerald-400/25 text-emerald-300">
-                  <Users className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="font-display text-xl font-bold">What we require</h3>
-                  <p className="text-xs text-wisdom-muted">Non-negotiables before you apply</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 perspective-scene">
-                {requirements.map((r) => {
-                  const Icon = r.icon;
-                  return (
-                    <div
-                      key={r.title}
-                      className={`card-3d rounded-2xl border bg-gradient-to-br p-5 ${r.accent}`}
-                    >
-                      <div className="inline-flex p-2.5 rounded-xl bg-wisdom-dark/50 border border-white/10 mb-3">
-                        <Icon className="w-5 h-5" />
-                      </div>
-                      <h4 className="font-display font-bold text-white mb-1">{r.title}</h4>
-                      <p className="text-sm text-wisdom-muted leading-relaxed">{r.body}</p>
-                    </div>
-                  );
-                })}
-              </div>
-              <p className="mt-4 text-xs text-wisdom-muted text-center sm:text-left">
-                Can&apos;t show these yet? Build them first — then return.
-              </p>
-            </div>
-
-            <div
-              id="start-application"
-              className="rounded-3xl border border-wisdom-cyan/25 bg-wisdom-card p-6 sm:p-8 shadow-card-3d scroll-mt-24"
-            >
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
-                <div className="flex items-start gap-3">
-                  <div className="p-2.5 rounded-xl bg-wisdom-cyan/15 border border-wisdom-cyan/30 text-wisdom-cyan shrink-0">
-                    <Send className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-display text-xl font-bold">Start application</h3>
-                    <p className="text-sm text-wisdom-muted mt-1 max-w-lg leading-relaxed">
-                      Expand a category, then pick the exact service line. You&apos;ll open the{" "}
-                      <strong className="text-white/90">talent application form</strong> (not a client
-                      quote request).
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2 max-h-[26rem] overflow-y-auto pr-1">
-                {categories.map((cat) => {
-                  const open = openCategory === cat.id;
-                  return (
-                    <div
-                      key={cat.id}
-                      className={`rounded-2xl border transition-all ${
-                        open
-                          ? "border-wisdom-cyan/45 bg-wisdom-cyan/5 shadow-lg shadow-cyan-500/5"
-                          : "border-white/10 bg-wisdom-dark/50 hover:border-white/20"
-                      }`}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => setOpenCategory(open ? null : cat.id)}
-                        className="w-full flex items-center gap-3 px-4 py-3.5 text-left"
-                        aria-expanded={open}
-                      >
-                        <span className="text-wisdom-cyan shrink-0 scale-90">{iconMap[cat.icon]}</span>
-                        <span className="flex-1 text-sm font-semibold text-white/95">{cat.name}</span>
-                        <span className="text-[10px] text-wisdom-muted hidden sm:inline">
-                          {cat.services.length} roles
-                        </span>
-                        <ChevronDown
-                          className={`w-4 h-4 text-wisdom-muted transition-transform duration-300 ${
-                            open ? "rotate-180 text-wisdom-cyan" : ""
-                          }`}
-                        />
-                      </button>
-                      <div
-                        className={`grid transition-all duration-300 ${
-                          open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-                        }`}
-                      >
-                        <div className="overflow-hidden">
-                          <div className="px-3 pb-3 grid grid-cols-1 sm:grid-cols-2 gap-1.5 border-t border-white/8 pt-2">
-                            {cat.services.map((svc) => (
-                              <Link
-                                key={svc.id}
-                                href={`/apply?service=${encodeURIComponent(svc.name)}&category=${encodeURIComponent(cat.name)}`}
-                                className="flex items-start gap-2 rounded-xl px-3 py-2.5 text-left text-xs text-wisdom-muted hover:text-white hover:bg-wisdom-cyan/10 border border-transparent hover:border-wisdom-cyan/25 transition-all group/svc"
-                              >
-                                <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5 text-wisdom-cyan/40 group-hover/svc:text-wisdom-cyan" />
-                                <span className="leading-snug">{svc.name}</span>
-                              </Link>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <p className="mt-5 text-[11px] text-wisdom-muted flex gap-2 leading-relaxed">
-                <FileText className="w-3.5 h-3.5 shrink-0 mt-0.5 text-wisdom-cyan/70" />
-                On the form: letter of interest, portfolio link, experience, availability, and
-                requirement confirmations.
-              </p>
-            </div>
-
-            <div className="mt-8 rounded-2xl border border-white/10 bg-gradient-to-br from-wisdom-cyan/10 via-wisdom-card to-wisdom-card px-6 py-5 sm:flex sm:items-center sm:justify-between gap-4">
-              <p className="text-sm text-wisdom-muted leading-relaxed max-w-xl">
-                <span className="font-semibold text-white">We review for fit, not volume.</span>{" "}
-                One strong application beats many weak ones.
-              </p>
-              <a
-                href="#start-application"
-                className="mt-3 sm:mt-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-wisdom-cyan/30 bg-wisdom-cyan/10 text-wisdom-cyan text-sm font-semibold hover:bg-wisdom-cyan/20 transition-colors shrink-0"
-              >
-                <Target className="w-4 h-4" />
-                Pick a role above
-              </a>
-            </div>
+            <TalentPath />
           </section>
         </div>
       </div>
