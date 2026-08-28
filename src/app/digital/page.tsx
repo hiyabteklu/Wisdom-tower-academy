@@ -52,17 +52,18 @@ export default function DigitalPage() {
   return (
     <div className="relative">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-wisdom-cyan/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-0 w-72 h-72 bg-violet-500/5 rounded-full blur-3xl" />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-wisdom-cyan/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-0 w-72 h-72 bg-violet-500/10 rounded-full blur-3xl" />
       </div>
 
       <div className="relative py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10 md:mb-12 animate-fade-up">
-            <h1 className="font-display text-4xl md:text-5xl font-extrabold mb-4 tracking-tight">
+          <div className="text-center mb-12 md:mb-14 animate-fade-up">
+            <p className="section-eyebrow mb-4 justify-center">Digital services</p>
+            <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-extrabold mb-5 tracking-tight text-balance">
               Our Services
             </h1>
-            <p className="text-wisdom-muted max-w-2xl mx-auto text-lg leading-relaxed">
+            <p className="text-wisdom-muted max-w-2xl mx-auto text-lg md:text-xl leading-relaxed text-balance">
               Seven focused categories — plus custom work when your project doesn't fit a list.
               One partner for digital, creative, and professional needs.
             </p>
@@ -81,30 +82,34 @@ export default function DigitalPage() {
               <Link
                 key={category.id}
                 href={`/services/${category.id}`}
-                className="card-3d group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-wisdom-card hover:border-wisdom-cyan/35 h-full"
+                className="card-3d group relative flex flex-col overflow-hidden rounded-2xl border border-white/12 bg-wisdom-card hover:border-wisdom-cyan/40 h-full"
               >
-                <div className="relative h-36 sm:h-40 overflow-hidden shrink-0">
+                <div className="relative h-40 sm:h-44 overflow-hidden shrink-0">
                   <div
                     className="absolute inset-0 bg-cover bg-center group-hover:scale-110 transition-transform duration-700"
                     style={{ backgroundImage: `url(${imageMap[category.id]})` }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card via-wisdom-card/30 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card via-wisdom-card/40 to-transparent" />
                   <div className="absolute bottom-3 left-4">
                     <div
-                      className={`p-2.5 rounded-xl bg-gradient-to-br ${gradientMap[category.id]} border border-white/15 text-wisdom-cyan shadow-md backdrop-blur-sm`}
+                      className={`p-2.5 rounded-xl bg-gradient-to-br ${gradientMap[category.id]} border border-white/20 text-wisdom-cyan shadow-md backdrop-blur-sm`}
                     >
                       {iconMap[category.icon]}
                     </div>
                   </div>
                 </div>
-                <div className="p-5 flex flex-col flex-1">
-                  <h3 className="font-semibold text-base sm:text-lg mb-1 group-hover:text-wisdom-cyan transition-colors leading-snug">
+                <div className="p-5 sm:p-6 flex flex-col flex-1">
+                  <h3 className="font-display text-lg sm:text-xl font-bold mb-2 group-hover:text-wisdom-cyan transition-colors leading-snug">
                     {category.name}
                   </h3>
-                  <p className="text-sm text-wisdom-muted line-clamp-2 mb-3 flex-1">{category.tagline}</p>
+                  <p className="text-base text-wisdom-muted line-clamp-2 mb-4 flex-1 leading-relaxed">
+                    {category.tagline}
+                  </p>
                   <div className="flex items-center justify-between mt-auto">
-                    <span className="text-xs text-wisdom-cyan">{category.services.length} services</span>
-                    <ArrowRight className="w-4 h-4 text-wisdom-muted group-hover:text-wisdom-cyan group-hover:translate-x-1 transition-all" />
+                    <span className="text-sm font-semibold text-wisdom-cyan">
+                      {category.services.length} services
+                    </span>
+                    <ArrowRight className="w-5 h-5 text-wisdom-muted group-hover:text-wisdom-cyan group-hover:translate-x-1 transition-all" />
                   </div>
                 </div>
               </Link>
@@ -112,9 +117,9 @@ export default function DigitalPage() {
 
             <Link
               href="/services/custom"
-              className="card-3d group relative flex flex-col overflow-hidden rounded-2xl border border-wisdom-cyan/30 bg-wisdom-card hover:border-wisdom-cyan/55 h-full"
+              className="card-3d group relative flex flex-col overflow-hidden rounded-2xl border border-wisdom-cyan/35 bg-wisdom-card hover:border-wisdom-cyan/60 h-full"
             >
-              <div className="relative h-36 sm:h-40 overflow-hidden shrink-0">
+              <div className="relative h-40 sm:h-44 overflow-hidden shrink-0">
                 <div
                   className="absolute inset-0 bg-cover bg-center group-hover:scale-110 transition-transform duration-700"
                   style={{
@@ -122,48 +127,44 @@ export default function DigitalPage() {
                       "url(https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600&q=80)",
                   }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card via-wisdom-card/35 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card via-wisdom-card/40 to-transparent" />
                 <div className="absolute bottom-3 left-4">
-                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-wisdom-cyan/30 to-cyan-600/15 border border-wisdom-cyan/30 text-wisdom-cyan shadow-md backdrop-blur-sm">
+                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-wisdom-cyan/35 to-cyan-600/20 border border-wisdom-cyan/35 text-wisdom-cyan shadow-md backdrop-blur-sm">
                     <ClipboardList className="w-7 h-7" />
                   </div>
                 </div>
               </div>
-              <div className="p-5 flex flex-col flex-1">
-                <h3 className="font-semibold text-base sm:text-lg mb-1 group-hover:text-wisdom-cyan transition-colors leading-snug">
+              <div className="p-5 sm:p-6 flex flex-col flex-1">
+                <h3 className="font-display text-lg sm:text-xl font-bold mb-2 group-hover:text-wisdom-cyan transition-colors leading-snug">
                   Custom order
                 </h3>
-                <p className="text-sm text-wisdom-muted line-clamp-2 mb-3 flex-1">
+                <p className="text-base text-wisdom-muted line-clamp-2 mb-4 flex-1 leading-relaxed">
                   Tell us who you are and what you need. We'll shape a package that isn't on the
                   standard list.
                 </p>
                 <div className="flex items-center justify-between mt-auto">
-                  <span className="text-xs text-wisdom-cyan font-medium">Submit a request</span>
-                  <ArrowRight className="w-4 h-4 text-wisdom-muted group-hover:text-wisdom-cyan group-hover:translate-x-1 transition-all" />
+                  <span className="text-sm font-semibold text-wisdom-cyan">Submit a request</span>
+                  <ArrowRight className="w-5 h-5 text-wisdom-muted group-hover:text-wisdom-cyan group-hover:translate-x-1 transition-all" />
                 </div>
               </div>
             </Link>
           </div>
 
-          {/* Register your business — core product */}
           <BusinessRegisterSection />
 
-          {/* Work with us — sequential path */}
-          <section className="mt-20 md:mt-24" id="work-with-us">
-            <div className="text-center mb-8 md:mb-10">
-              <p className="text-sm font-semibold tracking-[0.2em] uppercase text-wisdom-cyan/90 mb-3">
-                Contributors & talent
-              </p>
-              <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
+          <section className="mt-24 md:mt-32" id="work-with-us">
+            <div className="text-center mb-10 md:mb-12">
+              <p className="section-eyebrow mb-4 justify-center">Contributors & talent</p>
+              <h2 className="font-display text-4xl sm:text-5xl font-extrabold tracking-tight mb-4 text-balance">
                 Work with us?
               </h2>
-              <p className="text-wisdom-muted max-w-xl mx-auto text-base leading-relaxed">
+              <p className="text-wisdom-muted max-w-xl mx-auto text-lg md:text-xl leading-relaxed text-balance">
                 Walk every stage in order. Apply unlocks only after you finish step 7.
               </p>
             </div>
 
-            <div className="flex items-center gap-2 mb-4 text-xs text-wisdom-muted justify-center sm:justify-start">
-              <Users className="w-3.5 h-3.5 text-wisdom-cyan" />
+            <div className="flex items-center gap-2 mb-5 text-sm text-wisdom-muted justify-center sm:justify-start">
+              <Users className="w-4 h-4 text-wisdom-cyan" />
               Built by people who ship · paid internships on live work
             </div>
 
