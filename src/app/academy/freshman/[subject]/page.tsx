@@ -48,7 +48,7 @@ export default async function FreshmanSubjectPage({
         <CategoryBackButton fallback="/academy/freshman" />
 
         <div className="rounded-3xl border border-white/15 bg-wisdom-card shadow-card-3d overflow-hidden animate-fade-up mb-10">
-          <div className="relative h-44 sm:h-52 bg-wisdom-navy overflow-hidden border-b border-white/10">
+          <div className="relative aspect-video max-h-72 sm:max-h-80 bg-wisdom-navy overflow-hidden border-b border-white/10">
             <SubjectHeroImage src={subject.image} alt={subject.name} />
             <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card via-wisdom-card/50 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 px-6 sm:px-8 pb-6">
