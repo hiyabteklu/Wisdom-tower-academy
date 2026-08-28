@@ -15,6 +15,12 @@ export interface ResourceHub {
   accent: string;
   glow: string;
   icon: string;
+  /** public/images/hubs/{id}.jpg — same 6 images sitewide */
+  image: string;
+}
+
+function hubImg(id: ResourceType) {
+  return `/images/hubs/${id}.jpg`;
 }
 
 export interface Grade {
@@ -79,6 +85,7 @@ export const resourceHubs: ResourceHub[] = [
     accent: "text-sky-400",
     glow: "group-hover:shadow-sky-500/20",
     icon: "book",
+    image: hubImg("books"),
   },
   {
     id: "references",
@@ -87,6 +94,7 @@ export const resourceHubs: ResourceHub[] = [
     accent: "text-violet-400",
     glow: "group-hover:shadow-violet-500/20",
     icon: "library",
+    image: hubImg("references"),
   },
   {
     id: "videos",
@@ -95,6 +103,7 @@ export const resourceHubs: ResourceHub[] = [
     accent: "text-rose-400",
     glow: "group-hover:shadow-rose-500/20",
     icon: "video",
+    image: hubImg("videos"),
   },
   {
     id: "flashcards",
@@ -103,6 +112,7 @@ export const resourceHubs: ResourceHub[] = [
     accent: "text-amber-400",
     glow: "group-hover:shadow-amber-500/20",
     icon: "layers",
+    image: hubImg("flashcards"),
   },
   {
     id: "question-banks",
@@ -111,6 +121,7 @@ export const resourceHubs: ResourceHub[] = [
     accent: "text-cyan-400",
     glow: "group-hover:shadow-cyan-500/20",
     icon: "list",
+    image: hubImg("question-banks"),
   },
   {
     id: "exams",
@@ -119,6 +130,7 @@ export const resourceHubs: ResourceHub[] = [
     accent: "text-emerald-400",
     glow: "group-hover:shadow-emerald-500/20",
     icon: "clipboard",
+    image: hubImg("exams"),
   },
 ];
 
