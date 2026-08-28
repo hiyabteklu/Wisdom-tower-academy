@@ -33,6 +33,26 @@ export type EnrollmentRow = {
   created_at: string;
 };
 
+export type TalentApplicationRow = {
+  id: string;
+  created_at: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  city: string | null;
+  category: string | null;
+  service: string | null;
+  letter_of_interest: string | null;
+  portfolio_url: string | null;
+  experience: string | null;
+  availability: string | null;
+  hours_per_week: string | null;
+  heard_about: string | null;
+  requirements_confirmed: boolean | null;
+  status: string;
+  admin_notes: string | null;
+};
+
 export type DayCount = { day: string; label: string; orders: number; verified: number };
 
 export type AdminStats = {
@@ -42,11 +62,8 @@ export type AdminStats = {
   ordersVerified: number;
   ordersRejected: number;
   revenueVerifiedEtb: number;
-  /** Sum of pending_verification amounts */
   pipelineEtb: number;
-  /** verified / total orders as 0–100 */
   conversionPct: number;
-  /** average verified order value */
   avgOrderEtb: number;
   enrollments: number;
   inquiriesNew: number;
@@ -61,6 +78,22 @@ export type AdminStats = {
   recentUsers: ProfileRow[];
   recentInquiries: InquiryRow[];
   recentEnrollments: EnrollmentRow[];
+};
+
+export type DigitalAdminStats = {
+  users: number;
+  inquiriesTotal: number;
+  inquiriesNew: number;
+  talentTotal: number;
+  talentNew: number;
+  byCategory: { label: string; count: number }[];
+  byService: { label: string; count: number }[];
+  byTalentStatus: { label: string; count: number }[];
+  last7DaysInquiries: { day: string; label: string; count: number }[];
+  last7DaysTalent: { day: string; label: string; count: number }[];
+  recentInquiries: InquiryRow[];
+  recentTalent: TalentApplicationRow[];
+  recentUsers: ProfileRow[];
 };
 
 function orderFromRow(row: Record<string, unknown>): ManualOrder {
@@ -100,6 +133,23 @@ function buildLast7Days(orders: ManualOrder[]): DayCount[] {
       orders: dayOrders.length,
       verified: dayOrders.filter((o) => o.status === "verified").length,
     });
+  }
+  return days;
+}
+
+function buildLast7DayCounts(
+  rows: { created_at: string }[]
+): { day: string; label: string; count: number }[] {
+  const days: { day: string; label: string; count: number }[] = [];
+  const now = new Date();
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now);
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    const label = d.toLocaleDateString(undefined, { weekday: "short" });
+    const count = rows.filter((r) => r.created_at.slice(0, 10) === key).length;
+    days.push({ day: key, label, count });
   }
   return days;
 }
@@ -240,6 +290,96 @@ export async function fetchAdminStats(): Promise<AdminStats> {
   }
 }
 
+export async function fetchDigitalAdminStats(): Promise<DigitalAdminStats> {
+  const empty: DigitalAdminStats = {
+    users: 0,
+    inquiriesTotal: 0,
+    inquiriesNew: 0,
+    talentTotal: 0,
+    talentNew: 0,
+    byCategory: [],
+    byService: [],
+    byTalentStatus: [],
+    last7DaysInquiries: buildLast7DayCounts([]),
+    last7DaysTalent: buildLast7DayCounts([]),
+    recentInquiries: [],
+    recentTalent: [],
+    recentUsers: [],
+  };
+
+  try {
+    const [profilesRes, inquiriesRes, talentRes] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("id, email, full_name, avatar_url, created_at, updated_at")
+        .order("created_at", { ascending: false })
+        .limit(500),
+      supabase
+        .from("inquiries")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(300),
+      supabase
+        .from("talent_applications")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(300),
+    ]);
+
+    const profiles = (profilesRes.data || []) as ProfileRow[];
+    const inquiries = (inquiriesRes.data || []) as InquiryRow[];
+    const talent = (talentRes.data || []) as TalentApplicationRow[];
+
+    const catMap = new Map<string, number>();
+    for (const t of talent) {
+      const k = t.category || "Uncategorized";
+      catMap.set(k, (catMap.get(k) || 0) + 1);
+    }
+    const byCategory = Array.from(catMap.entries())
+      .map(([label, count]) => ({ label, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 8);
+
+    const svcMap = new Map<string, number>();
+    for (const t of talent) {
+      const k = t.service || "General";
+      svcMap.set(k, (svcMap.get(k) || 0) + 1);
+    }
+    const byService = Array.from(svcMap.entries())
+      .map(([label, count]) => ({ label, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 8);
+
+    const statusMap = new Map<string, number>();
+    for (const t of talent) {
+      const k = t.status || "new";
+      statusMap.set(k, (statusMap.get(k) || 0) + 1);
+    }
+    const byTalentStatus = Array.from(statusMap.entries())
+      .map(([label, count]) => ({ label, count }))
+      .sort((a, b) => b.count - a.count);
+
+    return {
+      users: profiles.length,
+      inquiriesTotal: inquiries.length,
+      inquiriesNew: inquiries.filter((i) => i.status === "new").length,
+      talentTotal: talent.length,
+      talentNew: talent.filter((t) => t.status === "new").length,
+      byCategory,
+      byService,
+      byTalentStatus,
+      last7DaysInquiries: buildLast7DayCounts(inquiries),
+      last7DaysTalent: buildLast7DayCounts(talent),
+      recentInquiries: inquiries.slice(0, 8),
+      recentTalent: talent.slice(0, 8),
+      recentUsers: profiles.slice(0, 10),
+    };
+  } catch (e) {
+    console.warn("[digital-admin-stats]", e);
+    return empty;
+  }
+}
+
 export async function listProfiles(): Promise<ProfileRow[]> {
   const { data, error } = await supabase
     .from("profiles")
@@ -274,6 +414,31 @@ export async function updateInquiryStatus(
   const payload: Record<string, unknown> = { status };
   if (adminNotes !== undefined) payload.admin_notes = adminNotes;
   const { error } = await supabase.from("inquiries").update(payload).eq("id", id);
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+export async function listTalentApplications(): Promise<TalentApplicationRow[]> {
+  const { data, error } = await supabase
+    .from("talent_applications")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) {
+    console.warn("[talent_applications]", error.message);
+    return [];
+  }
+  return (data || []) as TalentApplicationRow[];
+}
+
+export async function updateTalentApplicationStatus(
+  id: string,
+  status: string,
+  adminNotes?: string
+): Promise<{ ok: boolean; error?: string }> {
+  const payload: Record<string, unknown> = { status };
+  if (adminNotes !== undefined) payload.admin_notes = adminNotes;
+  const { error } = await supabase.from("talent_applications").update(payload).eq("id", id);
   if (error) return { ok: false, error: error.message };
   return { ok: true };
 }
