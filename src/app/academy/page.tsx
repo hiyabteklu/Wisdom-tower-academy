@@ -18,14 +18,15 @@ import {
 import VoiceMessageCard from "@/components/VoiceMessageCard";
 import TestimonialMarquee from "@/components/TestimonialMarquee";
 import WelcomeVideoCard from "@/components/WelcomeVideoCard";
+import { packageImages } from "@/data/packages";
 
-/** 6 pathway cards — images in public/images/academy/ */
+/** 6 pathway cards — same files as public/images/packages/ uploads */
 const programs = [
   {
     id: "grade-9-12",
     href: "/academy/grades",
     name: "Grade 9–12",
-    image: "/images/academy/grade-9-12.jpg",
+    image: packageImages["grade-9-12"],
     accent: "text-sky-400",
     border: "hover:border-sky-400/40",
     cta: "Open",
@@ -34,7 +35,7 @@ const programs = [
     id: "freshman",
     href: "/academy/freshman",
     name: "Freshman",
-    image: "/images/academy/freshman.jpg",
+    image: packageImages.freshman,
     accent: "text-purple-400",
     border: "hover:border-purple-400/40",
     cta: "Open",
@@ -43,7 +44,7 @@ const programs = [
     id: "uat",
     href: "/academy/uat",
     name: "UAT",
-    image: "/images/academy/uat.jpg",
+    image: packageImages.uat,
     accent: "text-emerald-400",
     border: "hover:border-emerald-400/40",
     cta: "Open",
@@ -52,7 +53,7 @@ const programs = [
     id: "gat",
     href: "/academy/gat",
     name: "GAT",
-    image: "/images/academy/gat.jpg",
+    image: packageImages.gat,
     accent: "text-rose-400",
     border: "hover:border-rose-400/40",
     cta: "Open",
@@ -61,7 +62,7 @@ const programs = [
     id: "coc",
     href: "/academy/coc",
     name: "COC",
-    image: "/images/academy/coc.jpg",
+    image: packageImages.coc,
     accent: "text-indigo-400",
     border: "hover:border-indigo-400/40",
     cta: "Open",
@@ -70,7 +71,7 @@ const programs = [
     id: "exit-exam",
     href: "/academy/exit-exam",
     name: "Exit Exam",
-    image: "/images/academy/exit-exam.jpg",
+    image: packageImages["exit-exam"],
     accent: "text-fuchsia-400",
     border: "hover:border-fuchsia-400/40",
     cta: "Open",
@@ -206,7 +207,6 @@ export default function AcademyPage() {
             />
           </div>
 
-          {/* 6 pathways — 16:9, no gradient, name + Open only */}
           <div className="perspective-scene grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
             {programs.map((program) => (
               <Link
