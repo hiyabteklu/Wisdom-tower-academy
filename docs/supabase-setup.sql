@@ -188,3 +188,37 @@ create policy "Anyone insert inquiries" on public.inquiries
 drop policy if exists "Authenticated manage inquiries" on public.inquiries;
 create policy "Authenticated manage inquiries" on public.inquiries
   for all to authenticated using (true);
+
+-- 8) Talent applications (Digital — Work with us)
+create table if not exists public.talent_applications (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  name text not null,
+  email text not null,
+  phone text,
+  city text,
+  category text,
+  service text,
+  letter_of_interest text,
+  portfolio_url text,
+  experience text,
+  availability text,
+  hours_per_week text,
+  heard_about text,
+  requirements_confirmed boolean default false,
+  status text not null default 'new',
+  admin_notes text
+);
+
+create index if not exists talent_applications_status_idx
+  on public.talent_applications (status, created_at desc);
+
+alter table public.talent_applications enable row level security;
+
+drop policy if exists "Anyone insert talent applications" on public.talent_applications;
+create policy "Anyone insert talent applications" on public.talent_applications
+  for insert with check (true);
+
+drop policy if exists "Authenticated manage talent applications" on public.talent_applications;
+create policy "Authenticated manage talent applications" on public.talent_applications
+  for all to authenticated using (true);
