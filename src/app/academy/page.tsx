@@ -7,20 +7,14 @@ import {
   Library,
   GraduationCap as GradCap,
   Trees,
-  Handshake,
-  Package,
-  ClipboardCheck,
-  Mail,
-  CheckCircle2,
-  Briefcase,
   BadgeCheck,
 } from "lucide-react";
 import VoiceMessageCard from "@/components/VoiceMessageCard";
 import TestimonialMarquee from "@/components/TestimonialMarquee";
 import WelcomeVideoCard from "@/components/WelcomeVideoCard";
+import PartnershipPath from "@/components/PartnershipPath";
 import { packageImages } from "@/data/packages";
 
-/** 6 pathway cards — same files as public/images/packages/ uploads */
 const programs = [
   {
     id: "grade-9-12",
@@ -141,42 +135,6 @@ const voiceStudents = [
     program: "Exit Exam · Voice note",
     duration: "0:35",
     accent: "text-fuchsia-400",
-  },
-];
-
-const partnershipCards = [
-  {
-    icon: Package,
-    title: "What we’re looking for",
-    body: "Courses, modules, or learning tools that help students in our community — secondary, freshman, entrance, and professional tracks.",
-    points: [
-      "Premade courses ready for students",
-      "Packages for business, tech, or personal development",
-      "Tools that reduce friction in real study paths",
-    ],
-    accent: "from-amber-500/25 to-orange-500/5 border-amber-400/35 text-amber-300",
-  },
-  {
-    icon: ClipboardCheck,
-    title: "How we review",
-    body: "Every proposal is checked against community standards — clarity, accuracy, and usefulness for Ethiopian learners first.",
-    points: [
-      "Alignment with our six academic branches",
-      "Quality of materials and teaching design",
-      "Fit with ethics and practical outcomes",
-    ],
-    accent: "from-sky-500/25 to-cyan-500/5 border-sky-400/35 text-sky-300",
-  },
-  {
-    icon: Handshake,
-    title: "How we partner",
-    body: "From co-branded modules to hosted content on Academy pathways — we structure collaboration so both sides know the scope.",
-    points: [
-      "Clear ownership and credit",
-      "Shared or hosted delivery options",
-      "Room to grow with measured adoption",
-    ],
-    accent: "from-emerald-500/25 to-teal-500/5 border-emerald-400/35 text-emerald-300",
   },
 ];
 
@@ -313,96 +271,10 @@ export default function AcademyPage() {
             </p>
           </section>
 
+          {/* Partnership — one 16:9 cover + step path (like Digital Work with us) */}
           <section className="mt-24 md:mt-28" id="partnership">
-            <div className="text-center mb-10 md:mb-12">
-              <p className="text-sm font-semibold tracking-[0.2em] uppercase text-amber-400/90 mb-3">
-                Build with us
-              </p>
-              <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight mb-4">
-                Open for partnership & collaboration
-              </h2>
-              <p className="text-wisdom-muted max-w-2xl mx-auto text-base md:text-lg leading-relaxed">
-                Educators, course creators, and institutions — if you have something that serves
-                students, we want to hear it. We review for fit with our community, not volume of
-                pitch decks.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 perspective-scene mb-10">
-              {partnershipCards.map((card) => {
-                const Icon = card.icon;
-                return (
-                  <article
-                    key={card.title}
-                    className={`card-3d rounded-3xl border bg-gradient-to-br p-6 sm:p-7 ${card.accent}`}
-                  >
-                    <div className="inline-flex p-3 rounded-2xl bg-wisdom-dark/60 border border-white/10 mb-4">
-                      <Icon className="w-6 h-6" />
-                    </div>
-                    <h3 className="font-display text-xl font-bold text-white mb-2">{card.title}</h3>
-                    <p className="text-sm text-wisdom-muted leading-relaxed mb-4">{card.body}</p>
-                    <ul className="space-y-2">
-                      {card.points.map((p) => (
-                        <li key={p} className="flex gap-2 text-sm text-white/85">
-                          <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-current opacity-70 shrink-0" />
-                          <span className="leading-snug">{p}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </article>
-                );
-              })}
-            </div>
-
-            <div className="rounded-3xl border border-white/12 bg-wisdom-card shadow-card-3d overflow-hidden">
-              <div className="grid grid-cols-1 lg:grid-cols-5">
-                <div className="lg:col-span-3 p-7 sm:p-9 border-b lg:border-b-0 lg:border-r border-white/10">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2.5 rounded-xl bg-amber-500/15 border border-amber-400/30 text-amber-300">
-                      <Briefcase className="w-5 h-5" />
-                    </div>
-                    <h3 className="font-display text-xl font-bold">We&apos;re open</h3>
-                  </div>
-                  <p className="text-wisdom-muted leading-relaxed mb-5">
-                    Bring premade courses, cohort ideas, or institutional packages. Tell us who you
-                    serve, what you&apos;ve already built, and how it could sit beside our pathways.
-                    Incomplete pitches are fine — clarity beats polish.
-                  </p>
-                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-white/85">
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
-                      Student-first content
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
-                      Business &amp; tech upskilling
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
-                      Personal development tracks
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
-                      Co-branded or hosted delivery
-                    </li>
-                  </ul>
-                </div>
-                <div className="lg:col-span-2 p-7 sm:p-9 flex flex-col justify-center bg-gradient-to-br from-amber-500/10 via-transparent to-transparent">
-                  <p className="text-sm text-wisdom-muted mb-4 leading-relaxed">
-                    Prefer a direct line? Reach the Academy team and we&apos;ll route your message.
-                  </p>
-                  <Link
-                    href="/contact?topic=partnership"
-                    className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-amber-500 text-wisdom-dark font-semibold hover:bg-amber-400 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-lg shadow-amber-500/20"
-                  >
-                    <Mail className="w-4 h-4" />
-                    Start a conversation
-                  </Link>
-                  <p className="mt-4 text-xs text-wisdom-muted text-center lg:text-left">
-                    Or email via the contact page — mention “Academy partnership” in the subject.
-                  </p>
-                </div>
-              </div>
+            <div className="max-w-3xl mx-auto">
+              <PartnershipPath />
             </div>
           </section>
         </div>
