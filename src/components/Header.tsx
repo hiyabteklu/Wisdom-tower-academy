@@ -8,9 +8,7 @@ import {
   X,
   LogOut,
   Shield,
-  BookOpen,
   GraduationCap,
-  Monitor,
   ChevronDown,
   User,
   Settings,
@@ -33,11 +31,11 @@ const mainNavLinks = [
 
 function isActivePath(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
-  return pathname === href || pathname.startsWith(href + "/");
+  return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 export default function Header() {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "/";
   const [isOpen, setIsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -48,12 +46,12 @@ export default function Header() {
   useEffect(() => {
     const getUser = async () => {
       const {
-        data: { user },
+        data: { user: u },
       } = await supabase.auth.getUser();
-      setUser(user);
+      setUser(u);
       setLoading(false);
     };
-    getUser();
+    void getUser();
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_e, session) => {
@@ -92,14 +90,16 @@ export default function Header() {
     "User";
 
   const isAdmin = isAdminEmail(user?.email);
-  const onAcademyRoute = pathname.startsWith("/academy");
-  const showAcademyChrome = onAcademyRoute;
+  const showAcademyChrome = pathname.startsWith("/academy");
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-wisdom-dark/95 backdrop-blur-md border-b border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <Link href={showAcademyChrome ? "/academy" : "/"} className="flex items-center gap-2 group min-w-0">
+          <Link
+            href={showAcademyChrome ? "/academy" : "/"}
+            className="flex items-center gap-2 group min-w-0"
+          >
             <div
               className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm shrink-0 ${
                 showAcademyChrome
@@ -145,7 +145,9 @@ export default function Header() {
                       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-wisdom-cyan to-cyan-700 flex items-center justify-center text-xs font-bold text-wisdom-dark">
                         {displayName.charAt(0).toUpperCase()}
                       </div>
-                      <ChevronDown className={`w-3.5 h-3.5 text-wisdom-muted ${profileOpen ? "rotate-180" : ""}`} />
+                      <ChevronDown
+                        className={`w-3.5 h-3.5 text-wisdom-muted ${profileOpen ? "rotate-180" : ""}`}
+                      />
                     </button>
                     {profileOpen && (
                       <div
@@ -165,7 +167,9 @@ export default function Header() {
                           >
                             <GraduationCap className="w-4 h-4 text-amber-400" />
                             My Learning
-                            <span className="ml-auto text-[10px] font-bold uppercase text-amber-400/80">Academy</span>
+                            <span className="ml-auto text-[10px] font-bold uppercase text-amber-400/80">
+                              Academy
+                            </span>
                           </Link>
                           <Link
                             href="/dashboard"
@@ -175,7 +179,9 @@ export default function Header() {
                           >
                             <LayoutDashboard className="w-4 h-4 text-wisdom-cyan" />
                             My Dashboard
-                            <span className="ml-auto text-[10px] font-bold uppercase text-wisdom-cyan/80">Digital</span>
+                            <span className="ml-auto text-[10px] font-bold uppercase text-wisdom-cyan/80">
+                              Digital
+                            </span>
                           </Link>
                           <Link
                             href="/cart"
@@ -229,7 +235,7 @@ export default function Header() {
                           <button
                             type="button"
                             role="menuitem"
-                            onClick={handleLogout}
+                            onClick={() => void handleLogout()}
                             className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 text-left"
                           >
                             <LogOut className="w-4 h-4" />
@@ -284,25 +290,49 @@ export default function Header() {
                 <div className="border-t border-white/10 px-4 py-3 space-y-1">
                   {user ? (
                     <>
-                      <Link href="/learning" className="flex items-center gap-2 text-sm py-1.5" onClick={() => setIsOpen(false)}>
+                      <Link
+                        href="/learning"
+                        className="flex items-center gap-2 text-sm py-1.5"
+                        onClick={() => setIsOpen(false)}
+                      >
                         <GraduationCap className="w-4 h-4 text-amber-400" /> My Learning
                       </Link>
-                      <Link href="/dashboard" className="flex items-center gap-2 text-sm py-1.5" onClick={() => setIsOpen(false)}>
+                      <Link
+                        href="/dashboard"
+                        className="flex items-center gap-2 text-sm py-1.5"
+                        onClick={() => setIsOpen(false)}
+                      >
                         <LayoutDashboard className="w-4 h-4 text-wisdom-cyan" /> My Dashboard
                       </Link>
-                      <Link href="/account" className="flex items-center gap-2 text-sm py-1.5" onClick={() => setIsOpen(false)}>
+                      <Link
+                        href="/account"
+                        className="flex items-center gap-2 text-sm py-1.5"
+                        onClick={() => setIsOpen(false)}
+                      >
                         <User className="w-4 h-4" /> Account
                       </Link>
-                      <button type="button" onClick={handleLogout} className="flex items-center gap-2 text-sm text-red-400 py-1.5 w-full text-left">
+                      <button
+                        type="button"
+                        onClick={() => void handleLogout()}
+                        className="flex items-center gap-2 text-sm text-red-400 py-1.5 w-full text-left"
+                      >
                         <LogOut className="w-4 h-4" /> Logout
                       </button>
                     </>
                   ) : (
                     <>
-                      <Link href="/login" className="block text-center text-sm py-2" onClick={() => setIsOpen(false)}>
+                      <Link
+                        href="/login"
+                        className="block text-center text-sm py-2"
+                        onClick={() => setIsOpen(false)}
+                      >
                         Sign In
                       </Link>
-                      <Link href="/signup" className="block text-center px-4 py-2.5 rounded-xl bg-wisdom-cyan text-wisdom-dark text-sm font-semibold" onClick={() => setIsOpen(false)}>
+                      <Link
+                        href="/signup"
+                        className="block text-center px-4 py-2.5 rounded-xl bg-wisdom-cyan text-wisdom-dark text-sm font-semibold"
+                        onClick={() => setIsOpen(false)}
+                      >
                         Get Started
                       </Link>
                     </>
