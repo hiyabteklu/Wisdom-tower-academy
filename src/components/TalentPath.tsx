@@ -15,10 +15,12 @@ import {
   ArrowRight,
   Route,
   Clock,
-  CheckCircle2,
   Send,
   X,
+  Lock,
 } from "lucide-react";
+
+const PATH_COMPLETE_KEY = "wt_talent_path_complete";
 
 const stages = [
   {
@@ -164,18 +166,48 @@ const stages = [
 ] as const;
 
 export default function TalentPath() {
-  /** null = all steps collapsed; number = that step's detail open */
-  const [open, setOpen] = useState<number | null>(null);
+  /** Current open detail panel (null = collapsed) */
+  const [open, setOpen] = useState<number | null>(0); // force start at step 1
+  /** Highest index the user is allowed to open (sequential) */
+  const [maxReached, setMaxReached] = useState(0);
   const [entered, setEntered] = useState(false);
+
+  const allRead = maxReached >= stages.length - 1;
 
   useEffect(() => {
     const t = requestAnimationFrame(() => setEntered(true));
     return () => cancelAnimationFrame(t);
   }, []);
 
-  const toggle = useCallback((i: number) => {
-    setOpen((prev) => (prev === i ? null : i));
-  }, []);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (allRead) {
+      sessionStorage.setItem(PATH_COMPLETE_KEY, "1");
+    }
+  }, [allRead]);
+
+  const tryOpen = useCallback(
+    (i: number) => {
+      if (i > maxReached) return; // locked
+      setOpen((prev) => (prev === i ? i : i)); // keep open on same click
+      setOpen(i);
+    },
+    [maxReached]
+  );
+
+  const goNext = useCallback(() => {
+    if (open === null) return;
+    if (open < stages.length - 1) {
+      const next = open + 1;
+      setMaxReached((m) => Math.max(m, next));
+      setOpen(next);
+    }
+  }, [open]);
+
+  const goPrev = useCallback(() => {
+    if (open === null || open === 0) return;
+    setOpen(open - 1);
+  }, [open]);
 
   const stage = open !== null ? stages[open] : null;
   const Icon = stage?.icon;
@@ -199,36 +231,61 @@ export default function TalentPath() {
             <div>
               <h3 className="font-display text-xl md:text-2xl font-bold tracking-tight">Your path</h3>
               <p className="text-sm text-wisdom-muted mt-0.5">
-                Seven stages · interest → paid contribution · tap a step for details
+                Read every stage in order — Apply unlocks after step 7
               </p>
             </div>
           </div>
+          <div className="text-xs font-semibold tabular-nums text-wisdom-muted">
+            Progress{" "}
+            <span className="text-wisdom-cyan">
+              {Math.min(maxReached + 1, stages.length)}/{stages.length}
+            </span>
+          </div>
         </div>
 
-        {/* Compact step rail + Apply now as 8th */}
         <div className="relative mb-2">
           <div className="hidden md:block absolute top-7 left-[4%] right-[12%] h-0.5 bg-white/10 rounded-full" />
+          <div
+            className="hidden md:block absolute top-7 left-[4%] h-0.5 rounded-full bg-wisdom-cyan transition-all duration-500"
+            style={{
+              width: `calc(${(maxReached / (stages.length - 1)) * 76}% )`,
+            }}
+          />
 
           <div className="flex gap-2 md:gap-0 overflow-x-auto md:overflow-visible pb-2 -mx-1 px-1 snap-x snap-mandatory md:snap-none">
             {stages.map((s, i) => {
               const SIcon = s.icon;
               const isOpen = open === i;
+              const locked = i > maxReached;
+              const done = i < maxReached || (allRead && i <= maxReached);
               return (
                 <button
                   key={s.n}
                   type="button"
-                  onClick={() => toggle(i)}
-                  className="relative flex flex-col items-center text-center shrink-0 snap-center md:flex-1 min-w-[4.25rem] md:min-w-0 group outline-none focus-visible:ring-2 focus-visible:ring-wisdom-cyan/50 rounded-xl"
+                  onClick={() => tryOpen(i)}
+                  disabled={locked}
+                  className={`relative flex flex-col items-center text-center shrink-0 snap-center md:flex-1 min-w-[4.25rem] md:min-w-0 group outline-none focus-visible:ring-2 focus-visible:ring-wisdom-cyan/50 rounded-xl ${
+                    locked ? "cursor-not-allowed opacity-50" : ""
+                  }`}
                   aria-expanded={isOpen}
+                  aria-disabled={locked}
                 >
                   <div
-                    className={`relative z-10 w-12 h-12 md:w-13 md:h-13 rounded-2xl border-2 flex items-center justify-center transition-all duration-300 ${
-                      isOpen
-                        ? `bg-gradient-to-br ${s.bg} ${s.border} ${s.text} scale-110 -translate-y-0.5 shadow-lg ${s.glow} ring-2 ${s.ring}`
-                        : "bg-wisdom-dark/80 border-white/12 text-wisdom-muted group-hover:border-white/30 group-hover:text-white/90 group-hover:scale-105"
+                    className={`relative z-10 w-12 h-12 rounded-2xl border-2 flex items-center justify-center transition-all duration-300 ${
+                      locked
+                        ? "bg-wisdom-dark/60 border-white/8 text-white/25"
+                        : isOpen
+                          ? `bg-gradient-to-br ${s.bg} ${s.border} ${s.text} scale-110 -translate-y-0.5 shadow-lg ${s.glow} ring-2 ${s.ring}`
+                          : done
+                            ? "bg-white/10 border-white/25 text-white/80"
+                            : "bg-wisdom-dark/80 border-white/12 text-wisdom-muted group-hover:border-white/30 group-hover:text-white/90"
                     }`}
                   >
-                    <SIcon className="w-5 h-5" />
+                    {locked ? (
+                      <Lock className="w-4 h-4" />
+                    ) : (
+                      <SIcon className="w-5 h-5" />
+                    )}
                     <span
                       className={`absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full text-[10px] font-black flex items-center justify-center border ${
                         isOpen
@@ -241,7 +298,7 @@ export default function TalentPath() {
                   </div>
                   <p
                     className={`mt-2 text-xs md:text-sm font-bold transition-colors ${
-                      isOpen ? "text-white" : "text-wisdom-muted"
+                      isOpen ? "text-white" : locked ? "text-white/30" : "text-wisdom-muted"
                     }`}
                   >
                     {s.title}
@@ -250,27 +307,41 @@ export default function TalentPath() {
               );
             })}
 
-            {/* 8th — Apply now */}
-            <Link
-              href="/apply"
-              className="relative flex flex-col items-center text-center shrink-0 snap-center md:flex-1 min-w-[4.25rem] md:min-w-0 group outline-none focus-visible:ring-2 focus-visible:ring-wisdom-cyan/50 rounded-xl"
-            >
-              <div className="relative z-10 w-12 h-12 rounded-2xl border-2 border-wisdom-cyan/50 bg-gradient-to-br from-wisdom-cyan/25 to-cyan-600/10 text-wisdom-cyan flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-cyan-500/30 ring-2 ring-wisdom-cyan/30">
-                <Send className="w-5 h-5" />
-                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full text-[10px] font-black flex items-center justify-center border bg-wisdom-cyan text-wisdom-dark border-wisdom-cyan">
-                  8
-                </span>
+            {/* 8 — Apply (gated) */}
+            {allRead ? (
+              <Link
+                href="/apply"
+                className="relative flex flex-col items-center text-center shrink-0 snap-center md:flex-1 min-w-[4.25rem] md:min-w-0 group outline-none focus-visible:ring-2 focus-visible:ring-wisdom-cyan/50 rounded-xl"
+              >
+                <div className="relative z-10 w-12 h-12 rounded-2xl border-2 border-wisdom-cyan/50 bg-gradient-to-br from-wisdom-cyan/25 to-cyan-600/10 text-wisdom-cyan flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-cyan-500/30 ring-2 ring-wisdom-cyan/30">
+                  <Send className="w-5 h-5" />
+                  <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full text-[10px] font-black flex items-center justify-center border bg-wisdom-cyan text-wisdom-dark border-wisdom-cyan">
+                    8
+                  </span>
+                </div>
+                <p className="mt-2 text-xs md:text-sm font-bold text-wisdom-cyan">Apply now</p>
+              </Link>
+            ) : (
+              <div
+                className="relative flex flex-col items-center text-center shrink-0 snap-center md:flex-1 min-w-[4.25rem] md:min-w-0 opacity-40 cursor-not-allowed"
+                title="Finish all 7 stages to unlock"
+              >
+                <div className="relative z-10 w-12 h-12 rounded-2xl border-2 border-white/10 bg-wisdom-dark/60 text-white/30 flex items-center justify-center">
+                  <Lock className="w-4 h-4" />
+                  <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full text-[10px] font-black flex items-center justify-center border bg-wisdom-dark border-white/15 text-white/40">
+                    8
+                  </span>
+                </div>
+                <p className="mt-2 text-xs md:text-sm font-bold text-white/35">Apply now</p>
               </div>
-              <p className="mt-2 text-xs md:text-sm font-bold text-wisdom-cyan">Apply now</p>
-            </Link>
+            )}
           </div>
         </div>
 
-        {/* Collapsed detail panel — only when a step is selected */}
         {stage && Icon && (
           <div
             key={stage.n}
-            className={`mt-5 rounded-2xl border ${stage.border} bg-gradient-to-br ${stage.bg} p-4 sm:p-5 animate-in fade-in duration-200`}
+            className={`mt-5 rounded-2xl border ${stage.border} bg-gradient-to-br ${stage.bg} p-4 sm:p-5`}
           >
             <div className="flex items-start justify-between gap-3 mb-3">
               <div className="flex items-center gap-3 min-w-0">
@@ -288,14 +359,6 @@ export default function TalentPath() {
                   </h4>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setOpen(null)}
-                className="p-1.5 rounded-lg text-wisdom-muted hover:text-white hover:bg-white/10 transition"
-                aria-label="Close details"
-              >
-                <X className="w-4 h-4" />
-              </button>
             </div>
 
             <p className="text-sm text-white/85 leading-relaxed mb-3">{stage.detail}</p>
@@ -322,25 +385,31 @@ export default function TalentPath() {
             <div className="flex flex-wrap items-center justify-between gap-2">
               <button
                 type="button"
-                onClick={() => setOpen(open! > 0 ? open! - 1 : null)}
+                onClick={goPrev}
                 disabled={open === 0}
                 className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-white/12 text-xs font-semibold text-wisdom-muted hover:text-white hover:bg-white/5 disabled:opacity-30 disabled:pointer-events-none"
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
                 Previous
               </button>
+
               {open! < stages.length - 1 ? (
                 <button
                   type="button"
-                  onClick={() => setOpen(open! + 1)}
-                  className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border text-xs font-semibold ${stage.border} ${stage.text} bg-white/5 hover:bg-white/10`}
+                  onClick={goNext}
+                  className={`inline-flex items-center gap-1 px-4 py-2 rounded-xl border text-xs font-bold ${stage.border} ${stage.text} bg-white/10 hover:bg-white/15`}
                 >
-                  Next
+                  Next stage
                   <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               ) : (
                 <Link
                   href="/apply"
+                  onClick={() => {
+                    if (typeof window !== "undefined") {
+                      sessionStorage.setItem(PATH_COMPLETE_KEY, "1");
+                    }
+                  }}
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-wisdom-cyan text-wisdom-dark text-xs font-bold hover:bg-wisdom-cyan-dark transition"
                 >
                   Apply now
@@ -351,12 +420,19 @@ export default function TalentPath() {
           </div>
         )}
 
-        {!stage && (
-          <div className="mt-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-white/10 bg-wisdom-dark/40 px-4 py-3.5">
+        {!allRead && (
+          <p className="mt-4 text-center text-xs text-wisdom-muted">
+            Use <strong className="text-white/80">Next stage</strong> to unlock the rest. Apply stays
+            locked until you finish all seven.
+          </p>
+        )}
+
+        {allRead && (
+          <div className="mt-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-wisdom-cyan/25 bg-wisdom-cyan/5 px-4 py-3.5">
             <p className="text-xs text-wisdom-muted leading-relaxed">
               <Handshake className="w-3.5 h-3.5 text-emerald-400 inline mr-1.5 align-text-bottom" />
-              Internships are <span className="text-emerald-300 font-semibold">paid</span> on live
-              work. Tap any step above for details — or go straight to apply.
+              Path complete. Internships are{" "}
+              <span className="text-emerald-300 font-semibold">paid</span> on live work.
             </p>
             <Link
               href="/apply"
