@@ -1,0 +1,221 @@
+/* Production UI polish — loaded after globals */
+
+:root,
+.theme-dark {
+  --cyan: #22e0ff;
+  --foreground: #f4f7fb;
+  --wt-muted: #aab6c8;
+  --wt-muted-rgb: 170 182 200;
+  --card: #1c283c;
+  --wt-card: #1c283c;
+  --wt-card-rgb: 28 40 60;
+}
+
+body {
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  letter-spacing: 0.01em;
+}
+
+/* Kill dusty grain — keep atmosphere clean */
+.atm-noise {
+  opacity: 0.015 !important;
+}
+
+.hero-grain {
+  opacity: 0.012 !important;
+}
+
+.atm-glow {
+  opacity: 0.55 !important;
+  filter: blur(90px);
+}
+
+.atm-glow-1 {
+  background: rgba(34, 180, 255, 0.42) !important;
+}
+
+.atm-glow-2 {
+  background: rgba(139, 92, 246, 0.32) !important;
+}
+
+.atm-glow-3 {
+  background: rgba(0, 160, 220, 0.28) !important;
+}
+
+.atm-vignette {
+  background: radial-gradient(
+    ellipse 80% 75% at 50% 45%,
+    transparent 40%,
+    rgba(0, 0, 0, 0.35) 100%
+  ) !important;
+}
+
+/* Display hierarchy */
+h1 {
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  font-weight: 800;
+}
+
+h2 {
+  font-size: clamp(1.85rem, 3.5vw, 2.75rem);
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  font-weight: 800;
+}
+
+h3 {
+  font-size: clamp(1.25rem, 2vw, 1.5rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.text-gradient-cyan {
+  background: linear-gradient(105deg, #ffffff 0%, #7df0ff 45%, #22e0ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  background-size: 200% auto;
+  animation: text-shimmer 6s ease-in-out infinite;
+}
+
+@keyframes text-shimmer {
+  0%,
+  100% {
+    background-position: 0% center;
+  }
+  50% {
+    background-position: 100% center;
+  }
+}
+
+/* Production buttons — never tiny */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 3rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.875rem;
+  background: #22e0ff;
+  color: #061018;
+  font-weight: 700;
+  font-size: 0.95rem;
+  line-height: 1.2;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.25s ease;
+  box-shadow: 0 8px 28px -8px rgba(34, 224, 255, 0.45);
+}
+
+.btn-primary:hover {
+  background: #00c4e6;
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 12px 36px -8px rgba(34, 224, 255, 0.55);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 3rem;
+  padding: 0.75rem 1.35rem;
+  border-radius: 0.875rem;
+  background: rgba(255, 255, 255, 0.06);
+  color: #f4f7fb;
+  font-weight: 650;
+  font-size: 0.95rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(34, 224, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+  padding: 0.6rem 1rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  color: #dce4f0;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.btn-ghost:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Cards slightly brighter */
+.bg-wisdom-card {
+  background-color: rgba(28, 40, 60, 0.95);
+}
+
+/* Form fields larger touch targets */
+.field-input {
+  min-height: 3rem;
+  font-size: 1rem;
+  padding: 0.9rem 1.1rem;
+  border-radius: 0.875rem;
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.field-input:focus {
+  border-color: #22e0ff;
+  box-shadow: 0 0 0 3px rgba(34, 224, 255, 0.25);
+}
+
+/* Section eyebrow */
+.section-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #22e0ff;
+}
+
+/* Smooth link underline */
+a {
+  text-underline-offset: 0.2em;
+}
+
+/* Reduce muddy overlays on cards */
+.card-elevated {
+  background: linear-gradient(165deg, #243548 0%, #1c283c 50%, #172033 100%) !important;
+}
