@@ -51,7 +51,6 @@ body {
   ) !important;
 }
 
-/* Display hierarchy */
 h1 {
   font-size: clamp(2.25rem, 5vw, 3.5rem);
   line-height: 1.1;
@@ -91,7 +90,6 @@ h3 {
   }
 }
 
-/* Production buttons — never tiny */
 .btn-primary {
   display: inline-flex;
   align-items: center;
@@ -179,12 +177,10 @@ h3 {
   cursor: not-allowed;
 }
 
-/* Cards slightly brighter */
 .bg-wisdom-card {
   background-color: rgba(28, 40, 60, 0.95);
 }
 
-/* Form fields larger touch targets */
 .field-input {
   min-height: 3rem;
   font-size: 1rem;
@@ -198,7 +194,6 @@ h3 {
   box-shadow: 0 0 0 3px rgba(34, 224, 255, 0.25);
 }
 
-/* Section eyebrow */
 .section-eyebrow {
   display: inline-flex;
   align-items: center;
@@ -210,12 +205,310 @@ h3 {
   color: #22e0ff;
 }
 
-/* Smooth link underline */
 a {
   text-underline-offset: 0.2em;
 }
 
-/* Reduce muddy overlays on cards */
 .card-elevated {
   background: linear-gradient(165deg, #243548 0%, #1c283c 50%, #172033 100%) !important;
+}
+
+/* ——— Reveal (stats / infinity card) ——— */
+.reveal-item {
+  opacity: 0;
+  transform: translateY(36px) scale(0.97);
+  transition:
+    opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reveal-item.is-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* ——— Infinity card (restored + upgraded) ——— */
+.infinity-card {
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse 80% 70% at 50% 40%, rgba(0, 120, 180, 0.45) 0%, transparent 55%),
+    linear-gradient(165deg, #0e1628 0%, #121c2e 45%, #0a101c 100%);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.1) inset,
+    0 0 0 1px rgba(34, 224, 255, 0.18),
+    0 18px 40px -12px rgba(0, 0, 0, 0.65),
+    0 40px 80px -24px rgba(34, 224, 255, 0.22);
+}
+
+.infinity-card:hover {
+  border-color: rgba(34, 224, 255, 0.5);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.12) inset,
+    0 0 0 1px rgba(34, 224, 255, 0.35),
+    0 28px 56px -16px rgba(0, 0, 0, 0.7),
+    0 0 90px -18px rgba(56, 189, 248, 0.35);
+}
+
+.infinity-field {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(1px 1px at 70% 20%, rgba(34, 224, 255, 0.5), transparent),
+    radial-gradient(1.5px 1.5px at 40% 70%, rgba(255, 255, 255, 0.3), transparent),
+    radial-gradient(1px 1px at 85% 60%, rgba(167, 139, 250, 0.4), transparent),
+    radial-gradient(1px 1px at 15% 80%, rgba(34, 224, 255, 0.35), transparent),
+    radial-gradient(1px 1px at 50% 50%, rgba(255, 255, 255, 0.2), transparent);
+  opacity: 0.75;
+  animation: infinity-twinkle 5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.infinity-aurora {
+  position: absolute;
+  inset: -25%;
+  background: conic-gradient(
+    from 120deg at 50% 50%,
+    transparent 0deg,
+    rgba(34, 224, 255, 0.12) 60deg,
+    transparent 120deg,
+    rgba(139, 92, 246, 0.1) 200deg,
+    transparent 280deg
+  );
+  animation: infinity-aurora-spin 16s linear infinite;
+  pointer-events: none;
+  opacity: 0.95;
+}
+
+@keyframes infinity-twinkle {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+@keyframes infinity-aurora-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.infinity-glyphs {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.infinity-glyph {
+  position: absolute;
+  font-family: Georgia, "Times New Roman", serif;
+  color: rgba(34, 224, 255, 0.28);
+  font-weight: 400;
+  animation: glyph-drift 12s ease-in-out infinite;
+  transform: translate(-50%, -50%);
+  text-shadow: 0 0 14px rgba(34, 224, 255, 0.2);
+  user-select: none;
+}
+
+.infinity-glyph:nth-child(odd) {
+  color: rgba(167, 139, 250, 0.22);
+}
+
+.infinity-glyph:nth-child(3n) {
+  color: rgba(255, 255, 255, 0.14);
+}
+
+@keyframes glyph-drift {
+  0% {
+    transform: translate(-50%, -50%) scale(0.85) rotate(0deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.65;
+  }
+  50% {
+    transform: translate(calc(-50% + 10px), calc(-50% - 20px)) scale(1.08) rotate(14deg);
+    opacity: 0.4;
+  }
+  85% {
+    opacity: 0.25;
+  }
+  100% {
+    transform: translate(calc(-50% - 8px), calc(-50% + 16px)) scale(0.9) rotate(-10deg);
+    opacity: 0;
+  }
+}
+
+.infinity-orbit {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  border: 1px solid rgba(34, 224, 255, 0.2);
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.infinity-orbit-a {
+  width: 6rem;
+  height: 3.4rem;
+  animation: orbit-tilt 8s linear infinite;
+  border-color: rgba(34, 224, 255, 0.28);
+}
+
+.infinity-orbit-b {
+  width: 7.5rem;
+  height: 4.2rem;
+  animation: orbit-tilt-rev 12s linear infinite;
+  border-color: rgba(167, 139, 250, 0.16);
+}
+
+@keyframes orbit-tilt {
+  0% {
+    transform: translate(-50%, -50%) rotateX(62deg) rotateZ(0deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotateX(62deg) rotateZ(360deg);
+  }
+}
+
+@keyframes orbit-tilt-rev {
+  0% {
+    transform: translate(-50%, -50%) rotateX(55deg) rotateZ(360deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotateX(55deg) rotateZ(0deg);
+  }
+}
+
+.infinity-stage {
+  perspective: 700px;
+  perspective-origin: 50% 50%;
+  height: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.infinity-spin {
+  position: relative;
+  width: 4rem;
+  height: 4rem;
+  transform-style: preserve-3d;
+  animation: infinity-3d 7s linear infinite;
+  will-change: transform;
+}
+
+.infinity-symbol {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: 3.25rem;
+  font-weight: 800;
+  line-height: 1;
+  color: #e8fbff;
+  text-shadow:
+    0 0 18px rgba(34, 224, 255, 0.95),
+    0 0 42px rgba(0, 200, 255, 0.55),
+    0 0 80px rgba(56, 189, 248, 0.35);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  animation: infinity-pulse-glow 2.8s ease-in-out infinite;
+}
+
+.infinity-symbol-ghost {
+  transform: rotateY(180deg);
+  color: #d4c4ff;
+  text-shadow:
+    0 0 18px rgba(167, 139, 250, 0.85),
+    0 0 40px rgba(139, 92, 246, 0.45);
+  animation: infinity-pulse-glow-alt 2.8s ease-in-out infinite;
+}
+
+@keyframes infinity-3d {
+  0% {
+    transform: rotateY(0deg) rotateX(14deg) rotateZ(-8deg);
+  }
+  25% {
+    transform: rotateY(90deg) rotateX(-10deg) rotateZ(6deg);
+  }
+  50% {
+    transform: rotateY(180deg) rotateX(12deg) rotateZ(-6deg);
+  }
+  75% {
+    transform: rotateY(270deg) rotateX(-8deg) rotateZ(10deg);
+  }
+  100% {
+    transform: rotateY(360deg) rotateX(14deg) rotateZ(-8deg);
+  }
+}
+
+@keyframes infinity-pulse-glow {
+  0%,
+  100% {
+    filter: brightness(1);
+    text-shadow:
+      0 0 18px rgba(34, 224, 255, 0.95),
+      0 0 42px rgba(0, 200, 255, 0.55),
+      0 0 80px rgba(56, 189, 248, 0.35);
+  }
+  50% {
+    filter: brightness(1.15);
+    text-shadow:
+      0 0 24px rgba(34, 224, 255, 1),
+      0 0 56px rgba(0, 200, 255, 0.7),
+      0 0 100px rgba(56, 189, 248, 0.5);
+  }
+}
+
+@keyframes infinity-pulse-glow-alt {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.12);
+  }
+}
+
+.infinity-card:hover .infinity-spin {
+  animation-duration: 3.8s;
+}
+
+.infinity-card:hover .infinity-glyph {
+  color: rgba(34, 224, 255, 0.45);
+}
+
+.infinity-card:hover .infinity-orbit-a {
+  border-color: rgba(34, 224, 255, 0.45);
+  animation-duration: 5s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .infinity-spin,
+  .infinity-orbit,
+  .infinity-glyph,
+  .infinity-aurora,
+  .infinity-field,
+  .infinity-symbol,
+  .infinity-symbol-ghost,
+  .text-gradient-cyan {
+    animation: none !important;
+  }
+
+  .infinity-spin {
+    transform: rotateX(12deg) !important;
+  }
+
+  .reveal-item {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
