@@ -20,9 +20,9 @@ html.sz-smooth {
   opacity: 1;
   transform: scale(1) translateY(0);
   filter: blur(0);
+  will-change: auto;
 }
 
-/* Slightly stronger zoom for primary cards */
 main .card-3d.sz-item:not(.sz-in),
 main .surface-card.sz-item:not(.sz-in),
 main .stat-card.sz-item:not(.sz-in) {
@@ -35,15 +35,21 @@ main .stat-card.sz-item.sz-in {
   transform: scale(1) translateY(0);
 }
 
-/* Sections: softer rise + zoom */
+main .card-3d.sz-item.sz-in:hover {
+  transform: translateY(-14px) rotateX(5deg) rotateY(-3deg) scale(1.02);
+}
+
+main .card-3d.sz-item.sz-in:active {
+  transform: translateY(-4px) scale(0.99);
+}
+
 main section.sz-item:not(.sz-in) {
   transform: scale(0.96) translateY(36px);
   filter: blur(4px);
 }
 
-/* After animation settles, drop will-change for performance */
-.sz-item.sz-in {
-  will-change: auto;
+.stagger-children > *.sz-item {
+  animation: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -59,7 +65,6 @@ main section.sz-item:not(.sz-in) {
   }
 }
 
-/* Mobile: a touch more zoom so the effect reads on small screens */
 @media (max-width: 768px) {
   .sz-item:not(.sz-in) {
     transform: scale(0.88) translateY(28px);
@@ -68,5 +73,9 @@ main section.sz-item:not(.sz-in) {
   main .card-3d.sz-item:not(.sz-in),
   main .surface-card.sz-item:not(.sz-in) {
     transform: scale(0.84) translateY(36px);
+  }
+
+  main .card-3d.sz-item.sz-in:hover {
+    transform: translateY(-8px) scale(1.01);
   }
 }
