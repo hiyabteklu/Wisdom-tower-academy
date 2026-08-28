@@ -33,6 +33,34 @@ import { supabase } from "@/lib/supabase";
 
 type ConfirmMode = "receipt" | "details";
 
+function BankLogo({
+  src,
+  label,
+  fallback,
+}: {
+  src: string;
+  label: string;
+  fallback: "phone" | "bank";
+}) {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return fallback === "phone" ? (
+      <Smartphone className="w-7 h-7 text-cyan-400" />
+    ) : (
+      <Building2 className="w-7 h-7 text-cyan-400" />
+    );
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt={label}
+      className="w-8 h-8 object-contain"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 export default function CheckoutPage() {
   const params = useParams();
   const packageId = String(params.packageId || "");
@@ -257,7 +285,7 @@ export default function CheckoutPage() {
           <p className="text-sm text-wisdom-muted leading-relaxed mb-4">
             Order <span className="text-white font-mono font-semibold">{orderRef}</span> for{" "}
             <span className="text-white">{pkg.name}</span> ({formatEtb(pkg.priceEtb)}) is pending
-            manual confirmation. You&apos;ll get access in My Learning after we verify the transfer.
+            manual confirmation. You'll get access in My Learning after we verify the transfer.
           </p>
           {submittedReceipt ? (
             <p className="text-xs text-wisdom-muted mb-2">
@@ -316,7 +344,7 @@ export default function CheckoutPage() {
         <div className="rounded-3xl border border-white/12 bg-wisdom-card overflow-hidden shadow-card-3d mb-6">
           <div className="flex gap-4 p-5 sm:p-6 border-b border-white/10">
             <div
-              className="w-20 h-20 rounded-xl bg-cover bg-center shrink-0 border border-white/10"
+              className="w-20 h-20 rounded-xl bg-cover bg-center shrink-0 border border-white/10 bg-wisdom-dark"
               style={{ backgroundImage: `url(${pkg.image})` }}
             />
             <div className="min-w-0">
@@ -363,12 +391,14 @@ export default function CheckoutPage() {
                   : "border-white/10 bg-wisdom-card text-white/80 hover:border-white/25"
               }`}
             >
-              <span className="flex items-center gap-2">
-                {m.id === "telebirr" ? (
-                  <Smartphone className="w-4 h-4 shrink-0" />
-                ) : (
-                  <Building2 className="w-4 h-4 shrink-0" />
-                )}
+              <span className="flex flex-col items-center gap-2 text-center">
+                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/95">
+                  <BankLogo
+                    src={m.logo}
+                    label={m.shortLabel}
+                    fallback={m.id === "telebirr" ? "phone" : "bank"}
+                  />
+                </span>
                 {m.shortLabel}
               </span>
             </button>
@@ -376,7 +406,16 @@ export default function CheckoutPage() {
         </div>
 
         <div className="rounded-2xl border border-white/12 bg-wisdom-card p-5 mb-8">
-          <p className="text-sm font-semibold text-white mb-1">{pay.name}</p>
+          <div className="flex items-center gap-3 mb-3">
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/95 border border-white/20">
+              <BankLogo
+                src={pay.logo}
+                label={pay.name}
+                fallback={pay.id === "telebirr" ? "phone" : "bank"}
+              />
+            </span>
+            <p className="text-sm font-semibold text-white">{pay.name}</p>
+          </div>
           <p className="text-xs text-wisdom-muted mb-4">
             Send exactly <span className="text-amber-300 font-semibold">{formatEtb(pkg.priceEtb)}</span>{" "}
             and include order reference <span className="font-mono text-white">{orderRef}</span>.
