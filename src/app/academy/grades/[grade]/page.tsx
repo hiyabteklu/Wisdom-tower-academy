@@ -5,6 +5,7 @@ import { packageIdForGrade } from "@/data/packages";
 import CategoryBackButton from "@/components/CategoryBackButton";
 import AcademicResultSaver from "@/components/AcademicResultSaver";
 import PackageOfferBanner from "@/components/PackageOfferBanner";
+import SubjectHeroImage from "@/components/SubjectHeroImage";
 import {
   BookOpen,
   Library,
@@ -13,6 +14,7 @@ import {
   ListChecks,
   ClipboardList,
   ChevronRight,
+  BadgeCheck,
 } from "lucide-react";
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -42,43 +44,42 @@ export default async function GradeDetailPage({
 
   return (
     <div className="relative min-h-[80vh]">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div
-          className={`absolute top-0 right-1/4 w-[28rem] h-[28rem] rounded-full blur-3xl opacity-30 bg-gradient-to-br ${grade.gradient}`}
-        />
-      </div>
-
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
         <CategoryBackButton fallback="/academy/grades" />
 
-        <div className="mb-8 animate-fade-up">
-          <div className="flex flex-wrap items-center gap-3 mb-4">
-            <span
-              className={`inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/15 bg-wisdom-card font-display font-extrabold ${grade.accent}`}
-            >
-              {grade.short}
-            </span>
-            <p className="text-sm font-semibold tracking-[0.18em] uppercase text-wisdom-muted">
-              Grade pathway
-            </p>
+        {/* Centered 16:9 hero — same pattern as freshman subjects */}
+        <div className="max-w-2xl mx-auto mb-8 animate-fade-up">
+          <div className="rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card overflow-hidden shadow-card-3d">
+            <div className="relative aspect-video w-full bg-wisdom-navy">
+              <SubjectHeroImage src={grade.image} alt={grade.label} />
+            </div>
+            <div className="px-5 py-4 sm:px-6 sm:py-5 text-center border-t border-white/8">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-wisdom-muted mb-2">
+                Grade pathway
+              </p>
+              <h1 className="inline-flex items-center justify-center gap-2 font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                <BadgeCheck className="w-6 h-6 sm:w-7 sm:h-7 shrink-0 text-sky-400" aria-label="Verified" />
+                <span className={grade.accent}>{grade.label}</span>
+              </h1>
+            </div>
           </div>
-          <h1 className="font-display text-4xl md:text-5xl font-extrabold tracking-tight mb-3">
-            <span className={grade.accent}>{grade.label}</span> resources
-          </h1>
-          <p className="text-wisdom-muted text-lg max-w-2xl leading-relaxed">{grade.subtitle}</p>
         </div>
 
-        <div className="max-w-3xl mb-10">
+        <div className="max-w-2xl mx-auto mb-8">
           <PackageOfferBanner packageId={packageId} />
         </div>
 
-        <div className="max-w-3xl mb-12">
+        <div className="max-w-2xl mx-auto mb-12">
           <AcademicResultSaver
             scopeId={`grade-${grade.id}`}
             scopeLabel={grade.label}
             accent={grade.accent}
           />
         </div>
+
+        <p className="text-sm font-semibold tracking-[0.15em] uppercase text-wisdom-muted mb-4 text-center sm:text-left">
+          Learning hubs
+        </p>
 
         <div className="perspective-scene grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 stagger-children">
           {resourceHubs.map((hub) => (
@@ -105,8 +106,8 @@ export default async function GradeDetailPage({
         </div>
 
         <div className="mt-14 pt-10 border-t border-white/10">
-          <p className="text-sm text-wisdom-muted mb-4 font-medium">Switch grade</p>
-          <div className="flex flex-wrap gap-2">
+          <p className="text-sm text-wisdom-muted mb-4 font-medium text-center sm:text-left">Switch grade</p>
+          <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
             {grades.map((g) => (
               <Link
                 key={g.id}

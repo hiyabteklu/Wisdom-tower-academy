@@ -23,6 +23,8 @@ export interface Grade {
   accent: string;
   ring: string;
   gradient: string;
+  /** public/images/academy/grade-{id}.jpg */
+  image: string;
 }
 
 export const grades: Grade[] = [
@@ -34,6 +36,7 @@ export const grades: Grade[] = [
     accent: "text-sky-400",
     ring: "border-sky-400/40 hover:border-sky-400/70",
     gradient: "from-sky-500/25 via-sky-500/5 to-transparent",
+    image: "/images/academy/grade-9.jpg",
   },
   {
     id: "10",
@@ -43,6 +46,7 @@ export const grades: Grade[] = [
     accent: "text-violet-400",
     ring: "border-violet-400/40 hover:border-violet-400/70",
     gradient: "from-violet-500/25 via-violet-500/5 to-transparent",
+    image: "/images/academy/grade-10.jpg",
   },
   {
     id: "11",
@@ -52,6 +56,7 @@ export const grades: Grade[] = [
     accent: "text-amber-400",
     ring: "border-amber-400/40 hover:border-amber-400/70",
     gradient: "from-amber-500/25 via-amber-500/5 to-transparent",
+    image: "/images/academy/grade-11.jpg",
   },
   {
     id: "12",
@@ -61,6 +66,7 @@ export const grades: Grade[] = [
     accent: "text-emerald-400",
     ring: "border-emerald-400/40 hover:border-emerald-400/70",
     gradient: "from-emerald-500/25 via-emerald-500/5 to-transparent",
+    image: "/images/academy/grade-12.jpg",
   },
 ];
 

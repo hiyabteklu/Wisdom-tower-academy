@@ -1,12 +1,6 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  BookOpen,
-  GraduationCap,
-  Users,
-  Award,
-  BadgeCheck,
-  FileCheck2,
   Trophy,
   Lightbulb,
   Building2,
@@ -19,85 +13,67 @@ import {
   Mail,
   CheckCircle2,
   Briefcase,
+  BadgeCheck,
 } from "lucide-react";
 import VoiceMessageCard from "@/components/VoiceMessageCard";
 import TestimonialMarquee from "@/components/TestimonialMarquee";
 import WelcomeVideoCard from "@/components/WelcomeVideoCard";
 
+/** 6 pathway cards — images in public/images/academy/ */
 const programs = [
   {
     id: "grade-9-12",
     href: "/academy/grades",
     name: "Grade 9–12",
-    description:
-      "Complete secondary pathways. Open a grade, then access books, videos, flashcards, question banks, and exams.",
-    icon: <BookOpen className="w-7 h-7" />,
-    image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800&q=80",
-    gradient: "from-sky-500/30 to-cyan-500/10",
+    image: "/images/academy/grade-9-12.jpg",
     accent: "text-sky-400",
     border: "hover:border-sky-400/40",
-    cta: "Open grades",
+    cta: "Open",
   },
   {
     id: "freshman",
     href: "/academy/freshman",
     name: "Freshman",
-    description:
-      "Nineteen first-year subjects — math, sciences, languages, civics, tech, and more.",
-    icon: <GraduationCap className="w-7 h-7" />,
-    image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&q=80",
-    gradient: "from-purple-500/30 to-pink-500/10",
+    image: "/images/academy/freshman.jpg",
     accent: "text-purple-400",
     border: "hover:border-purple-400/40",
-    cta: "Open subjects",
+    cta: "Open",
   },
   {
     id: "uat",
     href: "/academy/uat",
     name: "UAT",
-    description: "University Admission Test preparation with practice, mocks, and strategies.",
-    icon: <Award className="w-7 h-7" />,
-    image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&q=80",
-    gradient: "from-emerald-500/30 to-teal-500/10",
+    image: "/images/academy/uat.jpg",
     accent: "text-emerald-400",
     border: "hover:border-emerald-400/40",
-    cta: "Open UAT",
+    cta: "Open",
   },
   {
     id: "gat",
     href: "/academy/gat",
     name: "GAT",
-    description: "Graduate Admission Test coaching — quantitative, verbal, and analytical.",
-    icon: <Users className="w-7 h-7" />,
-    image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&q=80",
-    gradient: "from-rose-500/30 to-red-500/10",
+    image: "/images/academy/gat.jpg",
     accent: "text-rose-400",
     border: "hover:border-rose-400/40",
-    cta: "Open GAT",
+    cta: "Open",
   },
   {
     id: "coc",
     href: "/academy/coc",
     name: "COC",
-    description: "Certificate of Competency preparation — skills assessment and exam readiness.",
-    icon: <BadgeCheck className="w-7 h-7" />,
-    image: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&q=80",
-    gradient: "from-indigo-500/30 to-blue-500/10",
+    image: "/images/academy/coc.jpg",
     accent: "text-indigo-400",
     border: "hover:border-indigo-400/40",
-    cta: "Open COC",
+    cta: "Open",
   },
   {
     id: "exit-exam",
     href: "/academy/exit-exam",
     name: "Exit Exam",
-    description: "University exit exam preparation with structured review and practice tests.",
-    icon: <FileCheck2 className="w-7 h-7" />,
-    image: "https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?w=800&q=80",
-    gradient: "from-fuchsia-500/30 to-pink-500/10",
+    image: "/images/academy/exit-exam.jpg",
     accent: "text-fuchsia-400",
     border: "hover:border-fuchsia-400/40",
-    cta: "Open Exit Exam",
+    cta: "Open",
   },
 ];
 
@@ -222,45 +198,42 @@ export default function AcademyPage() {
             </p>
           </div>
 
-          {/* Welcome video — 16:9 framed */}
           <div className="mb-14 md:mb-16">
             <WelcomeVideoCard
               variant="academy"
               title="What you’ll find here"
               subtitle="A short look at how Academy is organized — pathways, practice, and support for real study goals."
-              /* Pass youtubeId="VIDEO_ID" when the real welcome video is ready */
             />
           </div>
 
-          <div className="perspective-scene grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-7">
+          {/* 6 pathways — 16:9, no gradient, name + Open only */}
+          <div className="perspective-scene grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
             {programs.map((program) => (
               <Link
                 key={program.id}
                 href={program.href}
-                className={`card-3d group relative overflow-hidden rounded-3xl border border-white/12 bg-wisdom-card ${program.border}`}
+                className={`card-3d group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card ${program.border}`}
               >
-                <div className="relative h-40 md:h-44 overflow-hidden">
-                  <div
-                    className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
-                    style={{ backgroundImage: `url(${program.image})` }}
+                <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={program.image}
+                    alt={program.name}
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card via-wisdom-card/35 to-transparent" />
-                  <div className="absolute bottom-4 left-5">
-                    <div
-                      className={`p-3 rounded-2xl bg-gradient-to-br ${program.gradient} border border-white/15 ${program.accent} shadow-md backdrop-blur-sm`}
-                    >
-                      {program.icon}
-                    </div>
-                  </div>
                 </div>
-                <div className="p-6">
-                  <h3 className={`font-display text-xl font-bold mb-2 ${program.accent}`}>
+                <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8">
+                  <h3
+                    className={`flex items-center gap-1.5 font-display text-base sm:text-lg font-bold ${program.accent}`}
+                  >
+                    <BadgeCheck className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-sky-400" aria-label="Verified" />
                     {program.name}
                   </h3>
-                  <p className="text-sm text-wisdom-muted leading-relaxed mb-4">{program.description}</p>
-                  <div className={`flex items-center gap-2 text-sm font-semibold ${program.accent}`}>
+                  <div
+                    className={`mt-2.5 flex items-center gap-1 text-xs sm:text-sm font-semibold ${program.accent}`}
+                  >
                     {program.cta}
-                    <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1.5" />
+                    <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
                   </div>
                 </div>
               </Link>
@@ -388,11 +361,11 @@ export default function AcademyPage() {
                     <div className="p-2.5 rounded-xl bg-amber-500/15 border border-amber-400/30 text-amber-300">
                       <Briefcase className="w-5 h-5" />
                     </div>
-                    <h3 className="font-display text-xl font-bold">We're open</h3>
+                    <h3 className="font-display text-xl font-bold">We&apos;re open</h3>
                   </div>
                   <p className="text-wisdom-muted leading-relaxed mb-5">
                     Bring premade courses, cohort ideas, or institutional packages. Tell us who you
-                    serve, what you've already built, and how it could sit beside our pathways.
+                    serve, what you&apos;ve already built, and how it could sit beside our pathways.
                     Incomplete pitches are fine — clarity beats polish.
                   </p>
                   <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-white/85">
@@ -402,7 +375,7 @@ export default function AcademyPage() {
                     </li>
                     <li className="flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
-                      Business & tech upskilling
+                      Business &amp; tech upskilling
                     </li>
                     <li className="flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
@@ -416,7 +389,7 @@ export default function AcademyPage() {
                 </div>
                 <div className="lg:col-span-2 p-7 sm:p-9 flex flex-col justify-center bg-gradient-to-br from-amber-500/10 via-transparent to-transparent">
                   <p className="text-sm text-wisdom-muted mb-4 leading-relaxed">
-                    Prefer a direct line? Reach the Academy team and we'll route your message.
+                    Prefer a direct line? Reach the Academy team and we&apos;ll route your message.
                   </p>
                   <Link
                     href="/contact?topic=partnership"

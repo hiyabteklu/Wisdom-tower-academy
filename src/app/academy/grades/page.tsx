@@ -1,58 +1,58 @@
 import Link from "next/link";
 import { grades } from "@/data/academy";
-import { ChevronRight } from "lucide-react";
+import { BadgeCheck, ChevronRight } from "lucide-react";
 import CategoryBackButton from "@/components/CategoryBackButton";
 import BranchLeaderboard from "@/components/BranchLeaderboard";
 
 export default function GradesPage() {
   return (
     <div className="relative min-h-[80vh]">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-10 left-1/3 w-96 h-96 bg-sky-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-1/4 w-72 h-72 bg-violet-500/8 rounded-full blur-3xl" />
-      </div>
-
       <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
         <CategoryBackButton fallback="/academy" />
 
-        <div className="mb-8 animate-fade-up">
+        <div className="mb-8 animate-fade-up text-center sm:text-left">
           <p className="text-sm font-semibold tracking-[0.2em] uppercase text-sky-400/90 mb-3">
             Secondary path
           </p>
           <h1 className="font-display text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
             Grade <span className="text-sky-400">9–12</span>
           </h1>
-          <p className="text-wisdom-muted text-lg max-w-xl leading-relaxed">
-            Choose your grade. Each level opens the same resource hubs — books, references, videos,
-            flashcards, question banks, and exams.
+          <p className="text-wisdom-muted text-lg max-w-xl leading-relaxed mx-auto sm:mx-0">
+            Choose your grade. Each level opens the same resource hubs.
           </p>
         </div>
 
-        <BranchLeaderboard branchName="Grade 9–12" accent="text-sky-400" />
+        <div className="max-w-2xl mx-auto mb-8">
+          <BranchLeaderboard branchName="Grade 9–12" accent="text-sky-400" />
+        </div>
 
+        {/* 4 grade cards — 16:9, no gradient, no subtitle */}
         <div className="perspective-scene grid grid-cols-1 sm:grid-cols-2 gap-5 md:gap-6 stagger-children">
           {grades.map((grade) => (
             <Link
               key={grade.id}
               href={`/academy/grades/${grade.id}`}
-              className={`card-3d group relative overflow-hidden rounded-3xl border bg-wisdom-card ${grade.ring} p-0`}
+              className={`card-3d group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border bg-wisdom-card ${grade.ring}`}
             >
-              <div className={`absolute inset-0 bg-gradient-to-br ${grade.gradient} opacity-80`} />
-              <div className="relative p-7 md:p-8 flex items-center gap-5">
-                <div
-                  className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-wisdom-dark/50 font-display text-2xl font-extrabold ${grade.accent}`}
-                >
-                  {grade.short}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h2 className={`font-display text-2xl font-bold mb-1 ${grade.accent}`}>
-                    {grade.label}
-                  </h2>
-                  <p className="text-sm text-wisdom-muted leading-relaxed">{grade.subtitle}</p>
-                </div>
-                <ChevronRight
-                  className={`w-6 h-6 shrink-0 text-wisdom-muted transition-all duration-300 group-hover:translate-x-1 ${grade.accent}`}
+              <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={grade.image}
+                  alt={grade.label}
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                 />
+              </div>
+              <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8 flex items-center justify-between gap-2">
+                <h2
+                  className={`flex items-center gap-1.5 font-display text-lg font-bold ${grade.accent}`}
+                >
+                  <BadgeCheck className="w-4 h-4 shrink-0 text-sky-400" aria-label="Verified" />
+                  {grade.label}
+                </h2>
+                <span className={`inline-flex items-center gap-0.5 text-xs font-semibold ${grade.accent}`}>
+                  Open
+                  <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+                </span>
               </div>
             </Link>
           ))}
