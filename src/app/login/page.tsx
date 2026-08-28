@@ -2,14 +2,12 @@
 
 import { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 
 function LoginForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const platformHint = searchParams.get("platform");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -21,7 +19,7 @@ function LoginForm() {
     setLoading(true);
     setError("");
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -32,14 +30,7 @@ function LoginForm() {
       return;
     }
 
-    const platform = data.user?.user_metadata?.platform as string | undefined;
-    if (platform === "academy") {
-      router.push("/academy");
-    } else if (platform === "digital") {
-      router.push("/digital");
-    } else {
-      router.push("/");
-    }
+    router.push("/");
     router.refresh();
   };
 
@@ -65,13 +56,7 @@ function LoginForm() {
             WT
           </div>
           <h1 className="text-3xl font-bold mb-2">Welcome back</h1>
-          <p className="text-wisdom-muted">
-            {platformHint === "academy"
-              ? "Sign in to Wisdom Academy"
-              : platformHint === "digital"
-                ? "Sign in to Wisdom Digital"
-                : "Sign in to your Wisdom Tower account"}
-          </p>
+          <p className="text-wisdom-muted">Sign in to your Wisdom Tower account</p>
         </div>
 
         <div className="bg-wisdom-card border border-white/5 rounded-2xl p-8 shadow-xl">
@@ -177,10 +162,7 @@ function LoginForm() {
 
           <p className="mt-6 text-center text-sm text-wisdom-muted">
             Don&apos;t have an account?{" "}
-            <Link
-              href={platformHint ? `/signup?platform=${platformHint}` : "/signup"}
-              className="text-wisdom-cyan hover:underline font-medium"
-            >
+            <Link href="/signup" className="text-wisdom-cyan hover:underline font-medium">
               Sign up
             </Link>
           </p>
