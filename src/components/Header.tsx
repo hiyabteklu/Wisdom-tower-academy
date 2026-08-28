@@ -1,5 +1,6 @@
 "use client";
 
+// Shared site header — one account for Academy + Digital
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
