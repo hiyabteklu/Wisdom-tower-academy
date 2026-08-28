@@ -21,14 +21,12 @@ const GLYPHS = [
 export default function InfinityCard({ visible, delay }: { visible: boolean; delay: number }) {
   return (
     <div
-      className={`stat-card infinity-card group relative overflow-hidden rounded-2xl border border-cyan-400/25 bg-wisdom-card p-6 md:p-8 text-center reveal-item ${visible ? "is-visible" : ""}`}
+      className={`stat-card infinity-card group relative overflow-hidden rounded-2xl border border-cyan-400/30 bg-wisdom-card p-6 md:p-8 text-center reveal-item ${visible ? "is-visible" : ""}`}
       style={{ transitionDelay: visible ? `${delay}ms` : undefined }}
     >
-      {/* Deep space field */}
       <div className="infinity-field" aria-hidden />
       <div className="infinity-aurora" aria-hidden />
 
-      {/* Drifting math / physics glyphs */}
       <div className="infinity-glyphs" aria-hidden>
         {GLYPHS.map((g) => (
           <span
@@ -46,11 +44,10 @@ export default function InfinityCard({ visible, delay }: { visible: boolean; del
         ))}
       </div>
 
-      {/* Orbital rings */}
       <div className="infinity-orbit infinity-orbit-a" aria-hidden />
       <div className="infinity-orbit infinity-orbit-b" aria-hidden />
 
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-[5.5rem] md:min-h-[6.5rem]">
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-[6.5rem] md:min-h-[7.5rem]">
         <div className="infinity-stage">
           <div className="infinity-spin">
             <span className="infinity-symbol" aria-hidden>
@@ -61,13 +58,12 @@ export default function InfinityCard({ visible, delay }: { visible: boolean; del
             </span>
           </div>
         </div>
-        <div className="mt-1 text-xs sm:text-sm text-wisdom-cyan/80 font-semibold uppercase tracking-[0.18em]">
+        <div className="mt-2 text-xs sm:text-sm text-wisdom-cyan font-semibold uppercase tracking-[0.2em]">
           Possibilities
         </div>
       </div>
 
-      {/* Soft vignette so edges stay clean */}
-      <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-cyan-400/15" />
+      <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-cyan-400/20" />
     </div>
   );
 }
