@@ -19,8 +19,8 @@ export default function SubjectCard({ href, name, description, image }: Props) {
       href={href}
       className="card-3d group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card shadow-lg shadow-black/20 transition-all duration-300 hover:border-purple-400/35 hover:shadow-purple-500/10 hover:-translate-y-0.5"
     >
-      {/* Image / hero */}
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-wisdom-navy">
+      {/* 16:9 cover */}
+      <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
         {!imgFailed ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -40,7 +40,6 @@ export default function SubjectCard({ href, name, description, image }: Props) {
         <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-purple-500/10 via-transparent to-transparent pointer-events-none" />
       </div>
 
-      {/* Body */}
       <div className="relative px-3.5 py-3.5 sm:px-4 sm:py-4 flex-1 flex flex-col border-t border-white/8">
         <h3 className="text-sm sm:text-[15px] font-semibold leading-snug text-white group-hover:text-purple-200 transition-colors duration-300 line-clamp-2">
           {name}
