@@ -7,9 +7,9 @@ import { useInView } from "@/hooks/useInView";
 import InfinityCard from "@/components/home/InfinityCard";
 
 const stats = [
-  { value: 30, suffix: "K+", label: "Users" },
-  { value: 10, suffix: "+", label: "Partners" },
-  { value: 70, suffix: "+", label: "Services" },
+  { value: 30, suffix: "K+", label: "Users", image: "/images/home/stat-users.jpg" },
+  { value: 10, suffix: "+", label: "Partners", image: "/images/home/stat-partners.jpg" },
+  { value: 70, suffix: "+", label: "Services", image: "/images/home/stat-services.jpg" },
 ];
 
 /** public/images/home/ — 16:9 covers for the two path cards */
@@ -17,6 +17,9 @@ const PATH_IMAGES = {
   academy: "/images/home/academy.jpg",
   digital: "/images/home/digital.jpg",
 } as const;
+
+/** Hero background — low opacity, brand-friendly dark image */
+const HERO_BG = "/images/home/hero-bg.jpg";
 
 function usePrefersReducedMotion() {
   const [reduced, setReduced] = useState(false);
@@ -127,6 +130,99 @@ function TiltCard({
   );
 }
 
+/** Auto-sliding strip for the 3 image stat cards (infinity stays fixed) */
+function StatsSlider({
+  visible,
+  reduced,
+}: {
+  visible: boolean;
+  reduced: boolean;
+}) {
+  const [index, setIndex] = useState(0);
+  const n = stats.length;
+
+  useEffect(() => {
+    if (reduced || !visible) return;
+    const id = window.setInterval(() => {
+      setIndex((i) => (i + 1) % n);
+    }, 4200);
+    return () => window.clearInterval(id);
+  }, [reduced, visible, n]);
+
+  return (
+    <div className="relative col-span-2 lg:col-span-3">
+      <div className="overflow-hidden rounded-2xl">
+        <div
+          className="flex transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]"
+          style={{
+            width: `${n * 100}%`,
+            transform: reduced ? undefined : `translateX(-${(index * 100) / n}%)`,
+          }}
+        >
+          {stats.map((stat, i) => (
+            <div
+              key={stat.label}
+              className="px-1.5 sm:px-2"
+              style={{ width: `${100 / n}%` }}
+            >
+              <div
+                className={`stat-card stat-card-image card-elevated group relative overflow-hidden rounded-2xl border border-white/14 bg-wisdom-card text-center reveal-item ${
+                  visible ? "is-visible" : ""
+                }`}
+                style={{ transitionDelay: visible ? `${i * 90}ms` : undefined }}
+              >
+                {/* Background image for this stat */}
+                <div className="absolute inset-0">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={stat.image}
+                    alt=""
+                    className="h-full w-full object-cover opacity-[0.38] group-hover:opacity-[0.48] transition-opacity duration-500 scale-105 group-hover:scale-110"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = "none";
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a101c]/95 via-[#0a101c]/55 to-[#0a101c]/25" />
+                </div>
+
+                <div className="relative z-10 p-6 md:p-8 min-h-[9.5rem] md:min-h-[10.5rem] flex flex-col items-center justify-center">
+                  <div className="stat-value font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-2 group-hover:text-wisdom-cyan transition-colors duration-300 drop-shadow-md">
+                    <CountUp
+                      target={stat.value}
+                      suffix={stat.suffix}
+                      active={visible}
+                    />
+                  </div>
+                  <div className="text-xs sm:text-sm text-wisdom-muted font-semibold uppercase tracking-[0.15em]">
+                    {stat.label}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Dots */}
+      {!reduced && (
+        <div className="flex justify-center gap-2 mt-4">
+          {stats.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              aria-label={`Show stat ${i + 1}`}
+              onClick={() => setIndex(i)}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                i === index ? "w-6 bg-wisdom-cyan" : "w-1.5 bg-white/25 hover:bg-white/40"
+              }`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function LandingPage() {
   const reduced = usePrefersReducedMotion();
   const heroRef = useRef<HTMLElement>(null);
@@ -171,20 +267,35 @@ export default function LandingPage() {
   return (
     <div className="landing-depth">
       <section ref={heroRef} className="relative overflow-hidden hero-scene">
-        <div className="absolute inset-0 bg-gradient-to-b from-wisdom-cyan/[0.07] via-transparent to-transparent" />
-        <div className="hero-grain" aria-hidden />
+        {/* Low-opacity high-res background image */}
+        <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={HERO_BG}
+            alt=""
+            className="h-full w-full object-cover object-center opacity-[0.22] scale-105"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = "none";
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#070c16]/70 via-[#070c16]/45 to-[#070c16]/90" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#070c16]/40 via-transparent to-[#070c16]/40" />
+        </div>
+
+        <div className="absolute inset-0 bg-gradient-to-b from-wisdom-cyan/[0.07] via-transparent to-transparent z-[1]" />
+        <div className="hero-grain z-[1]" aria-hidden />
 
         <div
-          className="absolute top-16 left-[12%] w-80 h-80 bg-wisdom-cyan/14 rounded-full blur-3xl pointer-events-none orb-float"
+          className="absolute top-16 left-[12%] w-80 h-80 bg-wisdom-cyan/14 rounded-full blur-3xl pointer-events-none orb-float z-[1]"
           style={blob1}
         />
         <div
-          className="absolute bottom-8 right-[10%] w-72 h-72 bg-purple-500/14 rounded-full blur-3xl pointer-events-none orb-float-delayed"
+          className="absolute bottom-8 right-[10%] w-72 h-72 bg-purple-500/14 rounded-full blur-3xl pointer-events-none orb-float-delayed z-[1]"
           style={blob2}
         />
-        <div className="absolute top-1/3 right-1/3 w-40 h-40 bg-wisdom-cyan/10 rounded-full blur-2xl pointer-events-none orb-pulse" />
+        <div className="absolute top-1/3 right-1/3 w-40 h-40 bg-wisdom-cyan/10 rounded-full blur-2xl pointer-events-none orb-pulse z-[1]" />
 
-        <div className="hero-mesh" aria-hidden />
+        <div className="hero-mesh z-[1]" aria-hidden />
 
         <div
           className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32 text-center relative z-10 ${loaded ? "hero-loaded" : "hero-loading"}`}
@@ -229,7 +340,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Path cards — 16:9, no gradient overlay, solid 3D Explore CTAs */}
+      {/* Path cards — 16:9 */}
       <section className="pb-16 md:pb-24 relative" ref={cardsSection.ref}>
         <div className="depth-well" aria-hidden />
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 perspective-scene relative z-10">
@@ -291,34 +402,16 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Stats: sliding image cards + fixed infinity */}
       <section className="pb-20 md:pb-28 relative" ref={statsSection.ref}>
         <div className="depth-well depth-well-soft" aria-hidden />
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-            {stats.map((stat, i) => (
-              <div
-                key={stat.label}
-                className={`stat-card stat-card-solid card-elevated group relative overflow-hidden rounded-2xl border border-white/14 bg-wisdom-card p-6 md:p-8 text-center reveal-item ${
-                  statsSection.inView ? "is-visible" : ""
-                }`}
-                style={{ transitionDelay: statsSection.inView ? `${i * 90}ms` : undefined }}
-              >
-                <div className="relative">
-                  <div className="stat-value font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-2 group-hover:text-wisdom-cyan transition-colors duration-300">
-                    <CountUp
-                      target={stat.value}
-                      suffix={stat.suffix}
-                      active={statsSection.inView}
-                    />
-                  </div>
-                  <div className="text-xs sm:text-sm text-wisdom-muted font-semibold uppercase tracking-[0.15em]">
-                    {stat.label}
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6 items-stretch">
+            <StatsSlider visible={statsSection.inView} reduced={reduced} />
 
-            <InfinityCard visible={statsSection.inView} delay={270} />
+            <div className="lg:col-span-1">
+              <InfinityCard visible={statsSection.inView} delay={270} />
+            </div>
           </div>
         </div>
       </section>
@@ -330,14 +423,14 @@ export default function LandingPage() {
           <div className="cta-panel rounded-3xl border border-white/12 bg-wisdom-card/80 backdrop-blur-md px-6 py-10 md:px-12 md:py-12 card-elevated">
             <h2 className="font-display text-2xl md:text-4xl font-bold mb-4">Not sure where to start?</h2>
             <p className="text-wisdom-muted mb-9 text-lg">
-              Tell us your goal and we'll guide you to the right path.
+              Tell us your goal and we&apos;ll guide you to the right path.
             </p>
             <Link
               href="/contact"
               className="inline-flex items-center gap-2 px-9 py-4 rounded-2xl bg-wisdom-cyan text-wisdom-dark font-semibold text-lg
                 hover:bg-wisdom-cyan-dark hover:shadow-glow hover:scale-105 active:scale-100 transition-all duration-300 shadow-lg shadow-cyan-500/25"
             >
-              Let's Build Together
+              Let&apos;s Build Together
               <ArrowRight className="w-5 h-5" />
             </Link>
           </div>

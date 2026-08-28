@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import {
@@ -40,6 +41,7 @@ export default function Header() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [logoOk, setLogoOk] = useState(true);
   const menuRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
 
@@ -98,17 +100,29 @@ export default function Header() {
         <div className="flex items-center justify-between h-16">
           <Link
             href={showAcademyChrome ? "/academy" : "/"}
-            className="flex items-center gap-2 group min-w-0"
+            className="flex items-center gap-2.5 group min-w-0"
           >
-            <div
-              className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm shrink-0 ${
-                showAcademyChrome
-                  ? "bg-gradient-to-br from-amber-400 to-orange-500 text-wisdom-dark"
-                  : "bg-gradient-to-br from-wisdom-cyan to-wisdom-cyan-dark text-wisdom-dark"
-              }`}
-            >
-              {showAcademyChrome ? "WA" : "WT"}
-            </div>
+            {logoOk ? (
+              <span className="relative w-9 h-9 shrink-0 rounded-lg overflow-hidden ring-1 ring-white/10 bg-wisdom-navy">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/images/brand/logo.png"
+                  alt="Wisdom Tower"
+                  className="w-full h-full object-contain p-0.5"
+                  onError={() => setLogoOk(false)}
+                />
+              </span>
+            ) : (
+              <div
+                className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm shrink-0 ${
+                  showAcademyChrome
+                    ? "bg-gradient-to-br from-amber-400 to-orange-500 text-wisdom-dark"
+                    : "bg-gradient-to-br from-wisdom-cyan to-wisdom-cyan-dark text-wisdom-dark"
+                }`}
+              >
+                {showAcademyChrome ? "WA" : "WT"}
+              </div>
+            )}
             <span className="font-semibold text-lg tracking-tight group-hover:text-wisdom-cyan transition-colors truncate">
               {showAcademyChrome ? "Wisdom Academy" : "Wisdom Tower"}
             </span>
