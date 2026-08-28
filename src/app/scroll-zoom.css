@@ -1,51 +1,50 @@
-/* Global scroll zoom-fit reveals */
+/* Global scroll zoom — transform + opacity only (smooth, low cost) */
 
 html.sz-smooth {
   scroll-behavior: smooth;
 }
 
 .sz-item {
-  opacity: 0;
-  transform: scale(0.9) translateY(32px);
-  filter: blur(6px);
+  opacity: 0.001;
+  transform: scale(0.92) translate3d(0, 28px, 0);
   transform-origin: center center;
-  will-change: transform, opacity, filter;
   transition:
-    opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.85s cubic-bezier(0.16, 1, 0.3, 1),
-    filter 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  backface-visibility: hidden;
 }
 
 .sz-item.sz-in {
   opacity: 1;
-  transform: scale(1) translateY(0);
-  filter: blur(0);
-  will-change: auto;
+  transform: scale(1) translate3d(0, 0, 0);
 }
 
+/* Cards: slightly stronger zoom */
 main .card-3d.sz-item:not(.sz-in),
 main .surface-card.sz-item:not(.sz-in),
-main .stat-card.sz-item:not(.sz-in) {
-  transform: scale(0.86) translateY(40px);
+main .stat-card.sz-item:not(.sz-in),
+main .infinity-card.sz-item:not(.sz-in) {
+  transform: scale(0.88) translate3d(0, 36px, 0);
 }
 
 main .card-3d.sz-item.sz-in,
 main .surface-card.sz-item.sz-in,
-main .stat-card.sz-item.sz-in {
-  transform: scale(1) translateY(0);
+main .stat-card.sz-item.sz-in,
+main .infinity-card.sz-item.sz-in {
+  transform: scale(1) translate3d(0, 0, 0);
 }
 
+/* Hover only after visible */
 main .card-3d.sz-item.sz-in:hover {
-  transform: translateY(-14px) rotateX(5deg) rotateY(-3deg) scale(1.02);
+  transform: translate3d(0, -14px, 0) rotateX(5deg) rotateY(-3deg) scale(1.02);
 }
 
 main .card-3d.sz-item.sz-in:active {
-  transform: translateY(-4px) scale(0.99);
+  transform: translate3d(0, -4px, 0) scale(0.99);
 }
 
 main section.sz-item:not(.sz-in) {
-  transform: scale(0.96) translateY(36px);
-  filter: blur(4px);
+  transform: scale(0.96) translate3d(0, 24px, 0);
 }
 
 .stagger-children > *.sz-item {
@@ -60,22 +59,21 @@ main section.sz-item:not(.sz-in) {
   .sz-item {
     opacity: 1 !important;
     transform: none !important;
-    filter: none !important;
     transition: none !important;
   }
 }
 
 @media (max-width: 768px) {
   .sz-item:not(.sz-in) {
-    transform: scale(0.88) translateY(28px);
+    transform: scale(0.9) translate3d(0, 22px, 0);
   }
 
   main .card-3d.sz-item:not(.sz-in),
   main .surface-card.sz-item:not(.sz-in) {
-    transform: scale(0.84) translateY(36px);
+    transform: scale(0.88) translate3d(0, 28px, 0);
   }
 
   main .card-3d.sz-item.sz-in:hover {
-    transform: translateY(-8px) scale(1.01);
+    transform: translate3d(0, -8px, 0) scale(1.01);
   }
 }
