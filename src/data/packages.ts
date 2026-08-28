@@ -1,7 +1,7 @@
 /**
  * Academy packages — 500 ETB each.
- * Grades 9–12 are separate packages. Other branches: one package each.
  * Images: public/images/packages/{id}.jpg  (16:9)
+ * Bank logos: public/images/banks/{id}.png  (1:1)
  */
 
 export type AcademyPackage = {
@@ -14,7 +14,6 @@ export type AcademyPackage = {
   image: string;
   includes: string[];
   enrolledLabel: string;
-  /** group for UI */
   group: "grades" | "branch";
 };
 
@@ -139,7 +138,6 @@ export function getPackage(id: string): AcademyPackage | undefined {
   return academyPackages.find((p) => p.id === id);
 }
 
-/** Map grade id "9" → package id "grade-9" */
 export function packageIdForGrade(gradeId: string): string {
   return `grade-${gradeId}`;
 }
@@ -150,6 +148,8 @@ export type PaymentMethod = {
   id: PaymentMethodId;
   name: string;
   shortLabel: string;
+  /** public/images/banks/{id}.png */
+  logo: string;
   instructions: string[];
   accountLabel: string;
   accountValue: string;
@@ -163,6 +163,7 @@ export const paymentMethods: PaymentMethod[] = [
     id: "telebirr",
     name: "Telebirr",
     shortLabel: "Telebirr",
+    logo: "/images/banks/telebirr.png",
     accountLabel: "Telebirr number",
     accountValue: "0900763030",
     accountName: ACCOUNT_NAME,
@@ -176,6 +177,7 @@ export const paymentMethods: PaymentMethod[] = [
     id: "cbe",
     name: "Commercial Bank of Ethiopia (CBE)",
     shortLabel: "CBE",
+    logo: "/images/banks/cbe.png",
     accountLabel: "Account number",
     accountValue: "1000665070654",
     accountName: ACCOUNT_NAME,
@@ -189,6 +191,7 @@ export const paymentMethods: PaymentMethod[] = [
     id: "abyssinia",
     name: "Bank of Abyssinia",
     shortLabel: "Abyssinia",
+    logo: "/images/banks/abyssinia.png",
     accountLabel: "Account number",
     accountValue: "211958545",
     accountName: ACCOUNT_NAME,
@@ -202,6 +205,7 @@ export const paymentMethods: PaymentMethod[] = [
     id: "other",
     name: "Other local bank",
     shortLabel: "Other bank",
+    logo: "/images/banks/other.png",
     accountLabel: "Prefer Telebirr, CBE, or Abyssinia",
     accountValue: "See Telebirr / CBE / Abyssinia",
     accountName: ACCOUNT_NAME,
