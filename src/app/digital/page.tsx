@@ -15,7 +15,6 @@ import {
   BookOpen,
   ArrowRight,
   ClipboardList,
-  Users,
 } from "lucide-react";
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -152,22 +151,8 @@ export default function DigitalPage() {
 
           <BusinessRegisterSection />
 
+          {/* Work with us — cover card (like Academy partnership) + path expands on click */}
           <section className="mt-24 md:mt-32" id="work-with-us">
-            <div className="text-center mb-10 md:mb-12">
-              <p className="section-eyebrow mb-4 justify-center">Contributors & talent</p>
-              <h2 className="font-display text-4xl sm:text-5xl font-extrabold tracking-tight mb-4 text-balance">
-                Work with us?
-              </h2>
-              <p className="text-wisdom-muted max-w-xl mx-auto text-lg md:text-xl leading-relaxed text-balance">
-                Walk every stage in order. Apply unlocks only after you finish step 7.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2 mb-5 text-sm text-wisdom-muted justify-center sm:justify-start">
-              <Users className="w-4 h-4 text-wisdom-cyan" />
-              Built by people who ship · paid internships on live work
-            </div>
-
             <TalentPath />
           </section>
         </div>
