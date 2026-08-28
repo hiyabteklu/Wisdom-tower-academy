@@ -16,7 +16,6 @@ import {
   Route,
   Clock,
   Send,
-  X,
   Lock,
 } from "lucide-react";
 
@@ -166,9 +165,7 @@ const stages = [
 ] as const;
 
 export default function TalentPath() {
-  /** Current open detail panel (null = collapsed) */
-  const [open, setOpen] = useState<number | null>(0); // force start at step 1
-  /** Highest index the user is allowed to open (sequential) */
+  const [open, setOpen] = useState<number | null>(0);
   const [maxReached, setMaxReached] = useState(0);
   const [entered, setEntered] = useState(false);
 
@@ -181,15 +178,12 @@ export default function TalentPath() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (allRead) {
-      sessionStorage.setItem(PATH_COMPLETE_KEY, "1");
-    }
+    if (allRead) sessionStorage.setItem(PATH_COMPLETE_KEY, "1");
   }, [allRead]);
 
   const tryOpen = useCallback(
     (i: number) => {
-      if (i > maxReached) return; // locked
-      setOpen((prev) => (prev === i ? i : i)); // keep open on same click
+      if (i > maxReached) return;
       setOpen(i);
     },
     [maxReached]
@@ -219,40 +213,40 @@ export default function TalentPath() {
       }`}
     >
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-24 -right-16 w-72 h-72 rounded-full blur-3xl opacity-20 bg-gradient-to-br from-cyan-500/20 to-transparent" />
+        <div className="absolute -top-24 -right-16 w-80 h-80 rounded-full blur-3xl opacity-30 bg-gradient-to-br from-cyan-400/30 to-transparent" />
       </div>
 
-      <div className="relative p-5 sm:p-7 md:p-8">
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-6">
+      <div className="relative p-6 sm:p-8 md:p-10">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-8">
           <div className="flex items-start gap-3">
-            <div className="p-2.5 rounded-xl bg-white/5 border border-white/12 text-wisdom-muted">
-              <Route className="w-5 h-5" />
+            <div className="p-3 rounded-2xl bg-white/5 border border-white/12 text-wisdom-cyan">
+              <Route className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-display text-xl md:text-2xl font-bold tracking-tight">Your path</h3>
-              <p className="text-sm text-wisdom-muted mt-0.5">
+              <h3 className="font-display text-2xl md:text-3xl font-extrabold tracking-tight">
+                Your path
+              </h3>
+              <p className="text-base text-wisdom-muted mt-1">
                 Read every stage in order — Apply unlocks after step 7
               </p>
             </div>
           </div>
-          <div className="text-xs font-semibold tabular-nums text-wisdom-muted">
+          <div className="text-sm font-semibold tabular-nums text-wisdom-muted">
             Progress{" "}
-            <span className="text-wisdom-cyan">
+            <span className="text-wisdom-cyan text-base">
               {Math.min(maxReached + 1, stages.length)}/{stages.length}
             </span>
           </div>
         </div>
 
         <div className="relative mb-2">
-          <div className="hidden md:block absolute top-7 left-[4%] right-[12%] h-0.5 bg-white/10 rounded-full" />
+          <div className="hidden md:block absolute top-8 left-[4%] right-[12%] h-0.5 bg-white/10 rounded-full" />
           <div
-            className="hidden md:block absolute top-7 left-[4%] h-0.5 rounded-full bg-wisdom-cyan transition-all duration-500"
-            style={{
-              width: `calc(${(maxReached / (stages.length - 1)) * 76}% )`,
-            }}
+            className="hidden md:block absolute top-8 left-[4%] h-0.5 rounded-full bg-wisdom-cyan transition-all duration-500"
+            style={{ width: `calc(${(maxReached / (stages.length - 1)) * 76}% )` }}
           />
 
-          <div className="flex gap-2 md:gap-0 overflow-x-auto md:overflow-visible pb-2 -mx-1 px-1 snap-x snap-mandatory md:snap-none">
+          <div className="flex gap-2 md:gap-0 overflow-x-auto md:overflow-visible pb-3 -mx-1 px-1 snap-x snap-mandatory md:snap-none">
             {stages.map((s, i) => {
               const SIcon = s.icon;
               const isOpen = open === i;
@@ -264,14 +258,14 @@ export default function TalentPath() {
                   type="button"
                   onClick={() => tryOpen(i)}
                   disabled={locked}
-                  className={`relative flex flex-col items-center text-center shrink-0 snap-center md:flex-1 min-w-[4.25rem] md:min-w-0 group outline-none focus-visible:ring-2 focus-visible:ring-wisdom-cyan/50 rounded-xl ${
+                  className={`relative flex flex-col items-center text-center shrink-0 snap-center md:flex-1 min-w-[4.75rem] md:min-w-0 group outline-none focus-visible:ring-2 focus-visible:ring-wisdom-cyan/50 rounded-xl ${
                     locked ? "cursor-not-allowed opacity-50" : ""
                   }`}
                   aria-expanded={isOpen}
                   aria-disabled={locked}
                 >
                   <div
-                    className={`relative z-10 w-12 h-12 rounded-2xl border-2 flex items-center justify-center transition-all duration-300 ${
+                    className={`relative z-10 w-14 h-14 rounded-2xl border-2 flex items-center justify-center transition-all duration-300 ${
                       locked
                         ? "bg-wisdom-dark/60 border-white/8 text-white/25"
                         : isOpen
@@ -281,13 +275,9 @@ export default function TalentPath() {
                             : "bg-wisdom-dark/80 border-white/12 text-wisdom-muted group-hover:border-white/30 group-hover:text-white/90"
                     }`}
                   >
-                    {locked ? (
-                      <Lock className="w-4 h-4" />
-                    ) : (
-                      <SIcon className="w-5 h-5" />
-                    )}
+                    {locked ? <Lock className="w-5 h-5" /> : <SIcon className="w-6 h-6" />}
                     <span
-                      className={`absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full text-[10px] font-black flex items-center justify-center border ${
+                      className={`absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full text-[11px] font-black flex items-center justify-center border ${
                         isOpen
                           ? "bg-white text-wisdom-dark border-white"
                           : "bg-wisdom-dark border-white/20 text-white/70"
@@ -297,7 +287,7 @@ export default function TalentPath() {
                     </span>
                   </div>
                   <p
-                    className={`mt-2 text-xs md:text-sm font-bold transition-colors ${
+                    className={`mt-2.5 text-sm font-bold transition-colors ${
                       isOpen ? "text-white" : locked ? "text-white/30" : "text-wisdom-muted"
                     }`}
                   >
@@ -307,32 +297,31 @@ export default function TalentPath() {
               );
             })}
 
-            {/* 8 — Apply (gated) */}
             {allRead ? (
               <Link
                 href="/apply"
-                className="relative flex flex-col items-center text-center shrink-0 snap-center md:flex-1 min-w-[4.25rem] md:min-w-0 group outline-none focus-visible:ring-2 focus-visible:ring-wisdom-cyan/50 rounded-xl"
+                className="relative flex flex-col items-center text-center shrink-0 snap-center md:flex-1 min-w-[4.75rem] md:min-w-0 group"
               >
-                <div className="relative z-10 w-12 h-12 rounded-2xl border-2 border-wisdom-cyan/50 bg-gradient-to-br from-wisdom-cyan/25 to-cyan-600/10 text-wisdom-cyan flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-cyan-500/30 ring-2 ring-wisdom-cyan/30">
-                  <Send className="w-5 h-5" />
-                  <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full text-[10px] font-black flex items-center justify-center border bg-wisdom-cyan text-wisdom-dark border-wisdom-cyan">
+                <div className="relative z-10 w-14 h-14 rounded-2xl border-2 border-wisdom-cyan/50 bg-gradient-to-br from-wisdom-cyan/25 to-cyan-600/10 text-wisdom-cyan flex items-center justify-center transition-all group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-cyan-500/30 ring-2 ring-wisdom-cyan/30">
+                  <Send className="w-6 h-6" />
+                  <span className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full text-[11px] font-black flex items-center justify-center border bg-wisdom-cyan text-wisdom-dark border-wisdom-cyan">
                     8
                   </span>
                 </div>
-                <p className="mt-2 text-xs md:text-sm font-bold text-wisdom-cyan">Apply now</p>
+                <p className="mt-2.5 text-sm font-bold text-wisdom-cyan">Apply now</p>
               </Link>
             ) : (
               <div
-                className="relative flex flex-col items-center text-center shrink-0 snap-center md:flex-1 min-w-[4.25rem] md:min-w-0 opacity-40 cursor-not-allowed"
+                className="relative flex flex-col items-center text-center shrink-0 snap-center md:flex-1 min-w-[4.75rem] md:min-w-0 opacity-40 cursor-not-allowed"
                 title="Finish all 7 stages to unlock"
               >
-                <div className="relative z-10 w-12 h-12 rounded-2xl border-2 border-white/10 bg-wisdom-dark/60 text-white/30 flex items-center justify-center">
-                  <Lock className="w-4 h-4" />
-                  <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full text-[10px] font-black flex items-center justify-center border bg-wisdom-dark border-white/15 text-white/40">
+                <div className="relative z-10 w-14 h-14 rounded-2xl border-2 border-white/10 bg-wisdom-dark/60 text-white/30 flex items-center justify-center">
+                  <Lock className="w-5 h-5" />
+                  <span className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full text-[11px] font-black flex items-center justify-center border bg-wisdom-dark border-white/15 text-white/40">
                     8
                   </span>
                 </div>
-                <p className="mt-2 text-xs md:text-sm font-bold text-white/35">Apply now</p>
+                <p className="mt-2.5 text-sm font-bold text-white/35">Apply now</p>
               </div>
             )}
           </div>
@@ -341,55 +330,53 @@ export default function TalentPath() {
         {stage && Icon && (
           <div
             key={stage.n}
-            className={`mt-5 rounded-2xl border ${stage.border} bg-gradient-to-br ${stage.bg} p-4 sm:p-5`}
+            className={`mt-6 rounded-2xl border ${stage.border} bg-gradient-to-br ${stage.bg} p-5 sm:p-6`}
           >
-            <div className="flex items-start justify-between gap-3 mb-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <div
-                  className={`w-10 h-10 rounded-xl border ${stage.border} bg-wisdom-dark/40 flex items-center justify-center ${stage.text} shrink-0`}
-                >
-                  <Icon className="w-5 h-5" />
-                </div>
-                <div className="min-w-0">
-                  <p className={`text-[10px] font-bold uppercase tracking-[0.16em] ${stage.text}`}>
-                    Stage {stage.n}
-                  </p>
-                  <h4 className="font-display text-lg font-extrabold text-white tracking-tight">
-                    {stage.title}
-                  </h4>
-                </div>
+            <div className="flex items-center gap-3 mb-4">
+              <div
+                className={`w-12 h-12 rounded-xl border ${stage.border} bg-wisdom-dark/40 flex items-center justify-center ${stage.text} shrink-0`}
+              >
+                <Icon className="w-6 h-6" />
+              </div>
+              <div>
+                <p className={`text-xs font-bold uppercase tracking-[0.16em] ${stage.text}`}>
+                  Stage {stage.n}
+                </p>
+                <h4 className="font-display text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+                  {stage.title}
+                </h4>
               </div>
             </div>
 
-            <p className="text-sm text-white/85 leading-relaxed mb-3">{stage.detail}</p>
+            <p className="text-base text-white/90 leading-relaxed mb-4">{stage.detail}</p>
 
-            <div className="rounded-xl border border-white/10 bg-black/20 p-3.5 mb-3">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-white/50 mb-2">
+            <div className="rounded-xl border border-white/10 bg-black/25 p-4 mb-4">
+              <p className="text-xs font-bold uppercase tracking-wider text-white/50 mb-3">
                 What you do
               </p>
-              <ul className="space-y-2">
+              <ul className="space-y-2.5">
                 {stage.youDo.map((item) => (
-                  <li key={item} className="flex gap-2 text-sm text-white/85 leading-snug">
-                    <ArrowRight className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${stage.text}`} />
+                  <li key={item} className="flex gap-2.5 text-base text-white/90 leading-snug">
+                    <ArrowRight className={`w-4 h-4 shrink-0 mt-1 ${stage.text}`} />
                     {item}
                   </li>
                 ))}
               </ul>
             </div>
 
-            <div className="flex items-start gap-2 rounded-xl border border-white/10 bg-black/25 px-3 py-2.5 mb-4">
-              <Clock className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${stage.text}`} />
-              <p className="text-xs text-wisdom-muted leading-relaxed">{stage.tip}</p>
+            <div className="flex items-start gap-2.5 rounded-xl border border-white/10 bg-black/30 px-4 py-3 mb-5">
+              <Clock className={`w-4 h-4 shrink-0 mt-0.5 ${stage.text}`} />
+              <p className="text-sm text-wisdom-muted leading-relaxed">{stage.tip}</p>
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <button
                 type="button"
                 onClick={goPrev}
                 disabled={open === 0}
-                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-white/12 text-xs font-semibold text-wisdom-muted hover:text-white hover:bg-white/5 disabled:opacity-30 disabled:pointer-events-none"
+                className="btn-ghost disabled:opacity-30 disabled:pointer-events-none"
               >
-                <ChevronLeft className="w-3.5 h-3.5" />
+                <ChevronLeft className="w-5 h-5" />
                 Previous
               </button>
 
@@ -397,10 +384,10 @@ export default function TalentPath() {
                 <button
                   type="button"
                   onClick={goNext}
-                  className={`inline-flex items-center gap-1 px-4 py-2 rounded-xl border text-xs font-bold ${stage.border} ${stage.text} bg-white/10 hover:bg-white/15`}
+                  className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl border text-sm font-bold min-h-[3rem] ${stage.border} ${stage.text} bg-white/10 hover:bg-white/15 transition`}
                 >
                   Next stage
-                  <ChevronRight className="w-3.5 h-3.5" />
+                  <ChevronRight className="w-5 h-5" />
                 </button>
               ) : (
                 <Link
@@ -410,10 +397,10 @@ export default function TalentPath() {
                       sessionStorage.setItem(PATH_COMPLETE_KEY, "1");
                     }
                   }}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-wisdom-cyan text-wisdom-dark text-xs font-bold hover:bg-wisdom-cyan-dark transition"
+                  className="btn-primary"
                 >
                   Apply now
-                  <Send className="w-3.5 h-3.5" />
+                  <Send className="w-5 h-5" />
                 </Link>
               )}
             </div>
@@ -421,25 +408,22 @@ export default function TalentPath() {
         )}
 
         {!allRead && (
-          <p className="mt-4 text-center text-xs text-wisdom-muted">
-            Use <strong className="text-white/80">Next stage</strong> to unlock the rest. Apply stays
+          <p className="mt-5 text-center text-sm text-wisdom-muted">
+            Use <strong className="text-white/90">Next stage</strong> to unlock the rest. Apply stays
             locked until you finish all seven.
           </p>
         )}
 
         {allRead && (
-          <div className="mt-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-wisdom-cyan/25 bg-wisdom-cyan/5 px-4 py-3.5">
-            <p className="text-xs text-wisdom-muted leading-relaxed">
-              <Handshake className="w-3.5 h-3.5 text-emerald-400 inline mr-1.5 align-text-bottom" />
+          <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl border border-wisdom-cyan/30 bg-wisdom-cyan/10 px-5 py-4">
+            <p className="text-sm text-wisdom-muted leading-relaxed">
+              <Handshake className="w-4 h-4 text-emerald-400 inline mr-1.5 align-text-bottom" />
               Path complete. Internships are{" "}
               <span className="text-emerald-300 font-semibold">paid</span> on live work.
             </p>
-            <Link
-              href="/apply"
-              className="inline-flex items-center justify-center gap-1.5 shrink-0 px-4 py-2 rounded-xl bg-wisdom-cyan text-wisdom-dark text-sm font-bold hover:bg-wisdom-cyan-dark transition"
-            >
+            <Link href="/apply" className="btn-primary shrink-0">
               Apply now
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-5 h-5" />
             </Link>
           </div>
         )}
