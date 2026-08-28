@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { categories } from "@/data/services";
 import TalentPath from "@/components/TalentPath";
 import WelcomeVideoCard from "@/components/WelcomeVideoCard";
@@ -18,34 +19,85 @@ import {
 } from "lucide-react";
 
 const iconMap: Record<string, React.ReactNode> = {
-  palette: <Palette className="w-7 h-7" />,
-  "pen-tool": <PenTool className="w-7 h-7" />,
-  "graduation-cap": <GraduationCap className="w-7 h-7" />,
-  database: <Database className="w-7 h-7" />,
-  globe: <Globe className="w-7 h-7" />,
-  briefcase: <Briefcase className="w-7 h-7" />,
-  "book-open": <BookOpen className="w-7 h-7" />,
+  palette: <Palette className="w-5 h-5" />,
+  "pen-tool": <PenTool className="w-5 h-5" />,
+  "graduation-cap": <GraduationCap className="w-5 h-5" />,
+  database: <Database className="w-5 h-5" />,
+  globe: <Globe className="w-5 h-5" />,
+  briefcase: <Briefcase className="w-5 h-5" />,
+  "book-open": <BookOpen className="w-5 h-5" />,
 };
 
-const gradientMap: Record<string, string> = {
-  "graphic-print-design": "from-pink-500/30 to-purple-500/10",
-  "writing-editorial": "from-blue-500/30 to-cyan-500/10",
-  "academic-research": "from-amber-500/30 to-orange-500/10",
-  "data-tech": "from-emerald-500/30 to-teal-500/10",
-  "web-digital-marketing": "from-violet-500/30 to-indigo-500/10",
-  "business-strategy": "from-rose-500/30 to-red-500/10",
-  "education-multimedia": "from-sky-500/30 to-blue-500/10",
-};
+/** Category cover images — 16:9 under public/images/digital/categories/ */
+const categoryCover = (id: string) => `/images/digital/categories/${id}.jpg`;
 
-const imageMap: Record<string, string> = {
-  "graphic-print-design": "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=600&q=80",
-  "writing-editorial": "https://images.unsplash.com/photo-1455390580379-a91bf48e9372?w=600&q=80",
-  "academic-research": "https://images.unsplash.com/photo-1481627834876-b7833e1d2af8?w=600&q=80",
-  "data-tech": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&q=80",
-  "web-digital-marketing": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&q=80",
-  "business-strategy": "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=600&q=80",
-  "education-multimedia": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&q=80",
-};
+function CategoryCoverCard({
+  href,
+  title,
+  tagline,
+  meta,
+  icon,
+  imageSrc,
+  accent = "cyan",
+}: {
+  href: string;
+  title: string;
+  tagline: string;
+  meta: string;
+  icon: React.ReactNode;
+  imageSrc: string;
+  accent?: "cyan" | "violet";
+}) {
+  const [failed, setFailed] = useState(false);
+  const border =
+    accent === "violet"
+      ? "border-wisdom-cyan/35 hover:border-wisdom-cyan/60"
+      : "border-white/12 hover:border-wisdom-cyan/40";
+
+  return (
+    <Link
+      href={href}
+      className={`group relative flex flex-col overflow-hidden rounded-2xl border bg-wisdom-card transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_-20px_rgba(34,224,255,0.25)] ${border}`}
+    >
+      {/* 16:9 cover */}
+      <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
+        {!failed ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={imageSrc}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+            onError={() => setFailed(true)}
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-wisdom-navy via-[#152238] to-wisdom-dark" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a101c] via-[#0a101c]/40 to-transparent" />
+        <div className="absolute bottom-3 left-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-black/35 text-wisdom-cyan backdrop-blur-md shadow-lg">
+            {icon}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-1 flex-col p-5 sm:p-6">
+        <h3 className="font-display text-lg sm:text-xl font-bold leading-snug text-white group-hover:text-wisdom-cyan transition-colors">
+          {title}
+        </h3>
+        <p className="mt-2 flex-1 text-sm sm:text-base text-wisdom-muted leading-relaxed line-clamp-2">
+          {tagline}
+        </p>
+        <div className="mt-4 flex items-center justify-between border-t border-white/8 pt-4">
+          <span className="text-sm font-semibold text-wisdom-cyan">{meta}</span>
+          <span className="inline-flex items-center gap-1 text-sm text-wisdom-muted group-hover:text-wisdom-cyan transition-colors">
+            Explore
+            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+}
 
 export default function DigitalPage() {
   return (
@@ -63,8 +115,8 @@ export default function DigitalPage() {
               Our Services
             </h1>
             <p className="text-wisdom-muted max-w-2xl mx-auto text-lg md:text-xl leading-relaxed text-balance">
-              Seven focused categories — plus custom work when your project doesn't fit a list.
-              One partner for digital, creative, and professional needs.
+              Seven focused categories — plus custom work when your project doesn&apos;t fit a list.
+              Pick a category, then order the exact service you need.
             </p>
           </div>
 
@@ -76,82 +128,33 @@ export default function DigitalPage() {
             />
           </div>
 
-          <div className="perspective-scene grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6 stagger-children">
+          {/* Category grid — 16:9 covers */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
             {categories.map((category) => (
-              <Link
+              <CategoryCoverCard
                 key={category.id}
                 href={`/services/${category.id}`}
-                className="card-3d group relative flex flex-col overflow-hidden rounded-2xl border border-white/12 bg-wisdom-card hover:border-wisdom-cyan/40 h-full"
-              >
-                <div className="relative h-40 sm:h-44 overflow-hidden shrink-0">
-                  <div
-                    className="absolute inset-0 bg-cover bg-center group-hover:scale-110 transition-transform duration-700"
-                    style={{ backgroundImage: `url(${imageMap[category.id]})` }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card via-wisdom-card/40 to-transparent" />
-                  <div className="absolute bottom-3 left-4">
-                    <div
-                      className={`p-2.5 rounded-xl bg-gradient-to-br ${gradientMap[category.id]} border border-white/20 text-wisdom-cyan shadow-md backdrop-blur-sm`}
-                    >
-                      {iconMap[category.icon]}
-                    </div>
-                  </div>
-                </div>
-                <div className="p-5 sm:p-6 flex flex-col flex-1">
-                  <h3 className="font-display text-lg sm:text-xl font-bold mb-2 group-hover:text-wisdom-cyan transition-colors leading-snug">
-                    {category.name}
-                  </h3>
-                  <p className="text-base text-wisdom-muted line-clamp-2 mb-4 flex-1 leading-relaxed">
-                    {category.tagline}
-                  </p>
-                  <div className="flex items-center justify-between mt-auto">
-                    <span className="text-sm font-semibold text-wisdom-cyan">
-                      {category.services.length} services
-                    </span>
-                    <ArrowRight className="w-5 h-5 text-wisdom-muted group-hover:text-wisdom-cyan group-hover:translate-x-1 transition-all" />
-                  </div>
-                </div>
-              </Link>
+                title={category.name}
+                tagline={category.tagline}
+                meta={`${category.services.length} services`}
+                icon={iconMap[category.icon]}
+                imageSrc={categoryCover(category.id)}
+              />
             ))}
 
-            <Link
+            <CategoryCoverCard
               href="/services/custom"
-              className="card-3d group relative flex flex-col overflow-hidden rounded-2xl border border-wisdom-cyan/35 bg-wisdom-card hover:border-wisdom-cyan/60 h-full"
-            >
-              <div className="relative h-40 sm:h-44 overflow-hidden shrink-0">
-                <div
-                  className="absolute inset-0 bg-cover bg-center group-hover:scale-110 transition-transform duration-700"
-                  style={{
-                    backgroundImage:
-                      "url(https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600&q=80)",
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card via-wisdom-card/40 to-transparent" />
-                <div className="absolute bottom-3 left-4">
-                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-wisdom-cyan/35 to-cyan-600/20 border border-wisdom-cyan/35 text-wisdom-cyan shadow-md backdrop-blur-sm">
-                    <ClipboardList className="w-7 h-7" />
-                  </div>
-                </div>
-              </div>
-              <div className="p-5 sm:p-6 flex flex-col flex-1">
-                <h3 className="font-display text-lg sm:text-xl font-bold mb-2 group-hover:text-wisdom-cyan transition-colors leading-snug">
-                  Custom order
-                </h3>
-                <p className="text-base text-wisdom-muted line-clamp-2 mb-4 flex-1 leading-relaxed">
-                  Tell us who you are and what you need. We'll shape a package that isn't on the
-                  standard list.
-                </p>
-                <div className="flex items-center justify-between mt-auto">
-                  <span className="text-sm font-semibold text-wisdom-cyan">Submit a request</span>
-                  <ArrowRight className="w-5 h-5 text-wisdom-muted group-hover:text-wisdom-cyan group-hover:translate-x-1 transition-all" />
-                </div>
-              </div>
-            </Link>
+              title="Custom order"
+              tagline="Tell us who you are and what you need. We'll shape a package that isn't on the standard list."
+              meta="Submit a request"
+              icon={<ClipboardList className="w-5 h-5" />}
+              imageSrc="/images/digital/categories/custom-order.jpg"
+              accent="violet"
+            />
           </div>
 
           <BusinessRegisterSection />
 
-          {/* Work with us — cover card (like Academy partnership) + path expands on click */}
           <section className="mt-24 md:mt-32" id="work-with-us">
             <TalentPath />
           </section>

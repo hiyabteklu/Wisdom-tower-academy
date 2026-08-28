@@ -6,10 +6,28 @@ Digital page media
 |------|--------|
 | **File name** | `talent-cover.jpg` |
 | **Path** | `public/images/digital/talent-cover.jpg` |
-| **Size** | **1280×720** (ideal) or **1920×1080** |
+| **Size** | **1280×720** (or 1920×1080) |
 | **Aspect ratio** | **16:9** |
-| **Format** | JPG or WebP, aim &lt; 300 KB |
-| **Use** | Full-bleed background for the "Work with us?" card (same layout as Academy `partnership.jpg`) |
-| **Style tip** | Team / collaboration / workspace / creative people — dark or mid-tone so white + cyan text stays readable over the ~45% black overlay |
 
-Other optional digital assets can live in this folder later (hero, register cards, etc.).
+## Category covers (Digital home grid)
+
+Upload **16:9** JPG/WebP under:
+
+**Folder:** `public/images/digital/categories/`
+
+| File name | Category |
+|-----------|----------|
+| `graphic-print-design.jpg` | Graphic & Print Design |
+| `writing-editorial.jpg` | Writing & Editorial |
+| `academic-research.jpg` | Academic & Research Support |
+| `data-tech.jpg` | Data & Tech Solutions |
+| `web-digital-marketing.jpg` | Web & Digital Marketing |
+| `business-strategy.jpg` | Business Strategy & Admin |
+| `education-multimedia.jpg` | Education & Multimedia |
+| `custom-order.jpg` | Custom order |
+
+**Recommended size:** **1280×720** (ideal) or **1920×1080**  
+**Aspect ratio:** **16:9**  
+**File size:** aim &lt; 250 KB each  
+
+If a file is missing, the card shows a dark navy fallback (no broken image).
