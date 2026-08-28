@@ -166,34 +166,45 @@ function StatsSlider({
               style={{ width: `${100 / n}%` }}
             >
               <div
-                className={`stat-card stat-card-image card-elevated group relative overflow-hidden rounded-2xl border border-white/14 bg-wisdom-card text-center reveal-item ${
+                className={`stat-card stat-card-image card-elevated group relative overflow-hidden rounded-2xl border border-white/14 bg-wisdom-card text-center reveal-item h-full ${
                   visible ? "is-visible" : ""
                 }`}
                 style={{ transitionDelay: visible ? `${i * 90}ms` : undefined }}
               >
-                {/* Background image for this stat */}
+                {/* Background image — no heavy gradient; image more visible */}
                 <div className="absolute inset-0">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={stat.image}
                     alt=""
-                    className="h-full w-full object-cover opacity-[0.38] group-hover:opacity-[0.48] transition-opacity duration-500 scale-105 group-hover:scale-110"
+                    className="h-full w-full object-cover object-center opacity-70 group-hover:opacity-80 transition-opacity duration-500"
                     onError={(e) => {
                       (e.target as HTMLImageElement).style.display = "none";
                     }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a101c]/95 via-[#0a101c]/55 to-[#0a101c]/25" />
                 </div>
 
-                <div className="relative z-10 p-6 md:p-8 min-h-[9.5rem] md:min-h-[10.5rem] flex flex-col items-center justify-center">
-                  <div className="stat-value font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-2 group-hover:text-wisdom-cyan transition-colors duration-300 drop-shadow-md">
+                <div className="relative z-10 px-6 py-10 sm:py-12 md:py-14 min-h-[12.5rem] md:min-h-[14rem] flex flex-col items-center justify-center">
+                  <div
+                    className="stat-value font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-2 group-hover:text-wisdom-cyan transition-colors duration-300"
+                    style={{
+                      textShadow:
+                        "0 1px 2px rgba(0,0,0,0.85), 0 2px 12px rgba(0,0,0,0.55), 0 0 24px rgba(0,0,0,0.35)",
+                    }}
+                  >
                     <CountUp
                       target={stat.value}
                       suffix={stat.suffix}
                       active={visible}
                     />
                   </div>
-                  <div className="text-xs sm:text-sm text-wisdom-muted font-semibold uppercase tracking-[0.15em]">
+                  <div
+                    className="text-xs sm:text-sm text-white/90 font-semibold uppercase tracking-[0.15em]"
+                    style={{
+                      textShadow:
+                        "0 1px 2px rgba(0,0,0,0.9), 0 2px 10px rgba(0,0,0,0.5)",
+                    }}
+                  >
                     {stat.label}
                   </div>
                 </div>
@@ -409,8 +420,10 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6 items-stretch">
             <StatsSlider visible={statsSection.inView} reduced={reduced} />
 
-            <div className="lg:col-span-1">
-              <InfinityCard visible={statsSection.inView} delay={270} />
+            <div className="lg:col-span-1 flex">
+              <div className="w-full min-h-[12.5rem] md:min-h-[14rem] flex">
+                <InfinityCard visible={statsSection.inView} delay={270} />
+              </div>
             </div>
           </div>
         </div>
@@ -423,14 +436,14 @@ export default function LandingPage() {
           <div className="cta-panel rounded-3xl border border-white/12 bg-wisdom-card/80 backdrop-blur-md px-6 py-10 md:px-12 md:py-12 card-elevated">
             <h2 className="font-display text-2xl md:text-4xl font-bold mb-4">Not sure where to start?</h2>
             <p className="text-wisdom-muted mb-9 text-lg">
-              Tell us your goal and we&apos;ll guide you to the right path.
+              Tell us your goal and we'll guide you to the right path.
             </p>
             <Link
               href="/contact"
               className="inline-flex items-center gap-2 px-9 py-4 rounded-2xl bg-wisdom-cyan text-wisdom-dark font-semibold text-lg
                 hover:bg-wisdom-cyan-dark hover:shadow-glow hover:scale-105 active:scale-100 transition-all duration-300 shadow-lg shadow-cyan-500/25"
             >
-              Let&apos;s Build Together
+              Let's Build Together
               <ArrowRight className="w-5 h-5" />
             </Link>
           </div>
