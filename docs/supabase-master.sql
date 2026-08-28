@@ -311,12 +311,13 @@ create table if not exists public.business_updates (
   created_at timestamptz not null default now()
 );
 
+-- NOTE: column is metric_window (not "window" — reserved in PostgreSQL)
 create table if not exists public.business_metrics (
   id uuid primary key default gen_random_uuid(),
   business_id uuid not null references public.businesses(id) on delete cascade,
   label text not null,
   value text not null,
-  window text default '7d',
+  metric_window text default '7d',
   recorded_at timestamptz not null default now()
 );
 
