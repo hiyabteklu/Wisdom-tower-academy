@@ -21,7 +21,7 @@ const GLYPHS = [
 export default function InfinityCard({ visible, delay }: { visible: boolean; delay: number }) {
   return (
     <div
-      className={`stat-card infinity-card group relative overflow-hidden rounded-2xl border border-cyan-400/30 bg-wisdom-card p-6 md:p-8 text-center reveal-item ${visible ? "is-visible" : ""}`}
+      className={`stat-card infinity-card group relative overflow-hidden rounded-2xl border border-cyan-400/30 bg-wisdom-card p-6 md:p-8 text-center reveal-item w-full h-full min-h-[12.5rem] md:min-h-[14rem] flex flex-col ${visible ? "is-visible" : ""}`}
       style={{ transitionDelay: visible ? `${delay}ms` : undefined }}
     >
       <div className="infinity-field" aria-hidden />
@@ -47,7 +47,7 @@ export default function InfinityCard({ visible, delay }: { visible: boolean; del
       <div className="infinity-orbit infinity-orbit-a" aria-hidden />
       <div className="infinity-orbit infinity-orbit-b" aria-hidden />
 
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-[6.5rem] md:min-h-[7.5rem]">
+      <div className="relative z-10 flex flex-col items-center justify-center flex-1 py-4">
         <div className="infinity-stage">
           <div className="infinity-spin">
             <span className="infinity-symbol" aria-hidden>
@@ -58,7 +58,12 @@ export default function InfinityCard({ visible, delay }: { visible: boolean; del
             </span>
           </div>
         </div>
-        <div className="mt-2 text-xs sm:text-sm text-wisdom-cyan font-semibold uppercase tracking-[0.2em]">
+        <div
+          className="mt-2 text-xs sm:text-sm text-wisdom-cyan font-semibold uppercase tracking-[0.2em]"
+          style={{
+            textShadow: "0 1px 2px rgba(0,0,0,0.7), 0 2px 10px rgba(0,0,0,0.35)",
+          }}
+        >
           Possibilities
         </div>
       </div>
