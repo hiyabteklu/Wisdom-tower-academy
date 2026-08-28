@@ -4,13 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   BookOpen,
-  GraduationCap,
   Play,
   CheckCircle2,
   Clock,
   ShoppingBag,
   ArrowRight,
-  Sparkles,
   LogIn,
   Lock,
 } from "lucide-react";
@@ -59,7 +57,7 @@ export default function LearningPage() {
         if (cancelled) return;
         const rows: UnlockedRow[] = [];
         for (const e of enrolls || []) {
-          const pkg = getPackage((e as { package_id?: string }).package_id || "");
+          const pkg = getPackage(e.packageId || "");
           if (pkg) {
             rows.push({
               id: pkg.id,
@@ -67,12 +65,17 @@ export default function LearningPage() {
               subtitle: pkg.shortName || pkg.name,
               href: `/packages/${pkg.id}`,
               image: pkg.image,
-              enrolledAt: (e as { created_at?: string }).created_at,
+              enrolledAt: e.createdAt,
             });
           }
         }
         setUnlocked(rows);
-        setPending((orders || []).filter((o) => o.status === "pending" || o.status === "submitted"));
+        setPending(
+          (orders || []).filter(
+            (o) =>
+              o.status === "pending_payment" || o.status === "pending_verification"
+          )
+        );
       } catch {
         setUnlocked([]);
         setPending([]);
