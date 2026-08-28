@@ -4,6 +4,7 @@ import Link from "next/link";
 import { categories } from "@/data/services";
 import TalentPath from "@/components/TalentPath";
 import WelcomeVideoCard from "@/components/WelcomeVideoCard";
+import BusinessRegisterSection from "@/components/BusinessRegisterSection";
 import {
   Palette,
   PenTool,
@@ -62,7 +63,7 @@ export default function DigitalPage() {
               Our Services
             </h1>
             <p className="text-wisdom-muted max-w-2xl mx-auto text-lg leading-relaxed">
-              Seven focused categories — plus custom work when your project doesn&apos;t fit a list.
+              Seven focused categories — plus custom work when your project doesn't fit a list.
               One partner for digital, creative, and professional needs.
             </p>
           </div>
@@ -133,7 +134,7 @@ export default function DigitalPage() {
                   Custom order
                 </h3>
                 <p className="text-sm text-wisdom-muted line-clamp-2 mb-3 flex-1">
-                  Tell us who you are and what you need. We&apos;ll shape a package that isn&apos;t on the
+                  Tell us who you are and what you need. We'll shape a package that isn't on the
                   standard list.
                 </p>
                 <div className="flex items-center justify-between mt-auto">
@@ -144,7 +145,10 @@ export default function DigitalPage() {
             </Link>
           </div>
 
-          {/* Work with us — compact path only */}
+          {/* Register your business — core product */}
+          <BusinessRegisterSection />
+
+          {/* Work with us — sequential path */}
           <section className="mt-20 md:mt-24" id="work-with-us">
             <div className="text-center mb-8 md:mb-10">
               <p className="text-sm font-semibold tracking-[0.2em] uppercase text-wisdom-cyan/90 mb-3">
@@ -154,8 +158,7 @@ export default function DigitalPage() {
                 Work with us?
               </h2>
               <p className="text-wisdom-muted max-w-xl mx-auto text-base leading-relaxed">
-                Walk the path stage by stage, then apply. Requirements live inside each step — no
-                extra checklist.
+                Walk every stage in order. Apply unlocks only after you finish step 7.
               </p>
             </div>
 
