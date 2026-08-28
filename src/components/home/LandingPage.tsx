@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowRight, GraduationCap, Laptop } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useInView } from "@/hooks/useInView";
 import InfinityCard from "@/components/home/InfinityCard";
 
@@ -11,6 +11,12 @@ const stats = [
   { value: 10, suffix: "+", label: "Partners" },
   { value: 70, suffix: "+", label: "Services" },
 ];
+
+/** public/images/home/ — 16:9 covers for the two path cards */
+const PATH_IMAGES = {
+  academy: "/images/home/academy.jpg",
+  digital: "/images/home/digital.jpg",
+} as const;
 
 function usePrefersReducedMotion() {
   const [reduced, setReduced] = useState(false);
@@ -223,72 +229,62 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Path cards — sit in a recessed well so elevation reads clearly */}
+      {/* Path cards — 16:9, no gradient overlay, solid 3D Explore CTAs */}
       <section className="pb-16 md:pb-24 relative" ref={cardsSection.ref}>
         <div className="depth-well" aria-hidden />
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 perspective-scene relative z-10">
           <div className="grid md:grid-cols-2 gap-8 lg:gap-10">
             <TiltCard href="/academy" visible={cardsSection.inView} delay={0}>
-              <div className="relative h-56 md:h-64 overflow-hidden">
-                <div
-                  className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
-                  style={{
-                    backgroundImage:
-                      "url('https://images.unsplash.com/photo-1523240795612-9a054b0db26a?w=800&q=80')",
-                  }}
+              <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={PATH_IMAGES.academy}
+                  alt="Wisdom Tower Academy"
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card via-wisdom-card/40 to-transparent" />
-                <div className="absolute bottom-5 left-6">
-                  <div className="p-3.5 rounded-2xl bg-amber-500/25 border border-amber-500/40 text-amber-300 shadow-lg backdrop-blur-sm">
-                    <GraduationCap className="w-7 h-7" />
-                  </div>
-                </div>
               </div>
 
-              <div className="p-7 md:p-9">
-                <h2 className="font-display text-2xl md:text-3xl font-bold mb-3 group-hover:text-wisdom-cyan transition-colors">
+              <div className="p-6 md:p-7 border-t border-white/8">
+                <h2 className="font-display text-2xl md:text-3xl font-bold mb-2 text-white group-hover:text-wisdom-cyan transition-colors">
                   Wisdom Tower Academy
                 </h2>
-                <p className="text-wisdom-muted mb-7 leading-relaxed">
-                  Structured learning pathways for Grade 9–12, Remedial, Freshman, UAT, GAT and more.
-                  Academic excellence starts here.
+                <p className="text-sm md:text-base text-wisdom-muted mb-5 leading-relaxed">
+                  Grades 9–12, Freshman, UAT, GAT, COC & Exit Exam pathways.
                 </p>
-                <div className="flex items-center gap-2 text-wisdom-cyan font-semibold">
+                <span
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-wisdom-cyan text-wisdom-dark text-sm font-bold
+                    shadow-lg shadow-cyan-500/30 group-hover:shadow-cyan-400/40 group-hover:scale-[1.03] transition-all duration-300"
+                >
                   Explore Academy
-                  <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1.5" />
-                </div>
+                  <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+                </span>
               </div>
             </TiltCard>
 
             <TiltCard href="/digital" visible={cardsSection.inView} delay={120}>
-              <div className="relative h-56 md:h-64 overflow-hidden">
-                <div
-                  className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
-                  style={{
-                    backgroundImage:
-                      "url('https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80')",
-                  }}
+              <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={PATH_IMAGES.digital}
+                  alt="Wisdom Tower Digital"
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card via-wisdom-card/40 to-transparent" />
-                <div className="absolute bottom-5 left-6">
-                  <div className="p-3.5 rounded-2xl bg-wisdom-cyan/25 border border-wisdom-cyan/40 text-wisdom-cyan shadow-lg backdrop-blur-sm">
-                    <Laptop className="w-7 h-7" />
-                  </div>
-                </div>
               </div>
 
-              <div className="p-7 md:p-9">
-                <h2 className="font-display text-2xl md:text-3xl font-bold mb-3 group-hover:text-wisdom-cyan transition-colors">
+              <div className="p-6 md:p-7 border-t border-white/8">
+                <h2 className="font-display text-2xl md:text-3xl font-bold mb-2 text-white group-hover:text-wisdom-cyan transition-colors">
                   Wisdom Tower Digital
                 </h2>
-                <p className="text-wisdom-muted mb-7 leading-relaxed">
-                  Professional services across design, writing, academic support, data, marketing,
-                  business and multimedia.
+                <p className="text-sm md:text-base text-wisdom-muted mb-5 leading-relaxed">
+                  Design, writing, web, marketing, data & business services.
                 </p>
-                <div className="flex items-center gap-2 text-wisdom-cyan font-semibold">
-                  Explore Digital Services
-                  <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1.5" />
-                </div>
+                <span
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-wisdom-cyan text-wisdom-dark text-sm font-bold
+                    shadow-lg shadow-cyan-500/30 group-hover:shadow-cyan-400/40 group-hover:scale-[1.03] transition-all duration-300"
+                >
+                  Explore Digital
+                  <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+                </span>
               </div>
             </TiltCard>
           </div>
@@ -307,7 +303,6 @@ export default function LandingPage() {
                 }`}
                 style={{ transitionDelay: statsSection.inView ? `${i * 90}ms` : undefined }}
               >
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-wisdom-cyan/10 via-transparent to-transparent pointer-events-none" />
                 <div className="relative">
                   <div className="stat-value font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-2 group-hover:text-wisdom-cyan transition-colors duration-300">
                     <CountUp
@@ -335,14 +330,14 @@ export default function LandingPage() {
           <div className="cta-panel rounded-3xl border border-white/12 bg-wisdom-card/80 backdrop-blur-md px-6 py-10 md:px-12 md:py-12 card-elevated">
             <h2 className="font-display text-2xl md:text-4xl font-bold mb-4">Not sure where to start?</h2>
             <p className="text-wisdom-muted mb-9 text-lg">
-              Tell us your goal and we&apos;ll guide you to the right path.
+              Tell us your goal and we'll guide you to the right path.
             </p>
             <Link
               href="/contact"
               className="inline-flex items-center gap-2 px-9 py-4 rounded-2xl bg-wisdom-cyan text-wisdom-dark font-semibold text-lg
                 hover:bg-wisdom-cyan-dark hover:shadow-glow hover:scale-105 active:scale-100 transition-all duration-300 shadow-lg shadow-cyan-500/25"
             >
-              Let&apos;s Build Together
+              Let's Build Together
               <ArrowRight className="w-5 h-5" />
             </Link>
           </div>
