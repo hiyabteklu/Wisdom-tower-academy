@@ -28,8 +28,8 @@ const iconMap: Record<string, React.ReactNode> = {
   "book-open": <BookOpen className="w-5 h-5" />,
 };
 
-/** Category cover images — 16:9 under public/images/digital/categories/ */
-const categoryCover = (id: string) => `/images/digital/categories/${id}.jpg`;
+/** Category covers live at public/images/digital/{id}.jpg */
+const categoryCover = (id: string) => `/images/digital/${id}.jpg`;
 
 function CategoryCoverCard({
   href,
@@ -59,7 +59,6 @@ function CategoryCoverCard({
       href={href}
       className={`group relative flex flex-col overflow-hidden rounded-2xl border bg-wisdom-card transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_-20px_rgba(34,224,255,0.25)] ${border}`}
     >
-      {/* 16:9 cover */}
       <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
         {!failed ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -115,7 +114,7 @@ export default function DigitalPage() {
               Our Services
             </h1>
             <p className="text-wisdom-muted max-w-2xl mx-auto text-lg md:text-xl leading-relaxed text-balance">
-              Seven focused categories — plus custom work when your project doesn&apos;t fit a list.
+              Seven focused categories — plus custom work when your project doesn't fit a list.
               Pick a category, then order the exact service you need.
             </p>
           </div>
@@ -128,7 +127,6 @@ export default function DigitalPage() {
             />
           </div>
 
-          {/* Category grid — 16:9 covers */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
             {categories.map((category) => (
               <CategoryCoverCard
@@ -148,7 +146,7 @@ export default function DigitalPage() {
               tagline="Tell us who you are and what you need. We'll shape a package that isn't on the standard list."
               meta="Submit a request"
               icon={<ClipboardList className="w-5 h-5" />}
-              imageSrc="/images/digital/categories/custom-order.jpg"
+              imageSrc="/images/digital/custom-order.jpg"
               accent="violet"
             />
           </div>
