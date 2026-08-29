@@ -27,8 +27,8 @@ import {
   BUSINESS_CART_EVENT,
 } from "@/lib/business-cart";
 
-/** 4 package covers — public/images/digital/business/{packageId}.jpg */
-const pkgImage = (id: string) => `/images/digital/business/${id}.jpg`;
+/** Package covers — public/images/digital/{packageId}.jpg */
+const pkgImage = (id: string) => `/images/digital/${id}.jpg`;
 
 const howItWorks = [
   {
@@ -81,7 +81,6 @@ function PackageCard({
           : "border-white/12 hover:border-wisdom-cyan/30"
       }`}
     >
-      {/* 16:9 package image */}
       <div className="relative aspect-video overflow-hidden bg-wisdom-navy">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -112,7 +111,6 @@ function PackageCard({
       <div className="flex flex-1 flex-col p-4 sm:p-5 border-t border-white/8">
         <p className="text-sm text-wisdom-muted leading-relaxed mb-4">{pkg.description}</p>
 
-        {/* Included list */}
         <ul className="space-y-2 mb-4 flex-1">
           {services.map((s) => {
             const inCart = cartIds.includes(s.id);
@@ -191,7 +189,6 @@ export default function BusinessRegisterSection() {
 
   return (
     <section className="mt-24 md:mt-32 space-y-16 md:space-y-20" id="register-business">
-      {/* Explanation */}
       <div className="text-center max-w-3xl mx-auto">
         <p className="inline-flex items-center gap-2 text-sm font-bold tracking-[0.2em] uppercase text-wisdom-cyan mb-4">
           <Building2 className="w-4 h-4" />
@@ -220,7 +217,6 @@ export default function BusinessRegisterSection() {
         </div>
       </div>
 
-      {/* How it works */}
       <div>
         <div className="mb-6 px-1">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-wisdom-cyan mb-1">
@@ -252,7 +248,6 @@ export default function BusinessRegisterSection() {
         </div>
       </div>
 
-      {/* 4 package cards */}
       <div>
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-6 px-1">
           <div>
@@ -286,7 +281,6 @@ export default function BusinessRegisterSection() {
         </div>
       </div>
 
-      {/* Next step CTA */}
       <div className="rounded-3xl border border-white/12 bg-gradient-to-br from-wisdom-card via-wisdom-card to-[#0e1a2e] p-6 sm:p-8 md:p-10 shadow-card-3d">
         <div className="grid md:grid-cols-2 gap-8 md:gap-10 items-center">
           <div>
@@ -297,7 +291,7 @@ export default function BusinessRegisterSection() {
               Finish registration
             </h3>
             <p className="text-wisdom-muted text-sm sm:text-base leading-relaxed mb-5">
-              Open the form with your cart, submit company details, and we&apos;ll review. After
+              Open the form with your cart, submit company details, and we'll review. After
               approval, services appear on{" "}
               <strong className="text-white/90">your dashboard</strong> so you can follow progress
               and leave feedback.
