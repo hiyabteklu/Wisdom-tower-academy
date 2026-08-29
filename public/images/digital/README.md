@@ -1,37 +1,35 @@
 Digital page media
 
-## Talent / Work with us cover
+All digital service images currently live in this folder (flat):
 
-| File | Path | Size |
-|------|------|------|
-| `talent-cover.jpg` | `public/images/digital/talent-cover.jpg` | 16:9, ideal 1280×720 |
+**`public/images/digital/`**
 
-## Category covers (Digital home grid)
+## Talent / Work with us
 
-**Folder:** `public/images/digital/categories/` — 16:9, ideal 1280×720
+| File | URL path |
+|------|----------|
+| `talent-cover.jpg` | `/images/digital/talent-cover.jpg` |
 
-| File name |
-|-----------|
-| `graphic-print-design.jpg` |
-| `writing-editorial.jpg` |
-| `academic-research.jpg` |
-| `data-tech.jpg` |
-| `web-digital-marketing.jpg` |
-| `business-strategy.jpg` |
-| `education-multimedia.jpg` |
-| `custom-order.jpg` |
+## Category covers (Digital grid)
 
-## Business packages (Register your business) — only 4 images
+| File | URL path |
+|------|----------|
+| `graphic-print-design.jpg` | `/images/digital/graphic-print-design.jpg` |
+| `writing-editorial.jpg` | `/images/digital/writing-editorial.jpg` |
+| `academic-research.jpg` | `/images/digital/academic-research.jpg` |
+| `data-tech.jpg` | `/images/digital/data-tech.jpg` |
+| `web-digital-marketing.jpg` | `/images/digital/web-digital-marketing.jpg` |
+| `business-strategy.jpg` | `/images/digital/business-strategy.jpg` |
+| `education-multimedia.jpg` | `/images/digital/education-multimedia.jpg` |
+| `custom-order.jpg` | `/images/digital/custom-order.jpg` |
 
-**Folder:** `public/images/digital/business/`  
-**Size:** **16:9**, ideal **1280×720**  
-**Format:** JPG/WebP, aim &lt; 250 KB each
+## Business packages (Register your business)
 
-| File name | Package |
-|-----------|---------|
-| `growth-marketing.jpg` | Growth & Marketing |
-| `brand-content.jpg` | Brand & Content |
-| `website-digital.jpg` | Website & Digital |
-| `business-support.jpg` | Business Support |
+| File | Package | URL path |
+|------|---------|----------|
+| `growth-marketing.jpg` | Growth & Marketing | `/images/digital/growth-marketing.jpg` |
+| `brand-content.jpg` | Brand & Content | `/images/digital/brand-content.jpg` |
+| `website-digital.jpg` | Website & Digital | `/images/digital/website-digital.jpg` |
+| `business-support.jpg` | Business Support | `/images/digital/business-support.jpg` |
 
-Old per-service filenames (social-media-management.jpg, etc.) are no longer required for this section.
+Size: **16:9**, ideal 1280×720. Missing files fall back to a dark panel.
