@@ -1,64 +1,18 @@
-# Wisdom Tower Digital
+# Wisdom Tower Academy
 
-Official website and digital platform for **Wisdom Tower** — Comprehensive Service Portfolio.
+Isolated education platform — Grades 9–12, Freshman, UAT, GAT, COC & Exit Exam pathways.
 
-> 70+ Services. 1 Integrated Partner.  
-> Empowering your ideas with end-to-end digital, creative, and professional solutions.
+Sister product: [Wisdom-tower-digital](https://github.com/hiyabteklu/Wisdom-tower-digital)  
+Live Digital: https://wisdom-tower-digital.vercel.app
 
-## Tech Stack
+## Stack
+- Next.js 15 + TypeScript + Tailwind
+- Supabase (use a **new** project — do not reuse Digital keys)
+- Vercel (new project)
 
-- **Framework**: Next.js 15 (App Router) + TypeScript
-- **Styling**: Tailwind CSS
-- **Icons**: Lucide React
-- **Hosting**: Vercel (planned)
-- **Database / Auth / Storage**: Supabase (planned)
-
-## Getting Started
-
+## Setup
 ```bash
-# Install dependencies
 npm install
-
-# Run development server
+cp .env.example .env.local   # fill NEW Supabase keys + NEXT_PUBLIC_DIGITAL_URL
 npm run dev
-```
 
-Open [http://localhost:3000](http://localhost:3000).
-
-## Project Structure
-
-```
-src/
-├── app/                  # Next.js App Router pages
-│   ├── page.tsx          # Homepage
-│   ├── services/         # Services listing
-│   ├── about/            # About page
-│   └── contact/          # Contact form
-├── components/           # Shared UI components
-├── data/                 # Static data (services catalog)
-└── lib/                  # Utilities
-```
-
-## Current Status
-
-- [x] Project foundation (Next.js + Tailwind + dark theme)
-- [x] Homepage with hero, stats, categories
-- [x] Services page (all 7 categories + 70 services)
-- [x] About page
-- [x] Contact form (UI only — backend pending)
-- [ ] Supabase integration (database + form submissions)
-- [ ] Admin dashboard
-- [ ] Client portal
-- [ ] Authentication
-
-## Brand Colors
-
-- Background: `#0a0f1a`
-- Navy: `#0f172a`
-- Card: `#1e293b`
-- Cyan accent: `#00d4ff`
-- Muted text: `#94a3b8`
-
----
-
-Built with care for Wisdom Tower.

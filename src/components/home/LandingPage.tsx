@@ -21,6 +21,9 @@ const PATH_IMAGES = {
 /** Hero background — low opacity, brand-friendly dark image */
 const HERO_BG = "/images/home/hero-bg.jpg";
 
+/** External Digital site (set in Vercel / .env) */
+const DIGITAL_URL = process.env.NEXT_PUBLIC_DIGITAL_URL ?? "https://wisdom-tower-digital.vercel.app";
+
 function usePrefersReducedMotion() {
   const [reduced, setReduced] = useState(false);
   useEffect(() => {
@@ -340,7 +343,7 @@ export default function LandingPage() {
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
-              href="/digital"
+              href={DIGITAL_URL}
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-white/25 text-white font-semibold
                 bg-white/[0.04] backdrop-blur-sm
                 hover:border-wisdom-cyan/50 hover:bg-white/8 hover:scale-105 active:scale-100 transition-all duration-300 shadow-lg shadow-black/30"
@@ -383,7 +386,7 @@ export default function LandingPage() {
               </div>
             </TiltCard>
 
-            <TiltCard href="/digital" visible={cardsSection.inView} delay={120}>
+            <TiltCard href={DIGITAL_URL} visible={cardsSection.inView} delay={120}>
               <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
