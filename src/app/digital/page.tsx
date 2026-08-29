@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { categories } from "@/data/services";
 import TalentPath from "@/components/TalentPath";
 import WelcomeVideoCard from "@/components/WelcomeVideoCard";
@@ -16,6 +16,7 @@ import {
   BookOpen,
   ArrowRight,
   ClipboardList,
+  Zap,
 } from "lucide-react";
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -28,7 +29,6 @@ const iconMap: Record<string, React.ReactNode> = {
   "book-open": <BookOpen className="w-5 h-5" />,
 };
 
-/** Category covers live at public/images/digital/{id}.jpg */
 const categoryCover = (id: string) => `/images/digital/${id}.jpg`;
 
 function CategoryCoverCard({
@@ -39,6 +39,7 @@ function CategoryCoverCard({
   icon,
   imageSrc,
   accent = "cyan",
+  delay = 0,
 }: {
   href: string;
   title: string;
@@ -47,6 +48,7 @@ function CategoryCoverCard({
   icon: React.ReactNode;
   imageSrc: string;
   accent?: "cyan" | "violet";
+  delay?: number;
 }) {
   const [failed, setFailed] = useState(false);
   const border =
@@ -57,7 +59,8 @@ function CategoryCoverCard({
   return (
     <Link
       href={href}
-      className={`group relative flex flex-col overflow-hidden rounded-2xl border bg-wisdom-card transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_-20px_rgba(34,224,255,0.25)] ${border}`}
+      className={`group relative flex flex-col overflow-hidden rounded-2xl border bg-wisdom-card transition-all duration-500 ease-out hover:-translate-y-1.5 hover:shadow-[0_24px_50px_-20px_rgba(34,224,255,0.28)] ${border} animate-fade-up`}
+      style={{ animationDelay: `${delay}ms` }}
     >
       <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
         {!failed ? (
@@ -65,22 +68,22 @@ function CategoryCoverCard({
           <img
             src={imageSrc}
             alt=""
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]"
             onError={() => setFailed(true)}
           />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-wisdom-navy via-[#152238] to-wisdom-dark" />
+          <div className="absolute inset-0 bg-wisdom-navy" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a101c] via-[#0a101c]/40 to-transparent" />
+        <div className="absolute inset-0 bg-black/25 group-hover:bg-black/20 transition-colors duration-500" />
         <div className="absolute bottom-3 left-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-black/35 text-wisdom-cyan backdrop-blur-md shadow-lg">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/25 bg-black/40 text-wisdom-cyan backdrop-blur-md shadow-lg transition-transform duration-300 group-hover:scale-105">
             {icon}
           </div>
         </div>
       </div>
 
       <div className="flex flex-1 flex-col p-5 sm:p-6">
-        <h3 className="font-display text-lg sm:text-xl font-bold leading-snug text-white group-hover:text-wisdom-cyan transition-colors">
+        <h3 className="font-display text-lg sm:text-xl font-bold leading-snug text-white group-hover:text-wisdom-cyan transition-colors duration-300">
           {title}
         </h3>
         <p className="mt-2 flex-1 text-sm sm:text-base text-wisdom-muted leading-relaxed line-clamp-2">
@@ -88,9 +91,9 @@ function CategoryCoverCard({
         </p>
         <div className="mt-4 flex items-center justify-between border-t border-white/8 pt-4">
           <span className="text-sm font-semibold text-wisdom-cyan">{meta}</span>
-          <span className="inline-flex items-center gap-1 text-sm text-wisdom-muted group-hover:text-wisdom-cyan transition-colors">
+          <span className="inline-flex items-center gap-1 text-sm text-wisdom-muted group-hover:text-wisdom-cyan transition-colors duration-300">
             Explore
-            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+            <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
           </span>
         </div>
       </div>
@@ -99,6 +102,13 @@ function CategoryCoverCard({
 }
 
 export default function DigitalPage() {
+  const [heroIn, setHeroIn] = useState(false);
+
+  useEffect(() => {
+    const t = requestAnimationFrame(() => setHeroIn(true));
+    return () => cancelAnimationFrame(t);
+  }, []);
+
   return (
     <div className="relative">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -108,18 +118,50 @@ export default function DigitalPage() {
 
       <div className="relative py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12 md:mb-14 animate-fade-up">
-            <p className="section-eyebrow mb-4 justify-center">Digital services</p>
-            <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-extrabold mb-5 tracking-tight text-balance">
-              Our Services
+          {/* Hero title */}
+          <div className="text-center mb-12 md:mb-14">
+            <p
+              className={`section-eyebrow mb-5 justify-center transition-all duration-700 ${
+                heroIn ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
+              }`}
+            >
+              Digital services
+            </p>
+            <h1
+              className={`font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight text-balance transition-all duration-1000 ease-out ${
+                heroIn ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-6 scale-[0.98]"
+              }`}
+              style={{ transitionDelay: "80ms" }}
+            >
+              <span className="text-white">Our </span>
+              <span className="relative inline-block text-wisdom-cyan">
+                Services
+                <span
+                  className={`absolute -bottom-1 left-0 h-[3px] rounded-full bg-wisdom-cyan/80 transition-all duration-1000 ease-out ${
+                    heroIn ? "w-full" : "w-0"
+                  }`}
+                  style={{ transitionDelay: "500ms" }}
+                  aria-hidden
+                />
+              </span>
             </h1>
-            <p className="text-wisdom-muted max-w-2xl mx-auto text-lg md:text-xl leading-relaxed text-balance">
-              Seven focused categories — plus custom work when your project doesn't fit a list.
-              Pick a category, then order the exact service you need.
+            <p
+              className={`mt-6 text-wisdom-muted max-w-2xl mx-auto text-lg md:text-xl leading-relaxed text-balance transition-all duration-700 ${
+                heroIn ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+              }`}
+              style={{ transitionDelay: "220ms" }}
+            >
+              One-off jobs or ongoing work — pick a lane, order what you need, or leave the
+              day-to-day with us.
             </p>
           </div>
 
-          <div className="mb-14 md:mb-16">
+          <div
+            className={`mb-16 md:mb-20 transition-all duration-700 ${
+              heroIn ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+            }`}
+            style={{ transitionDelay: "320ms" }}
+          >
             <WelcomeVideoCard
               variant="digital"
               title="How we work with you"
@@ -127,8 +169,22 @@ export default function DigitalPage() {
             />
           </div>
 
+          {/* Quick order categories */}
+          <div className="mb-8 md:mb-10 text-center sm:text-left">
+            <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-wisdom-cyan mb-3">
+              <Zap className="w-3.5 h-3.5" />
+              Quick order
+            </p>
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-white text-balance">
+              Want something done quickly?
+            </h2>
+            <p className="mt-2 text-wisdom-muted text-base sm:text-lg max-w-2xl leading-relaxed">
+              Explore a category, pick from the list, and order — same request form, clear next steps.
+            </p>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
-            {categories.map((category) => (
+            {categories.map((category, i) => (
               <CategoryCoverCard
                 key={category.id}
                 href={`/services/${category.id}`}
@@ -137,6 +193,7 @@ export default function DigitalPage() {
                 meta={`${category.services.length} services`}
                 icon={iconMap[category.icon]}
                 imageSrc={categoryCover(category.id)}
+                delay={i * 60}
               />
             ))}
 
@@ -148,6 +205,7 @@ export default function DigitalPage() {
               icon={<ClipboardList className="w-5 h-5" />}
               imageSrc="/images/digital/custom-order.jpg"
               accent="violet"
+              delay={categories.length * 60}
             />
           </div>
 
