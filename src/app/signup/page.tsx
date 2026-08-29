@@ -2,14 +2,10 @@
 
 import { useState, Suspense } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Mail, Lock, User, Eye, EyeOff, ArrowRight } from "lucide-react";
 
 function SignupForm() {
-  const searchParams = useSearchParams();
-  const next = searchParams.get("next");
-
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,19 +25,13 @@ function SignupForm() {
       return;
     }
 
-    const redirectNext =
-      next && next.startsWith("/") && !next.startsWith("//")
-        ? `?next=${encodeURIComponent(next)}`
-        : "";
-
     const { error: signErr } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
-          full_name: fullName.trim(),
+          full_name: fullName,
         },
-        emailRedirectTo: `${window.location.origin}/auth/callback${redirectNext}`,
       },
     });
 
@@ -57,14 +47,10 @@ function SignupForm() {
 
   const handleGoogleSignup = async () => {
     setLoading(true);
-    const redirectNext =
-      next && next.startsWith("/") && !next.startsWith("//")
-        ? `?next=${encodeURIComponent(next)}`
-        : "";
     const { error: oauthErr } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback${redirectNext}`,
+        redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
     if (oauthErr) {
@@ -72,11 +58,6 @@ function SignupForm() {
       setLoading(false);
     }
   };
-
-  const loginHref =
-    next && next.startsWith("/")
-      ? `/login?next=${encodeURIComponent(next)}`
-      : "/login";
 
   if (success) {
     return (
@@ -89,15 +70,11 @@ function SignupForm() {
               </svg>
             </div>
             <h2 className="text-2xl font-bold mb-2">Check your email</h2>
-            <p className="text-wisdom-muted mb-4 leading-relaxed">
+            <p className="text-wisdom-muted mb-6">
               We sent a confirmation link to <strong className="text-white">{email}</strong>.
+              One account works for Academy learning and Digital services.
             </p>
-            <p className="text-sm text-wisdom-muted mb-6 leading-relaxed">
-              After you confirm and sign in, you'll complete a short profile
-              (school, phone, stream) so we can support you and unlock packages
-              correctly.
-            </p>
-            <Link href={loginHref} className="inline-flex items-center gap-2 text-wisdom-cyan hover:underline">
+            <Link href="/login" className="inline-flex items-center gap-2 text-wisdom-cyan hover:underline">
               Back to Sign In
             </Link>
           </div>
@@ -156,7 +133,6 @@ function SignupForm() {
                   onChange={(e) => setFullName(e.target.value)}
                   className="w-full pl-11 pr-4 py-3 rounded-xl bg-wisdom-dark border border-white/10 focus:border-wisdom-cyan focus:outline-none focus:ring-1 focus:ring-wisdom-cyan transition-colors"
                   placeholder="Your full name"
-                  autoComplete="name"
                 />
               </div>
             </div>
@@ -172,7 +148,6 @@ function SignupForm() {
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-11 pr-4 py-3 rounded-xl bg-wisdom-dark border border-white/10 focus:border-wisdom-cyan focus:outline-none focus:ring-1 focus:ring-wisdom-cyan transition-colors"
                   placeholder="you@example.com"
-                  autoComplete="email"
                 />
               </div>
             </div>
@@ -188,7 +163,6 @@ function SignupForm() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-11 pr-12 py-3 rounded-xl bg-wisdom-dark border border-white/10 focus:border-wisdom-cyan focus:outline-none focus:ring-1 focus:ring-wisdom-cyan transition-colors"
                   placeholder="At least 8 characters"
-                  autoComplete="new-password"
                   minLength={8}
                 />
                 <button
@@ -223,13 +197,9 @@ function SignupForm() {
             </button>
           </form>
 
-          <p className="mt-4 text-center text-xs text-wisdom-muted leading-relaxed">
-            Next: confirm email → sign in → complete profile (school, phone, stream).
-          </p>
-
-          <p className="mt-4 text-center text-sm text-wisdom-muted">
+          <p className="mt-6 text-center text-sm text-wisdom-muted">
             Already have an account?{" "}
-            <Link href={loginHref} className="text-wisdom-cyan hover:underline font-medium">
+            <Link href="/login" className="text-wisdom-cyan hover:underline font-medium">
               Sign in
             </Link>
           </p>
