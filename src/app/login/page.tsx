@@ -2,12 +2,16 @@
 
 import { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { ensureProfile, postAuthPath } from "@/lib/profile";
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 
 function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next");
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -19,34 +23,50 @@ function LoginForm() {
     setLoading(true);
     setError("");
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error: signErr } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    if (error) {
-      setError(error.message);
+    if (signErr) {
+      setError(signErr.message);
       setLoading(false);
       return;
     }
 
-    router.push("/");
+    const user = data.user;
+    if (user) {
+      await ensureProfile(user);
+      const dest = postAuthPath(user, next);
+      router.push(dest);
+    } else {
+      router.push(next && next.startsWith("/") ? next : "/");
+    }
     router.refresh();
   };
 
   const handleGoogleLogin = async () => {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
+    const redirectNext =
+      next && next.startsWith("/") && !next.startsWith("//")
+        ? `?next=${encodeURIComponent(next)}`
+        : "";
+    const { error: oauthErr } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback${redirectNext}`,
       },
     });
-    if (error) {
-      setError(error.message);
+    if (oauthErr) {
+      setError(oauthErr.message);
       setLoading(false);
     }
   };
+
+  const signupHref =
+    next && next.startsWith("/")
+      ? `/signup?next=${encodeURIComponent(next)}`
+      : "/signup";
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-16">
@@ -61,6 +81,7 @@ function LoginForm() {
 
         <div className="bg-wisdom-card border border-white/5 rounded-2xl p-8 shadow-xl">
           <button
+            type="button"
             onClick={handleGoogleLogin}
             disabled={loading}
             className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-white text-gray-900 font-medium hover:bg-gray-100 transition-colors mb-6 disabled:opacity-60"
@@ -107,6 +128,7 @@ function LoginForm() {
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-11 pr-4 py-3 rounded-xl bg-wisdom-dark border border-white/10 focus:border-wisdom-cyan focus:outline-none focus:ring-1 focus:ring-wisdom-cyan transition-colors"
                   placeholder="you@example.com"
+                  autoComplete="email"
                 />
               </div>
             </div>
@@ -127,6 +149,7 @@ function LoginForm() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-11 pr-12 py-3 rounded-xl bg-wisdom-dark border border-white/10 focus:border-wisdom-cyan focus:outline-none focus:ring-1 focus:ring-wisdom-cyan transition-colors"
                   placeholder="••••••••"
+                  autoComplete="current-password"
                 />
                 <button
                   type="button"
@@ -161,8 +184,8 @@ function LoginForm() {
           </form>
 
           <p className="mt-6 text-center text-sm text-wisdom-muted">
-            Don&apos;t have an account?{" "}
-            <Link href="/signup" className="text-wisdom-cyan hover:underline font-medium">
+            Don't have an account?{" "}
+            <Link href={signupHref} className="text-wisdom-cyan hover:underline font-medium">
               Sign up
             </Link>
           </p>
@@ -174,7 +197,11 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-[80vh] flex items-center justify-center text-wisdom-muted">Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-[80vh] flex items-center justify-center text-wisdom-muted">Loading...</div>
+      }
+    >
       <LoginForm />
     </Suspense>
   );
