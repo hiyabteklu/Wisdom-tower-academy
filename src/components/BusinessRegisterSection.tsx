@@ -8,10 +8,11 @@ import {
   CheckCircle2,
   LayoutDashboard,
   ShoppingCart,
-  Share2,
-  BarChart3,
   Users,
-  Sparkles,
+  MessageSquare,
+  ClipboardList,
+  Handshake,
+  ShieldCheck,
 } from "lucide-react";
 import {
   businessServices,
@@ -23,46 +24,33 @@ import {
   BUSINESS_CART_EVENT,
 } from "@/lib/business-cart";
 
-const SERVICE_IMAGES: Record<string, string> = {
-  "social-media-management":
-    "https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=600&h=600&fit=crop&q=80",
-  "digital-marketing":
-    "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=600&fit=crop&q=80",
-  seo: "https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?w=600&h=600&fit=crop&q=80",
-  "graphic-design-retainer":
-    "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=600&h=600&fit=crop&q=80",
-  "website-build":
-    "https://images.unsplash.com/photo-1467232004584-a241c7cabb93?w=600&h=600&fit=crop&q=80",
-  "website-maintenance":
-    "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&h=600&fit=crop&q=80",
-  "content-writing":
-    "https://images.unsplash.com/photo-1455390580379-a91bf48e9372?w=600&h=600&fit=crop&q=80",
-  "video-photo":
-    "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=600&h=600&fit=crop&q=80",
-  "virtual-ops":
-    "https://images.unsplash.com/photo-1553877522-43269d4ea984?w=600&h=600&fit=crop&q=80",
-  "analytics-reporting":
-    "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=600&fit=crop&q=80",
-};
+/** Local covers — public/images/digital/business/{id}.jpg (16:9) */
+const bizImage = (id: string) => `/images/digital/business/${id}.jpg`;
 
-const pillars = [
+const howItWorks = [
   {
-    icon: ShoppingCart,
-    title: "Pick services",
-    text: "Marketing, design, web, SEO, content — add what your company needs.",
-    color: "text-sky-300 bg-sky-500/15 border-sky-400/30",
+    n: 1,
+    icon: Building2,
+    title: "Register your company",
+    text: "Tell us who you are — name, contact, and what the business does. No card is charged at this step.",
   },
   {
-    icon: Users,
-    title: "We run the team",
-    text: "Writers, designers, and managers as one unit — not five scattered freelancers.",
-    color: "text-violet-300 bg-violet-500/15 border-violet-400/30",
+    n: 2,
+    icon: ClipboardList,
+    title: "Choose the work to leave with us",
+    text: "Pick ongoing services from the list (marketing, design, web, ops…). Add what you want handled — we take care of delivery under the agreement.",
   },
   {
+    n: 3,
+    icon: Handshake,
+    title: "We align, then run it",
+    text: "We review scope, confirm pricing and cadence, and assemble the team as one unit — not scattered freelancers.",
+  },
+  {
+    n: 4,
     icon: LayoutDashboard,
-    title: "Your dashboard",
-    text: "Posts, results, deliverables, and weekly goals in one live board.",
-    color: "text-cyan-300 bg-cyan-500/15 border-cyan-400/30",
+    title: "Your live dashboard",
+    text: "Track posts, progress, deliverables, and goals. Send feedback or recommendations anytime from the same place.",
   },
 ];
 
@@ -81,148 +69,206 @@ export default function BusinessRegisterSection() {
   }, []);
 
   return (
-    <section className="mt-24 md:mt-32" id="register-business">
-      {/* Header outside the box — matches Our Services */}
-      <div className="text-center mb-10 md:mb-12">
-        <p className="inline-flex items-center gap-2 text-sm font-bold tracking-[0.2em] uppercase text-wisdom-cyan mb-4 animate-fade-up">
+    <section className="mt-24 md:mt-32 space-y-16 md:space-y-20" id="register-business">
+      {/* ——— 1. Explanation ——— */}
+      <div className="text-center max-w-3xl mx-auto">
+        <p className="inline-flex items-center gap-2 text-sm font-bold tracking-[0.2em] uppercase text-wisdom-cyan mb-4">
           <Building2 className="w-4 h-4" />
           For companies
         </p>
-        <h2 className="font-display text-4xl sm:text-5xl md:text-[3.25rem] font-extrabold tracking-tight mb-4 leading-[1.1] text-balance">
-          <span className="text-gradient-cyan">Register your business?</span>
+        <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight mb-5 leading-[1.12] text-balance">
+          Register your business
         </h2>
-        <p className="text-wisdom-muted max-w-2xl mx-auto text-lg md:text-xl leading-relaxed text-balance">
-          Subscribe to the services you need. We assemble the team and put live status — posts,
-          progress, analytics — on <strong className="text-white font-semibold">your company dashboard</strong>.
+        <p className="text-wisdom-muted text-base sm:text-lg md:text-xl leading-relaxed text-balance">
+          Prefer to <strong className="text-white/95 font-semibold">leave marketing, design, web, or ops to us</strong>?
+          Register the company, pick the services you want on an ongoing basis, and we deliver under a clear agreement.
+          You get a <strong className="text-white/95 font-semibold">dedicated dashboard</strong> for status, results, and feedback — without juggling five freelancers.
         </p>
-        <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
-          <Link href="/business/register" className="btn-primary text-base px-8 py-3.5">
-            Register business
-            <ArrowRight className="w-5 h-5" />
-          </Link>
-          <Link href="/business/cart" className="btn-secondary text-base px-6 py-3.5">
-            <ShoppingCart className="w-5 h-5" />
-            Cart{cartIds.length > 0 ? ` (${cartIds.length})` : ""}
-          </Link>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-wisdom-muted">
+          <span className="inline-flex items-center gap-1.5">
+            <ShieldCheck className="w-4 h-4 text-emerald-400" /> No charge until scope is agreed
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <MessageSquare className="w-4 h-4 text-wisdom-cyan" /> Feedback & recommendations anytime
+          </span>
         </div>
       </div>
 
-      {/* Content box */}
-      <div className="relative rounded-[1.75rem] border border-white/12 bg-wisdom-card/90 overflow-hidden shadow-card-3d">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-24 right-0 w-96 h-96 rounded-full bg-wisdom-cyan/20 blur-[100px]" />
-          <div className="absolute bottom-0 left-0 w-80 h-80 rounded-full bg-violet-500/15 blur-[90px]" />
+      {/* ——— 2. How it works (separate from catalog) ——— */}
+      <div>
+        <div className="flex items-end justify-between gap-4 mb-6 px-1">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-wisdom-cyan mb-1">How it works</p>
+            <h3 className="font-display text-xl sm:text-2xl font-bold text-white">Four simple steps</h3>
+          </div>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {howItWorks.map((step) => (
+            <div
+              key={step.n}
+              className="relative rounded-2xl border border-white/12 bg-wisdom-card/90 p-5 sm:p-6 overflow-hidden"
+            >
+              <span className="absolute top-3 right-4 font-display text-4xl font-extrabold text-white/[0.06] select-none">
+                {step.n}
+              </span>
+              <div className="w-11 h-11 rounded-xl border border-wisdom-cyan/25 bg-wisdom-cyan/10 text-wisdom-cyan flex items-center justify-center mb-4">
+                <step.icon className="w-5 h-5" />
+              </div>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-wisdom-cyan mb-1">
+                Step {step.n}
+              </p>
+              <h4 className="font-display text-base sm:text-lg font-bold text-white mb-2 leading-snug">
+                {step.title}
+              </h4>
+              <p className="text-sm text-wisdom-muted leading-relaxed">{step.text}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ——— 3. Service catalog (image cards) ——— */}
+      <div>
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-6 px-1">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-wisdom-cyan mb-1">
+              Subscription catalog
+            </p>
+            <h3 className="font-display text-xl sm:text-2xl font-bold text-white">
+              Services you can leave with us
+            </h3>
+            <p className="mt-1.5 text-sm text-wisdom-muted max-w-xl">
+              Add what you need to the cart, then finish on the registration form. We confirm agreement before anything goes live.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <Link href="/business/cart" className="btn-secondary text-sm px-4 py-2.5">
+              <ShoppingCart className="w-4 h-4" />
+              Cart{cartIds.length > 0 ? ` (${cartIds.length})` : ""}
+            </Link>
+            <Link href="/business/register" className="btn-primary text-sm px-5 py-2.5">
+              Register & submit
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
 
-        <div className="relative p-6 sm:p-8 md:p-10">
-          {/* Flow pillars */}
-          <div className="grid md:grid-cols-3 gap-4 mb-10">
-            {pillars.map((p, i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+          {businessServices.map((svc) => {
+            const inCart = cartIds.includes(svc.id);
+            return (
               <div
-                key={p.title}
-                className="rounded-2xl border border-white/12 bg-black/30 p-5 sm:p-6 animate-fade-up"
-                style={{ animationDelay: `${i * 0.08}s` }}
+                key={svc.id}
+                className={`group flex flex-col overflow-hidden rounded-2xl border bg-wisdom-card transition-all duration-300 ${
+                  inCart
+                    ? "border-wisdom-cyan/45 shadow-[0_0_0_1px_rgba(34,224,255,0.2)]"
+                    : "border-white/12 hover:border-wisdom-cyan/30"
+                }`}
               >
-                <div
-                  className={`w-12 h-12 rounded-2xl border flex items-center justify-center mb-4 ${p.color}`}
-                >
-                  <p.icon className="w-6 h-6" />
-                </div>
-                <p className="text-xs font-bold uppercase tracking-wider text-wisdom-muted mb-1">
-                  Step {i + 1}
-                </p>
-                <h3 className="font-display text-xl font-bold text-white mb-2">{p.title}</h3>
-                <p className="text-base text-wisdom-muted leading-relaxed">{p.text}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-wisdom-cyan" />
-              <h3 className="font-display text-xl sm:text-2xl font-bold text-white">
-                Popular subscriptions
-              </h3>
-            </div>
-            <p className="text-sm text-wisdom-muted">Tap to add · finish on register</p>
-          </div>
-
-          {/* 1:1 image cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-            {businessServices.slice(0, 6).map((svc) => {
-              const inCart = cartIds.includes(svc.id);
-              const img =
-                SERVICE_IMAGES[svc.id] ||
-                "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=600&h=600&fit=crop&q=80";
-              return (
-                <div
-                  key={svc.id}
-                  className={`group relative flex flex-col rounded-2xl border overflow-hidden transition-all duration-300 ${
-                    inCart
-                      ? "border-wisdom-cyan/50 shadow-glow"
-                      : "border-white/10 hover:border-wisdom-cyan/35"
-                  }`}
-                >
-                  <div className="relative aspect-square overflow-hidden bg-wisdom-dark">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={img}
-                      alt=""
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-wisdom-dark via-wisdom-dark/40 to-transparent" />
-                    {inCart && (
-                      <span className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-full bg-emerald-500/90 text-white text-[11px] font-bold px-2 py-1">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        Added
-                      </span>
-                    )}
-                    <div className="absolute bottom-0 left-0 right-0 p-3">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-wisdom-cyan/90">
-                        {svc.category}
-                      </p>
-                      <h4 className="font-semibold text-sm sm:text-base text-white leading-snug line-clamp-2">
-                        {svc.name}
-                      </h4>
-                    </div>
+                <div className="relative aspect-video overflow-hidden bg-wisdom-navy">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={bizImage(svc.id)}
+                    alt=""
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.opacity = "0";
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a101c]/90 via-[#0a101c]/25 to-transparent" />
+                  {inCart && (
+                    <span className="absolute top-2.5 right-2.5 inline-flex items-center gap-1 rounded-full bg-emerald-500/95 text-white text-[11px] font-bold px-2.5 py-1 shadow-md">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      In cart
+                    </span>
+                  )}
+                  <div className="absolute bottom-0 left-0 right-0 p-3.5">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-wisdom-cyan/95 mb-0.5">
+                      {svc.category}
+                    </p>
+                    <h4 className="font-display text-base sm:text-lg font-bold text-white leading-snug">
+                      {svc.name}
+                    </h4>
                   </div>
-                  <div className="p-3 bg-wisdom-dark/90 border-t border-white/8 flex flex-col gap-2 flex-1">
-                    <p className="text-xs font-semibold text-wisdom-cyan">
+                </div>
+
+                <div className="flex flex-1 flex-col p-4 sm:p-5 border-t border-white/8">
+                  <p className="text-sm text-wisdom-muted leading-relaxed line-clamp-2 flex-1">
+                    {svc.description}
+                  </p>
+                  <div className="mt-4 flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-wisdom-cyan">
                       {formatBizPrice(svc.priceFromEtb, svc.billing)}
                     </p>
                     <button
                       type="button"
                       disabled={inCart}
                       onClick={() => addBusinessService(svc.id)}
-                      className={`w-full py-2.5 rounded-xl text-sm font-bold transition ${
+                      className={`shrink-0 rounded-xl px-4 py-2 text-sm font-bold transition ${
                         inCart
-                          ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                          ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/25 cursor-default"
                           : "bg-wisdom-cyan text-wisdom-dark hover:bg-wisdom-cyan-dark"
                       }`}
                     >
-                      {inCart ? "In cart" : "Add to cart"}
+                      {inCart ? "Added" : "Add to cart"}
                     </button>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
-          <div className="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl border border-white/10 bg-black/35 px-5 py-5">
-            <div className="flex flex-wrap items-center gap-5 text-sm text-wisdom-muted">
-              <span className="inline-flex items-center gap-2">
-                <Share2 className="w-4 h-4 text-sky-400" /> Social status
-              </span>
-              <span className="inline-flex items-center gap-2">
-                <BarChart3 className="w-4 h-4 text-violet-400" /> Live analytics
-              </span>
-              <span className="inline-flex items-center gap-2">
-                <LayoutDashboard className="w-4 h-4 text-wisdom-cyan" /> Goals & drafts
-              </span>
-            </div>
-            <Link href="/business/register" className="btn-primary shrink-0">
-              Full catalog & register
+      {/* ——— 4. Registration / dashboard CTAs (separate) ——— */}
+      <div className="rounded-3xl border border-white/12 bg-gradient-to-br from-wisdom-card via-wisdom-card to-[#0e1a2e] p-6 sm:p-8 md:p-10 shadow-card-3d">
+        <div className="grid md:grid-cols-2 gap-8 md:gap-10 items-center">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-wisdom-cyan mb-2">
+              Next step
+            </p>
+            <h3 className="font-display text-2xl sm:text-3xl font-extrabold text-white mb-3 tracking-tight">
+              Finish registration
+            </h3>
+            <p className="text-wisdom-muted text-sm sm:text-base leading-relaxed mb-5">
+              Open the form with your cart, submit company details, and we&apos;ll review.
+              After approval, services appear on <strong className="text-white/90">your dashboard</strong> so you can follow progress and leave feedback.
+            </p>
+            <ul className="space-y-2 text-sm text-wisdom-muted mb-6">
+              <li className="flex gap-2">
+                <Users className="w-4 h-4 text-wisdom-cyan shrink-0 mt-0.5" />
+                One coordinated team for the services you selected
+              </li>
+              <li className="flex gap-2">
+                <LayoutDashboard className="w-4 h-4 text-wisdom-cyan shrink-0 mt-0.5" />
+                Live board for status, deliverables, and goals
+              </li>
+              <li className="flex gap-2">
+                <MessageSquare className="w-4 h-4 text-wisdom-cyan shrink-0 mt-0.5" />
+                Submit feedback or recommendations from the dashboard
+              </li>
+            </ul>
+          </div>
+          <div className="flex flex-col gap-3 sm:items-stretch">
+            <Link
+              href="/business/register"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-wisdom-cyan px-6 py-4 text-base font-bold text-wisdom-dark hover:bg-wisdom-cyan-dark transition shadow-lg shadow-cyan-500/20"
+            >
+              Register business
               <ArrowRight className="w-5 h-5" />
+            </Link>
+            <Link
+              href="/business/cart"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/[0.04] px-6 py-3.5 text-sm font-semibold text-white hover:border-wisdom-cyan/40 hover:bg-white/[0.07] transition"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              Review cart{cartIds.length > 0 ? ` (${cartIds.length})` : ""}
+            </Link>
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 px-6 py-3 text-sm font-medium text-wisdom-muted hover:text-wisdom-cyan hover:border-wisdom-cyan/30 transition"
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              Already registered? Open dashboard
             </Link>
           </div>
         </div>
