@@ -8,8 +8,7 @@ Digital page media
 
 ## Category covers (Digital home grid)
 
-**Folder:** `public/images/digital/categories/`  
-**Size:** 16:9, ideal **1280×720**
+**Folder:** `public/images/digital/categories/` — 16:9, ideal 1280×720
 
 | File name |
 |-----------|
@@ -22,23 +21,17 @@ Digital page media
 | `education-multimedia.jpg` |
 | `custom-order.jpg` |
 
-## Business subscription cards (Register your business)
+## Business packages (Register your business) — only 4 images
 
 **Folder:** `public/images/digital/business/`  
-**Size:** **16:9**, ideal **1280×720** (or 960×540)  
+**Size:** **16:9**, ideal **1280×720**  
 **Format:** JPG/WebP, aim &lt; 250 KB each
 
-| File name | Service |
+| File name | Package |
 |-----------|---------|
-| `social-media-management.jpg` | Social media management |
-| `digital-marketing.jpg` | Digital marketing |
-| `seo.jpg` | SEO & visibility |
-| `graphic-design-retainer.jpg` | Graphic design retainer |
-| `website-build.jpg` | Website development |
-| `website-maintenance.jpg` | Website maintenance |
-| `content-writing.jpg` | Content & copywriting |
-| `video-photo.jpg` | Photo & short video |
-| `virtual-ops.jpg` | Ops & admin support |
-| `analytics-reporting.jpg` | Analytics & reporting |
+| `growth-marketing.jpg` | Growth & Marketing |
+| `brand-content.jpg` | Brand & Content |
+| `website-digital.jpg` | Website & Digital |
+| `business-support.jpg` | Business Support |
 
-Missing files fall back to a dark navy panel (layout stays intact).
+Old per-service filenames (social-media-management.jpg, etc.) are no longer required for this section.
