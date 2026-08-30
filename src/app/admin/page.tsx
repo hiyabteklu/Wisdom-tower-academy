@@ -11,8 +11,8 @@ import PaymentsPanel from "@/components/admin/PaymentsPanel";
 import AnalyticsPanel from "@/components/admin/AnalyticsPanel";
 import UsersPanel from "@/components/admin/UsersPanel";
 import InquiriesPanel from "@/components/admin/InquiriesPanel";
+import CatalogPanel from "@/components/admin/CatalogPanel";
 import {
-  Shield,
   LogOut,
   CreditCard,
   Inbox,
@@ -20,9 +20,10 @@ import {
   LayoutDashboard,
   ExternalLink,
   GraduationCap,
+  Package,
 } from "lucide-react";
 
-type AcademyTab = "overview" | "payments" | "users" | "inquiries";
+type AcademyTab = "overview" | "catalog" | "payments" | "users" | "inquiries";
 
 export default function AdminPage() {
   const router = useRouter();
@@ -58,6 +59,7 @@ export default function AdminPage() {
 
   const academyTabs: { id: AcademyTab; label: string; icon: typeof LayoutDashboard }[] = [
     { id: "overview", label: "Overview", icon: LayoutDashboard },
+    { id: "catalog", label: "Catalog", icon: Package },
     { id: "payments", label: "Payments", icon: CreditCard },
     { id: "users", label: "Users", icon: Users },
     { id: "inquiries", label: "Inquiries", icon: Inbox },
@@ -124,6 +126,7 @@ export default function AdminPage() {
         </div>
 
         {academyTab === "overview" && <AnalyticsPanel />}
+        {academyTab === "catalog" && <CatalogPanel />}
         {academyTab === "payments" && user.email && <PaymentsPanel adminEmail={user.email} />}
         {academyTab === "users" && <UsersPanel />}
         {academyTab === "inquiries" && <InquiriesPanel />}

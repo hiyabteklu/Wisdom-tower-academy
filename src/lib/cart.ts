@@ -1,9 +1,10 @@
 /**
  * Simple cart: list of package ids in localStorage.
- * One entry per package (no quantity mess).
+ * Resolves products via catalog runtime cache, then static packages.
  */
 
-import { academyPackages, getPackage, type AcademyPackage } from "@/data/packages";
+import { academyPackages, type AcademyPackage } from "@/data/packages";
+import { getPackageResolved, getRuntimeCatalog } from "@/lib/catalog";
 
 const KEY = "wt_cart_v1";
 export const CART_EVENT = "wt-cart-change";
@@ -14,7 +15,7 @@ function readIds(): string[] {
     const raw = localStorage.getItem(KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw) as string[];
-    return Array.isArray(parsed) ? parsed.filter((id) => Boolean(getPackage(id))) : [];
+    return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
   }
@@ -32,7 +33,7 @@ export function getCartIds(): string[] {
 
 export function getCartPackages(): AcademyPackage[] {
   return readIds()
-    .map((id) => getPackage(id))
+    .map((id) => getPackageResolved(id))
     .filter((p): p is AcademyPackage => Boolean(p));
 }
 
@@ -44,9 +45,8 @@ export function isInCart(packageId: string): boolean {
   return readIds().includes(packageId);
 }
 
-/** Returns true if newly added, false if already present */
 export function addToCart(packageId: string): boolean {
-  if (!getPackage(packageId)) return false;
+  if (!getPackageResolved(packageId)) return false;
   const ids = readIds();
   if (ids.includes(packageId)) return false;
   writeIds([...ids, packageId]);
@@ -65,7 +65,8 @@ export function cartTotalEtb(): number {
   return getCartPackages().reduce((sum, p) => sum + p.priceEtb, 0);
 }
 
-/** All sellable packages (for validation) */
 export function allPackageIds(): string[] {
+  const runtime = getRuntimeCatalog();
+  if (runtime?.length) return runtime.map((p) => p.id);
   return academyPackages.map((p) => p.id);
 }

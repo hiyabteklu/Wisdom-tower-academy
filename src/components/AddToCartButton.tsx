@@ -4,11 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ShoppingBag, Check } from "lucide-react";
 import { addToCart, isInCart, CART_EVENT } from "@/lib/cart";
-import { formatEtb, getPackage, PACKAGE_PRICE_ETB } from "@/data/packages";
+import { formatEtb, PACKAGE_PRICE_ETB } from "@/data/packages";
+import { getPackageResolved } from "@/lib/catalog";
 
 type Props = {
   packageId: string;
-  /** primary = amber enroll style; ghost = outline */
   variant?: "primary" | "ghost" | "compact";
   className?: string;
 };
@@ -20,7 +20,7 @@ export default function AddToCartButton({
 }: Props) {
   const [inCart, setInCart] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
-  const pkg = getPackage(packageId);
+  const pkg = getPackageResolved(packageId);
   const price = pkg?.priceEtb ?? PACKAGE_PRICE_ETB;
 
   useEffect(() => {
