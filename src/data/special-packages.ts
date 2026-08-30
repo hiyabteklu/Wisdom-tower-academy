@@ -39,8 +39,15 @@ const eceY3Sem1: SpecialCourse[] = [
   { code: "ECEg3096", title: "Electrical Workshop Practice II", slug: slugify("ECEg3096") },
 ];
 
-/** Second semester list — update when you send the official table */
-const eceY3Sem2: SpecialCourse[] = [];
+const eceY3Sem2: SpecialCourse[] = [
+  { code: "ECEg3071", title: "Applied Electronics II", slug: slugify("ECEg3071") },
+  { code: "Econ1011", title: "Economics", slug: slugify("Econ1011") },
+  { code: "ECEg3051", title: "Electromagnetic Fields", slug: slugify("ECEg3051") },
+  { code: "ECEg3081", title: "Signals and Systems Analysis", slug: slugify("ECEg3081") },
+  { code: "ECEg3073", title: "Electrical Engineering Laboratory III", slug: slugify("ECEg3073") },
+  { code: "ECEg3101", title: "Object Oriented Programming", slug: slugify("ECEg3101") },
+  { code: "ECEg3061", title: "Computational Methods", slug: slugify("ECEg3061") },
+];
 
 export const specialPackages: SpecialPackage[] = [
   {
