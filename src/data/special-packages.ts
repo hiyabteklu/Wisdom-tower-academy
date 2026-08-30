@@ -2,6 +2,10 @@
  *
  * Image folder: public/images/special-packages/
  * See README in that folder for exact filenames (18 images).
+ *
+ * Pricing (ECE Year 3):
+ * - Full year package: 600 ETB (both semesters)
+ * - Single semester: 300 ETB each
  */
 
 export type SpecialCourse = {
@@ -16,6 +20,9 @@ export type SpecialSemester = {
   label: string;
   shortLabel: string;
   image: string;
+  /** Cart / checkout package id for this semester alone */
+  packageId: string;
+  priceEtb: number;
   courses: SpecialCourse[];
 };
 
@@ -26,12 +33,19 @@ export type SpecialPackage = {
   blurb: string;
   image: string;
   yearLabel: string;
+  /** Full track package id (both semesters) */
+  fullPackageId: string;
+  fullPriceEtb: number;
+  semesterPriceEtb: number;
   semesters: SpecialSemester[];
 };
 
 /** Hub cover on /academy and /academy/special-packages */
 export const SPECIAL_PACKAGES_HUB_IMAGE =
   "/images/special-packages/special-packages.jpg";
+
+export const ECE_FULL_PRICE_ETB = 600;
+export const ECE_SEMESTER_PRICE_ETB = 300;
 
 function slugify(code: string) {
   return code.toLowerCase().replace(/[^a-z0-9]+/g, "-");
@@ -72,15 +86,20 @@ export const specialPackages: SpecialPackage[] = [
     id: "ece-y3",
     slug: "electrical-computer-engineering",
     name: "Electrical & Computer Engineering",
-    blurb: "Year 3 — semester by semester, then each course.",
+    blurb: "Year 3 — buy the full year (600 ETB) or one semester (300 ETB).",
     image: "/images/special-packages/ece.jpg",
     yearLabel: "3rd Year",
+    fullPackageId: "ece-y3-full",
+    fullPriceEtb: ECE_FULL_PRICE_ETB,
+    semesterPriceEtb: ECE_SEMESTER_PRICE_ETB,
     semesters: [
       {
         id: "sem-1",
         label: "First Semester",
         shortLabel: "Semester 1",
         image: "/images/special-packages/ece-sem-1.jpg",
+        packageId: "ece-y3-sem-1",
+        priceEtb: ECE_SEMESTER_PRICE_ETB,
         courses: eceY3Sem1,
       },
       {
@@ -88,6 +107,8 @@ export const specialPackages: SpecialPackage[] = [
         label: "Second Semester",
         shortLabel: "Semester 2",
         image: "/images/special-packages/ece-sem-2.jpg",
+        packageId: "ece-y3-sem-2",
+        priceEtb: ECE_SEMESTER_PRICE_ETB,
         courses: eceY3Sem2,
       },
     ],

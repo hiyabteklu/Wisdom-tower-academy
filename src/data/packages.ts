@@ -1,5 +1,5 @@
 /**
- * Academy packages — 500 ETB each.
+ * Academy packages — grades/branches at 500 ETB; ECE special at 600 full / 300 per semester.
  * Images live in public/images/packages/ (uploaded names with hash suffixes).
  * Bank logos: public/images/banks/{id}.png
  */
@@ -14,7 +14,7 @@ export type AcademyPackage = {
   image: string;
   includes: string[];
   enrolledLabel: string;
-  group: "grades" | "branch";
+  group: "grades" | "branch" | "special";
 };
 
 export const PACKAGE_PRICE_ETB = 500;
@@ -142,6 +142,50 @@ export const academyPackages: AcademyPackage[] = [
     enrolledLabel: "510+ students",
     group: "branch",
   },
+  // —— Special packages (ECE) ——
+  {
+    id: "ece-y3-full",
+    name: "ECE Year 3 — Full year",
+    shortName: "ECE Full",
+    description:
+      "Electrical & Computer Engineering 3rd year — both semesters (14 courses) with learning hubs.",
+    priceEtb: 600,
+    href: "/academy/special-packages/electrical-computer-engineering",
+    image: "/images/special-packages/ece.jpg",
+    includes: [
+      "Semester 1 + Semester 2",
+      "All 14 course hubs",
+      "600 ETB one-time (saves vs two semesters)",
+    ],
+    enrolledLabel: "Special track",
+    group: "special",
+  },
+  {
+    id: "ece-y3-sem-1",
+    name: "ECE Year 3 — Semester 1",
+    shortName: "ECE S1",
+    description:
+      "First semester only — Engineering Thermodynamics, Networks, Machines, Digital Logic, and more.",
+    priceEtb: 300,
+    href: "/academy/special-packages/electrical-computer-engineering/sem-1",
+    image: "/images/special-packages/ece-sem-1.jpg",
+    includes: ["7 courses · Semester 1", "Learning hubs per course", "300 ETB one-time"],
+    enrolledLabel: "Special track",
+    group: "special",
+  },
+  {
+    id: "ece-y3-sem-2",
+    name: "ECE Year 3 — Semester 2",
+    shortName: "ECE S2",
+    description:
+      "Second semester only — Applied Electronics, EM Fields, Signals, OOP, Computational Methods, and more.",
+    priceEtb: 300,
+    href: "/academy/special-packages/electrical-computer-engineering/sem-2",
+    image: "/images/special-packages/ece-sem-2.jpg",
+    includes: ["7 courses · Semester 2", "Learning hubs per course", "300 ETB one-time"],
+    enrolledLabel: "Special track",
+    group: "special",
+  },
 ];
 
 export function getPackage(id: string): AcademyPackage | undefined {
@@ -177,7 +221,7 @@ export const paymentMethods: PaymentMethod[] = [
     accountValue: "0900763030",
     accountName: ACCOUNT_NAME,
     instructions: [
-      "Open Telebirr and send the exact package amount (500 ETB).",
+      "Open Telebirr and send the exact package amount.",
       "Put the order reference in the remark / reason field.",
       "Keep the SMS confirmation — enter the transaction ID on the form below.",
     ],

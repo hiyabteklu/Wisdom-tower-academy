@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, BadgeCheck } from "lucide-react";
 import SafeCoverImage from "@/components/SafeCoverImage";
+import AddToCartButton from "@/components/AddToCartButton";
+import { formatEtb } from "@/data/packages";
 import { getSemester, specialPackages } from "@/data/special-packages";
 
 export function generateStaticParams() {
@@ -43,9 +45,26 @@ export default async function SemesterPage({
         <p className="text-xs font-semibold uppercase tracking-wider text-violet-300/90 mb-2">
           {pkg.name} · {pkg.yearLabel}
         </p>
-        <h1 className="font-display text-3xl md:text-4xl font-extrabold text-white mb-8">
+        <h1 className="font-display text-3xl md:text-4xl font-extrabold text-white mb-2">
           {sem.label}
         </h1>
+        <p className="text-sm text-amber-300 font-semibold mb-6">
+          {formatEtb(sem.priceEtb)} · this semester only
+        </p>
+
+        <div className="mb-8 max-w-sm">
+          <AddToCartButton packageId={sem.packageId} />
+          <p className="mt-2 text-xs text-wisdom-muted">
+            Or buy full year for {formatEtb(pkg.fullPriceEtb)} on the{" "}
+            <Link
+              href={`/academy/special-packages/${pkg.slug}`}
+              className="text-cyan-400 hover:underline"
+            >
+              department page
+            </Link>
+            .
+          </p>
+        </div>
 
         {sem.courses.length === 0 ? (
           <div className="rounded-2xl border border-white/10 bg-wisdom-card/80 p-8 text-center text-wisdom-muted">

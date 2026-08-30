@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ShoppingBag, Check } from "lucide-react";
 import { addToCart, isInCart, CART_EVENT } from "@/lib/cart";
-import { formatEtb, PACKAGE_PRICE_ETB } from "@/data/packages";
+import { formatEtb, getPackage, PACKAGE_PRICE_ETB } from "@/data/packages";
 
 type Props = {
   packageId: string;
@@ -20,6 +20,8 @@ export default function AddToCartButton({
 }: Props) {
   const [inCart, setInCart] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
+  const pkg = getPackage(packageId);
+  const price = pkg?.priceEtb ?? PACKAGE_PRICE_ETB;
 
   useEffect(() => {
     const sync = () => setInCart(isInCart(packageId));
@@ -64,7 +66,7 @@ export default function AddToCartButton({
         className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 text-wisdom-dark text-xs font-bold hover:bg-amber-400 ${className}`}
       >
         <ShoppingBag className="w-3.5 h-3.5" />
-        {formatEtb(PACKAGE_PRICE_ETB)}
+        {formatEtb(price)}
       </button>
     );
   }
@@ -77,7 +79,7 @@ export default function AddToCartButton({
         className={`inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-amber-400/40 text-amber-200 text-sm font-semibold hover:bg-amber-500/10 ${className}`}
       >
         <ShoppingBag className="w-4 h-4" />
-        Add to cart · {formatEtb(PACKAGE_PRICE_ETB)}
+        Add to cart · {formatEtb(price)}
       </button>
     );
   }
@@ -89,7 +91,7 @@ export default function AddToCartButton({
       className={`inline-flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-amber-500 text-wisdom-dark text-sm font-semibold hover:bg-amber-400 transition-colors ${className}`}
     >
       <ShoppingBag className="w-4 h-4" />
-      Add to cart · {formatEtb(PACKAGE_PRICE_ETB)}
+      Add to cart · {formatEtb(price)}
     </button>
   );
 }

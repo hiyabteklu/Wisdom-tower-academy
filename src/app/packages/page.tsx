@@ -5,7 +5,8 @@ import AddToCartButton from "@/components/AddToCartButton";
 
 export const metadata = {
   title: "Packages · Wisdom Tower Academy",
-  description: "Grade 9–12 and branch packages at 500 ETB — Telebirr, CBE, local banks",
+  description:
+    "Grade 9–12 and branch packages at 500 ETB; ECE special 600 full / 300 per semester — Telebirr, CBE, local banks",
 };
 
 function PackageGrid({
@@ -66,6 +67,7 @@ function PackageGrid({
 export default function PackagesPage() {
   const grades = academyPackages.filter((p) => p.group === "grades");
   const branches = academyPackages.filter((p) => p.group === "branch");
+  const specials = academyPackages.filter((p) => p.group === "special");
 
   return (
     <div className="relative min-h-[80vh]">
@@ -75,20 +77,32 @@ export default function PackagesPage() {
             Academy packages
           </p>
           <h1 className="font-display text-3xl md:text-4xl font-extrabold text-white tracking-tight">
-            500 ETB each
+            Choose your track
           </h1>
           <p className="mt-3 text-wisdom-muted leading-relaxed">
-            Add to cart, then pay with Telebirr, CBE, or a local bank. We verify manually and unlock
-            access.
+            Grades & branches at 500 ETB. ECE special: 600 ETB full year or 300 ETB per semester.
+            Pay with Telebirr, CBE, or a local bank — we verify manually and unlock access.
           </p>
         </div>
 
         <h2 className="font-display text-xl font-bold text-white mb-4">Grades 9–12</h2>
-        <p className="text-sm text-wisdom-muted mb-6">Each grade is its own package.</p>
+        <p className="text-sm text-wisdom-muted mb-6">Each grade is its own package · 500 ETB.</p>
         <PackageGrid list={grades} />
 
         <h2 className="font-display text-xl font-bold text-white mt-14 mb-4">Other branches</h2>
         <PackageGrid list={branches} />
+
+        {specials.length > 0 && (
+          <>
+            <h2 className="font-display text-xl font-bold text-white mt-14 mb-2">
+              Special packages
+            </h2>
+            <p className="text-sm text-wisdom-muted mb-6">
+              Electrical & Computer Engineering — full year 600 ETB, or one semester 300 ETB.
+            </p>
+            <PackageGrid list={specials} />
+          </>
+        )}
 
         <div className="mt-12 rounded-2xl border border-white/10 bg-wisdom-dark/50 p-5 flex gap-3 max-w-2xl mx-auto">
           <Shield className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />

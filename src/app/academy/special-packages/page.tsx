@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { ArrowRight, BadgeCheck, Sparkles } from "lucide-react";
 import SafeCoverImage from "@/components/SafeCoverImage";
+import AddToCartButton from "@/components/AddToCartButton";
+import { formatEtb } from "@/data/packages";
 import { SPECIAL_PACKAGES_HUB_IMAGE, specialPackages } from "@/data/special-packages";
 
 export const metadata = {
   title: "Special Packages · Wisdom Tower Academy",
-  description: "Department track packages — Electrical & Computer Engineering and more",
+  description:
+    "Department track packages — Electrical & Computer Engineering: 600 ETB full year or 300 ETB per semester",
 };
 
 export default function SpecialPackagesPage() {
@@ -25,43 +28,59 @@ export default function SpecialPackagesPage() {
             Department tracks
           </h1>
           <p className="mt-3 text-wisdom-muted max-w-xl mx-auto leading-relaxed text-sm md:text-base">
-            Open a department, pick a semester, then each course.
+            Buy the full year or a single semester. Open a department, pick a semester, then each
+            course.
           </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 md:gap-6 max-w-3xl mx-auto">
           {specialPackages.map((pkg) => (
-            <Link
+            <div
               key={pkg.id}
-              href={`/academy/special-packages/${pkg.slug}`}
-              className="group flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card hover:border-violet-400/40 transition-all"
+              className="flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card"
             >
-              <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
-                <SafeCoverImage src={pkg.image} alt="" />
+              <Link
+                href={`/academy/special-packages/${pkg.slug}`}
+                className="group flex flex-col flex-1"
+              >
+                <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
+                  <SafeCoverImage src={pkg.image} alt="" />
+                </div>
+                <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-300/80 mb-1">
+                    {pkg.yearLabel}
+                  </p>
+                  <h2 className="flex items-center gap-1.5 font-display text-base sm:text-lg font-bold text-white group-hover:text-violet-200 transition-colors">
+                    <BadgeCheck className="w-4 h-4 shrink-0 text-sky-400" aria-hidden />
+                    <span className="line-clamp-2">{pkg.name}</span>
+                  </h2>
+                  <p className="mt-2 text-xs text-wisdom-muted">{pkg.blurb}</p>
+                  <p className="mt-2 text-sm font-semibold text-amber-300">
+                    Full year {formatEtb(pkg.fullPriceEtb)} · Semester {" "}
+                    {formatEtb(pkg.semesterPriceEtb)}
+                  </p>
+                  <span className="mt-2.5 inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-violet-400/90">
+                    Browse courses
+                    <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                  </span>
+                </div>
+              </Link>
+              <div className="px-4 pb-4 sm:px-5 sm:pb-5">
+                <AddToCartButton packageId={pkg.fullPackageId} variant="ghost" />
               </div>
-              <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-300/80 mb-1">
-                  {pkg.yearLabel}
-                </p>
-                <h2 className="flex items-center gap-1.5 font-display text-base sm:text-lg font-bold text-white group-hover:text-violet-200 transition-colors">
-                  <BadgeCheck className="w-4 h-4 shrink-0 text-sky-400" aria-hidden />
-                  <span className="line-clamp-2">{pkg.name}</span>
-                </h2>
-                <span className="mt-2.5 inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-violet-400/90">
-                  Open
-                  <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-                </span>
-              </div>
-            </Link>
+            </div>
           ))}
         </div>
 
-        {/* Optional: keep hub image asset documented; used from Academy page */}
         <span className="sr-only" aria-hidden data-hub-image={SPECIAL_PACKAGES_HUB_IMAGE} />
 
         <p className="mt-10 text-center text-sm text-wisdom-muted">
           <Link href="/academy" className="text-amber-400 hover:underline">
             ← Back to Academy
+          </Link>
+          {" · "}
+          <Link href="/packages" className="text-cyan-400 hover:underline">
+            All packages
           </Link>
         </p>
       </div>
