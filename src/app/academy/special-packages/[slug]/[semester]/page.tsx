@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, BadgeCheck } from "lucide-react";
 import { getSemester, specialPackages } from "@/data/special-packages";
 
 export function generateStaticParams() {
@@ -42,43 +42,41 @@ export default async function SemesterPage({
         <p className="text-xs font-semibold uppercase tracking-wider text-violet-300/90 mb-2">
           {pkg.name} · {pkg.yearLabel}
         </p>
-        <h1 className="font-display text-3xl md:text-4xl font-extrabold text-white mb-2">
+        <h1 className="font-display text-3xl md:text-4xl font-extrabold text-white mb-8">
           {sem.label}
         </h1>
-        <p className="text-wisdom-muted mb-10">
-          {sem.courses.length > 0
-            ? "Select a course to open its materials."
-            : "Course list for this semester will appear here when published."}
-        </p>
 
         {sem.courses.length === 0 ? (
           <div className="rounded-2xl border border-white/10 bg-wisdom-card/80 p-8 text-center text-wisdom-muted">
-            Second semester courses are not listed yet. Send the official table and we'll add
-            them here.
+            Courses for this semester will appear here when published.
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {sem.courses.map((course) => (
+            {sem.courses.map((c) => (
               <Link
-                key={course.code}
-                href={`/academy/special-packages/${pkg.slug}/${sem.id}/${course.slug}`}
-                className="group block overflow-hidden rounded-2xl border border-white/12 bg-wisdom-card hover:border-amber-400/40 transition-all"
+                key={c.code}
+                href={`/academy/special-packages/${pkg.slug}/${sem.id}/${c.slug}`}
+                className="group flex flex-col overflow-hidden rounded-2xl border border-white/12 bg-wisdom-card hover:border-violet-400/40 transition-all"
               >
-                <div className="relative aspect-video w-full overflow-hidden bg-gradient-to-br from-violet-900/80 via-wisdom-navy to-amber-900/40">
-                  <div className="absolute inset-0 flex items-center justify-center p-4">
-                    <span className="font-mono text-lg md:text-xl font-bold text-white/90 tracking-wide">
-                      {course.code}
-                    </span>
-                  </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#070c16] via-transparent to-transparent opacity-80" />
+                <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={c.image}
+                    alt=""
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.opacity = "0";
+                    }}
+                  />
                 </div>
-                <div className="p-4 border-t border-white/8">
-                  <p className="text-[11px] font-mono text-violet-300/90 mb-1">{course.code}</p>
-                  <h2 className="font-display text-base font-bold text-white leading-snug group-hover:text-amber-300 transition-colors">
-                    {course.title}
+                <div className="px-4 py-3.5 border-t border-white/8">
+                  <p className="text-[10px] font-mono text-violet-300/80 mb-0.5">{c.code}</p>
+                  <h2 className="flex items-start gap-1.5 font-display text-sm sm:text-base font-bold text-white group-hover:text-violet-200 leading-snug">
+                    <BadgeCheck className="w-4 h-4 shrink-0 text-sky-400 mt-0.5" aria-hidden />
+                    <span className="line-clamp-2">{c.title}</span>
                   </h2>
-                  <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-amber-400/90">
-                    Open course
+                  <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-violet-400/90">
+                    Open
                     <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
                   </span>
                 </div>
