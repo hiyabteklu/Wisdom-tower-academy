@@ -15,7 +15,7 @@ import {
   ShoppingBag,
   ExternalLink,
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { supabase, recoverSession } from "@/lib/supabase";
 import { isAdminEmail } from "@/lib/admin";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import HeaderLibraryLinks from "@/components/HeaderLibraryLinks";
@@ -49,20 +49,30 @@ export default function Header() {
   const profileRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const getUser = async () => {
-      const {
-        data: { user: u },
-      } = await supabase.auth.getUser();
-      setUser(u);
-      setLoading(false);
+    let cancelled = false;
+
+    const apply = (u: SupabaseUser | null) => {
+      if (!cancelled) {
+        setUser(u);
+        setLoading(false);
+      }
     };
-    void getUser();
+
+    (async () => {
+      const session = await recoverSession();
+      apply(session?.user ?? null);
+    })();
+
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_e, session) => {
-      setUser(session?.user ?? null);
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      apply(session?.user ?? null);
     });
-    return () => subscription.unsubscribe();
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
