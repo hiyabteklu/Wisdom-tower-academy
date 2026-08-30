@@ -3,7 +3,7 @@
 import { useState, Suspense } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { Mail, Lock, User, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { Mail, Lock, User, Eye, EyeOff, ArrowRight, GraduationCap } from "lucide-react";
 
 function SignupForm() {
   const [fullName, setFullName] = useState("");
@@ -72,9 +72,9 @@ function SignupForm() {
             <h2 className="text-2xl font-bold mb-2">Check your email</h2>
             <p className="text-wisdom-muted mb-6">
               We sent a confirmation link to <strong className="text-white">{email}</strong>.
-              One account works for Academy learning and Digital services.
+              This account is for Wisdom Tower Academy.
             </p>
-            <Link href="/login" className="inline-flex items-center gap-2 text-wisdom-cyan hover:underline">
+            <Link href="/login" className="inline-flex items-center gap-2 text-amber-400 hover:underline">
               Back to Sign In
             </Link>
           </div>
@@ -87,13 +87,11 @@ function SignupForm() {
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-16">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-wisdom-cyan to-wisdom-cyan-dark text-wisdom-dark font-bold text-xl mb-4">
-            WT
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-wisdom-dark mb-4">
+            <GraduationCap className="w-7 h-7" />
           </div>
-          <h1 className="text-3xl font-bold mb-2">Create account</h1>
-          <p className="text-wisdom-muted">
-            One account for Wisdom Academy and Wisdom Digital
-          </p>
+          <h1 className="text-3xl font-bold mb-2">Create Academy account</h1>
+          <p className="text-wisdom-muted">For learning pathways, packages, and My Learning</p>
         </div>
 
         <div className="bg-wisdom-card border border-white/5 rounded-2xl p-8 shadow-xl">
@@ -131,7 +129,7 @@ function SignupForm() {
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-wisdom-dark border border-white/10 focus:border-wisdom-cyan focus:outline-none focus:ring-1 focus:ring-wisdom-cyan transition-colors"
+                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-wisdom-dark border border-white/10 focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400 transition-colors"
                   placeholder="Your full name"
                 />
               </div>
@@ -146,7 +144,7 @@ function SignupForm() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-wisdom-dark border border-white/10 focus:border-wisdom-cyan focus:outline-none focus:ring-1 focus:ring-wisdom-cyan transition-colors"
+                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-wisdom-dark border border-white/10 focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400 transition-colors"
                   placeholder="you@example.com"
                 />
               </div>
@@ -161,7 +159,7 @@ function SignupForm() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-11 pr-12 py-3 rounded-xl bg-wisdom-dark border border-white/10 focus:border-wisdom-cyan focus:outline-none focus:ring-1 focus:ring-wisdom-cyan transition-colors"
+                  className="w-full pl-11 pr-12 py-3 rounded-xl bg-wisdom-dark border border-white/10 focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400 transition-colors"
                   placeholder="At least 8 characters"
                   minLength={8}
                 />
@@ -184,7 +182,7 @@ function SignupForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-wisdom-cyan text-wisdom-dark font-semibold hover:bg-wisdom-cyan-dark transition-colors disabled:opacity-60"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-amber-500 text-wisdom-dark font-semibold hover:bg-amber-400 transition-colors disabled:opacity-60"
             >
               {loading ? (
                 "Creating account..."
@@ -199,7 +197,7 @@ function SignupForm() {
 
           <p className="mt-6 text-center text-sm text-wisdom-muted">
             Already have an account?{" "}
-            <Link href="/login" className="text-wisdom-cyan hover:underline font-medium">
+            <Link href="/login" className="text-amber-400 hover:underline font-medium">
               Sign in
             </Link>
           </p>
