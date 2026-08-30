@@ -25,6 +25,8 @@ function SignupForm() {
       return;
     }
 
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+
     const { error: signErr } = await supabase.auth.signUp({
       email,
       password,
@@ -32,6 +34,7 @@ function SignupForm() {
         data: {
           full_name: fullName,
         },
+        emailRedirectTo: origin ? `${origin}/auth/callback` : undefined,
       },
     });
 
@@ -47,10 +50,15 @@ function SignupForm() {
 
   const handleGoogleSignup = async () => {
     setLoading(true);
+    setError("");
     const { error: oauthErr } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: {
+          access_type: "offline",
+          prompt: "consent",
+        },
       },
     });
     if (oauthErr) {
