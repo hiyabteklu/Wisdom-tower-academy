@@ -17,17 +17,43 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (urlError) {
-      setError(
-        urlError === "oauth"
-          ? "Google sign-in failed. Try again or use email."
-          : decodeURIComponent(urlError)
-      );
-    }
-  }, [urlError]);
+    let cancelled = false;
+
+    (async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (cancelled) return;
+
+      if (session?.user) {
+        const dest =
+          next && next.startsWith("/") && !next.startsWith("//")
+            ? next
+            : "/learning";
+        router.replace(dest);
+        return;
+      }
+
+      setChecking(false);
+
+      if (urlError) {
+        setError(
+          urlError === "oauth"
+            ? "Google sign-in failed. Try again or use email."
+            : decodeURIComponent(urlError)
+        );
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [router, next, urlError]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,10 +92,6 @@ function LoginForm() {
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
-        queryParams: {
-          access_type: "offline",
-          prompt: "consent",
-        },
       },
     });
     if (oauthErr) {
@@ -77,6 +99,14 @@ function LoginForm() {
       setLoading(false);
     }
   };
+
+  if (checking) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center text-wisdom-muted">
+        Checking session…
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-16">
