@@ -18,6 +18,7 @@ import {
   getPackage,
   type AcademyPackage,
 } from "@/data/packages";
+import { getPackageResolved } from "@/lib/catalog";
 import { listMyEnrollments, listMyOrders, type ManualOrder } from "@/lib/orders";
 import { supabase } from "@/lib/supabase";
 import UserHubNav from "@/components/UserHubNav";
@@ -30,6 +31,30 @@ type UnlockedRow = {
   image: string;
   enrolledAt?: string;
 };
+
+/** Learning hub URL — never /packages/{id} (that route does not exist). */
+function learningHrefForPackage(packageId: string, packageName?: string): {
+  href: string;
+  title: string;
+  subtitle: string;
+  image: string;
+} {
+  const pkg = getPackageResolved(packageId) || getPackage(packageId);
+  if (pkg) {
+    return {
+      href: pkg.href || "/packages",
+      title: pkg.name,
+      subtitle: pkg.shortName || pkg.name,
+      image: pkg.image,
+    };
+  }
+  return {
+    href: "/packages",
+    title: packageName || packageId,
+    subtitle: packageId,
+    image: "",
+  };
+}
 
 export default function LearningPage() {
   const [unlocked, setUnlocked] = useState<UnlockedRow[]>([]);
@@ -55,20 +80,40 @@ export default function LearningPage() {
           listMyOrders(),
         ]);
         if (cancelled) return;
+
         const rows: UnlockedRow[] = [];
+        const seen = new Set<string>();
+
         for (const e of enrolls || []) {
-          const pkg = getPackage(e.packageId || "");
-          if (pkg) {
-            rows.push({
-              id: pkg.id,
-              title: pkg.name,
-              subtitle: pkg.shortName || pkg.name,
-              href: `/packages/${pkg.id}`,
-              image: pkg.image,
-              enrolledAt: e.createdAt,
-            });
-          }
+          const meta = learningHrefForPackage(e.packageId, e.packageName);
+          if (seen.has(e.packageId)) continue;
+          seen.add(e.packageId);
+          rows.push({
+            id: e.packageId,
+            title: meta.title,
+            subtitle: meta.subtitle,
+            href: meta.href,
+            image: meta.image,
+            enrolledAt: e.createdAt,
+          });
         }
+
+        // Also unlock from verified orders (in case enrollment row missing)
+        for (const o of orders || []) {
+          if (o.status !== "verified") continue;
+          if (seen.has(o.packageId)) continue;
+          seen.add(o.packageId);
+          const meta = learningHrefForPackage(o.packageId, o.packageName);
+          rows.push({
+            id: o.packageId,
+            title: meta.title,
+            subtitle: meta.subtitle,
+            href: meta.href,
+            image: meta.image,
+            enrolledAt: o.verifiedAt || o.createdAt,
+          });
+        }
+
         setUnlocked(rows);
         setPending(
           (orders || []).filter(
@@ -112,11 +157,8 @@ export default function LearningPage() {
             My Learning
           </h1>
           <p className="text-wisdom-muted text-base md:text-lg max-w-2xl">
-            Your unlocked packages, pending payments, and next steps — switch to{" "}
-            <Link href="/dashboard" className="text-wisdom-cyan font-semibold hover:underline">
-              My Dashboard
-            </Link>{" "}
-            for Digital / business.
+            Your unlocked packages and content hubs. After admin approval, open a package to
+            study subjects, notes, and practice.
           </p>
         </div>
 
@@ -159,14 +201,16 @@ export default function LearningPage() {
                         className="surface-card flex gap-3 rounded-2xl border border-white/12 p-3 hover:border-amber-400/40 transition"
                       >
                         <div
-                          className="w-16 h-16 rounded-xl bg-cover bg-center shrink-0 border border-white/10"
-                          style={{ backgroundImage: `url(${u.image})` }}
+                          className="w-16 h-16 rounded-xl bg-cover bg-center shrink-0 border border-white/10 bg-wisdom-dark"
+                          style={{
+                            backgroundImage: u.image ? `url(${u.image})` : undefined,
+                          }}
                         />
                         <div className="min-w-0">
                           <p className="font-semibold text-white truncate">{u.title}</p>
                           <p className="text-xs text-wisdom-muted">{u.subtitle}</p>
                           <span className="inline-flex items-center gap-1 text-xs text-emerald-400 mt-1">
-                            <Play className="w-3 h-3" /> Open
+                            <Play className="w-3 h-3" /> Open content
                           </span>
                         </div>
                       </Link>
@@ -183,14 +227,21 @@ export default function LearningPage() {
                   Pending verification
                 </h2>
                 <ul className="space-y-2">
-                  {pending.map((p) => (
-                    <li
-                      key={p.id}
-                      className="surface-card rounded-xl border border-amber-400/25 px-4 py-3 text-sm text-white/90"
-                    >
-                      {getPackage(p.packageId)?.name || p.packageId} · {p.status}
-                    </li>
-                  ))}
+                  {pending.map((p) => {
+                    const name =
+                      getPackageResolved(p.packageId)?.name ||
+                      getPackage(p.packageId)?.name ||
+                      p.packageName ||
+                      p.packageId;
+                    return (
+                      <li
+                        key={p.id}
+                        className="surface-card rounded-xl border border-amber-400/25 px-4 py-3 text-sm text-white/90"
+                      >
+                        {name} · {p.status}
+                      </li>
+                    );
+                  })}
                 </ul>
               </section>
             )}
@@ -204,11 +255,13 @@ export default function LearningPage() {
                 {lockedPackages.slice(0, 6).map((pkg: AcademyPackage) => (
                   <li key={pkg.id}>
                     <Link
-                      href={`/packages/${pkg.id}`}
+                      href="/packages"
                       className="surface-card block rounded-2xl border border-white/12 p-4 hover:border-wisdom-cyan/35 transition"
                     >
                       <p className="font-semibold text-white">{pkg.name}</p>
-                      <p className="text-sm text-amber-300 font-bold mt-1">{formatEtb(pkg.priceEtb)}</p>
+                      <p className="text-sm text-amber-300 font-bold mt-1">
+                        {formatEtb(pkg.priceEtb)}
+                      </p>
                     </Link>
                   </li>
                 ))}

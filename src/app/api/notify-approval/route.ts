@@ -17,7 +17,7 @@ function siteUrl(): string {
     process.env.NEXT_PUBLIC_SITE_URL ||
     process.env.VERCEL_PROJECT_PRODUCTION_URL ||
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "") ||
-    "https://wisdom-tower-digital.vercel.app";
+    "https://wisdom-tower-academy.vercel.app";
   return fromEnv.replace(/\/$/, "");
 }
 
@@ -169,7 +169,7 @@ function buildApprovedEmail(opts: {
     `Order: ${orderId}`,
     `Open My Learning: ${learningUrl}`,
     ``,
-    `- Wisdom Tower`,
+    `- Wisdom Tower Academy`,
   ].join("\n");
 
   const html = [
@@ -182,9 +182,9 @@ function buildApprovedEmail(opts: {
     `<p style="font-family:ui-monospace,monospace;background:#f1f5f9;padding:10px 12px;border-radius:8px">Order: ${escapeHtml(
       orderId
     )}</p>`,
-    `<p><a href="${learningUrl}" style="display:inline-block;background:#00d4ff;color:#0a0f1a;padding:12px 18px;border-radius:10px;text-decoration:none;font-weight:700">Open My Learning</a></p>`,
+    `<p><a href="${learningUrl}" style="display:inline-block;background:#f59e0b;color:#0a0f1a;padding:12px 18px;border-radius:10px;text-decoration:none;font-weight:700">Open My Learning</a></p>`,
     `<p style="color:#64748b;font-size:13px">Or view orders: <a href="${ordersUrl}">${ordersUrl}</a></p>`,
-    `<p style="color:#64748b;font-size:13px;margin-top:24px">- Wisdom Tower</p>`,
+    `<p style="color:#64748b;font-size:13px;margin-top:24px">- Wisdom Tower Academy</p>`,
     `</div>`,
   ].join("");
 
@@ -204,7 +204,7 @@ function buildRejectedEmail(opts: {
     `We could not verify your payment for ${packageName} (order ${orderId}).`,
     `Please contact us with your receipt or try again from checkout.`,
     ``,
-    `- Wisdom Tower`,
+    `- Wisdom Tower Academy`,
   ].join("\n");
 
   const html = [
@@ -215,7 +215,7 @@ function buildRejectedEmail(opts: {
       packageName
     )}</strong> (order <code>${escapeHtml(orderId)}</code>).</p>`,
     `<p>Reply with your receipt or contact support from the website.</p>`,
-    `<p style="color:#64748b;font-size:13px;margin-top:24px">- Wisdom Tower</p>`,
+    `<p style="color:#64748b;font-size:13px;margin-top:24px">- Wisdom Tower Academy</p>`,
     `</div>`,
   ].join("");
 
@@ -284,7 +284,7 @@ export async function POST(req: NextRequest) {
         emailResult = { sent: false, skipped: true, error: "No email on order" };
       }
 
-      const smsMsg = `Wisdom Tower: Payment approved for ${packageName}. Order ${orderId}. Open My Learning: ${learningUrl}`;
+      const smsMsg = `Wisdom Tower Academy: Payment approved for ${packageName}. Order ${orderId}. Open My Learning: ${learningUrl}`;
       if (order.phone) {
         smsResult = await sendSms({ to: String(order.phone), message: smsMsg });
       } else {
@@ -304,7 +304,7 @@ export async function POST(req: NextRequest) {
         emailResult = { sent: false, skipped: true, error: "No email on order" };
       }
 
-      const smsMsg = `Wisdom Tower: Payment for ${packageName} (order ${orderId}) needs attention. Contact support with your receipt.`;
+      const smsMsg = `Wisdom Tower Academy: Payment for ${packageName} (order ${orderId}) needs attention. Contact support with your receipt.`;
       if (order.phone) {
         smsResult = await sendSms({ to: String(order.phone), message: smsMsg });
       } else {

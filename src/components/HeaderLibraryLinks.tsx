@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BookOpen, ShoppingBag } from "lucide-react";
 import { cartCount, CART_EVENT } from "@/lib/cart";
+import NotificationBell from "@/components/NotificationBell";
 
 export default function HeaderLibraryLinks({
   onNavigate,
@@ -34,6 +35,7 @@ export default function HeaderLibraryLinks({
 
   return (
     <div className="flex items-center gap-0.5">
+      <NotificationBell size={size} />
       <Link
         href="/learning"
         onClick={onNavigate}
