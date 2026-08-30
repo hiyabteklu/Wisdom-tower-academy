@@ -1,15 +1,17 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { ensureProfile } from "@/lib/profile";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, GraduationCap } from "lucide-react";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next");
+  const urlError = searchParams.get("error");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,12 +19,22 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    if (urlError) {
+      setError(
+        urlError === "oauth"
+          ? "Google sign-in failed. Try again or use email."
+          : decodeURIComponent(urlError)
+      );
+    }
+  }, [urlError]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    const { error: signErr } = await supabase.auth.signInWithPassword({
+    const { data, error: signErr } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -33,6 +45,14 @@ function LoginForm() {
       return;
     }
 
+    if (data.user) {
+      try {
+        await ensureProfile(data.user);
+      } catch {
+        /* non-blocking */
+      }
+    }
+
     const dest =
       next && next.startsWith("/") && !next.startsWith("//") ? next : "/learning";
     router.push(dest);
@@ -41,10 +61,15 @@ function LoginForm() {
 
   const handleGoogleLogin = async () => {
     setLoading(true);
+    setError("");
     const { error: oauthErr } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: {
+          access_type: "offline",
+          prompt: "consent",
+        },
       },
     });
     if (oauthErr) {
