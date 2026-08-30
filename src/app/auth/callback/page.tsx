@@ -12,6 +12,20 @@ function CallbackInner() {
   useEffect(() => {
     let cancelled = false;
 
+    const finish = async (user: { id: string; email?: string } | null | undefined) => {
+      if (user) {
+        try {
+          await ensureProfile(user as Parameters<typeof ensureProfile>[0]);
+        } catch (e) {
+          console.warn("[auth/callback] ensureProfile", e);
+        }
+      }
+      if (!cancelled) {
+        router.replace("/learning");
+        router.refresh();
+      }
+    };
+
     const run = async () => {
       try {
         const url = new URL(window.location.href);
@@ -21,6 +35,14 @@ function CallbackInner() {
 
         if (err) {
           console.error("[auth/callback]", err, errDesc);
+          // Still check for existing session (user may already be logged in)
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+          if (session?.user) {
+            await finish(session.user);
+            return;
+          }
           if (!cancelled) {
             setMsg("Sign-in failed. Redirecting…");
             router.replace(`/login?error=${encodeURIComponent(errDesc || err)}`);
@@ -29,13 +51,26 @@ function CallbackInner() {
         }
 
         if (code) {
-          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          const { data, error: exchangeError } =
+            await supabase.auth.exchangeCodeForSession(code);
           if (exchangeError) {
-            console.error("[auth/callback] exchange", exchangeError.message);
+            console.warn("[auth/callback] exchange", exchangeError.message);
+            // Code may already be used; session might still exist
+            const {
+              data: { session },
+            } = await supabase.auth.getSession();
+            if (session?.user) {
+              await finish(session.user);
+              return;
+            }
             if (!cancelled) {
               setMsg("Sign-in failed. Redirecting…");
               router.replace("/login?error=oauth");
             }
+            return;
+          }
+          if (data.session?.user) {
+            await finish(data.session.user);
             return;
           }
         }
@@ -44,26 +79,24 @@ function CallbackInner() {
           data: { session },
         } = await supabase.auth.getSession();
 
-        if (!session?.user) {
-          if (!cancelled) {
-            setMsg("No session. Redirecting…");
-            router.replace("/login");
-          }
+        if (session?.user) {
+          await finish(session.user);
           return;
         }
 
-        try {
-          await ensureProfile(session.user);
-        } catch (e) {
-          console.warn("[auth/callback] ensureProfile", e);
-        }
-
         if (!cancelled) {
-          router.replace("/learning");
-          router.refresh();
+          setMsg("No session. Redirecting…");
+          router.replace("/login");
         }
       } catch (e) {
         console.error("[auth/callback]", e);
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (session?.user) {
+          await finish(session.user);
+          return;
+        }
         if (!cancelled) {
           setMsg("Something went wrong. Redirecting…");
           router.replace("/login");
