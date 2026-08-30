@@ -15,6 +15,7 @@ import TestimonialMarquee from "@/components/TestimonialMarquee";
 import WelcomeVideoCard from "@/components/WelcomeVideoCard";
 import PartnershipPath from "@/components/PartnershipPath";
 import { packageImages } from "@/data/packages";
+import { SPECIAL_PACKAGES_HUB_IMAGE } from "@/data/special-packages";
 
 const programs = [
   {
@@ -199,7 +200,6 @@ export default function AcademyPage() {
             ))}
           </div>
 
-          {/* Special packages hub — 16:9 entry; departments listed inside */}
           <section className="mt-20 md:mt-24 relative" id="special-packages">
             <div className="absolute -inset-x-2 md:-inset-x-6 -inset-y-6 rounded-[2rem] border border-violet-500/20 bg-gradient-to-b from-violet-500/[0.08] via-violet-500/[0.02] to-transparent pointer-events-none" />
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-px bg-gradient-to-r from-transparent via-violet-400/60 to-transparent" />
@@ -209,42 +209,38 @@ export default function AcademyPage() {
                 <Sparkles className="w-3.5 h-3.5" />
                 Beyond the six branches
               </p>
-              <h2 className="font-display text-3xl md:text-4xl font-bold text-white mb-3">
+              <h2 className="font-display text-3xl md:text-4xl font-bold text-white mb-2">
                 Special packages
               </h2>
-              <p className="text-wisdom-muted max-w-lg mx-auto text-base leading-relaxed">
-                Department tracks by year and semester. More packages will appear here over time.
+              <p className="text-wisdom-muted max-w-lg mx-auto text-sm leading-relaxed">
+                Department tracks by year and semester.
               </p>
             </div>
 
             <Link
               href="/academy/special-packages"
-              className="relative group block max-w-4xl mx-auto overflow-hidden rounded-3xl border border-violet-400/30 bg-wisdom-card hover:border-violet-300/50 transition-all shadow-lg shadow-violet-900/20"
+              className="relative group block max-w-xl mx-auto overflow-hidden rounded-2xl sm:rounded-3xl border border-violet-400/30 bg-wisdom-card hover:border-violet-300/50 transition-all"
             >
               <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/images/home/academy.jpg"
-                  alt="Special packages"
+                  src={SPECIAL_PACKAGES_HUB_IMAGE}
+                  alt=""
                   className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.opacity = "0";
+                  }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#070c16] via-[#070c16]/45 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 text-left">
-                  <p className="text-violet-300 text-xs font-semibold uppercase tracking-wider mb-1">
-                    Department tracks
-                  </p>
-                  <h3 className="font-display text-2xl md:text-3xl font-bold text-white mb-2">
-                    Special packages
-                  </h3>
-                  <p className="text-sm text-wisdom-muted max-w-md mb-4">
-                    Open to choose a department — Electrical & Computer Engineering and more as
-                    they are added.
-                  </p>
-                  <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-500 text-white text-sm font-bold">
-                    Browse special packages
-                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                  </span>
-                </div>
+              </div>
+              <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8 text-left">
+                <h3 className="flex items-center gap-1.5 font-display text-base sm:text-lg font-bold text-white group-hover:text-violet-200">
+                  <BadgeCheck className="w-4 h-4 shrink-0 text-sky-400" aria-hidden />
+                  Special packages
+                </h3>
+                <span className="mt-2.5 inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-violet-400/90">
+                  Open
+                  <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                </span>
               </div>
             </Link>
           </section>
@@ -317,9 +313,6 @@ export default function AcademyPage() {
             </div>
 
             <TestimonialMarquee />
-            <p className="mt-3 text-center text-[11px] text-wisdom-muted">
-              Quotes auto-scroll · hover to pause · replace with your real feedback anytime
-            </p>
           </section>
 
           <section className="mt-24 md:mt-28" id="partnership">
