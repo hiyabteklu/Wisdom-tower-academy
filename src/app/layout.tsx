@@ -7,16 +7,18 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import ScrollZoom from "@/components/ScrollZoom";
 
 export const metadata: Metadata = {
-  title: "Wisdom Tower | Comprehensive Digital & Professional Services",
+  title: "Wisdom Tower Academy | Grades 9–12, Freshman, UAT, GAT, COC & Exit Exam",
   description:
-    "70+ Services. 1 Integrated Partner. Empowering your ideas with end-to-end digital, creative, and professional solutions.",
+    "Wisdom Tower Academy — pathways for Grades 9–12, Freshman, UAT, GAT, COC and Exit Exam. Learn, practice, and unlock packages.",
   keywords: [
-    "graphic design",
-    "academic support",
-    "web development",
-    "digital marketing",
-    "business strategy",
-    "Wisdom Tower",
+    "Wisdom Tower Academy",
+    "Ethiopia education",
+    "GAT",
+    "UAT",
+    "Exit Exam",
+    "Freshman",
+    "COC",
+    "online learning",
   ],
 };
 
@@ -26,7 +28,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className="theme-dark dark" data-theme="dark" style={{ colorScheme: "dark" }}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className="theme-dark dark"
+      data-theme="dark"
+      style={{ colorScheme: "dark" }}
+    >
       <head>
         <script
           dangerouslySetInnerHTML={{
