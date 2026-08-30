@@ -10,14 +10,8 @@ function CallbackInner() {
 
   useEffect(() => {
     const run = async () => {
-      try {
-        sessionStorage.removeItem("wt_signup_platform");
-      } catch {
-        /* ignore */
-      }
-
       await supabase.auth.getSession();
-      router.replace("/");
+      router.replace("/learning");
     };
 
     run().catch(() => {
