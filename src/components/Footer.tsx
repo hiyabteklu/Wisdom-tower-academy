@@ -95,6 +95,16 @@ export default function Footer() {
                   Contact
                 </Link>
               </li>
+              <li>
+                <Link href="/privacy" className="hover:text-amber-300 transition-colors">
+                  Privacy
+                </Link>
+              </li>
+              <li>
+                <Link href="/terms" className="hover:text-amber-300 transition-colors">
+                  Terms
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -122,14 +132,22 @@ export default function Footer() {
 
         <div className="mt-12 pt-6 border-t border-white/8 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-wisdom-muted">
           <p>© {new Date().getFullYear()} Wisdom Tower Academy. All rights reserved.</p>
-          <a
-            href={DIGITAL_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-wisdom-cyan transition-colors text-xs"
-          >
-            Digital services
-          </a>
+          <div className="flex flex-wrap gap-3 text-xs">
+            <Link href="/privacy" className="hover:text-amber-300">
+              Privacy
+            </Link>
+            <Link href="/terms" className="hover:text-amber-300">
+              Terms
+            </Link>
+            <a
+              href={DIGITAL_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-wisdom-cyan transition-colors"
+            >
+              Digital services
+            </a>
+          </div>
         </div>
       </div>
     </footer>
