@@ -8,12 +8,14 @@ import {
   GraduationCap as GradCap,
   Trees,
   BadgeCheck,
+  Sparkles,
 } from "lucide-react";
 import VoiceMessageCard from "@/components/VoiceMessageCard";
 import TestimonialMarquee from "@/components/TestimonialMarquee";
 import WelcomeVideoCard from "@/components/WelcomeVideoCard";
 import PartnershipPath from "@/components/PartnershipPath";
 import { packageImages } from "@/data/packages";
+import { specialPackages } from "@/data/special-packages";
 
 const programs = [
   {
@@ -139,6 +141,8 @@ const voiceStudents = [
 ];
 
 export default function AcademyPage() {
+  const featuredSpecial = specialPackages[0];
+
   return (
     <div className="relative">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -197,6 +201,67 @@ export default function AcademyPage() {
               </Link>
             ))}
           </div>
+
+          {/* Special packages — clearly separated from the six branches */}
+          <section className="mt-20 md:mt-24 relative" id="special-packages">
+            <div className="absolute -inset-x-2 md:-inset-x-6 -inset-y-6 rounded-[2rem] border border-violet-500/20 bg-gradient-to-b from-violet-500/[0.08] via-violet-500/[0.02] to-transparent pointer-events-none" />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-px bg-gradient-to-r from-transparent via-violet-400/60 to-transparent" />
+
+            <div className="relative text-center mb-8 pt-6">
+              <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-violet-300/90 mb-3">
+                <Sparkles className="w-3.5 h-3.5" />
+                Beyond the six branches
+              </p>
+              <h2 className="font-display text-3xl md:text-4xl font-bold text-white mb-3">
+                Special packages
+              </h2>
+              <p className="text-wisdom-muted max-w-lg mx-auto text-base leading-relaxed">
+                Department tracks by year and semester — starting with Electrical & Computer
+                Engineering.
+              </p>
+            </div>
+
+            {featuredSpecial && (
+              <Link
+                href={`/academy/special-packages/${featuredSpecial.slug}`}
+                className="relative group block max-w-4xl mx-auto overflow-hidden rounded-3xl border border-violet-400/30 bg-wisdom-card hover:border-violet-300/50 transition-all shadow-lg shadow-violet-900/20"
+              >
+                <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={featuredSpecial.image}
+                    alt={featuredSpecial.name}
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#070c16] via-[#070c16]/45 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 text-left">
+                    <p className="text-violet-300 text-xs font-semibold uppercase tracking-wider mb-1">
+                      {featuredSpecial.yearLabel}
+                    </p>
+                    <h3 className="font-display text-2xl md:text-3xl font-bold text-white mb-2">
+                      {featuredSpecial.name}
+                    </h3>
+                    <p className="text-sm text-wisdom-muted max-w-md mb-4">
+                      {featuredSpecial.blurb}
+                    </p>
+                    <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-500 text-white text-sm font-bold">
+                      Open special package
+                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            )}
+
+            <p className="relative mt-5 text-center">
+              <Link
+                href="/academy/special-packages"
+                className="text-sm font-semibold text-violet-300 hover:text-violet-200"
+              >
+                View all special packages →
+              </Link>
+            </p>
+          </section>
 
           <div className="mt-24 md:mt-28 relative">
             <div className="absolute -inset-x-4 -inset-y-8 rounded-[2rem] border border-teal-500/15 bg-gradient-to-b from-teal-500/[0.06] via-transparent to-transparent pointer-events-none" />
@@ -271,7 +336,6 @@ export default function AcademyPage() {
             </p>
           </section>
 
-          {/* Partnership — one 16:9 cover + step path (like Digital Work with us) */}
           <section className="mt-24 md:mt-28" id="partnership">
             <div className="max-w-3xl mx-auto">
               <PartnershipPath />
