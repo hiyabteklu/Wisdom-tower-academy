@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, BadgeCheck, Sparkles } from "lucide-react";
+import SafeCoverImage from "@/components/SafeCoverImage";
 import { SPECIAL_PACKAGES_HUB_IMAGE, specialPackages } from "@/data/special-packages";
 
 export const metadata = {
@@ -36,15 +37,7 @@ export default function SpecialPackagesPage() {
               className="group flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card hover:border-violet-400/40 transition-all"
             >
               <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={pkg.image}
-                  alt=""
-                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.opacity = "0";
-                  }}
-                />
+                <SafeCoverImage src={pkg.image} alt="" />
               </div>
               <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8">
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-300/80 mb-1">

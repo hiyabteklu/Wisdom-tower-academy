@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, BadgeCheck } from "lucide-react";
+import SafeCoverImage from "@/components/SafeCoverImage";
 import { getSemester, specialPackages } from "@/data/special-packages";
 
 export function generateStaticParams() {
@@ -59,15 +60,7 @@ export default async function SemesterPage({
                 className="group flex flex-col overflow-hidden rounded-2xl border border-white/12 bg-wisdom-card hover:border-violet-400/40 transition-all"
               >
                 <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={c.image}
-                    alt=""
-                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.opacity = "0";
-                    }}
-                  />
+                  <SafeCoverImage src={c.image} alt="" />
                 </div>
                 <div className="px-4 py-3.5 border-t border-white/8">
                   <p className="text-[10px] font-mono text-violet-300/80 mb-0.5">{c.code}</p>

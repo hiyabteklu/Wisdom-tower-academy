@@ -14,6 +14,7 @@ import VoiceMessageCard from "@/components/VoiceMessageCard";
 import TestimonialMarquee from "@/components/TestimonialMarquee";
 import WelcomeVideoCard from "@/components/WelcomeVideoCard";
 import PartnershipPath from "@/components/PartnershipPath";
+import SafeCoverImage from "@/components/SafeCoverImage";
 import { packageImages } from "@/data/packages";
 import { SPECIAL_PACKAGES_HUB_IMAGE } from "@/data/special-packages";
 
@@ -222,15 +223,7 @@ export default function AcademyPage() {
               className="relative group block max-w-xl mx-auto overflow-hidden rounded-2xl sm:rounded-3xl border border-violet-400/30 bg-wisdom-card hover:border-violet-300/50 transition-all"
             >
               <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={SPECIAL_PACKAGES_HUB_IMAGE}
-                  alt=""
-                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.opacity = "0";
-                  }}
-                />
+                <SafeCoverImage src={SPECIAL_PACKAGES_HUB_IMAGE} alt="" />
               </div>
               <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8 text-left">
                 <h3 className="flex items-center gap-1.5 font-display text-base sm:text-lg font-bold text-white group-hover:text-violet-200">

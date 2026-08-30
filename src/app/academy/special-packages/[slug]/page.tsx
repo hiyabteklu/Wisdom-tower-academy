@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, BadgeCheck } from "lucide-react";
+import SafeCoverImage from "@/components/SafeCoverImage";
 import { getSpecialPackage, specialPackages } from "@/data/special-packages";
 
 export function generateStaticParams() {
@@ -46,15 +47,7 @@ export default async function SpecialPackagePage({
               className="group flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card hover:border-violet-400/40 transition-all"
             >
               <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={sem.image}
-                  alt=""
-                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.opacity = "0";
-                  }}
-                />
+                <SafeCoverImage src={sem.image} alt="" />
               </div>
               <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8">
                 <h2 className="flex items-center gap-1.5 font-display text-base sm:text-lg font-bold text-white group-hover:text-violet-200">
