@@ -4,7 +4,7 @@ import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, GraduationCap } from "lucide-react";
 
 function LoginForm() {
   const router = useRouter();
@@ -34,7 +34,7 @@ function LoginForm() {
     }
 
     const dest =
-      next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
+      next && next.startsWith("/") && !next.startsWith("//") ? next : "/learning";
     router.push(dest);
     router.refresh();
   };
@@ -57,11 +57,11 @@ function LoginForm() {
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-16">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-wisdom-cyan to-wisdom-cyan-dark text-wisdom-dark font-bold text-xl mb-4">
-            WT
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-wisdom-dark mb-4">
+            <GraduationCap className="w-7 h-7" />
           </div>
-          <h1 className="text-3xl font-bold mb-2">Welcome back</h1>
-          <p className="text-wisdom-muted">Sign in to your Wisdom Tower account</p>
+          <h1 className="text-3xl font-bold mb-2">Student sign in</h1>
+          <p className="text-wisdom-muted">Wisdom Tower Academy account</p>
         </div>
 
         <div className="bg-wisdom-card border border-white/5 rounded-2xl p-8 shadow-xl">
@@ -111,7 +111,7 @@ function LoginForm() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-wisdom-dark border border-white/10 focus:border-wisdom-cyan focus:outline-none focus:ring-1 focus:ring-wisdom-cyan transition-colors"
+                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-wisdom-dark border border-white/10 focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400 transition-colors"
                   placeholder="you@example.com"
                 />
               </div>
@@ -120,7 +120,7 @@ function LoginForm() {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-sm font-medium">Password</label>
-                <Link href="/forgot-password" className="text-sm text-wisdom-cyan hover:underline">
+                <Link href="/forgot-password" className="text-sm text-amber-400 hover:underline">
                   Forgot password?
                 </Link>
               </div>
@@ -131,7 +131,7 @@ function LoginForm() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-11 pr-12 py-3 rounded-xl bg-wisdom-dark border border-white/10 focus:border-wisdom-cyan focus:outline-none focus:ring-1 focus:ring-wisdom-cyan transition-colors"
+                  className="w-full pl-11 pr-12 py-3 rounded-xl bg-wisdom-dark border border-white/10 focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400 transition-colors"
                   placeholder="••••••••"
                 />
                 <button
@@ -153,7 +153,7 @@ function LoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-wisdom-cyan text-wisdom-dark font-semibold hover:bg-wisdom-cyan-dark transition-colors disabled:opacity-60"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-amber-500 text-wisdom-dark font-semibold hover:bg-amber-400 transition-colors disabled:opacity-60"
             >
               {loading ? (
                 "Signing in..."
@@ -168,7 +168,7 @@ function LoginForm() {
 
           <p className="mt-6 text-center text-sm text-wisdom-muted">
             Don't have an account?{" "}
-            <Link href="/signup" className="text-wisdom-cyan hover:underline font-medium">
+            <Link href="/signup" className="text-amber-400 hover:underline font-medium">
               Sign up
             </Link>
           </p>
