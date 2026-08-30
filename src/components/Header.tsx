@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import {
@@ -14,18 +13,22 @@ import {
   User,
   Settings,
   ShoppingBag,
-  LayoutDashboard,
+  ExternalLink,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { isAdminEmail } from "@/lib/admin";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import HeaderLibraryLinks from "@/components/HeaderLibraryLinks";
 
+const DIGITAL_URL =
+  process.env.NEXT_PUBLIC_DIGITAL_URL?.replace(/\/$/, "") ||
+  "https://wisdom-tower-digital.vercel.app";
+
 const mainNavLinks = [
   { href: "/", label: "Home" },
   { href: "/academy", label: "Academy" },
-  { href: "/digital", label: "Digital" },
-  { href: "/services", label: "All Services" },
+  { href: "/packages", label: "Packages" },
+  { href: "/learning", label: "My Learning" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
 ];
@@ -89,42 +92,32 @@ export default function Header() {
     user?.user_metadata?.full_name ||
     user?.user_metadata?.name ||
     user?.email?.split("@")[0] ||
-    "User";
+    "Student";
 
   const isAdmin = isAdminEmail(user?.email);
-  const showAcademyChrome = pathname.startsWith("/academy");
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-wisdom-dark/95 backdrop-blur-md border-b border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <Link
-            href={showAcademyChrome ? "/academy" : "/"}
-            className="flex items-center gap-2.5 group min-w-0"
-          >
+          <Link href="/" className="flex items-center gap-2.5 group min-w-0">
             {logoOk ? (
               <span className="relative w-9 h-9 shrink-0 rounded-lg overflow-hidden ring-1 ring-white/10 bg-wisdom-navy">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/images/brand/logo.png"
-                  alt="Wisdom Tower"
+                  alt="Wisdom Academy"
                   className="w-full h-full object-contain p-0.5"
                   onError={() => setLogoOk(false)}
                 />
               </span>
             ) : (
-              <div
-                className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm shrink-0 ${
-                  showAcademyChrome
-                    ? "bg-gradient-to-br from-amber-400 to-orange-500 text-wisdom-dark"
-                    : "bg-gradient-to-br from-wisdom-cyan to-wisdom-cyan-dark text-wisdom-dark"
-                }`}
-              >
-                {showAcademyChrome ? "WA" : "WT"}
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm shrink-0 bg-gradient-to-br from-amber-400 to-orange-500 text-wisdom-dark">
+                WA
               </div>
             )}
-            <span className="font-semibold text-lg tracking-tight group-hover:text-wisdom-cyan transition-colors truncate">
-              {showAcademyChrome ? "Wisdom Academy" : "Wisdom Tower"}
+            <span className="font-semibold text-lg tracking-tight group-hover:text-amber-300 transition-colors truncate">
+              Wisdom Academy
             </span>
           </Link>
 
@@ -133,12 +126,21 @@ export default function Header() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="nav-link text-sm text-wisdom-muted hover:text-wisdom-cyan transition-colors"
+                className="nav-link text-sm text-wisdom-muted hover:text-amber-300 transition-colors"
                 data-active={isActivePath(pathname, link.href) ? "true" : undefined}
               >
                 {link.label}
               </Link>
             ))}
+            <a
+              href={DIGITAL_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-sm text-wisdom-muted hover:text-wisdom-cyan transition-colors"
+            >
+              Digital
+              <ExternalLink className="w-3.5 h-3.5 opacity-70" />
+            </a>
 
             {!loading && (
               <div className="flex items-center gap-1.5 ml-1">
@@ -152,11 +154,11 @@ export default function Header() {
                       aria-haspopup="menu"
                       className={`flex items-center gap-1.5 rounded-full p-0.5 pr-1.5 border transition-all ${
                         profileOpen
-                          ? "border-wisdom-cyan/50 bg-wisdom-cyan/10"
+                          ? "border-amber-400/50 bg-amber-500/10"
                           : "border-white/10 hover:border-white/25"
                       }`}
                     >
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-wisdom-cyan to-cyan-700 flex items-center justify-center text-xs font-bold text-wisdom-dark">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center text-xs font-bold text-wisdom-dark">
                         {displayName.charAt(0).toUpperCase()}
                       </div>
                       <ChevronDown
@@ -181,21 +183,15 @@ export default function Header() {
                           >
                             <GraduationCap className="w-4 h-4 text-amber-400" />
                             My Learning
-                            <span className="ml-auto text-[10px] font-bold uppercase text-amber-400/80">
-                              Academy
-                            </span>
                           </Link>
                           <Link
-                            href="/dashboard"
+                            href="/packages"
                             role="menuitem"
                             className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/90 hover:bg-white/5"
                             onClick={() => setProfileOpen(false)}
                           >
-                            <LayoutDashboard className="w-4 h-4 text-wisdom-cyan" />
-                            My Dashboard
-                            <span className="ml-auto text-[10px] font-bold uppercase text-wisdom-cyan/80">
-                              Digital
-                            </span>
+                            <ShoppingBag className="w-4 h-4 text-wisdom-muted" />
+                            Packages
                           </Link>
                           <Link
                             href="/cart"
@@ -204,16 +200,7 @@ export default function Header() {
                             onClick={() => setProfileOpen(false)}
                           >
                             <ShoppingBag className="w-4 h-4 text-wisdom-muted" />
-                            Academy cart
-                          </Link>
-                          <Link
-                            href="/business/cart"
-                            role="menuitem"
-                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/90 hover:bg-white/5"
-                            onClick={() => setProfileOpen(false)}
-                          >
-                            <ShoppingBag className="w-4 h-4 text-wisdom-muted" />
-                            Business cart
+                            Cart
                           </Link>
                           <Link
                             href="/account"
@@ -237,13 +224,24 @@ export default function Header() {
                             <Link
                               href="/admin"
                               role="menuitem"
-                              className="flex items-center gap-3 px-4 py-2.5 text-sm text-wisdom-cyan hover:bg-wisdom-cyan/10"
+                              className="flex items-center gap-3 px-4 py-2.5 text-sm text-amber-300 hover:bg-amber-500/10"
                               onClick={() => setProfileOpen(false)}
                             >
                               <Shield className="w-4 h-4" />
-                              Admin Dashboard
+                              Admin
                             </Link>
                           )}
+                          <a
+                            href={DIGITAL_URL}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            role="menuitem"
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-wisdom-cyan hover:bg-white/5"
+                            onClick={() => setProfileOpen(false)}
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                            Wisdom Digital
+                          </a>
                         </div>
                         <div className="border-t border-white/10 py-1.5">
                           <button
@@ -261,12 +259,12 @@ export default function Header() {
                   </div>
                 ) : (
                   <div className="flex items-center gap-3 ml-1">
-                    <Link href="/login" className="text-sm text-wisdom-muted hover:text-wisdom-cyan">
+                    <Link href="/login" className="text-sm text-wisdom-muted hover:text-amber-300">
                       Sign In
                     </Link>
                     <Link
                       href="/signup"
-                      className="px-4 py-2 rounded-lg bg-wisdom-cyan text-wisdom-dark text-sm font-medium hover:bg-wisdom-cyan-dark"
+                      className="px-4 py-2 rounded-lg bg-amber-500 text-wisdom-dark text-sm font-medium hover:bg-amber-400"
                     >
                       Get Started
                     </Link>
@@ -300,6 +298,16 @@ export default function Header() {
                       {link.label}
                     </Link>
                   ))}
+                  <a
+                    href={DIGITAL_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-wisdom-cyan hover:bg-white/5"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Digital
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
                 </nav>
                 <div className="border-t border-white/10 px-4 py-3 space-y-1">
                   {user ? (
@@ -310,13 +318,6 @@ export default function Header() {
                         onClick={() => setIsOpen(false)}
                       >
                         <GraduationCap className="w-4 h-4 text-amber-400" /> My Learning
-                      </Link>
-                      <Link
-                        href="/dashboard"
-                        className="flex items-center gap-2 text-sm py-1.5"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        <LayoutDashboard className="w-4 h-4 text-wisdom-cyan" /> My Dashboard
                       </Link>
                       <Link
                         href="/account"
@@ -344,7 +345,7 @@ export default function Header() {
                       </Link>
                       <Link
                         href="/signup"
-                        className="block text-center px-4 py-2.5 rounded-xl bg-wisdom-cyan text-wisdom-dark text-sm font-semibold"
+                        className="block text-center px-4 py-2.5 rounded-xl bg-amber-500 text-wisdom-dark text-sm font-semibold"
                         onClick={() => setIsOpen(false)}
                       >
                         Get Started
