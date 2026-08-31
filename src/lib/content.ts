@@ -72,6 +72,34 @@ export type ProgressMeta = {
   [key: string]: unknown;
 };
 
+export type ScopeProgressRow = {
+  resourceId: string;
+  title: string;
+  hub: HubId;
+  contentType: ContentType;
+  progressPct: number;
+  totalSeconds: number;
+  focusSeconds: number;
+  lastOpenedAt: string | null;
+  meta: ProgressMeta;
+};
+
+export type ScopeStats = {
+  rows: ScopeProgressRow[];
+  totalStudySeconds: number;
+  avgProgressPct: number;
+  quizAttempted: number;
+  quizCorrect: number;
+  quizWrong: number;
+  flashKnow: number;
+  flashAgain: number;
+  flashLearning: number;
+  videoWatchSeconds: number;
+  examScores: number[];
+  avgExamPercent: number;
+  streakDays: number;
+};
+
 function rowToResource(row: Record<string, unknown>): LearningResource {
   return {
     id: String(row.id),
@@ -220,7 +248,6 @@ export async function saveProgress(opts: {
   const prevMeta = (existing?.meta as Record<string, unknown>) || {};
   const nextMeta = opts.meta ? { ...prevMeta, ...opts.meta } : prevMeta;
 
-  // Never decrease progress % unless explicitly completing a better score path
   const nextPct = Math.max(
     Number(existing?.progress_pct || 0),
     Math.min(100, opts.progressPct)
@@ -281,6 +308,8 @@ export async function saveExamAttempt(opts: {
   score: number;
   total: number;
   answers: Record<number, number>;
+  title?: string;
+  scopeId?: string;
 }): Promise<{ ok: boolean; error?: string }> {
   const {
     data: { session },
@@ -296,8 +325,185 @@ export async function saveExamAttempt(opts: {
     meta: { total: opts.total },
   });
 
+  // Also mirror into academic_results for Progress Tracker board
+  if (opts.scopeId && opts.total > 0) {
+    const missed = Math.max(0, opts.total - opts.score);
+    const percent = Math.round((opts.score / opts.total) * 1000) / 10;
+    await supabase.from("academic_results").insert({
+      user_id: session.user.id,
+      scope_id: opts.scopeId,
+      title: opts.title || "Exam attempt",
+      total: opts.total,
+      correct: opts.score,
+      missed,
+      percent,
+    });
+  }
+
   if (error) return { ok: false, error: error.message };
   return { ok: true };
+}
+
+/** Aggregate learning_progress for all resources under a scope_path (exact or prefix). */
+export async function getScopeStats(opts: {
+  scopePath: string;
+  hub?: HubId;
+}): Promise<{ stats: ScopeStats; error?: string }> {
+  const empty: ScopeStats = {
+    rows: [],
+    totalStudySeconds: 0,
+    avgProgressPct: 0,
+    quizAttempted: 0,
+    quizCorrect: 0,
+    quizWrong: 0,
+    flashKnow: 0,
+    flashAgain: 0,
+    flashLearning: 0,
+    videoWatchSeconds: 0,
+    examScores: [],
+    avgExamPercent: 0,
+    streakDays: 0,
+  };
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session?.user) return { stats: empty };
+
+  // Resources in this scope
+  let rq = supabase
+    .from("learning_resources")
+    .select("id, title, hub, content_type, scope_path")
+    .eq("scope_path", opts.scopePath);
+  if (opts.hub) rq = rq.eq("hub", opts.hub);
+
+  const { data: resources, error: rErr } = await rq;
+  if (rErr) return { stats: empty, error: rErr.message };
+  if (!resources?.length) return { stats: empty };
+
+  const ids = resources.map((r) => String(r.id));
+  const byId = new Map(
+    resources.map((r) => [
+      String(r.id),
+      {
+        title: String(r.title),
+        hub: r.hub as HubId,
+        contentType: r.content_type as ContentType,
+      },
+    ])
+  );
+
+  const { data: prog, error: pErr } = await supabase
+    .from("learning_progress")
+    .select(
+      "resource_id, progress_pct, total_seconds, focus_seconds, last_opened_at, meta"
+    )
+    .eq("user_id", session.user.id)
+    .in("resource_id", ids);
+
+  if (pErr) return { stats: empty, error: pErr.message };
+
+  const rows: ScopeProgressRow[] = (prog || []).map((p) => {
+    const info = byId.get(String(p.resource_id));
+    return {
+      resourceId: String(p.resource_id),
+      title: info?.title || "Item",
+      hub: info?.hub || "books",
+      contentType: info?.contentType || "pdf",
+      progressPct: Number(p.progress_pct || 0),
+      totalSeconds: Number(p.total_seconds || 0),
+      focusSeconds: Number(p.focus_seconds || 0),
+      lastOpenedAt: p.last_opened_at ? String(p.last_opened_at) : null,
+      meta: (p.meta as ProgressMeta) || {},
+    };
+  });
+
+  let totalStudySeconds = 0;
+  let pctSum = 0;
+  let quizAttempted = 0;
+  let quizCorrect = 0;
+  let quizWrong = 0;
+  let flashKnow = 0;
+  let flashAgain = 0;
+  let flashLearning = 0;
+  let videoWatchSeconds = 0;
+  const examScores: number[] = [];
+  const daySet = new Set<string>();
+
+  for (const r of rows) {
+    totalStudySeconds += r.totalSeconds;
+    pctSum += r.progressPct;
+    const q = r.meta.quiz;
+    if (q) {
+      quizAttempted += Number(q.attempted || 0);
+      quizCorrect += Number(q.correct || 0);
+      quizWrong += Math.max(0, Number(q.attempted || 0) - Number(q.correct || 0));
+      if (q.submitted && q.total) {
+        examScores.push(
+          Math.round((Number(q.correct || 0) / Number(q.total)) * 1000) / 10
+        );
+      }
+    }
+    const f = r.meta.flashcards;
+    if (f) {
+      flashKnow += Number(f.know || 0);
+      flashAgain += Number(f.again || 0);
+      flashLearning += Number(f.learning || 0);
+    }
+    if (r.meta.video?.watchSeconds) {
+      videoWatchSeconds += Number(r.meta.video.watchSeconds || 0);
+    }
+    if (r.lastOpenedAt) {
+      daySet.add(r.lastOpenedAt.slice(0, 10));
+    }
+  }
+
+  // Simple consecutive-day streak ending today or yesterday
+  const days = Array.from(daySet).sort().reverse();
+  let streakDays = 0;
+  if (days.length) {
+    const today = new Date();
+    const iso = (d: Date) => d.toISOString().slice(0, 10);
+    let cursor = iso(today);
+    if (!daySet.has(cursor)) {
+      const y = new Date(today);
+      y.setDate(y.getDate() - 1);
+      cursor = iso(y);
+    }
+    while (daySet.has(cursor)) {
+      streakDays += 1;
+      const d = new Date(cursor + "T12:00:00Z");
+      d.setUTCDate(d.getUTCDate() - 1);
+      cursor = d.toISOString().slice(0, 10);
+    }
+  }
+
+  const avgExamPercent =
+    examScores.length > 0
+      ? Math.round(
+          (examScores.reduce((a, b) => a + b, 0) / examScores.length) * 10
+        ) / 10
+      : 0;
+
+  return {
+    stats: {
+      rows,
+      totalStudySeconds,
+      avgProgressPct: rows.length
+        ? Math.round((pctSum / rows.length) * 10) / 10
+        : 0,
+      quizAttempted,
+      quizCorrect,
+      quizWrong,
+      flashKnow,
+      flashAgain,
+      flashLearning,
+      videoWatchSeconds,
+      examScores,
+      avgExamPercent,
+      streakDays,
+    },
+  };
 }
 
 export function freshmanScope(subjectId: string): string {
@@ -306,4 +512,8 @@ export function freshmanScope(subjectId: string): string {
 
 export function eceScope(semId: string, courseSlug: string): string {
   return `ece/${semId}/${courseSlug}`;
+}
+
+export function gradeScope(gradeId: string): string {
+  return `grade/${gradeId}`;
 }
