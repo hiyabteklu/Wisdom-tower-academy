@@ -1,11 +1,6 @@
-/** Special packages — department / year tracks beyond the six main branches
+/** Special packages — semester purchases only (no full-year cart).
  *
- * Image folder: public/images/special-packages/
- * See README in that folder for exact filenames (18 images).
- *
- * Pricing (ECE Year 3):
- * - Full year package: 600 ETB (both semesters)
- * - Single semester: 300 ETB each
+ * ECE Y3: Semester 1 = 300 ETB (live). Semester 2 = coming soon.
  */
 
 export type SpecialCourse = {
@@ -20,9 +15,10 @@ export type SpecialSemester = {
   label: string;
   shortLabel: string;
   image: string;
-  /** Cart / checkout package id for this semester alone */
   packageId: string;
   priceEtb: number;
+  /** false = not for sale yet */
+  purchasable: boolean;
   courses: SpecialCourse[];
 };
 
@@ -33,18 +29,13 @@ export type SpecialPackage = {
   blurb: string;
   image: string;
   yearLabel: string;
-  /** Full track package id (both semesters) */
-  fullPackageId: string;
-  fullPriceEtb: number;
   semesterPriceEtb: number;
   semesters: SpecialSemester[];
 };
 
-/** Hub cover on /academy and /academy/special-packages */
 export const SPECIAL_PACKAGES_HUB_IMAGE =
   "/images/special-packages/special-packages.jpg";
 
-export const ECE_FULL_PRICE_ETB = 600;
 export const ECE_SEMESTER_PRICE_ETB = 300;
 
 function slugify(code: string) {
@@ -86,11 +77,9 @@ export const specialPackages: SpecialPackage[] = [
     id: "ece-y3",
     slug: "electrical-computer-engineering",
     name: "Electrical & Computer Engineering",
-    blurb: "Year 3 — buy the full year (600 ETB) or one semester (300 ETB).",
+    blurb: "Year 3 — buy each semester separately (300 ETB). Semester 1 is live; Semester 2 coming soon.",
     image: "/images/special-packages/ece.jpg",
     yearLabel: "3rd Year",
-    fullPackageId: "ece-y3-full",
-    fullPriceEtb: ECE_FULL_PRICE_ETB,
     semesterPriceEtb: ECE_SEMESTER_PRICE_ETB,
     semesters: [
       {
@@ -100,6 +89,7 @@ export const specialPackages: SpecialPackage[] = [
         image: "/images/special-packages/ece-sem-1.jpg",
         packageId: "ece-y3-sem-1",
         priceEtb: ECE_SEMESTER_PRICE_ETB,
+        purchasable: true,
         courses: eceY3Sem1,
       },
       {
@@ -109,6 +99,7 @@ export const specialPackages: SpecialPackage[] = [
         image: "/images/special-packages/ece-sem-2.jpg",
         packageId: "ece-y3-sem-2",
         priceEtb: ECE_SEMESTER_PRICE_ETB,
+        purchasable: false,
         courses: eceY3Sem2,
       },
     ],

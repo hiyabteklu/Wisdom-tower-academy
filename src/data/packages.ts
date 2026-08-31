@@ -1,6 +1,6 @@
 /**
- * Academy packages — Freshman 300 ETB; grades/other branches 500 (not for sale until ready);
- * ECE special at 600 full / 300 per semester.
+ * Academy packages — Freshman 300; ECE S1 300 only (no full-year).
+ * Other tracks 500 (not for sale until ready).
  */
 
 export type AcademyPackage = {
@@ -19,7 +19,6 @@ export type AcademyPackage = {
 export const PACKAGE_PRICE_ETB = 500;
 export const FRESHMAN_PRICE_ETB = 300;
 
-/** Exact filenames currently in public/images/packages/ */
 export const packageImages = {
   "grade-9-12": "/images/packages/grade-9-12_9842aa.jpeg",
   "grade-9": "/images/packages/grade-9_67df27.jpeg",
@@ -148,28 +147,11 @@ export const academyPackages: AcademyPackage[] = [
     group: "branch",
   },
   {
-    id: "ece-y3-full",
-    name: "ECE Year 3 — Full year",
-    shortName: "ECE Full",
-    description:
-      "Electrical & Computer Engineering 3rd year — both semesters (14 courses) with learning hubs.",
-    priceEtb: 600,
-    href: "/academy/special-packages/electrical-computer-engineering",
-    image: "/images/special-packages/ece.jpg",
-    includes: [
-      "Semester 1 + Semester 2",
-      "All 14 course hubs",
-      "600 ETB one-time (saves vs two semesters)",
-    ],
-    enrolledLabel: "Special track",
-    group: "special",
-  },
-  {
     id: "ece-y3-sem-1",
     name: "ECE Year 3 — Semester 1",
     shortName: "ECE S1",
     description:
-      "First semester only — Engineering Thermodynamics, Networks, Machines, Digital Logic, and more.",
+      "First semester — Engineering Thermodynamics, Networks, Machines, Digital Logic, and more.",
     priceEtb: 300,
     href: "/academy/special-packages/electrical-computer-engineering/sem-1",
     image: "/images/special-packages/ece-sem-1.jpg",
@@ -182,11 +164,11 @@ export const academyPackages: AcademyPackage[] = [
     name: "ECE Year 3 — Semester 2",
     shortName: "ECE S2",
     description:
-      "Second semester only — Applied Electronics, EM Fields, Signals, OOP, Computational Methods, and more.",
+      "Second semester — Applied Electronics, EM Fields, Signals, OOP, Computational Methods, and more.",
     priceEtb: 300,
     href: "/academy/special-packages/electrical-computer-engineering/sem-2",
     image: "/images/special-packages/ece-sem-2.jpg",
-    includes: ["7 courses · Semester 2", "Learning hubs per course", "300 ETB one-time"],
+    includes: ["7 courses · Semester 2", "Learning hubs per course", "Coming soon"],
     enrolledLabel: "Special track",
     group: "special",
   },

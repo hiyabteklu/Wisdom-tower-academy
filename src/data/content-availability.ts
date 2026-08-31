@@ -1,17 +1,14 @@
 /**
  * Live vs uploading + purchase gates.
  *
- * Purchasable now: Freshman (300 ETB) + ECE special packages.
- * Freshman: everyone browses subjects + 6 hubs; opening a hub needs ownership.
- * One Freshman purchase unlocks ALL subjects’ hubs.
- * Other pathways: explore until hubs → “coming soon” modal (not for sale yet).
+ * Purchasable: Freshman (300) + ECE Semester 1 only (300).
+ * ECE Semester 2 = coming soon (not for sale).
+ * No full-year ECE package.
  */
 
 export const PURCHASABLE_PACKAGE_IDS = new Set([
   "freshman",
-  "ece-y3-full",
   "ece-y3-sem-1",
-  "ece-y3-sem-2",
 ]);
 
 export type HubLockMode = "open" | "require_purchase" | "coming_soon";
@@ -24,36 +21,34 @@ export function isPackagePurchasable(packageId: string): boolean {
   return PURCHASABLE_PACKAGE_IDS.has(packageId);
 }
 
-/** Whole freshman catalog is live (not “uploading”). */
 export function isFreshmanSubjectReady(_subjectId: string): boolean {
   return true;
 }
 
-/**
- * Which package(s) unlock hubs under this path.
- * Freshman path → only "freshman".
- * ECE → semester package and/or full year.
- */
 export function unlockPackageIdsForPath(basePath: string): string[] {
   if (basePath.includes("/academy/freshman")) {
     return ["freshman"];
   }
   if (basePath.includes("/special-packages/electrical-computer-engineering")) {
-    if (basePath.includes("/sem-1")) return ["ece-y3-sem-1", "ece-y3-full"];
-    if (basePath.includes("/sem-2")) return ["ece-y3-sem-2", "ece-y3-full"];
-    return ["ece-y3-full", "ece-y3-sem-1", "ece-y3-sem-2"];
+    if (basePath.includes("/sem-1")) return ["ece-y3-sem-1"];
+    // sem-2 not sellable yet
+    return [];
   }
   return [];
 }
 
 export function getHubLockMode(basePath: string): HubLockMode {
   if (basePath.includes("/academy/freshman")) return "require_purchase";
-  if (isSpecialPackagePath(basePath)) return "require_purchase";
-  // Grades, UAT, GAT, COC, Exit Exam — content still uploading
+  if (basePath.includes("/special-packages") && basePath.includes("/sem-1")) {
+    return "require_purchase";
+  }
+  if (basePath.includes("/special-packages") && basePath.includes("/sem-2")) {
+    return "coming_soon";
+  }
+  if (isSpecialPackagePath(basePath)) return "coming_soon";
   return "coming_soon";
 }
 
-/** @deprecated use getHubLockMode — kept for older call sites */
 export function areHubsReady(basePath: string): boolean {
   return getHubLockMode(basePath) === "open";
 }

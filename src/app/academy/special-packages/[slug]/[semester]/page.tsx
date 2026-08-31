@@ -48,23 +48,22 @@ export default async function SemesterPage({
         <h1 className="font-display text-3xl md:text-4xl font-extrabold text-white mb-2">
           {sem.label}
         </h1>
-        <p className="text-sm text-amber-300 font-semibold mb-6">
-          {formatEtb(sem.priceEtb)} · this semester only
-        </p>
 
-        <div className="mb-8 max-w-sm">
-          <AddToCartButton packageId={sem.packageId} />
-          <p className="mt-2 text-xs text-wisdom-muted">
-            Or buy full year for {formatEtb(pkg.fullPriceEtb)} on the{" "}
-            <Link
-              href={`/academy/special-packages/${pkg.slug}`}
-              className="text-cyan-400 hover:underline"
-            >
-              department page
-            </Link>
-            .
-          </p>
-        </div>
+        {sem.purchasable ? (
+          <>
+            <p className="text-sm text-amber-300 font-semibold mb-6">
+              {formatEtb(sem.priceEtb)} · this semester only
+            </p>
+            <div className="mb-8 max-w-sm">
+              <AddToCartButton packageId={sem.packageId} />
+            </div>
+          </>
+        ) : (
+          <div className="mb-8 max-w-md rounded-2xl border border-amber-400/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-100/90">
+            This semester is not for sale yet — materials are still being prepared. You can browse
+            course titles below.
+          </div>
+        )}
 
         {sem.courses.length === 0 ? (
           <div className="rounded-2xl border border-white/10 bg-wisdom-card/80 p-8 text-center text-wisdom-muted">

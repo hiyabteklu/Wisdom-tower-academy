@@ -201,11 +201,9 @@ export default function AcademyPage() {
             ))}
           </div>
 
-          <section className="mt-20 md:mt-24 relative" id="special-packages">
-            <div className="absolute -inset-x-2 md:-inset-x-6 -inset-y-6 rounded-[2rem] border border-violet-500/20 bg-gradient-to-b from-violet-500/[0.08] via-violet-500/[0.02] to-transparent pointer-events-none" />
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-px bg-gradient-to-r from-transparent via-violet-400/60 to-transparent" />
-
-            <div className="relative text-center mb-8 pt-6">
+          {/* Special packages: header OUTSIDE the card */}
+          <section className="mt-20 md:mt-24" id="special-packages">
+            <div className="text-center mb-8">
               <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-violet-300/90 mb-3">
                 <Sparkles className="w-3.5 h-3.5" />
                 Beyond the six branches
@@ -214,13 +212,13 @@ export default function AcademyPage() {
                 Special packages
               </h2>
               <p className="text-wisdom-muted max-w-lg mx-auto text-sm leading-relaxed">
-                Department tracks by year and semester.
+                Department tracks by year and semester — buy each semester separately.
               </p>
             </div>
 
             <Link
               href="/academy/special-packages"
-              className="relative group block max-w-xl mx-auto overflow-hidden rounded-2xl sm:rounded-3xl border border-violet-400/30 bg-wisdom-card hover:border-violet-300/50 transition-all"
+              className="group block max-w-xl mx-auto overflow-hidden rounded-2xl sm:rounded-3xl border border-violet-400/30 bg-wisdom-card hover:border-violet-300/50 transition-all"
             >
               <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
                 <SafeCoverImage src={SPECIAL_PACKAGES_HUB_IMAGE} alt="" />
@@ -228,7 +226,7 @@ export default function AcademyPage() {
               <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8 text-left">
                 <h3 className="flex items-center gap-1.5 font-display text-base sm:text-lg font-bold text-white group-hover:text-violet-200">
                   <BadgeCheck className="w-4 h-4 shrink-0 text-sky-400" aria-hidden />
-                  Special packages
+                  Browse special packages
                 </h3>
                 <span className="mt-2.5 inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-violet-400/90">
                   Open
