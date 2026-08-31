@@ -1,7 +1,6 @@
 /**
- * Academy packages — grades/branches at 500 ETB; ECE special at 600 full / 300 per semester.
- * Images live in public/images/packages/ (uploaded names with hash suffixes).
- * Bank logos: public/images/banks/{id}.png
+ * Academy packages — Freshman 300 ETB; grades/other branches 500 (not for sale until ready);
+ * ECE special at 600 full / 300 per semester.
  */
 
 export type AcademyPackage = {
@@ -18,6 +17,7 @@ export type AcademyPackage = {
 };
 
 export const PACKAGE_PRICE_ETB = 500;
+export const FRESHMAN_PRICE_ETB = 300;
 
 /** Exact filenames currently in public/images/packages/ */
 export const packageImages = {
@@ -86,11 +86,16 @@ export const academyPackages: AcademyPackage[] = [
     id: "freshman",
     name: "Freshman Package",
     shortName: "Freshman",
-    description: "Nineteen first-year subjects — math, sciences, languages, civics, and more.",
-    priceEtb: PACKAGE_PRICE_ETB,
+    description:
+      "All first-year subjects in one package — math, sciences, languages, civics, and more. One purchase unlocks every subject’s learning hubs.",
+    priceEtb: FRESHMAN_PRICE_ETB,
     href: "/academy/freshman",
     image: packageImages.freshman,
-    includes: ["All freshman subjects", "Notes & practice", "500 ETB one-time"],
+    includes: [
+      "All freshman subjects",
+      "Books · videos · flashcards · exams",
+      "300 ETB one-time",
+    ],
     enrolledLabel: "890+ students",
     group: "branch",
   },
@@ -142,7 +147,6 @@ export const academyPackages: AcademyPackage[] = [
     enrolledLabel: "510+ students",
     group: "branch",
   },
-  // —— Special packages (ECE) ——
   {
     id: "ece-y3-full",
     name: "ECE Year 3 — Full year",
