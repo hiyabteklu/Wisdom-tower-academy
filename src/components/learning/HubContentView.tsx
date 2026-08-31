@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   listResources,
@@ -9,9 +9,9 @@ import {
   getMyProgress,
   type LearningResource,
   type HubId,
+  type ProgressMeta,
 } from "@/lib/content";
 import { isPackageOwned } from "@/lib/ownership";
-import { supabase } from "@/lib/supabase";
 import {
   BookOpen,
   Download,
@@ -20,6 +20,8 @@ import {
   Play,
   HelpCircle,
   Timer,
+  Layers,
+  BarChart3,
 } from "lucide-react";
 import NotesViewer from "@/components/learning/NotesViewer";
 import QuizExamViewer from "@/components/learning/QuizExamViewer";
@@ -31,6 +33,16 @@ type Props = {
   packageId: string;
   accent?: string;
 };
+
+function formatTime(sec: number) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  if (m >= 60) {
+    const h = Math.floor(m / 60);
+    return `${h}h ${m % 60}m`;
+  }
+  return `${m}m ${s}s`;
+}
 
 export default function HubContentView({
   scopePath,
@@ -45,6 +57,8 @@ export default function HubContentView({
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [progressPct, setProgressPct] = useState(0);
   const [seconds, setSeconds] = useState(0);
+  const [progMeta, setProgMeta] = useState<ProgressMeta>({});
+  const videoWatchRef = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -71,29 +85,47 @@ export default function HubContentView({
     };
   }, [scopePath, hub, packageId]);
 
+  // Study-time ticker
   useEffect(() => {
     if (!active || !owned) return;
     let tick = 0;
     const id = window.setInterval(() => {
       tick += 1;
       setSeconds((s) => s + 1);
+      if (active.contentType === "video_url") {
+        videoWatchRef.current += 1;
+      }
       if (tick % 30 === 0) {
+        const videoMeta =
+          active.contentType === "video_url"
+            ? {
+                video: {
+                  watchSeconds:
+                    (Number(progMeta.video?.watchSeconds || 0) || 0) +
+                    videoWatchRef.current,
+                },
+              }
+            : undefined;
+        if (videoMeta) videoWatchRef.current = 0;
         void saveProgress({
           resourceId: active.id,
           progressPct,
           addSeconds: 30,
           addFocusSeconds: document.visibilityState === "visible" ? 30 : 0,
+          meta: videoMeta,
         });
       }
     }, 1000);
     return () => window.clearInterval(id);
-  }, [active, owned, progressPct]);
+  }, [active, owned, progressPct, progMeta.video?.watchSeconds]);
 
   async function openItem(item: LearningResource) {
     setActive(item);
+    videoWatchRef.current = 0;
     const prog = await getMyProgress(item.id);
     setProgressPct(prog.pct);
     setSeconds(prog.totalSeconds);
+    setProgMeta(prog.meta || {});
     if (item.contentType === "pdf" && item.storagePath) {
       const signed = await getSignedContentUrl(item.storagePath);
       setPdfUrl(signed.url || null);
@@ -126,6 +158,10 @@ export default function HubContentView({
   }
 
   if (active) {
+    const quiz = progMeta.quiz;
+    const fc = progMeta.flashcards;
+    const vid = progMeta.video;
+
     return (
       <div className="space-y-4">
         <button
@@ -135,12 +171,57 @@ export default function HubContentView({
         >
           ← All items
         </button>
-        <div className="flex flex-wrap items-center justify-between gap-2">
+
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <h2 className={`font-display text-xl font-bold ${accent}`}>{active.title}</h2>
-          <p className="text-xs text-wisdom-muted flex items-center gap-1">
-            <Clock className="w-3.5 h-3.5" />
-            {Math.floor(seconds / 60)}m studied · {Math.round(progressPct)}%
-          </p>
+          <div className="flex flex-wrap gap-2 text-xs">
+            <span className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-wisdom-dark/50 px-2.5 py-1 text-wisdom-muted">
+              <Clock className="w-3.5 h-3.5" />
+              {formatTime(seconds)} studied
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-lg border border-amber-400/25 bg-amber-500/10 px-2.5 py-1 text-amber-200 font-semibold">
+              <BarChart3 className="w-3.5 h-3.5" />
+              {Math.round(progressPct)}%
+            </span>
+          </div>
+        </div>
+
+        {/* Type-specific progress chips */}
+        {(quiz || fc || vid) && (
+          <div className="flex flex-wrap gap-2 text-xs">
+            {quiz && (
+              <>
+                <Chip>
+                  Attempted {quiz.attempted}/{quiz.total}
+                </Chip>
+                <Chip tone="emerald">Correct {quiz.correct}</Chip>
+                <Chip tone="amber">Accuracy {quiz.accuracy}%</Chip>
+              </>
+            )}
+            {fc && (
+              <>
+                <Chip>
+                  Cards {fc.seen}/{fc.total}
+                </Chip>
+                <Chip tone="emerald">Know {fc.know}</Chip>
+                <Chip tone="amber">Learning {fc.learning}</Chip>
+                <Chip tone="rose">Again {fc.again}</Chip>
+              </>
+            )}
+            {vid && (
+              <Chip tone="cyan">
+                Watch time {formatTime(Number(vid.watchSeconds || 0))}
+              </Chip>
+            )}
+          </div>
+        )}
+
+        {/* Progress bar */}
+        <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-amber-400 to-cyan-400 transition-all duration-500"
+            style={{ width: `${Math.min(100, progressPct)}%` }}
+          />
         </div>
 
         {active.contentType === "pdf" && pdfUrl && (
@@ -192,7 +273,7 @@ export default function HubContentView({
         {active.contentType === "video_url" && (
           <div className="rounded-2xl border border-white/12 p-4">
             <p className="text-sm text-wisdom-muted mb-2 flex items-center gap-1">
-              <Play className="w-4 h-4" /> Video
+              <Play className="w-4 h-4" /> Video · watch time tracked while this page is open
             </p>
             {active.bodyMd?.includes("youtube") || active.bodyMd?.includes("youtu.be") ? (
               <div className="aspect-video rounded-xl overflow-hidden bg-black">
@@ -201,10 +282,18 @@ export default function HubContentView({
                   src={toEmbed(active.bodyMd)}
                   allowFullScreen
                   title={active.title}
+                  onLoad={() => {
+                    setProgressPct((p) => Math.max(p, 10));
+                  }}
                 />
               </div>
             ) : (
-              <a href={active.bodyMd || "#"} className="text-cyan-300 underline text-sm" target="_blank" rel="noreferrer">
+              <a
+                href={active.bodyMd || "#"}
+                className="text-cyan-300 underline text-sm"
+                target="_blank"
+                rel="noreferrer"
+              >
                 {active.bodyMd || "No URL"}
               </a>
             )}
@@ -212,7 +301,7 @@ export default function HubContentView({
         )}
 
         {active.contentType === "flashcard_deck" && (
-          <FlashcardViewer meta={active.meta} />
+          <FlashcardViewer meta={active.meta} resourceId={active.id} />
         )}
 
         {(active.contentType === "quiz" || active.contentType === "exam") && (
@@ -242,14 +331,18 @@ export default function HubContentView({
           <button
             type="button"
             onClick={() => void openItem(item)}
-            className="w-full flex items-center gap-3 rounded-2xl border border-white/12 bg-wisdom-card px-4 py-3.5 text-left hover:border-amber-400/35"
+            className="w-full flex items-center gap-3 rounded-2xl border border-white/12 bg-wisdom-card px-4 py-3.5 text-left hover:border-amber-400/35 transition-colors"
           >
             {hub === "exams" ? (
-              <Timer className="w-5 h-5 text-emerald-400" />
+              <Timer className="w-5 h-5 text-emerald-400 shrink-0" />
             ) : hub === "question-banks" ? (
-              <HelpCircle className="w-5 h-5 text-cyan-400" />
+              <HelpCircle className="w-5 h-5 text-cyan-400 shrink-0" />
+            ) : hub === "flashcards" ? (
+              <Layers className="w-5 h-5 text-violet-400 shrink-0" />
+            ) : hub === "videos" ? (
+              <Play className="w-5 h-5 text-rose-400 shrink-0" />
             ) : (
-              <BookOpen className="w-5 h-5 text-amber-400" />
+              <BookOpen className="w-5 h-5 text-amber-400 shrink-0" />
             )}
             <div className="min-w-0 flex-1">
               <p className="font-semibold text-white truncate">{item.title}</p>
@@ -261,6 +354,27 @@ export default function HubContentView({
         </li>
       ))}
     </ul>
+  );
+}
+
+function Chip({
+  children,
+  tone = "muted",
+}: {
+  children: React.ReactNode;
+  tone?: "muted" | "emerald" | "amber" | "rose" | "cyan";
+}) {
+  const map = {
+    muted: "border-white/10 text-wisdom-muted",
+    emerald: "border-emerald-400/25 text-emerald-200 bg-emerald-500/10",
+    amber: "border-amber-400/25 text-amber-200 bg-amber-500/10",
+    rose: "border-rose-400/25 text-rose-200 bg-rose-500/10",
+    cyan: "border-cyan-400/25 text-cyan-200 bg-cyan-500/10",
+  };
+  return (
+    <span className={`rounded-lg border px-2.5 py-1 font-medium ${map[tone]}`}>
+      {children}
+    </span>
   );
 }
 

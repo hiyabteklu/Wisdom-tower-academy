@@ -49,6 +49,29 @@ export type ResourceInput = {
   published?: boolean;
 };
 
+export type ProgressMeta = {
+  quiz?: {
+    attempted: number;
+    correct: number;
+    total: number;
+    accuracy: number;
+    submitted?: boolean;
+  };
+  flashcards?: {
+    know: number;
+    learning: number;
+    again: number;
+    seen: number;
+    total: number;
+    accuracy: number;
+  };
+  video?: {
+    watchSeconds: number;
+    lastPosition?: number;
+  };
+  [key: string]: unknown;
+};
+
 function rowToResource(row: Record<string, unknown>): LearningResource {
   return {
     id: String(row.id),
@@ -142,7 +165,6 @@ export async function deleteResource(
   return { ok: true };
 }
 
-/** Upload PDF/media to learning-content bucket */
 export async function uploadLearningFile(
   path: string,
   file: File
@@ -175,6 +197,7 @@ export async function saveProgress(opts: {
   lastPage?: number;
   addSeconds?: number;
   addFocusSeconds?: number;
+  meta?: ProgressMeta;
 }): Promise<{ ok: boolean; error?: string }> {
   const {
     data: { session },
@@ -184,7 +207,7 @@ export async function saveProgress(opts: {
   const userId = session.user.id;
   const { data: existing } = await supabase
     .from("learning_progress")
-    .select("total_seconds, focus_seconds")
+    .select("total_seconds, focus_seconds, meta, progress_pct")
     .eq("user_id", userId)
     .eq("resource_id", opts.resourceId)
     .maybeSingle();
@@ -194,15 +217,25 @@ export async function saveProgress(opts: {
   const focus =
     Number(existing?.focus_seconds || 0) + Math.max(0, opts.addFocusSeconds || 0);
 
+  const prevMeta = (existing?.meta as Record<string, unknown>) || {};
+  const nextMeta = opts.meta ? { ...prevMeta, ...opts.meta } : prevMeta;
+
+  // Never decrease progress % unless explicitly completing a better score path
+  const nextPct = Math.max(
+    Number(existing?.progress_pct || 0),
+    Math.min(100, opts.progressPct)
+  );
+
   const { error } = await supabase.from("learning_progress").upsert(
     {
       user_id: userId,
       resource_id: opts.resourceId,
-      progress_pct: opts.progressPct,
+      progress_pct: nextPct,
       last_page: opts.lastPage ?? null,
       total_seconds: total,
       focus_seconds: focus,
       last_opened_at: new Date().toISOString(),
+      meta: nextMeta,
     },
     { onConflict: "user_id,resource_id" }
   );
@@ -213,15 +246,23 @@ export async function saveProgress(opts: {
 
 export async function getMyProgress(
   resourceId: string
-): Promise<{ pct: number; lastPage: number | null; totalSeconds: number }> {
+): Promise<{
+  pct: number;
+  lastPage: number | null;
+  totalSeconds: number;
+  focusSeconds: number;
+  meta: ProgressMeta;
+}> {
   const {
     data: { session },
   } = await supabase.auth.getSession();
-  if (!session?.user) return { pct: 0, lastPage: null, totalSeconds: 0 };
+  if (!session?.user) {
+    return { pct: 0, lastPage: null, totalSeconds: 0, focusSeconds: 0, meta: {} };
+  }
 
   const { data } = await supabase
     .from("learning_progress")
-    .select("progress_pct, last_page, total_seconds")
+    .select("progress_pct, last_page, total_seconds, focus_seconds, meta")
     .eq("user_id", session.user.id)
     .eq("resource_id", resourceId)
     .maybeSingle();
@@ -230,10 +271,35 @@ export async function getMyProgress(
     pct: Number(data?.progress_pct || 0),
     lastPage: data?.last_page != null ? Number(data.last_page) : null,
     totalSeconds: Number(data?.total_seconds || 0),
+    focusSeconds: Number(data?.focus_seconds || 0),
+    meta: (data?.meta as ProgressMeta) || {},
   };
 }
 
-/** Scope path helpers matching website structure */
+export async function saveExamAttempt(opts: {
+  resourceId: string;
+  score: number;
+  total: number;
+  answers: Record<number, number>;
+}): Promise<{ ok: boolean; error?: string }> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session?.user) return { ok: false, error: "Not signed in" };
+
+  const { error } = await supabase.from("exam_attempts").insert({
+    user_id: session.user.id,
+    resource_id: opts.resourceId,
+    submitted_at: new Date().toISOString(),
+    score: opts.score,
+    answers: opts.answers,
+    meta: { total: opts.total },
+  });
+
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
 export function freshmanScope(subjectId: string): string {
   return `freshman/${subjectId}`;
 }
