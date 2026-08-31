@@ -20,6 +20,7 @@ import {
   Timer,
   Layers,
   BarChart3,
+  Gauge,
 } from "lucide-react";
 import NotesViewer from "@/components/learning/NotesViewer";
 import QuizExamViewer from "@/components/learning/QuizExamViewer";
@@ -44,6 +45,21 @@ function formatTime(sec: number) {
   return `${m}m ${s}s`;
 }
 
+function focusLabel(focusSec: number, totalSec: number) {
+  if (totalSec < 30) return "—";
+  const ratio = focusSec / Math.max(1, totalSec);
+  if (ratio >= 0.75) return "Intense";
+  if (ratio >= 0.4) return "Medium";
+  return "Fast";
+}
+
+function completionLabel(pct: number) {
+  if (pct >= 85) return "Long";
+  if (pct >= 40) return "Medium";
+  if (pct > 0) return "Short";
+  return "Not started";
+}
+
 export default function HubContentView({
   scopePath,
   hub,
@@ -58,6 +74,7 @@ export default function HubContentView({
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [progressPct, setProgressPct] = useState(0);
   const [seconds, setSeconds] = useState(0);
+  const [focusSeconds, setFocusSeconds] = useState(0);
   const [progMeta, setProgMeta] = useState<ProgressMeta>({});
   const videoWatchRef = useRef(0);
 
@@ -92,6 +109,9 @@ export default function HubContentView({
     const id = window.setInterval(() => {
       tick += 1;
       setSeconds((s) => s + 1);
+      if (document.visibilityState === "visible") {
+        setFocusSeconds((f) => f + 1);
+      }
       if (active.contentType === "video_url") {
         videoWatchRef.current += 1;
       }
@@ -125,6 +145,7 @@ export default function HubContentView({
     const prog = await getMyProgress(item.id);
     setProgressPct(prog.pct);
     setSeconds(prog.totalSeconds);
+    setFocusSeconds(prog.focusSeconds);
     setProgMeta(prog.meta || {});
 
     if (item.contentType === "pdf" && item.storagePath) {
@@ -161,6 +182,8 @@ export default function HubContentView({
     const quiz = progMeta.quiz;
     const fc = progMeta.flashcards;
     const vid = progMeta.video;
+    const isBookLike = hub === "books" || active.contentType === "pdf";
+    const isRef = hub === "references" || active.contentType === "markdown";
 
     return (
       <div className="space-y-4">
@@ -174,42 +197,68 @@ export default function HubContentView({
 
         <div className="flex flex-wrap items-start justify-between gap-3">
           <h2 className={`font-display text-xl font-bold ${accent}`}>{active.title}</h2>
-          <div className="flex flex-wrap gap-2 text-xs">
-            <span className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-wisdom-dark/50 px-2.5 py-1 text-wisdom-muted">
-              <Clock className="w-3.5 h-3.5" />
-              {formatTime(seconds)} studied
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-lg border border-amber-400/25 bg-amber-500/10 px-2.5 py-1 text-amber-200 font-semibold">
-              <BarChart3 className="w-3.5 h-3.5" />
-              {Math.round(progressPct)}%
-            </span>
-          </div>
         </div>
 
-        {(quiz || fc || vid) && (
-          <div className="flex flex-wrap gap-2 text-xs">
-            {quiz && (
-              <>
-                <Chip>Attempted {quiz.attempted}/{quiz.total}</Chip>
-                <Chip tone="emerald">Correct {quiz.correct}</Chip>
-                <Chip tone="amber">Accuracy {quiz.accuracy}%</Chip>
-              </>
-            )}
-            {fc && (
-              <>
-                <Chip>Cards {fc.seen}/{fc.total}</Chip>
-                <Chip tone="emerald">Know {fc.know}</Chip>
-                <Chip tone="amber">Learning {fc.learning}</Chip>
-                <Chip tone="rose">Again {fc.again}</Chip>
-              </>
-            )}
-            {vid && (
+        {/* Hub-specific progress chips only */}
+        <div className="flex flex-wrap gap-2 text-xs">
+          {(isBookLike || isRef) && (
+            <>
               <Chip tone="cyan">
-                Watch time {formatTime(Number(vid.watchSeconds || 0))}
+                <Clock className="w-3 h-3 inline mr-1" />
+                Reading {formatTime(seconds)}
               </Chip>
-            )}
-          </div>
-        )}
+              <Chip tone="amber">
+                <Gauge className="w-3 h-3 inline mr-1" />
+                Focus {focusLabel(focusSeconds, seconds)}
+              </Chip>
+              <Chip>
+                Session {completionLabel(progressPct)}
+              </Chip>
+              <Chip tone="emerald">
+                <BarChart3 className="w-3 h-3 inline mr-1" />
+                {Math.round(progressPct)}% complete
+              </Chip>
+            </>
+          )}
+
+          {hub === "videos" && (
+            <>
+              <Chip tone="cyan">
+                Watch {formatTime(Number(vid?.watchSeconds || seconds))}
+              </Chip>
+              <Chip tone="amber">{Math.round(progressPct)}%</Chip>
+            </>
+          )}
+
+          {hub === "flashcards" && fc && (
+            <>
+              <Chip>Cards {fc.seen}/{fc.total}</Chip>
+              <Chip tone="emerald">Know {fc.know}</Chip>
+              <Chip tone="amber">Learning {fc.learning}</Chip>
+              <Chip tone="rose">Again {fc.again}</Chip>
+              <Chip tone="cyan">Mastery {fc.accuracy}%</Chip>
+            </>
+          )}
+
+          {(hub === "question-banks" || hub === "exams") && quiz && (
+            <>
+              <Chip>Attempted {quiz.attempted}/{quiz.total}</Chip>
+              <Chip tone="emerald">Correct {quiz.correct}</Chip>
+              {"wrong" in quiz && (
+                <Chip tone="rose">Wrong {Number((quiz as { wrong?: number }).wrong || 0)}</Chip>
+              )}
+              {"skipped" in quiz && (
+                <Chip>Skipped {Number((quiz as { skipped?: number }).skipped || 0)}</Chip>
+              )}
+              <Chip tone="amber">Accuracy {quiz.accuracy}%</Chip>
+              {"elapsedSec" in quiz && (
+                <Chip tone="cyan">
+                  Time {formatTime(Number((quiz as { elapsedSec?: number }).elapsedSec || 0))}
+                </Chip>
+              )}
+            </>
+          )}
+        </div>
 
         <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
           <div
@@ -251,7 +300,7 @@ export default function HubContentView({
         {active.contentType === "video_url" && (
           <div className="rounded-2xl border border-white/12 p-4">
             <p className="text-sm text-wisdom-muted mb-2 flex items-center gap-1">
-              <Play className="w-4 h-4" /> Video · watch time tracked while this page is open
+              <Play className="w-4 h-4" /> Video
             </p>
             {active.bodyMd?.includes("youtube") || active.bodyMd?.includes("youtu.be") ? (
               <div className="aspect-video rounded-xl overflow-hidden bg-black">
@@ -350,7 +399,7 @@ function Chip({
     cyan: "border-cyan-400/25 text-cyan-200 bg-cyan-500/10",
   };
   return (
-    <span className={`rounded-lg border px-2.5 py-1 font-medium ${map[tone]}`}>
+    <span className={`inline-flex items-center rounded-lg border px-2.5 py-1 font-medium ${map[tone]}`}>
       {children}
     </span>
   );

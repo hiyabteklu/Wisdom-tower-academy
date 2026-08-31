@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Sparkles, ListTree, BookMarked } from "lucide-react";
+import { Lightbulb, ListTree } from "lucide-react";
 import RichContent, { type TocItem } from "@/components/learning/RichContent";
 
 type Props = {
@@ -18,7 +18,6 @@ export default function NotesViewer({ body, resourceId, onProgress }: Props) {
   const articleRef = useRef<HTMLDivElement>(null);
   const reported = useRef(false);
 
-  // Scroll-depth progress
   useEffect(() => {
     const el = articleRef.current;
     if (!el) return;
@@ -42,7 +41,7 @@ export default function NotesViewer({ body, resourceId, onProgress }: Props) {
     return () => window.removeEventListener("scroll", onScroll);
   }, [body, onProgress]);
 
-  async function explain() {
+  async function summarize() {
     setLoading(true);
     setAi("");
     try {
@@ -50,13 +49,13 @@ export default function NotesViewer({ body, resourceId, onProgress }: Props) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          text: body.slice(0, 4000),
+          text: body.slice(0, 8000),
           resourceId,
-          mode: "notes",
+          mode: "summarize",
         }),
       });
       const data = await res.json();
-      setAi(data.explanation || data.error || "No explanation returned.");
+      setAi(data.explanation || data.error || "No summary returned.");
       onProgress?.(100);
     } catch {
       setAi("Could not reach AI. Try again later.");
@@ -66,7 +65,6 @@ export default function NotesViewer({ body, resourceId, onProgress }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2">
         {toc.length > 0 && (
           <button
@@ -78,10 +76,6 @@ export default function NotesViewer({ body, resourceId, onProgress }: Props) {
             {showToc ? "Hide outline" : "Outline"}
           </button>
         )}
-        <span className="text-[10px] uppercase tracking-wider text-wisdom-muted flex items-center gap-1">
-          <BookMarked className="w-3 h-3" />
-          Use ==highlight== or [[key term]] in notes
-        </span>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px]">
@@ -119,20 +113,25 @@ export default function NotesViewer({ body, resourceId, onProgress }: Props) {
         )}
       </div>
 
-      <button
-        type="button"
-        onClick={() => void explain()}
-        disabled={loading}
-        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-violet-400/40 bg-violet-500/10 text-violet-200 text-sm font-semibold disabled:opacity-60"
-      >
-        <Sparkles className="w-4 h-4" />
-        {loading ? "Explaining…" : "Explain with AI"}
-      </button>
-      {ai && (
-        <div className="rounded-2xl border border-violet-400/25 bg-violet-500/10 p-4 text-sm text-white/90 leading-relaxed">
-          <RichContent body={ai} />
-        </div>
-      )}
+      <div className="pt-2 border-t border-white/8">
+        <button
+          type="button"
+          onClick={() => void summarize()}
+          disabled={loading}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-violet-400/40 bg-violet-500/10 text-violet-200 text-sm font-semibold disabled:opacity-60"
+        >
+          <Lightbulb className="w-4 h-4" />
+          {loading ? "Summarizing…" : "Summarize with AI"}
+        </button>
+        {ai && (
+          <div className="mt-3 rounded-2xl border border-violet-400/25 bg-violet-500/10 p-4 text-sm text-white/90 leading-relaxed">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-violet-300 mb-2 inline-flex items-center gap-1">
+              <Lightbulb className="w-3.5 h-3.5" /> AI summary
+            </p>
+            <RichContent body={ai} />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

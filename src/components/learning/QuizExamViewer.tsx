@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Sparkles, Calculator, Trophy, Target } from "lucide-react";
+import {
+  Lightbulb,
+  Calculator,
+  Trophy,
+  Target,
+  BadgeCheck,
+  Clock,
+} from "lucide-react";
 import RichContent from "@/components/learning/RichContent";
 import { saveProgress, saveExamAttempt } from "@/lib/content";
 
@@ -32,21 +39,24 @@ export default function QuizExamViewer({
   const [idx, setIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [showSol, setShowSol] = useState(false);
-  const [left, setLeft] = useState(durationMin * 60);
+  const [left, setLeft] = useState(durationMin > 0 ? durationMin * 60 : 0);
   const [calc, setCalc] = useState("");
   const [ai, setAi] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [startedAt] = useState(() => Date.now());
 
+  // Exam countdown only
   useEffect(() => {
-    if (!isExam || !durationMin) return;
+    if (!isExam || durationMin <= 0 || submitted) return;
     if (left <= 0) {
       setSubmitted(true);
       return;
     }
     const t = setTimeout(() => setLeft((s) => s - 1), 1000);
     return () => clearTimeout(t);
-  }, [left, isExam, durationMin]);
+  }, [left, isExam, durationMin, submitted]);
 
   const q = questions[idx];
 
@@ -59,52 +69,69 @@ export default function QuizExamViewer({
   }, [answers, questions]);
 
   const attempted = Object.keys(answers).length;
-  const accuracy = attempted > 0 ? Math.round((score / attempted) * 100) : 0;
+  const skipped = questions.length - attempted;
+  const wrong = useMemo(() => {
+    let w = 0;
+    questions.forEach((qq, i) => {
+      if (answers[i] != null && answers[i] !== qq.correct) w++;
+    });
+    return w;
+  }, [answers, questions]);
 
+  const accuracy = attempted > 0 ? Math.round((score / attempted) * 100) : 0;
+  const elapsedSec = Math.max(0, Math.round((Date.now() - startedAt) / 1000));
+
+  // Practice quiz: live progress. Exam: only after submit.
   useEffect(() => {
     if (!resourceId || questions.length === 0) return;
+    if (isExam && !submitted) return;
     const pct = Math.round((attempted / questions.length) * 100);
     void saveProgress({
       resourceId,
-      progressPct: pct,
+      progressPct: submitted ? 100 : pct,
       meta: {
         quiz: {
           attempted,
           correct: score,
           total: questions.length,
-          accuracy,
-          submitted,
+          accuracy: submitted
+            ? questions.length
+              ? Math.round((score / questions.length) * 100)
+              : 0
+            : accuracy,
+          submitted: Boolean(submitted),
+          wrong,
+          skipped,
+          elapsedSec,
         },
       },
     });
-  }, [attempted, score, accuracy, submitted, resourceId, questions.length]);
+  }, [
+    attempted,
+    score,
+    accuracy,
+    submitted,
+    resourceId,
+    questions.length,
+    isExam,
+    wrong,
+    skipped,
+    elapsedSec,
+  ]);
 
   useEffect(() => {
     if (!submitted || saved || !resourceId) return;
     setSaved(true);
-    void saveExamAttempt({
-      resourceId,
-      score,
-      total: questions.length,
-      answers,
-      title: title || (isExam ? "Exam" : "Quiz"),
-      scopeId: trackerScopeId,
-    });
-    void saveProgress({
-      resourceId,
-      progressPct: 100,
-      meta: {
-        quiz: {
-          attempted,
-          correct: score,
-          total: questions.length,
-          accuracy: questions.length
-            ? Math.round((score / questions.length) * 100)
-            : 0,
-          submitted: true,
-        },
-      },
-    });
+    if (isExam) {
+      void saveExamAttempt({
+        resourceId,
+        score,
+        total: questions.length,
+        answers,
+        title: title || "Exam",
+        scopeId: trackerScopeId,
+      });
+    }
   }, [
     submitted,
     saved,
@@ -112,7 +139,6 @@ export default function QuizExamViewer({
     score,
     questions.length,
     answers,
-    attempted,
     title,
     trackerScopeId,
     isExam,
@@ -123,16 +149,28 @@ export default function QuizExamViewer({
   }
 
   async function explainQ() {
-    setAi("…");
+    if (!q) return;
+    setAiLoading(true);
+    setAi("");
     try {
+      const student =
+        answers[idx] != null
+          ? q.choices?.[answers[idx]] || String(answers[idx])
+          : "(not answered)";
+      const correct =
+        q.correct != null ? q.choices?.[q.correct] || String(q.correct) : "";
       const res = await fetch("/api/ai/explain", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          text: q?.prompt,
-          solution: q?.solution,
-          resourceId,
           mode: "question",
+          text: q.prompt,
+          question: q.prompt,
+          choices: q.choices || [],
+          studentAnswer: student,
+          correctAnswer: correct,
+          solution: q.solution || "",
+          resourceId,
         }),
       });
       const data = await res.json();
@@ -140,22 +178,41 @@ export default function QuizExamViewer({
     } catch {
       setAi("AI unavailable");
     }
+    setAiLoading(false);
   }
+
+  const revealCorrectness = !isExam || submitted;
 
   return (
     <div className="space-y-4">
+      {/* Tracker — exam hides live score until submit */}
       <div className="flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-wisdom-dark/40 px-4 py-2.5 text-xs">
-        <span className="inline-flex items-center gap-1 text-cyan-200">
-          <Target className="w-3.5 h-3.5" />
-          Attempted {attempted}/{questions.length}
-        </span>
-        <span className="inline-flex items-center gap-1 text-emerald-200">
-          <Trophy className="w-3.5 h-3.5" />
-          Correct {score}
-        </span>
-        <span className="text-amber-200 font-semibold">Accuracy {accuracy}%</span>
+        {!isExam && (
+          <>
+            <span className="inline-flex items-center gap-1 text-cyan-200">
+              <Target className="w-3.5 h-3.5" />
+              Attempted {attempted}/{questions.length}
+            </span>
+            <span className="inline-flex items-center gap-1 text-emerald-200">
+              <Trophy className="w-3.5 h-3.5" />
+              Correct {score}
+            </span>
+            <span className="text-amber-200 font-semibold">Accuracy {accuracy}%</span>
+          </>
+        )}
+        {isExam && !submitted && (
+          <span className="inline-flex items-center gap-1 text-white/70">
+            Answered {attempted}/{questions.length}
+            {skipped > 0 ? ` · ${skipped} left` : ""}
+          </span>
+        )}
         {isExam && durationMin > 0 && (
-          <span className="ml-auto font-mono text-emerald-200">
+          <span
+            className={`ml-auto font-mono font-bold inline-flex items-center gap-1 ${
+              left < 60 ? "text-rose-300" : "text-emerald-200"
+            }`}
+          >
+            <Clock className="w-3.5 h-3.5" />
             {Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")}
           </span>
         )}
@@ -164,8 +221,8 @@ export default function QuizExamViewer({
       <div className="flex flex-wrap gap-1.5">
         {questions.map((qq, i) => {
           const answered = answers[i] != null;
-          const isCorrect = answered && answers[i] === qq.correct;
-          const isWrong = answered && answers[i] !== qq.correct && (submitted || !isExam);
+          const isCorrect = revealCorrectness && answered && answers[i] === qq.correct;
+          const isWrong = revealCorrectness && answered && answers[i] !== qq.correct;
           return (
             <button
               key={i}
@@ -203,22 +260,31 @@ export default function QuizExamViewer({
         <div className="space-y-2">
           {(q.choices || []).map((c, ci) => {
             const selected = answers[idx] === ci;
-            const reveal = submitted || (!isExam && showSol);
+            const reveal = revealCorrectness && (submitted || !isExam);
             const isRight = q.correct === ci;
+            // Practice: show right/wrong after selecting + opening solution, or always after pick if showSol
+            const showMark = isExam ? submitted : showSol || submitted;
             return (
               <button
                 key={ci}
                 type="button"
                 disabled={submitted}
-                onClick={() => setAnswers((a) => ({ ...a, [idx]: ci }))}
+                onClick={() => {
+                  if (submitted) return;
+                  setAnswers((a) => ({ ...a, [idx]: ci }));
+                  // Exam: never reveal per-click
+                  if (!isExam) {
+                    /* practice keeps neutral until solution */
+                  }
+                }}
                 className={`w-full text-left px-3 py-2.5 rounded-xl border text-sm transition-colors ${
                   selected
                     ? "border-amber-400/50 bg-amber-500/15 text-white"
                     : "border-white/12 text-white/80 hover:border-white/25"
                 } ${
-                  reveal && isRight ? "!border-emerald-400/50 !bg-emerald-500/10" : ""
+                  showMark && isRight ? "!border-emerald-400/50 !bg-emerald-500/10" : ""
                 } ${
-                  reveal && selected && !isRight
+                  showMark && selected && !isRight
                     ? "!border-rose-400/40 !bg-rose-500/10"
                     : ""
                 }`}
@@ -232,47 +298,48 @@ export default function QuizExamViewer({
           })}
         </div>
 
+        {/* Practice only: Official solution + AI explain */}
         {!isExam && (
           <div className="mt-4 flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => setShowSol(true)}
-              className="text-xs font-semibold text-cyan-300"
+              onClick={() => setShowSol((v) => !v)}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-emerald-400/35 bg-emerald-500/10 text-emerald-200 text-xs font-bold"
             >
-              Show solution
+              <BadgeCheck className="w-4 h-4" />
+              {showSol ? "Hide official solution" : "Official solution"}
             </button>
             <button
               type="button"
               onClick={() => void explainQ()}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-violet-300"
+              disabled={aiLoading}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-violet-400/35 bg-violet-500/10 text-violet-200 text-xs font-bold disabled:opacity-60"
             >
-              <Sparkles className="w-3.5 h-3.5" /> Explain with AI
+              <Lightbulb className="w-4 h-4" />
+              {aiLoading ? "Generating…" : "Explain with AI"}
             </button>
           </div>
         )}
 
-        {showSol && q.solution && (
-          <div className="mt-3 rounded-xl border border-cyan-400/25 bg-cyan-500/10 p-4 text-sm">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-300 mb-2">
-              Solution
+        {!isExam && showSol && q.solution && (
+          <div className="mt-3 rounded-xl border border-emerald-400/25 bg-emerald-500/10 p-4 text-sm">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 mb-2 inline-flex items-center gap-1">
+              <BadgeCheck className="w-3.5 h-3.5" /> Official solution
             </p>
-            <div className="study-prose text-cyan-50">
+            <div className="study-prose text-emerald-50">
               <RichContent body={q.solution} />
             </div>
           </div>
         )}
-        {ai && ai !== "…" && (
+        {!isExam && ai && (
           <div className="mt-3 rounded-xl border border-violet-400/25 bg-violet-500/10 p-4 text-sm">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-violet-300 mb-2">
-              AI explanation
+            <p className="text-[10px] font-bold uppercase tracking-wider text-violet-300 mb-2 inline-flex items-center gap-1">
+              <Lightbulb className="w-3.5 h-3.5" /> AI explanation
             </p>
             <div className="study-prose text-white/90">
               <RichContent body={ai} />
             </div>
           </div>
-        )}
-        {ai === "…" && (
-          <p className="mt-3 text-xs text-violet-300/80">Generating explanation…</p>
         )}
       </div>
 
@@ -307,12 +374,13 @@ export default function QuizExamViewer({
             onClick={() => setSubmitted(true)}
             className="px-4 py-2 rounded-xl border border-emerald-400/40 text-emerald-200 text-sm font-semibold"
           >
-            {isExam ? "Submit exam" : "Submit quiz"}
+            {isExam ? "Submit exam" : "Finish practice"}
           </button>
         )}
       </div>
 
-      <details className="rounded-xl border border-white/10 bg-wisdom-dark/40 p-3">
+      {/* Calculator — especially for exams */}
+      <details className="rounded-xl border border-white/10 bg-wisdom-dark/40 p-3" open={isExam}>
         <summary className="text-xs font-semibold text-wisdom-muted cursor-pointer flex items-center gap-1">
           <Calculator className="w-3.5 h-3.5" /> Calculator
         </summary>
@@ -336,16 +404,66 @@ export default function QuizExamViewer({
       </details>
 
       {submitted && (
-        <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-5 text-center">
+        <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-5">
           <Trophy className="w-7 h-7 text-emerald-300 mx-auto mb-2" />
-          <p className="font-display text-lg font-bold text-white">
+          <p className="font-display text-lg font-bold text-white text-center">
             Score: {score} / {questions.length}
           </p>
-          <p className="text-sm text-emerald-200/90 mt-1">
+          <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
+            <div className="rounded-lg bg-wisdom-dark/40 py-2">
+              <p className="text-emerald-300 font-bold text-base">{score}</p>
+              <p className="text-wisdom-muted">Correct</p>
+            </div>
+            <div className="rounded-lg bg-wisdom-dark/40 py-2">
+              <p className="text-rose-300 font-bold text-base">{wrong}</p>
+              <p className="text-wisdom-muted">Wrong</p>
+            </div>
+            <div className="rounded-lg bg-wisdom-dark/40 py-2">
+              <p className="text-amber-200 font-bold text-base">{skipped}</p>
+              <p className="text-wisdom-muted">Skipped</p>
+            </div>
+            <div className="rounded-lg bg-wisdom-dark/40 py-2">
+              <p className="text-cyan-200 font-bold text-base">
+                {Math.floor(elapsedSec / 60)}m {elapsedSec % 60}s
+              </p>
+              <p className="text-wisdom-muted">Time</p>
+            </div>
+          </div>
+          <p className="text-sm text-emerald-200/90 mt-3 text-center">
             Accuracy{" "}
-            {questions.length ? Math.round((score / questions.length) * 100) : 0}% · saved to
-            Progress Tracker
+            {questions.length ? Math.round((score / questions.length) * 100) : 0}% · saved
           </p>
+
+          {/* After exam: show solutions for review */}
+          {isExam && (
+            <div className="mt-4 text-left space-y-3">
+              <p className="text-xs font-bold uppercase tracking-wider text-white/50">
+                Review answers
+              </p>
+              {questions.map((qq, i) => (
+                <div
+                  key={i}
+                  className="rounded-xl border border-white/10 bg-wisdom-dark/30 p-3 text-sm"
+                >
+                  <p className="text-white/80 mb-1">
+                    <span className="text-wisdom-muted">Q{i + 1}.</span>{" "}
+                    {qq.prompt.slice(0, 120)}
+                    {qq.prompt.length > 120 ? "…" : ""}
+                  </p>
+                  <p
+                    className={
+                      answers[i] === qq.correct
+                        ? "text-emerald-300"
+                        : "text-rose-300"
+                    }
+                  >
+                    Your: {answers[i] != null ? qq.choices?.[answers[i]] : "—"} ·
+                    Correct: {qq.correct != null ? qq.choices?.[qq.correct] : "—"}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
