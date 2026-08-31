@@ -56,6 +56,9 @@ export type ProgressMeta = {
     total: number;
     accuracy: number;
     submitted?: boolean;
+    wrong?: number;
+    skipped?: number;
+    elapsedSec?: number;
   };
   flashcards?: {
     know: number;
@@ -437,7 +440,10 @@ export async function getScopeStats(opts: {
     if (q) {
       quizAttempted += Number(q.attempted || 0);
       quizCorrect += Number(q.correct || 0);
-      quizWrong += Math.max(0, Number(q.attempted || 0) - Number(q.correct || 0));
+      quizWrong +=
+        q.wrong != null
+          ? Number(q.wrong)
+          : Math.max(0, Number(q.attempted || 0) - Number(q.correct || 0));
       if (q.submitted && q.total) {
         examScores.push(
           Math.round((Number(q.correct || 0) / Number(q.total)) * 1000) / 10
