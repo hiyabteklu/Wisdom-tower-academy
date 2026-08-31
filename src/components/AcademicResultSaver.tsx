@@ -1,9 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ComponentType } from "react";
 import Link from "next/link";
 import {
-  TrendingUp,
   Target,
   CheckCircle2,
   XCircle,
@@ -35,7 +34,7 @@ export type ResultEntry = {
   notes?: string | null;
 };
 
-type Props = {
+export type AcademicResultSaverProps = {
   scopeId: string;
   scopeLabel: string;
   accent?: string;
@@ -122,17 +121,15 @@ export default function AcademicResultSaver({
   accent = "text-wisdom-cyan",
   scopePath,
   hub,
-}: Props) {
+}: AcademicResultSaverProps) {
   const [user, setUser] = useState<User | null>(null);
   const [results, setResults] = useState<ResultEntry[]>([]);
   const [study, setStudy] = useState<ScopeStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
   const load = useCallback(
     async (uid: string) => {
       setLoading(true);
-      setError("");
       try {
         const { data, error: qErr } = await supabase
           .from("academic_results")
@@ -145,9 +142,6 @@ export default function AcademicResultSaver({
         if (qErr) {
           console.warn("academic_results:", qErr.message);
           setResults([]);
-          if (qErr.code === "42P01" || /does not exist|relation/i.test(qErr.message)) {
-            // non-fatal — study stats may still load
-          }
         } else {
           setResults(
             (data || []).map((row) => ({
@@ -205,7 +199,6 @@ export default function AcademicResultSaver({
     };
   }, [load]);
 
-  // Refresh when user returns to tab (after studying)
   useEffect(() => {
     const onVis = () => {
       if (document.visibilityState === "visible" && user) void load(user.id);
@@ -235,7 +228,7 @@ export default function AcademicResultSaver({
   }, [results]);
 
   const hasStudy =
-    study &&
+    !!study &&
     (study.totalStudySeconds > 0 ||
       study.quizAttempted > 0 ||
       study.flashKnow + study.flashAgain + study.flashLearning > 0 ||
@@ -292,67 +285,29 @@ export default function AcademicResultSaver({
         </div>
       ) : (
         <>
-          {/* Study activity grid */}
           {study && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-white/5 border-b border-white/10">
-              <StatChip
-                icon={Clock}
-                label="Study time"
-                value={formatTime(study.totalStudySeconds)}
-                color="text-cyan-300"
-              />
-              <StatChip
-                icon={BookOpen}
-                label="Avg progress"
-                value={`${study.avgProgressPct}%`}
-                color="text-amber-300"
-              />
+              <StatChip icon={Clock} label="Study time" value={formatTime(study.totalStudySeconds)} color="text-cyan-300" />
+              <StatChip icon={BookOpen} label="Avg progress" value={`${study.avgProgressPct}%`} color="text-amber-300" />
               <StatChip
                 icon={CheckCircle2}
                 label="Correct"
-                value={String(
-                  study.quizCorrect + (hasAttempts ? stats.totalCorrect : 0)
-                )}
+                value={String(study.quizCorrect + (hasAttempts ? stats.totalCorrect : 0))}
                 color="text-emerald-300"
               />
               <StatChip
                 icon={XCircle}
                 label="Wrong / again"
-                value={String(
-                  study.quizWrong +
-                    study.flashAgain +
-                    (hasAttempts ? stats.totalMissed : 0)
-                )}
+                value={String(study.quizWrong + study.flashAgain + (hasAttempts ? stats.totalMissed : 0))}
                 color="text-rose-300"
               />
-              <StatChip
-                icon={Layers}
-                label="Cards known"
-                value={String(study.flashKnow)}
-                color="text-violet-300"
-              />
-              <StatChip
-                icon={Layers}
-                label="Cards learning"
-                value={String(study.flashLearning)}
-                color="text-amber-200"
-              />
-              <StatChip
-                icon={Target}
-                label="Questions tried"
-                value={String(study.quizAttempted || stats.attempts)}
-                color="text-cyan-200"
-              />
-              <StatChip
-                icon={Flame}
-                label="Streak"
-                value={study.streakDays > 0 ? `${study.streakDays}🔥` : "—"}
-                color="text-orange-300"
-              />
+              <StatChip icon={Layers} label="Cards known" value={String(study.flashKnow)} color="text-violet-300" />
+              <StatChip icon={Layers} label="Cards learning" value={String(study.flashLearning)} color="text-amber-200" />
+              <StatChip icon={Target} label="Questions tried" value={String(study.quizAttempted || stats.attempts)} color="text-cyan-200" />
+              <StatChip icon={Flame} label="Streak" value={study.streakDays > 0 ? `${study.streakDays}🔥` : "—"} color="text-orange-300" />
             </div>
           )}
 
-          {/* Exam gauges when we have scored attempts */}
           {hasAttempts && (
             <div className="px-5 sm:px-8 py-8 flex flex-wrap items-center justify-center gap-8 sm:gap-12 border-b border-white/10">
               <CircularGauge
@@ -388,21 +343,14 @@ export default function AcademicResultSaver({
 
           {!hasAttempts && study && study.avgExamPercent > 0 && (
             <div className="px-5 py-6 border-b border-white/10 text-center">
-              <p className="text-xs uppercase tracking-wider text-wisdom-muted mb-1">
-                Quiz / exam average
-              </p>
-              <p className="font-display text-3xl font-black text-cyan-300">
-                {study.avgExamPercent}%
-              </p>
+              <p className="text-xs uppercase tracking-wider text-wisdom-muted mb-1">Quiz / exam average</p>
+              <p className="font-display text-3xl font-black text-cyan-300">{study.avgExamPercent}%</p>
             </div>
           )}
 
-          {/* Per-resource study rows */}
           {study && study.rows.length > 0 && (
             <div className="px-5 sm:px-6 py-5 border-b border-white/10">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted mb-3">
-                Items you opened
-              </p>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted mb-3">Items you opened</p>
               <ul className="space-y-2">
                 {study.rows
                   .slice()
@@ -413,15 +361,9 @@ export default function AcademicResultSaver({
                       key={r.resourceId}
                       className="flex flex-wrap items-center gap-2 rounded-xl border border-white/8 bg-wisdom-dark/40 px-3 py-2.5 text-sm"
                     >
-                      <span className="font-medium text-white/90 truncate flex-1 min-w-0">
-                        {r.title}
-                      </span>
-                      <span className="text-xs text-wisdom-muted">
-                        {formatTime(r.totalSeconds)}
-                      </span>
-                      <span className="text-xs font-semibold text-amber-200">
-                        {Math.round(r.progressPct)}%
-                      </span>
+                      <span className="font-medium text-white/90 truncate flex-1 min-w-0">{r.title}</span>
+                      <span className="text-xs text-wisdom-muted">{formatTime(r.totalSeconds)}</span>
+                      <span className="text-xs font-semibold text-amber-200">{Math.round(r.progressPct)}%</span>
                     </li>
                   ))}
               </ul>
@@ -430,15 +372,10 @@ export default function AcademicResultSaver({
 
           {hasAttempts && (
             <div className="px-5 sm:px-6 py-5">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted mb-3">
-                Scored attempts
-              </p>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted mb-3">Scored attempts</p>
               <ul className="space-y-2.5">
                 {results.map((r) => (
-                  <li
-                    key={r.id}
-                    className="rounded-2xl border border-white/8 bg-wisdom-dark/40 px-4 py-3.5"
-                  >
+                  <li key={r.id} className="rounded-2xl border border-white/8 bg-wisdom-dark/40 px-4 py-3.5">
                     <div className="flex flex-wrap items-center gap-2 mb-1">
                       <p className="font-semibold text-sm truncate flex-1 min-w-0">{r.title}</p>
                       <span
@@ -488,7 +425,7 @@ function StatChip({
   value,
   color,
 }: {
-  icon: React.ComponentType<{ className?: string }>;
+  icon: ComponentType<{ className?: string }>;
   label: string;
   value: string;
   color: string;
