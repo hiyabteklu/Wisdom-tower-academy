@@ -16,9 +16,17 @@ type Props = {
   meta: Record<string, unknown>;
   isExam?: boolean;
   resourceId: string;
+  title?: string;
+  trackerScopeId?: string;
 };
 
-export default function QuizExamViewer({ meta, isExam, resourceId }: Props) {
+export default function QuizExamViewer({
+  meta,
+  isExam,
+  resourceId,
+  title,
+  trackerScopeId,
+}: Props) {
   const questions = (Array.isArray(meta.questions) ? meta.questions : []) as Q[];
   const durationMin = Number(meta.durationMin || 0);
   const [idx, setIdx] = useState(0);
@@ -51,10 +59,8 @@ export default function QuizExamViewer({ meta, isExam, resourceId }: Props) {
   }, [answers, questions]);
 
   const attempted = Object.keys(answers).length;
-  const accuracy =
-    attempted > 0 ? Math.round((score / attempted) * 100) : 0;
+  const accuracy = attempted > 0 ? Math.round((score / attempted) * 100) : 0;
 
-  // Live progress while answering (practice mode)
   useEffect(() => {
     if (!resourceId || questions.length === 0) return;
     const pct = Math.round((attempted / questions.length) * 100);
@@ -73,7 +79,6 @@ export default function QuizExamViewer({ meta, isExam, resourceId }: Props) {
     });
   }, [attempted, score, accuracy, submitted, resourceId, questions.length]);
 
-  // Persist exam attempt on submit
   useEffect(() => {
     if (!submitted || saved || !resourceId) return;
     setSaved(true);
@@ -82,6 +87,8 @@ export default function QuizExamViewer({ meta, isExam, resourceId }: Props) {
       score,
       total: questions.length,
       answers,
+      title: title || (isExam ? "Exam" : "Quiz"),
+      scopeId: trackerScopeId,
     });
     void saveProgress({
       resourceId,
@@ -98,7 +105,18 @@ export default function QuizExamViewer({ meta, isExam, resourceId }: Props) {
         },
       },
     });
-  }, [submitted, saved, resourceId, score, questions.length, answers, attempted]);
+  }, [
+    submitted,
+    saved,
+    resourceId,
+    score,
+    questions.length,
+    answers,
+    attempted,
+    title,
+    trackerScopeId,
+    isExam,
+  ]);
 
   if (!questions.length) {
     return <p className="text-sm text-wisdom-muted">No questions yet.</p>;
@@ -126,7 +144,6 @@ export default function QuizExamViewer({ meta, isExam, resourceId }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* Live stats bar */}
       <div className="flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-wisdom-dark/40 px-4 py-2.5 text-xs">
         <span className="inline-flex items-center gap-1 text-cyan-200">
           <Target className="w-3.5 h-3.5" />
@@ -136,9 +153,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId }: Props) {
           <Trophy className="w-3.5 h-3.5" />
           Correct {score}
         </span>
-        <span className="text-amber-200 font-semibold">
-          Accuracy {accuracy}%
-        </span>
+        <span className="text-amber-200 font-semibold">Accuracy {accuracy}%</span>
         {isExam && durationMin > 0 && (
           <span className="ml-auto font-mono text-emerald-200">
             {Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")}
@@ -146,7 +161,6 @@ export default function QuizExamViewer({ meta, isExam, resourceId }: Props) {
         )}
       </div>
 
-      {/* Nav board */}
       <div className="flex flex-wrap gap-1.5">
         {questions.map((qq, i) => {
           const answered = answers[i] != null;
@@ -189,8 +203,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId }: Props) {
         <div className="space-y-2">
           {(q.choices || []).map((c, ci) => {
             const selected = answers[idx] === ci;
-            const reveal =
-              submitted || (!isExam && showSol);
+            const reveal = submitted || (!isExam && showSol);
             const isRight = q.correct === ci;
             return (
               <button
@@ -203,9 +216,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId }: Props) {
                     ? "border-amber-400/50 bg-amber-500/15 text-white"
                     : "border-white/12 text-white/80 hover:border-white/25"
                 } ${
-                  reveal && isRight
-                    ? "!border-emerald-400/50 !bg-emerald-500/10"
-                    : ""
+                  reveal && isRight ? "!border-emerald-400/50 !bg-emerald-500/10" : ""
                 } ${
                   reveal && selected && !isRight
                     ? "!border-rose-400/40 !bg-rose-500/10"
@@ -290,13 +301,13 @@ export default function QuizExamViewer({ meta, isExam, resourceId }: Props) {
         >
           Next
         </button>
-        {isExam && !submitted && (
+        {!submitted && (
           <button
             type="button"
             onClick={() => setSubmitted(true)}
             className="px-4 py-2 rounded-xl border border-emerald-400/40 text-emerald-200 text-sm font-semibold"
           >
-            Submit exam
+            {isExam ? "Submit exam" : "Submit quiz"}
           </button>
         )}
       </div>
@@ -332,10 +343,8 @@ export default function QuizExamViewer({ meta, isExam, resourceId }: Props) {
           </p>
           <p className="text-sm text-emerald-200/90 mt-1">
             Accuracy{" "}
-            {questions.length
-              ? Math.round((score / questions.length) * 100)
-              : 0}
-            % · saved to your progress
+            {questions.length ? Math.round((score / questions.length) * 100) : 0}% · saved to
+            Progress Tracker
           </p>
         </div>
       )}
