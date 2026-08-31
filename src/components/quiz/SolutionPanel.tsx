@@ -1,13 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { BookOpen, Lightbulb, Loader2 } from "lucide-react";
+import { BadgeCheck, Lightbulb, Loader2 } from "lucide-react";
 import MathText from "@/components/MathText";
 
 type Props = {
-  /** Premade solution written/uploaded by you (no AI) */
   solution?: string;
-  /** When true, show optional "Explain with AI" */
   enableAi?: boolean;
   questionId: string;
   question: string;
@@ -26,11 +24,6 @@ type ExplainResponse = {
   detail?: string;
 };
 
-/**
- * Two paths after an answer is revealed:
- * 1) Solution — your premade text (free, instant)
- * 2) Explain with AI — optional extra tutoring (uses API + cache)
- */
 export default function SolutionPanel({
   solution,
   enableAi = true,
@@ -57,15 +50,18 @@ export default function SolutionPanel({
     setAiLoading(true);
     setAiError("");
     try {
-      const res = await fetch("/api/explain", {
+      const res = await fetch("/api/ai/explain", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          mode: "question",
           questionId,
           question,
+          text: question,
           choices,
           studentAnswer,
           correctAnswer,
+          solution,
           subject,
           difficulty,
         }),
@@ -99,8 +95,8 @@ export default function SolutionPanel({
                 : "border-white/15 bg-white/5 text-white/90 hover:border-emerald-400/30 hover:text-emerald-200"
             }`}
           >
-            <BookOpen className="w-4 h-4" />
-            {showSolution ? "Hide solution" : "Solution"}
+            <BadgeCheck className="w-4 h-4" />
+            {showSolution ? "Hide official solution" : "Official solution"}
           </button>
         )}
 
@@ -109,7 +105,7 @@ export default function SolutionPanel({
             type="button"
             onClick={handleAiExplain}
             disabled={aiLoading || Boolean(aiText && !aiMeta?.fallback)}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-cyan-400/30 bg-cyan-500/10 text-cyan-300 text-sm font-semibold hover:bg-cyan-500/20 disabled:opacity-60 transition-colors"
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-violet-400/30 bg-violet-500/10 text-violet-200 text-sm font-semibold hover:bg-violet-500/20 disabled:opacity-60 transition-colors"
           >
             {aiLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -128,11 +124,10 @@ export default function SolutionPanel({
       {showSolution && hasPremade && (
         <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/5 px-4 py-3.5">
           <div className="flex items-center gap-2 mb-2">
-            <BookOpen className="w-4 h-4 text-emerald-400" />
+            <BadgeCheck className="w-4 h-4 text-emerald-400" />
             <span className="text-xs font-bold uppercase tracking-wider text-emerald-300/90">
-              Solution
+              Official solution
             </span>
-            <span className="text-[10px] text-wisdom-muted ml-auto">official</span>
           </div>
           <div className="text-sm text-white/85 leading-relaxed">
             <MathText text={solution || ""} />
@@ -143,18 +138,12 @@ export default function SolutionPanel({
       {aiError && <p className="text-xs text-amber-300/90">{aiError}</p>}
 
       {aiText && (
-        <div className="rounded-2xl border border-cyan-400/20 bg-cyan-500/5 px-4 py-3.5">
+        <div className="rounded-2xl border border-violet-400/20 bg-violet-500/5 px-4 py-3.5">
           <div className="flex items-center gap-2 mb-2">
-            <Lightbulb className="w-4 h-4 text-cyan-400" />
-            <span className="text-xs font-bold uppercase tracking-wider text-cyan-300/90">
+            <Lightbulb className="w-4 h-4 text-violet-400" />
+            <span className="text-xs font-bold uppercase tracking-wider text-violet-300/90">
               AI explanation
             </span>
-            {aiMeta?.cached && (
-              <span className="text-[10px] text-wisdom-muted ml-auto">cached</span>
-            )}
-            {aiMeta?.fallback && (
-              <span className="text-[10px] text-amber-400/80 ml-auto">offline tip</span>
-            )}
           </div>
           <div className="text-sm text-white/85 leading-relaxed">
             <MathText text={aiText} />

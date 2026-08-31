@@ -14,6 +14,7 @@ import {
   Layers,
   Flame,
   BookOpen,
+  SkipForward,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
@@ -38,8 +39,8 @@ export type AcademicResultSaverProps = {
   scopeId: string;
   scopeLabel: string;
   accent?: string;
-  /** When set, also load learning_progress for this hub path */
   scopePath?: string;
+  /** When set, board emphasizes metrics for this hub only */
   hub?: HubId;
 };
 
@@ -227,6 +228,12 @@ export default function AcademicResultSaver({
     };
   }, [results]);
 
+  const isBooks = hub === "books" || hub === "references";
+  const isFlash = hub === "flashcards";
+  const isQuizHub = hub === "question-banks" || hub === "exams";
+  const isVideo = hub === "videos";
+  const isCombined = !hub;
+
   const hasStudy =
     !!study &&
     (study.totalStudySeconds > 0 ||
@@ -247,10 +254,13 @@ export default function AcademicResultSaver({
             <h2 className="font-display text-lg sm:text-xl font-bold tracking-tight">
               Progress <span className={accent}>Tracker</span>
             </h2>
-            <p className="text-xs text-wisdom-muted">{scopeLabel} · live from your activity</p>
+            <p className="text-xs text-wisdom-muted">
+              {scopeLabel}
+              {hub ? ` · ${hub}` : " · all hubs"} · live activity
+            </p>
           </div>
         </div>
-        {study && study.streakDays > 0 && (
+        {study && study.streakDays > 0 && (isCombined || isBooks || isFlash || isQuizHub) && (
           <span className="inline-flex items-center gap-1.5 rounded-xl border border-orange-400/30 bg-orange-500/10 px-3 py-1.5 text-sm font-bold text-orange-300">
             <Flame className="w-4 h-4" /> {study.streakDays} day streak
           </span>
@@ -277,38 +287,80 @@ export default function AcademicResultSaver({
       ) : !hasAnything ? (
         <div className="px-6 py-12 text-center">
           <Activity className="w-10 h-10 text-wisdom-muted mx-auto mb-3 opacity-40" />
-          <p className="text-sm font-medium text-white/80 mb-1">No activity yet in this hub</p>
+          <p className="text-sm font-medium text-white/80 mb-1">No activity yet</p>
           <p className="text-sm text-wisdom-muted max-w-sm mx-auto leading-relaxed">
-            Open a book, study notes, review flashcards, or finish a quiz — progress appears here
-            automatically.
+            Open materials in this section — progress appears here automatically.
           </p>
         </div>
       ) : (
         <>
           {study && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-white/5 border-b border-white/10">
-              <StatChip icon={Clock} label="Study time" value={formatTime(study.totalStudySeconds)} color="text-cyan-300" />
-              <StatChip icon={BookOpen} label="Avg progress" value={`${study.avgProgressPct}%`} color="text-amber-300" />
-              <StatChip
-                icon={CheckCircle2}
-                label="Correct"
-                value={String(study.quizCorrect + (hasAttempts ? stats.totalCorrect : 0))}
-                color="text-emerald-300"
-              />
-              <StatChip
-                icon={XCircle}
-                label="Wrong / again"
-                value={String(study.quizWrong + study.flashAgain + (hasAttempts ? stats.totalMissed : 0))}
-                color="text-rose-300"
-              />
-              <StatChip icon={Layers} label="Cards known" value={String(study.flashKnow)} color="text-violet-300" />
-              <StatChip icon={Layers} label="Cards learning" value={String(study.flashLearning)} color="text-amber-200" />
-              <StatChip icon={Target} label="Questions tried" value={String(study.quizAttempted || stats.attempts)} color="text-cyan-200" />
-              <StatChip icon={Flame} label="Streak" value={study.streakDays > 0 ? `${study.streakDays}🔥` : "—"} color="text-orange-300" />
+              {(isCombined || isBooks || isVideo) && (
+                <StatChip
+                  icon={Clock}
+                  label={isVideo ? "Watch time" : "Study time"}
+                  value={formatTime(
+                    isVideo ? study.videoWatchSeconds || study.totalStudySeconds : study.totalStudySeconds
+                  )}
+                  color="text-cyan-300"
+                />
+              )}
+              {(isCombined || isBooks) && (
+                <StatChip
+                  icon={BookOpen}
+                  label="Avg progress"
+                  value={`${study.avgProgressPct}%`}
+                  color="text-amber-300"
+                />
+              )}
+              {(isCombined || isQuizHub) && (
+                <>
+                  <StatChip
+                    icon={CheckCircle2}
+                    label="Correct"
+                    value={String(study.quizCorrect + (hasAttempts ? stats.totalCorrect : 0))}
+                    color="text-emerald-300"
+                  />
+                  <StatChip
+                    icon={XCircle}
+                    label="Wrong"
+                    value={String(study.quizWrong + (hasAttempts ? stats.totalMissed : 0))}
+                    color="text-rose-300"
+                  />
+                  <StatChip
+                    icon={Target}
+                    label="Questions tried"
+                    value={String(study.quizAttempted || stats.attempts)}
+                    color="text-cyan-200"
+                  />
+                  <StatChip
+                    icon={Gauge}
+                    label="Exam avg"
+                    value={study.avgExamPercent > 0 ? `${study.avgExamPercent}%` : stats.avg ? `${stats.avg}%` : "—"}
+                    color="text-amber-200"
+                  />
+                </>
+              )}
+              {(isCombined || isFlash) && (
+                <>
+                  <StatChip icon={Layers} label="Cards known" value={String(study.flashKnow)} color="text-violet-300" />
+                  <StatChip icon={Layers} label="Cards learning" value={String(study.flashLearning)} color="text-amber-200" />
+                  <StatChip icon={XCircle} label="Again" value={String(study.flashAgain)} color="text-rose-300" />
+                </>
+              )}
+              {(isCombined || isBooks || isFlash || isQuizHub) && (
+                <StatChip
+                  icon={Flame}
+                  label="Streak"
+                  value={study.streakDays > 0 ? `${study.streakDays}🔥` : "—"}
+                  color="text-orange-300"
+                />
+              )}
             </div>
           )}
 
-          {hasAttempts && (
+          {hasAttempts && (isCombined || isQuizHub) && (
             <div className="px-5 sm:px-8 py-8 flex flex-wrap items-center justify-center gap-8 sm:gap-12 border-b border-white/10">
               <CircularGauge
                 percent={stats.latest}
@@ -341,16 +393,11 @@ export default function AcademicResultSaver({
             </div>
           )}
 
-          {!hasAttempts && study && study.avgExamPercent > 0 && (
-            <div className="px-5 py-6 border-b border-white/10 text-center">
-              <p className="text-xs uppercase tracking-wider text-wisdom-muted mb-1">Quiz / exam average</p>
-              <p className="font-display text-3xl font-black text-cyan-300">{study.avgExamPercent}%</p>
-            </div>
-          )}
-
           {study && study.rows.length > 0 && (
             <div className="px-5 sm:px-6 py-5 border-b border-white/10">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted mb-3">Items you opened</p>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted mb-3">
+                Items you opened
+              </p>
               <ul className="space-y-2">
                 {study.rows
                   .slice()
@@ -363,16 +410,20 @@ export default function AcademicResultSaver({
                     >
                       <span className="font-medium text-white/90 truncate flex-1 min-w-0">{r.title}</span>
                       <span className="text-xs text-wisdom-muted">{formatTime(r.totalSeconds)}</span>
-                      <span className="text-xs font-semibold text-amber-200">{Math.round(r.progressPct)}%</span>
+                      <span className="text-xs font-semibold text-amber-200">
+                        {Math.round(r.progressPct)}%
+                      </span>
                     </li>
                   ))}
               </ul>
             </div>
           )}
 
-          {hasAttempts && (
+          {hasAttempts && (isCombined || isQuizHub) && (
             <div className="px-5 sm:px-6 py-5">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted mb-3">Scored attempts</p>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted mb-3">
+                Scored attempts
+              </p>
               <ul className="space-y-2.5">
                 {results.map((r) => (
                   <li key={r.id} className="rounded-2xl border border-white/8 bg-wisdom-dark/40 px-4 py-3.5">
@@ -398,6 +449,10 @@ export default function AcademicResultSaver({
                       <span className="inline-flex items-center gap-1">
                         <XCircle className="w-3 h-3 text-rose-400/80" />
                         {r.missed} missed
+                      </span>
+                      <span className="inline-flex items-center gap-1">
+                        <SkipForward className="w-3 h-3" />
+                        {Math.max(0, r.total - r.correct - r.missed)} skipped
                       </span>
                       <span className="inline-flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
