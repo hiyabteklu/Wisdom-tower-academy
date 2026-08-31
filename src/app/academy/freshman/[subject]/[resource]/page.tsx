@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { freshmanSubjects, getFreshmanSubject } from "@/data/freshman";
-import { getResource, resourceHubs, type ResourceType } from "@/data/academy";
+import { getResource, resourceHubs } from "@/data/academy";
 import CategoryBackButton from "@/components/CategoryBackButton";
 import AcademicResultSaver from "@/components/AcademicResultSaver";
 import HubContentView from "@/components/learning/HubContentView";
@@ -30,6 +30,7 @@ export default async function FreshmanSubjectResourcePage({
 
   const hub = resource.id as HubId;
   const scopePath = `freshman/${subject.id}`;
+  const trackerScopeId = `freshman-${subject.id}-${resource.id}`;
 
   return (
     <div className="relative min-h-[75vh]">
@@ -48,9 +49,11 @@ export default async function FreshmanSubjectResourcePage({
 
         <div className="mb-8">
           <AcademicResultSaver
-            scopeId={`freshman-${subject.id}-${resource.id}`}
+            scopeId={trackerScopeId}
             scopeLabel={`Freshman · ${subject.name} · ${resource.name}`}
             accent={resource.accent}
+            scopePath={scopePath}
+            hub={hub}
           />
         </div>
 
@@ -59,6 +62,7 @@ export default async function FreshmanSubjectResourcePage({
           hub={hub}
           packageId="freshman"
           accent={resource.accent}
+          trackerScopeId={trackerScopeId}
         />
 
         <div className="mt-10 flex flex-wrap justify-center gap-2">

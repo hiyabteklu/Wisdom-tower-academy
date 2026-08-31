@@ -14,7 +14,6 @@ import {
 import { isPackageOwned } from "@/lib/ownership";
 import {
   BookOpen,
-  Download,
   Clock,
   FileText,
   Play,
@@ -26,12 +25,15 @@ import {
 import NotesViewer from "@/components/learning/NotesViewer";
 import QuizExamViewer from "@/components/learning/QuizExamViewer";
 import FlashcardViewer from "@/components/learning/FlashcardViewer";
+import PdfReader from "@/components/learning/PdfReader";
 
 type Props = {
   scopePath: string;
   hub: HubId;
   packageId: string;
   accent?: string;
+  /** Passed into quiz/exam so Progress Tracker can scope attempts */
+  trackerScopeId?: string;
 };
 
 function formatTime(sec: number) {
@@ -49,6 +51,7 @@ export default function HubContentView({
   hub,
   packageId,
   accent = "text-amber-300",
+  trackerScopeId,
 }: Props) {
   const [items, setItems] = useState<LearningResource[]>([]);
   const [owned, setOwned] = useState(false);
@@ -85,7 +88,6 @@ export default function HubContentView({
     };
   }, [scopePath, hub, packageId]);
 
-  // Study-time ticker
   useEffect(() => {
     if (!active || !owned) return;
     let tick = 0;
@@ -186,23 +188,18 @@ export default function HubContentView({
           </div>
         </div>
 
-        {/* Type-specific progress chips */}
         {(quiz || fc || vid) && (
           <div className="flex flex-wrap gap-2 text-xs">
             {quiz && (
               <>
-                <Chip>
-                  Attempted {quiz.attempted}/{quiz.total}
-                </Chip>
+                <Chip>Attempted {quiz.attempted}/{quiz.total}</Chip>
                 <Chip tone="emerald">Correct {quiz.correct}</Chip>
                 <Chip tone="amber">Accuracy {quiz.accuracy}%</Chip>
               </>
             )}
             {fc && (
               <>
-                <Chip>
-                  Cards {fc.seen}/{fc.total}
-                </Chip>
+                <Chip>Cards {fc.seen}/{fc.total}</Chip>
                 <Chip tone="emerald">Know {fc.know}</Chip>
                 <Chip tone="amber">Learning {fc.learning}</Chip>
                 <Chip tone="rose">Again {fc.again}</Chip>
@@ -216,7 +213,6 @@ export default function HubContentView({
           </div>
         )}
 
-        {/* Progress bar */}
         <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
           <div
             className="h-full rounded-full bg-gradient-to-r from-amber-400 to-cyan-400 transition-all duration-500"
@@ -225,38 +221,22 @@ export default function HubContentView({
         </div>
 
         {active.contentType === "pdf" && pdfUrl && (
-          <div className="space-y-3">
-            <div className="flex gap-2">
-              <a
-                href={pdfUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/15 text-xs font-semibold"
-              >
-                <BookOpen className="w-3.5 h-3.5" /> Open reader tab
-              </a>
-              <a
-                href={pdfUrl}
-                download
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/15 text-xs font-semibold"
-              >
-                <Download className="w-3.5 h-3.5" /> Download
-              </a>
-            </div>
-            <iframe
-              title={active.title}
-              src={pdfUrl}
-              className="w-full h-[70vh] rounded-2xl border border-white/12 bg-black"
-              onLoad={() => {
-                setProgressPct((p) => Math.max(p, 5));
-                void saveProgress({
-                  resourceId: active.id,
-                  progressPct: Math.max(progressPct, 5),
-                  addSeconds: 0,
-                });
-              }}
-            />
-          </div>
+          <PdfReader
+            url={pdfUrl}
+            title={active.title}
+            onOpened={() => {
+              setProgressPct((p) => Math.max(p, 5));
+              void saveProgress({
+                resourceId: active.id,
+                progressPct: Math.max(progressPct, 5),
+                addSeconds: 0,
+              });
+            }}
+          />
+        )}
+
+        {active.contentType === "pdf" && !pdfUrl && (
+          <p className="text-sm text-wisdom-muted">Could not load this PDF.</p>
         )}
 
         {active.contentType === "markdown" && (
@@ -282,9 +262,7 @@ export default function HubContentView({
                   src={toEmbed(active.bodyMd)}
                   allowFullScreen
                   title={active.title}
-                  onLoad={() => {
-                    setProgressPct((p) => Math.max(p, 10));
-                  }}
+                  onLoad={() => setProgressPct((p) => Math.max(p, 10))}
                 />
               </div>
             ) : (
@@ -309,6 +287,8 @@ export default function HubContentView({
             meta={active.meta}
             isExam={active.contentType === "exam"}
             resourceId={active.id}
+            title={active.title}
+            trackerScopeId={trackerScopeId}
           />
         )}
       </div>

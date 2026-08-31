@@ -4,7 +4,9 @@ import { getCourse, specialPackages } from "@/data/special-packages";
 import { getResource, resourceHubs } from "@/data/academy";
 import CategoryBackButton from "@/components/CategoryBackButton";
 import AcademicResultSaver from "@/components/AcademicResultSaver";
-import { BookOpen, Construction } from "lucide-react";
+import HubContentView from "@/components/learning/HubContentView";
+import type { HubId } from "@/lib/content";
+import { eceScope } from "@/lib/content";
 
 export function generateStaticParams() {
   const params: { slug: string; semester: string; course: string; resource: string }[] = [];
@@ -37,6 +39,11 @@ export default async function SpecialCourseResourcePage({
   if (!found || !resource) notFound();
   const { pkg, sem, course } = found;
   const courseBase = `/academy/special-packages/${pkg.slug}/${sem.id}/${course.slug}`;
+  const hub = resource.id as HubId;
+  // Must match admin Content panel scope_path when uploading
+  const scopePath = eceScope(sem.id, course.slug);
+  const packageId = sem.packageId;
+  const trackerScopeId = `special-${pkg.slug}-${sem.id}-${course.slug}-${resource.id}`;
 
   return (
     <div className="relative min-h-[75vh]">
@@ -55,39 +62,21 @@ export default async function SpecialCourseResourcePage({
 
         <div className="mb-8">
           <AcademicResultSaver
-            scopeId={`special-${pkg.slug}-${sem.id}-${course.slug}-${resource.id}`}
+            scopeId={trackerScopeId}
             scopeLabel={`${course.code} · ${resource.name}`}
             accent={resource.accent}
+            scopePath={scopePath}
+            hub={hub}
           />
         </div>
 
-        <div className="rounded-3xl border border-white/15 bg-wisdom-card shadow-card-3d overflow-hidden">
-          <div className="px-6 sm:px-8 py-10 text-center">
-            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-wisdom-dark/60 text-wisdom-muted">
-              <Construction className="w-8 h-8" />
-            </div>
-            <h2 className="font-display text-xl font-bold mb-2">Content coming soon</h2>
-            <p className="text-wisdom-muted text-sm max-w-md mx-auto leading-relaxed mb-8">
-              Materials for {resource.name.toLowerCase()} in {course.title} will appear here. Track
-              progress above in the meantime.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Link
-                href={courseBase}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/15 text-sm font-medium hover:border-violet-400/40 hover:text-violet-300 transition-colors"
-              >
-                All hubs for {course.code}
-              </Link>
-              <Link
-                href="/contact"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-500 text-white text-sm font-semibold hover:bg-violet-400 transition-colors"
-              >
-                <BookOpen className="w-4 h-4" />
-                Request materials
-              </Link>
-            </div>
-          </div>
-        </div>
+        <HubContentView
+          scopePath={scopePath}
+          hub={hub}
+          packageId={packageId}
+          accent={resource.accent}
+          trackerScopeId={trackerScopeId}
+        />
 
         <div className="mt-8 flex flex-wrap justify-center gap-2">
           {resourceHubs.map((h) => (
