@@ -7,6 +7,7 @@ import {
   useState,
   type FormEvent,
 } from "react";
+import { createPortal } from "react-dom";
 import {
   FileText,
   Maximize2,
@@ -27,17 +28,18 @@ type Props = {
   onPageChange?: (page: number, total: number) => void;
 };
 
-/** True in-app PDF: continuous vertical scroll + real fullscreen. */
+/** True in-app PDF: continuous vertical scroll + portal fullscreen (covers footer). */
 export default function PdfReader({ url, title, onOpened, onPageChange }: Props) {
   const [fullscreen, setFullscreen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [numPages, setNumPages] = useState(0);
   const [scale, setScale] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
   const [gotoInput, setGotoInput] = useState("");
+  const [scrollWidth, setScrollWidth] = useState(360);
 
-  const shellRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -49,11 +51,32 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
   onPageChangeRef.current = onPageChange;
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Measure scroll area width
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const measure = () => setScrollWidth(el.clientWidth || 360);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [fullscreen, loading, numPages]);
+
+  // Lock body + hide page chrome while fullscreen
+  useEffect(() => {
     if (!fullscreen) return;
-    const prev = document.body.style.overflow;
+    const prevOverflow = document.body.style.overflow;
+    const prevPos = document.documentElement.style.overflow;
     document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    document.body.classList.add("pdf-fs-active");
     return () => {
-      document.body.style.overflow = prev;
+      document.body.style.overflow = prevOverflow;
+      document.documentElement.style.overflow = prevPos;
+      document.body.classList.remove("pdf-fs-active");
     };
   }, [fullscreen]);
 
@@ -142,7 +165,7 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
       if (el) obs.observe(el);
     });
     return () => obs.disconnect();
-  }, [numPages, loading]);
+  }, [numPages, loading, fullscreen]);
 
   const scrollToPage = useCallback(
     (p: number) => {
@@ -164,16 +187,9 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
     setGotoInput("");
   }
 
-  return (
-    <div
-      ref={shellRef}
-      className={`flex flex-col bg-neutral-950 border border-white/12 overflow-hidden ${
-        fullscreen
-          ? "fixed inset-0 z-[200] rounded-none border-0"
-          : "relative rounded-2xl"
-      }`}
-    >
-      <div className="flex items-center gap-2 px-2 sm:px-3 py-2 border-b border-white/10 bg-[#0b1220]/98 shrink-0 backdrop-blur">
+  const readerChrome = (
+    <>
+      <div className="flex items-center gap-2 px-2 sm:px-3 py-2 border-b border-white/10 bg-[#0b1220] shrink-0">
         <FileText className="w-4 h-4 shrink-0 text-amber-300" />
         <p className="text-xs sm:text-sm text-white/80 truncate font-medium flex-1 min-w-0">
           {title}
@@ -209,7 +225,7 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
             <button
               type="button"
               onClick={() => setFullscreen(false)}
-              className="ml-1 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500 text-white text-[11px] font-bold hover:bg-rose-400 transition-colors shadow-lg shadow-rose-500/30"
+              className="ml-1 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500 text-white text-[11px] font-bold hover:bg-rose-400 transition-colors"
             >
               <X className="w-4 h-4" />
               Exit
@@ -243,8 +259,7 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
             />
             <span className="text-[11px] text-white/45 tabular-nums">/ {numPages}</span>
             <button
-              type="submit"
-              className="px-2 py-1.5 rounded-lg border border-amber-400/30 text-[11px] font-semibold text-amber-200 hover:bg-amber-500/10"
+              type="submit"ess="px-2 py-1.5 rounded-lg border border-amber-400/30 text-[11px] font-semibold text-amber-200 hover:bg-amber-500/10"
             >
               Go
             </button>
@@ -273,9 +288,7 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
 
       <div
         ref={scrollRef}
-        className={`overflow-y-auto overflow-x-hidden flex-1 bg-[#121212] ${
-          fullscreen ? "min-h-0" : "h-[min(72vh,680px)]"
-        }`}
+        className="overflow-y-auto overflow-x-hidden flex-1 min-h-0 bg-[#121212]"
       >
         {loading && (
           <div className="flex items-center justify-center w-full py-28">
@@ -291,14 +304,14 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
         )}
 
         {!loading && !error && numPages > 0 && (
-          <div className="flex flex-col items-center gap-3 py-3 px-2 sm:px-4">
+          <div className="flex flex-col items-center gap-3 py-3 px-2 sm:px-4 pb-16">
             {Array.from({ length: numPages }, (_, i) => (
               <PdfPage
                 key={i + 1}
                 pdf={pdfRef.current}
                 pageNumber={i + 1}
                 scale={scale}
-                containerWidth={scrollRef.current?.clientWidth ?? 360}
+                containerWidth={scrollWidth}
                 setRef={(el) => {
                   pageRefs.current[i] = el;
                 }}
@@ -307,18 +320,47 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
           </div>
         )}
       </div>
+    </>
+  );
 
-      {fullscreen && (
-        <button
-          type="button"
-          onClick={() => setFullscreen(false)}
-          className="fixed top-3 right-3 z-[210] inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-rose-500 text-white text-sm font-bold shadow-xl shadow-black/40 hover:bg-rose-400"
-        >
-          <X className="w-5 h-5" />
-          Exit full screen
-        </button>
-      )}
+  // Inline (embedded) shell
+  const inlineShell = (
+    <div className="relative flex flex-col rounded-2xl border border-white/12 bg-neutral-950 overflow-hidden h-[min(72vh,680px)]">
+      {readerChrome}
     </div>
+  );
+
+  // Fullscreen portal — sits on document.body above header/footer
+  const fullscreenShell =
+    mounted && fullscreen
+      ? createPortal(
+          <div
+            className="fixed inset-0 z-[9999] flex flex-col bg-[#0a0a0a]"
+            style={{ height: "100dvh", width: "100vw" }}
+            role="dialog"
+            aria-modal="true"
+            aria-label={title}
+          >
+            {readerChrome}
+            <button
+              type="button"
+              onClick={() => setFullscreen(false)}
+              className="absolute top-[max(0.75rem,env(safe-area-inset-top))] right-3 z-[10000] inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-rose-500 text-white text-sm font-bold shadow-xl shadow-black/50 hover:bg-rose-400"
+            >
+              <X className="w-5 h-5" />
+              Exit
+            </button>
+          </div>,
+          document.body
+        )
+      : null;
+
+  return (
+    <>
+      {/* Keep inline layout; hide content when portaled so we don't double-render canvases */}
+      <div className={fullscreen ? "hidden" : undefined}>{inlineShell}</div>
+      {fullscreenShell}
+    </>
   );
 }
 
@@ -428,7 +470,7 @@ function PdfPage({
       className="relative shadow-2xl shadow-black/40 rounded-sm overflow-hidden bg-white"
     >
       {!rendered && (
-        <div className="absolute inset-0 flex items-center justify-center bg-neutral-800 text-white/30 text-xs">
+        <div className="absolute inset-0 flex items-center justify-center bg-neutral-800 text-white/30 text-xs min-h-[120px]">
           {pageNumber}
         </div>
       )}
