@@ -8,6 +8,7 @@ import { isPackagePurchasable } from "@/data/content-availability";
 import { CloudUpload, ArrowLeft } from "lucide-react";
 import CheckoutForm from "@/components/CheckoutForm";
 
+/** Gate: only purchasable packages reach CheckoutForm. */
 export default function CheckoutPage({
   params,
 }: {
