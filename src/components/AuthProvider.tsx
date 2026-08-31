@@ -5,13 +5,10 @@ import { supabase, recoverSession } from "@/lib/supabase";
 import { clearOwnershipCache } from "@/lib/ownership";
 
 /**
- * Keeps auth session alive across tab close / return:
- * - refreshes token on focus
- * - clears ownership cache on sign-in / sign-out
+ * Keeps auth session alive across tab close / return.
  */
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    // Warm session from localStorage on first paint
     void recoverSession();
 
     const {
@@ -28,21 +25,21 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     });
 
     const onVisible = () => {
-      if (document.visibilityState === "visible") {
-        void recoverSession();
-      }
-    };
-    const onFocus = () => {
-      void recoverSession();
+      if (document.visibilityState === "visible") void recoverSession();
     };
 
     document.addEventListener("visibilitychange", onVisible);
-    window.addEventListener("focus", onFocus);
+    window.addEventListener("focus", () => void recoverSession());
+
+    // Periodic refresh while tab is open (helps long sessions)
+    const interval = window.setInterval(() => {
+      void recoverSession();
+    }, 4 * 60 * 1000);
 
     return () => {
       subscription.unsubscribe();
       document.removeEventListener("visibilitychange", onVisible);
-      window.removeEventListener("focus", onFocus);
+      window.clearInterval(interval);
     };
   }, []);
 
