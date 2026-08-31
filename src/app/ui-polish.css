@@ -1,13 +1,66 @@
-/* Extra polish + study content typography */
+/* Production UI polish — loaded after globals */
 
-.text-gradient-cyan {
-  background: linear-gradient(105deg, #22e0ff 0%, #a5f3fc 45%, #818cf8 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+:root,
+.theme-dark {
+  --cyan: #22e0ff;
+  --foreground: #f4f7fb;
+  --wt-muted: #aab6c8;
+  --wt-muted-rgb: 170 182 200;
+  --card: #1c283c;
+  --wt-card: #1c283c;
+  --wt-card-rgb: 28 40 60;
 }
 
-/* ——— Study prose (books / references / solutions) ——— */
+body {
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  letter-spacing: 0.01em;
+}
+
+.atm-noise { opacity: 0.015 !important; }
+.hero-grain { opacity: 0.012 !important; }
+.atm-glow { opacity: 0.55 !important; filter: blur(90px); }
+.atm-glow-1 { background: rgba(34, 180, 255, 0.42) !important; }
+.atm-glow-2 { background: rgba(139, 92, 246, 0.32) !important; }
+.atm-glow-3 { background: rgba(0, 160, 220, 0.28) !important; }
+.atm-vignette {
+  background: radial-gradient(ellipse 80% 75% at 50% 45%, transparent 40%, rgba(0, 0, 0, 0.35) 100%) !important;
+}
+
+h1 { font-size: clamp(2.25rem, 5vw, 3.5rem); line-height: 1.1; letter-spacing: -0.03em; font-weight: 800; }
+h2 { font-size: clamp(1.85rem, 3.5vw, 2.75rem); line-height: 1.15; letter-spacing: -0.025em; font-weight: 800; }
+h3 { font-size: clamp(1.25rem, 2vw, 1.5rem); font-weight: 700; letter-spacing: -0.02em; }
+
+.text-gradient-cyan {
+  background: linear-gradient(105deg, #ffffff 0%, #7df0ff 45%, #22e0ff 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  background-size: 200% auto; animation: text-shimmer 6s ease-in-out infinite;
+}
+@keyframes text-shimmer {
+  0%, 100% { background-position: 0% center; }
+  50% { background-position: 100% center; }
+}
+
+.btn-primary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  min-height: 3rem; padding: 0.75rem 1.5rem; border-radius: 0.875rem;
+  background: #22e0ff; color: #061018; font-weight: 700; font-size: 0.95rem;
+  border: none; cursor: pointer;
+  box-shadow: 0 8px 28px -8px rgba(34, 224, 255, 0.45);
+  transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.25s ease;
+}
+.btn-primary:hover { background: #00c4e6; transform: translateY(-1px) scale(1.02); }
+.btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+.btn-secondary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  min-height: 3rem; padding: 0.75rem 1.35rem; border-radius: 0.875rem;
+  background: rgba(255, 255, 255, 0.06); color: #f4f7fb; font-weight: 650; font-size: 0.95rem;
+  border: 1px solid rgba(255, 255, 255, 0.16); cursor: pointer;
+}
+.btn-secondary:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(34, 224, 255, 0.4); }
+
+/* Study prose (books / references / solutions) */
 .study-prose {
   font-family: var(--font-body);
   font-size: 1.02rem;
@@ -15,7 +68,6 @@
   color: rgba(244, 247, 251, 0.9);
   letter-spacing: 0.01em;
 }
-
 .study-h1 {
   font-family: var(--font-display);
   font-size: 1.85rem;
@@ -25,7 +77,6 @@
   margin: 0 0 1rem;
   line-height: 1.2;
 }
-
 .study-h2 {
   font-family: var(--font-display);
   font-size: 1.35rem;
@@ -38,7 +89,6 @@
   gap: 0.6rem;
   line-height: 1.3;
 }
-
 .study-h2-bar {
   display: inline-block;
   width: 4px;
@@ -47,7 +97,6 @@
   background: linear-gradient(180deg, #fbbf24, #22e0ff);
   flex-shrink: 0;
 }
-
 .study-h3 {
   font-family: var(--font-display);
   font-size: 1.1rem;
@@ -56,23 +105,17 @@
   margin: 1.25rem 0 0.5rem;
   letter-spacing: -0.015em;
 }
-
-.study-p {
-  margin: 0 0 0.95rem;
-}
-
+.study-p { margin: 0 0 0.95rem; }
 .study-list {
   margin: 0.4rem 0 1rem;
   padding-left: 1.25rem;
   list-style: none;
 }
-
 .study-list li {
   position: relative;
   margin-bottom: 0.45rem;
   padding-left: 0.35rem;
 }
-
 .study-list li::before {
   content: "";
   position: absolute;
@@ -83,40 +126,23 @@
   border-radius: 50%;
   background: linear-gradient(135deg, #22e0ff, #a78bfa);
 }
-
 .study-callout {
   margin: 1rem 0;
   padding: 0.9rem 1.1rem;
   border-radius: 0.9rem;
   border: 1px solid rgba(34, 224, 255, 0.28);
-  background: linear-gradient(
-    135deg,
-    rgba(34, 224, 255, 0.1),
-    rgba(139, 92, 246, 0.08)
-  );
+  background: linear-gradient(135deg, rgba(34, 224, 255, 0.1), rgba(139, 92, 246, 0.08));
   color: #e0f7ff;
   font-size: 0.95rem;
 }
-
 .study-hr {
   border: none;
   height: 1px;
   margin: 1.5rem 0;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.2),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
 }
-
-/* Key terms & highlights */
 mark.key-term {
-  background: linear-gradient(
-    120deg,
-    rgba(251, 191, 36, 0.35),
-    rgba(245, 158, 11, 0.2)
-  );
+  background: linear-gradient(120deg, rgba(251, 191, 36, 0.35), rgba(245, 158, 11, 0.2));
   color: #fef3c7;
   padding: 0.08em 0.35em;
   border-radius: 0.35em;
@@ -125,7 +151,6 @@ mark.key-term {
   -webkit-box-decoration-break: clone;
   border-bottom: 1px solid rgba(251, 191, 36, 0.45);
 }
-
 mark.hl-term {
   background: rgba(34, 224, 255, 0.18);
   color: #e0faff;
@@ -135,23 +160,14 @@ mark.hl-term {
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }
-
-.study-prose strong {
-  color: #fff;
-  font-weight: 650;
-}
-
-.study-prose code {
-  font-size: 0.88em;
-}
-
-/* Math spacing inside study prose */
-.study-prose .katex {
-  font-size: 1.05em;
-}
-
+.study-prose strong { color: #fff; font-weight: 650; }
+.study-prose .katex { font-size: 1.05em; }
 .study-prose .katex-display {
   margin: 0.85rem 0;
   overflow-x: auto;
   overflow-y: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .text-gradient-cyan { animation: none !important; }
 }
