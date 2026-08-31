@@ -32,7 +32,6 @@ type Props = {
   hub: HubId;
   packageId: string;
   accent?: string;
-  /** Passed into quiz/exam so Progress Tracker can scope attempts */
   trackerScopeId?: string;
 };
 
@@ -128,9 +127,22 @@ export default function HubContentView({
     setProgressPct(prog.pct);
     setSeconds(prog.totalSeconds);
     setProgMeta(prog.meta || {});
+
     if (item.contentType === "pdf" && item.storagePath) {
-      const signed = await getSignedContentUrl(item.storagePath);
-      setPdfUrl(signed.url || null);
+      // Prefer same-origin proxy (mobile-safe). Fallback to signed URL.
+      const proxy = `/api/content/pdf?path=${encodeURIComponent(item.storagePath)}`;
+      try {
+        const head = await fetch(proxy, { method: "GET" });
+        if (head.ok) {
+          setPdfUrl(proxy);
+        } else {
+          const signed = await getSignedContentUrl(item.storagePath);
+          setPdfUrl(signed.url || null);
+        }
+      } catch {
+        const signed = await getSignedContentUrl(item.storagePath);
+        setPdfUrl(signed.url || null);
+      }
     } else {
       setPdfUrl(null);
     }
