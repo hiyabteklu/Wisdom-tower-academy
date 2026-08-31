@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   listResources,
-  getSignedContentUrl,
   saveProgress,
   getMyProgress,
   type LearningResource,
@@ -129,20 +128,7 @@ export default function HubContentView({
     setProgMeta(prog.meta || {});
 
     if (item.contentType === "pdf" && item.storagePath) {
-      // Prefer same-origin proxy (mobile-safe). Fallback to signed URL.
-      const proxy = `/api/content/pdf?path=${encodeURIComponent(item.storagePath)}`;
-      try {
-        const head = await fetch(proxy, { method: "GET" });
-        if (head.ok) {
-          setPdfUrl(proxy);
-        } else {
-          const signed = await getSignedContentUrl(item.storagePath);
-          setPdfUrl(signed.url || null);
-        }
-      } catch {
-        const signed = await getSignedContentUrl(item.storagePath);
-        setPdfUrl(signed.url || null);
-      }
+      setPdfUrl(`/api/content/pdf?path=${encodeURIComponent(item.storagePath)}`);
     } else {
       setPdfUrl(null);
     }
