@@ -19,11 +19,7 @@ type Props = {
   onOpened?: () => void;
 };
 
-/**
- * True in-app PDF reader using PDF.js → canvas.
- * Never relies on the browser PDF plugin (which on mobile only shows "Open").
- * PDFs are cached in memory after the first fetch.
- */
+/** True in-app PDF reader (PDF.js → canvas). Cached after first fetch. */
 export default function PdfReader({ url, title, onOpened }: Props) {
   const [fullscreen, setFullscreen] = useState(false);
   const [error, setError] = useState("");
@@ -37,8 +33,10 @@ export default function PdfReader({ url, title, onOpened }: Props) {
   const pdfRef = useRef<any>(null);
   const renderTaskRef = useRef<{ cancel: () => void } | null>(null);
   const openedRef = useRef(false);
+  const onOpenedRef = useRef(onOpened);
+  onOpenedRef.current = onOpened;
 
-  // Load document once per URL
+  // Load once per URL — do NOT depend on onOpened (parent re-renders every second)
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -51,7 +49,6 @@ export default function PdfReader({ url, title, onOpened }: Props) {
     (async () => {
       try {
         const pdfjs = await import("pdfjs-dist");
-        // Worker from CDN — matches installed major version
         pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
 
         const data = await fetchPdfCached(url);
@@ -67,7 +64,7 @@ export default function PdfReader({ url, title, onOpened }: Props) {
         setLoading(false);
         if (!openedRef.current) {
           openedRef.current = true;
-          onOpened?.();
+          onOpenedRef.current?.();
         }
       } catch (e) {
         if (!cancelled) {
@@ -88,9 +85,8 @@ export default function PdfReader({ url, title, onOpened }: Props) {
       }
       pdfRef.current = null;
     };
-  }, [url, onOpened]);
+  }, [url]);
 
-  // Render current page
   const renderPage = useCallback(async () => {
     const pdf = pdfRef.current;
     const canvas = canvasRef.current;
@@ -100,14 +96,11 @@ export default function PdfReader({ url, title, onOpened }: Props) {
       renderTaskRef.current?.cancel();
       const pageObj = await pdf.getPage(page);
 
-      // Fit width of container when possible
       const container = containerRef.current;
       let viewport = pageObj.getViewport({ scale: 1 });
       let nextScale = scale;
       if (container && container.clientWidth > 40) {
         const fit = (container.clientWidth - 16) / viewport.width;
-        nextScale = Math.min(Math.max(scale, fit * 0.98), scale);
-        // Prefer user zoom, but never overflow on first paint if scale is default
         if (scale <= 1.2) nextScale = fit * 0.98;
       }
       viewport = pageObj.getViewport({ scale: nextScale });
@@ -116,18 +109,24 @@ export default function PdfReader({ url, title, onOpened }: Props) {
       if (!ctx) return;
 
       const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
-      canvas.width = Math.floor(viewport.width * dpr);
-      canvas.height = Math.floor(viewport.height * dpr);
-      canvas.style.width = `${Math.floor(viewport.width)}px`;
-      canvas.style.height = `${Math.floor(viewport.height)}px`;
+      const w = Math.floor(viewport.width);
+      const h = Math.floor(viewport.height);
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       const task = pageObj.render({ canvasContext: ctx, viewport });
       renderTaskRef.current = task;
       await task.promise;
     } catch (e) {
-      // Cancelled renders throw — ignore those
-      if (e && typeof e === "object" && "name" in e && (e as { name: string }).name === "RenderingCancelledException") {
+      if (
+        e &&
+        typeof e === "object" &&
+        "name" in e &&
+        (e as { name: string }).name === "RenderingCancelledException"
+      ) {
         return;
       }
       console.warn("PDF render:", e);
@@ -138,14 +137,21 @@ export default function PdfReader({ url, title, onOpened }: Props) {
     if (!loading && pdfRef.current) void renderPage();
   }, [loading, page, scale, renderPage]);
 
-  // Re-render on resize
+  // Debounced resize
   useEffect(() => {
     if (!containerRef.current) return;
+    let t: number | undefined;
     const ro = new ResizeObserver(() => {
-      if (pdfRef.current) void renderPage();
+      window.clearTimeout(t);
+      t = window.setTimeout(() => {
+        if (pdfRef.current) void renderPage();
+      }, 120);
     });
     ro.observe(containerRef.current);
-    return () => ro.disconnect();
+    return () => {
+      window.clearTimeout(t);
+      ro.disconnect();
+    };
   }, [renderPage]);
 
   return (
@@ -154,7 +160,6 @@ export default function PdfReader({ url, title, onOpened }: Props) {
         fullscreen ? "fixed inset-2 z-[80] rounded-xl" : ""
       }`}
     >
-      {/* Toolbar */}
       <div className="flex items-center justify-between gap-2 px-2 sm:px-3 py-2 border-b border-white/10 bg-wisdom-dark/95 shrink-0">
         <p className="text-xs text-white/70 truncate flex items-center gap-1.5 min-w-0 flex-1">
           <FileText className="w-3.5 h-3.5 shrink-0 text-amber-300" />
@@ -195,7 +200,6 @@ export default function PdfReader({ url, title, onOpened }: Props) {
         </div>
       </div>
 
-      {/* Page nav */}
       {numPages > 0 && (
         <div className="flex items-center justify-center gap-3 px-3 py-1.5 border-b border-white/8 bg-wisdom-dark/80 text-xs shrink-0">
           <button
@@ -228,7 +232,7 @@ export default function PdfReader({ url, title, onOpened }: Props) {
       >
         {loading && (
           <div className="flex items-center justify-center w-full py-24">
-            <p className="text-sm text-wisdom-muted">Loading & caching PDF…</p>
+            <p className="text-sm text-wisdom-muted">Loading…</p>
           </div>
         )}
 
@@ -243,10 +247,6 @@ export default function PdfReader({ url, title, onOpened }: Props) {
           <canvas ref={canvasRef} className="max-w-full shadow-lg my-2" />
         )}
       </div>
-
-      <p className="px-3 py-1.5 text-[10px] text-wisdom-muted border-t border-white/8 bg-wisdom-dark/80 shrink-0">
-        In-app reader · cached after first load · no download
-      </p>
     </div>
   );
 }
