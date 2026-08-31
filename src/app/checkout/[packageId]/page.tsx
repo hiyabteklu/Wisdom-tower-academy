@@ -2,17 +2,10 @@
 
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { getPackage, formatEtb } from "@/data/packages";
 import { getPackageResolved } from "@/lib/catalog";
 import { isPackagePurchasable } from "@/data/content-availability";
 import { CloudUpload, ArrowLeft } from "lucide-react";
-
-/**
- * Thin gate: undeveloped packages cannot reach payment UI.
- * Full checkout lives in the previous implementation — we re-export by
- * dynamically loading only when purchasable.
- */
 import CheckoutForm from "@/components/CheckoutForm";
 
 export default function CheckoutPage({
@@ -21,7 +14,6 @@ export default function CheckoutPage({
   params: Promise<{ packageId: string }>;
 }) {
   const { packageId } = use(params);
-  const router = useRouter();
   const pkg = getPackageResolved(packageId) || getPackage(packageId);
   const [ready, setReady] = useState(false);
 
