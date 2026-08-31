@@ -24,7 +24,6 @@ type Props = {
   url: string;
   title: string;
   onOpened?: () => void;
-  /** Called when current visible page changes (for progress) */
   onPageChange?: (page: number, total: number) => void;
 };
 
@@ -49,7 +48,6 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
   onOpenedRef.current = onOpened;
   onPageChangeRef.current = onPageChange;
 
-  // Lock body scroll in fullscreen
   useEffect(() => {
     if (!fullscreen) return;
     const prev = document.body.style.overflow;
@@ -59,7 +57,6 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
     };
   }, [fullscreen]);
 
-  // Escape exits fullscreen
   useEffect(() => {
     if (!fullscreen) return;
     const onKey = (e: KeyboardEvent) => {
@@ -69,7 +66,6 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
     return () => window.removeEventListener("keydown", onKey);
   }, [fullscreen]);
 
-  // Load PDF once per URL
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -120,7 +116,6 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
     };
   }, [url]);
 
-  // Track visible page while scrolling
   useEffect(() => {
     const root = scrollRef.current;
     if (!root || !numPages) return;
@@ -169,7 +164,7 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
     setGotoInput("");
   }
 
-  const shell = (
+  return (
     <div
       ref={shellRef}
       className={`flex flex-col bg-neutral-950 border border-white/12 overflow-hidden ${
@@ -178,7 +173,6 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
           : "relative rounded-2xl"
       }`}
     >
-      {/* Top bar */}
       <div className="flex items-center gap-2 px-2 sm:px-3 py-2 border-b border-white/10 bg-[#0b1220]/98 shrink-0 backdrop-blur">
         <FileText className="w-4 h-4 shrink-0 text-amber-300" />
         <p className="text-xs sm:text-sm text-white/80 truncate font-medium flex-1 min-w-0">
@@ -224,7 +218,6 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
         </div>
       </div>
 
-      {/* Nav bar */}
       {numPages > 0 && (
         <div className="flex flex-wrap items-center justify-center gap-2 px-2 py-2 border-b border-white/8 bg-[#0d1526] shrink-0">
           <button
@@ -278,7 +271,6 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
         </div>
       )}
 
-      {/* Scrollable pages */}
       <div
         ref={scrollRef}
         className={`overflow-y-auto overflow-x-hidden flex-1 bg-[#121212] ${
@@ -316,7 +308,6 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
         )}
       </div>
 
-      {/* Floating exit when fullscreen (always visible) */}
       {fullscreen && (
         <button
           type="button"
@@ -329,8 +320,6 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
       )}
     </div>
   );
-
-  return shell;
 }
 
 function ToolBtn({
@@ -381,7 +370,7 @@ function PdfPage({
     if (!pdf || !canvasRef.current) return;
     let cancelled = false;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let task: { cancel: () => void } | null = null;
+    let task: { cancel: () => void; promise: Promise<void> } | null = null;
 
     (async () => {
       try {
@@ -395,7 +384,8 @@ function PdfPage({
             : scale;
         const viewport = pageObj.getViewport({ scale: fit });
 
-        const canvas = canvasRef.current!;
+        const canvas = canvasRef.current;
+        if (!canvas) return;
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
 
@@ -408,8 +398,9 @@ function PdfPage({
         canvas.style.height = `${h}px`;
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-        task = pageObj.render({ canvasContext: ctx, viewport });
-        await task.promise;
+        const renderTask = pageObj.render({ canvasContext: ctx, viewport });
+        task = renderTask;
+        await renderTask.promise;
         if (!cancelled) setRendered(true);
       } catch (e) {
         if (
