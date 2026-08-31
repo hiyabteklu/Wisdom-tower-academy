@@ -54,7 +54,6 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
     setMounted(true);
   }, []);
 
-  // Measure scroll area width
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -65,18 +64,15 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
     return () => ro.disconnect();
   }, [fullscreen, loading, numPages]);
 
-  // Lock body + hide page chrome while fullscreen
   useEffect(() => {
     if (!fullscreen) return;
     const prevOverflow = document.body.style.overflow;
     const prevPos = document.documentElement.style.overflow;
     document.body.style.overflow = "hidden";
     document.documentElement.style.overflow = "hidden";
-    document.body.classList.add("pdf-fs-active");
     return () => {
       document.body.style.overflow = prevOverflow;
       document.documentElement.style.overflow = prevPos;
-      document.body.classList.remove("pdf-fs-active");
     };
   }, [fullscreen]);
 
@@ -259,7 +255,8 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
             />
             <span className="text-[11px] text-white/45 tabular-nums">/ {numPages}</span>
             <button
-              type="submit"ess="px-2 py-1.5 rounded-lg border border-amber-400/30 text-[11px] font-semibold text-amber-200 hover:bg-amber-500/10"
+              type="submit"
+              className="px-2 py-1.5 rounded-lg border border-amber-400/30 text-[11px] font-semibold text-amber-200 hover:bg-amber-500/10"
             >
               Go
             </button>
@@ -323,14 +320,12 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
     </>
   );
 
-  // Inline (embedded) shell
   const inlineShell = (
     <div className="relative flex flex-col rounded-2xl border border-white/12 bg-neutral-950 overflow-hidden h-[min(72vh,680px)]">
       {readerChrome}
     </div>
   );
 
-  // Fullscreen portal — sits on document.body above header/footer
   const fullscreenShell =
     mounted && fullscreen
       ? createPortal(
@@ -357,7 +352,6 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
 
   return (
     <>
-      {/* Keep inline layout; hide content when portaled so we don't double-render canvases */}
       <div className={fullscreen ? "hidden" : undefined}>{inlineShell}</div>
       {fullscreenShell}
     </>
