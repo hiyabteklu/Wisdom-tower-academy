@@ -1,19 +1,23 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
-import { BadgeCheck, ChevronRight } from "lucide-react";
+import { BadgeCheck, ChevronRight, Lock } from "lucide-react";
 import type { ResourceHub } from "@/data/academy";
+import ComingSoonModal from "@/components/ComingSoonModal";
 
 type Props = {
   hub: ResourceHub;
   href: string;
+  /** When true, click shows coming-soon modal instead of navigating */
+  locked?: boolean;
 };
 
-/** Shared 16:9 learning-hub card — no gradient, no description. */
-export default function ResourceHubCard({ hub, href }: Props) {
-  return (
-    <Link
-      href={href}
-      className={`card-3d group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card hover:border-white/25 shadow-lg ${hub.glow}`}
-    >
+export default function ResourceHubCard({ hub, href, locked = false }: Props) {
+  const [open, setOpen] = useState(false);
+
+  const body = (
+    <>
       <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -21,6 +25,14 @@ export default function ResourceHubCard({ hub, href }: Props) {
           alt={hub.name}
           className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
         />
+        {locked && (
+          <div className="absolute inset-0 bg-wisdom-dark/25 flex items-start justify-end p-2.5">
+            <span className="inline-flex items-center gap-1 rounded-lg border border-white/15 bg-black/50 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white/90 backdrop-blur-sm">
+              <Lock className="w-3 h-3" />
+              Soon
+            </span>
+          </div>
+        )}
       </div>
       <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8">
         <h2
@@ -30,10 +42,34 @@ export default function ResourceHubCard({ hub, href }: Props) {
           {hub.name}
         </h2>
         <div className={`mt-2.5 flex items-center gap-1 text-xs sm:text-sm font-semibold ${hub.accent}`}>
-          Open
+          {locked ? "Preview" : "Open"}
           <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
         </div>
       </div>
+    </>
+  );
+
+  if (locked) {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className={`card-3d group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card hover:border-amber-400/30 shadow-lg text-left w-full ${hub.glow}`}
+        >
+          {body}
+        </button>
+        <ComingSoonModal open={open} onClose={() => setOpen(false)} hubName={hub.name} />
+      </>
+    );
+  }
+
+  return (
+    <Link
+      href={href}
+      className={`card-3d group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card hover:border-white/25 shadow-lg ${hub.glow}`}
+    >
+      {body}
     </Link>
   );
 }

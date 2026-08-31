@@ -1,10 +1,10 @@
 /**
- * Simple cart: list of package ids in localStorage.
- * Resolves products via catalog runtime cache, then static packages.
+ * Cart: package ids in localStorage. Only purchasable packages can be added.
  */
 
 import { academyPackages, type AcademyPackage } from "@/data/packages";
 import { getPackageResolved, getRuntimeCatalog } from "@/lib/catalog";
+import { isPackagePurchasable } from "@/data/content-availability";
 
 const KEY = "wt_cart_v1";
 export const CART_EVENT = "wt-cart-change";
@@ -28,26 +28,29 @@ function writeIds(ids: string[]) {
 }
 
 export function getCartIds(): string[] {
-  return readIds();
+  return readIds().filter((id) => isPackagePurchasable(id));
 }
 
 export function getCartPackages(): AcademyPackage[] {
-  return readIds()
+  return getCartIds()
     .map((id) => getPackageResolved(id))
     .filter((p): p is AcademyPackage => Boolean(p));
 }
 
 export function cartCount(): number {
-  return readIds().length;
+  return getCartIds().length;
 }
 
 export function isInCart(packageId: string): boolean {
-  return readIds().includes(packageId);
+  return getCartIds().includes(packageId);
 }
 
 export function addToCart(packageId: string): boolean {
-  if (!getPackageResolved(packageId)) return false;
-  const ids = readIds();
+  if (!isPackagePurchasable(packageId)) return false;
+  if (!getPackageResolved(packageId) && !academyPackages.find((p) => p.id === packageId)) {
+    return false;
+  }
+  const ids = readIds().filter((id) => isPackagePurchasable(id));
   if (ids.includes(packageId)) return false;
   writeIds([...ids, packageId]);
   return true;

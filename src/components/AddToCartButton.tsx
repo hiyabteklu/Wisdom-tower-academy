@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ShoppingBag, Check, BookOpen } from "lucide-react";
+import { ShoppingBag, Check, BookOpen, CloudUpload } from "lucide-react";
 import { addToCart, isInCart, CART_EVENT } from "@/lib/cart";
 import { formatEtb, PACKAGE_PRICE_ETB, getPackage } from "@/data/packages";
 import { getPackageResolved } from "@/lib/catalog";
 import { isPackageOwned, clearOwnershipCache } from "@/lib/ownership";
+import { isPackagePurchasable } from "@/data/content-availability";
 import { supabase } from "@/lib/supabase";
+import ComingSoonModal from "@/components/ComingSoonModal";
 
 type Props = {
   packageId: string;
@@ -22,11 +24,12 @@ export default function AddToCartButton({
 }: Props) {
   const [inCart, setInCart] = useState(false);
   const [owned, setOwned] = useState(false);
-  const [checking, setChecking] = useState(true);
   const [justAdded, setJustAdded] = useState(false);
+  const [soonOpen, setSoonOpen] = useState(false);
   const pkg = getPackageResolved(packageId) || getPackage(packageId);
   const price = pkg?.priceEtb ?? PACKAGE_PRICE_ETB;
   const openHref = pkg?.href || "/learning";
+  const purchasable = isPackagePurchasable(packageId);
 
   useEffect(() => {
     const syncCart = () => setInCart(isInCart(packageId));
@@ -34,22 +37,15 @@ export default function AddToCartButton({
 
     let cancelled = false;
     (async () => {
-      setChecking(true);
       const {
         data: { session },
       } = await supabase.auth.getSession();
       if (!session?.user) {
-        if (!cancelled) {
-          setOwned(false);
-          setChecking(false);
-        }
+        if (!cancelled) setOwned(false);
         return;
       }
       const has = await isPackageOwned(packageId);
-      if (!cancelled) {
-        setOwned(has);
-        setChecking(false);
-      }
+      if (!cancelled) setOwned(has);
     })();
 
     window.addEventListener(CART_EVENT, syncCart);
@@ -73,15 +69,15 @@ export default function AddToCartButton({
   }, [packageId]);
 
   function onAdd() {
+    if (!purchasable) {
+      setSoonOpen(true);
+      return;
+    }
     if (owned) return;
     addToCart(packageId);
     setInCart(true);
     setJustAdded(true);
     setTimeout(() => setJustAdded(false), 2000);
-  }
-
-  if (checking && !owned) {
-    // Avoid flash of wrong CTA; still show cart state if already known
   }
 
   if (owned) {
@@ -99,6 +95,22 @@ export default function AddToCartButton({
           Open content
         </Link>
       </div>
+    );
+  }
+
+  if (!purchasable) {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => setSoonOpen(true)}
+          className={`inline-flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-amber-400/35 bg-amber-500/10 text-amber-200 text-sm font-semibold hover:bg-amber-500/15 ${className}`}
+        >
+          <CloudUpload className="w-4 h-4" />
+          Coming soon · not for sale yet
+        </button>
+        <ComingSoonModal open={soonOpen} onClose={() => setSoonOpen(false)} hubName={pkg?.name} />
+      </>
     );
   }
 

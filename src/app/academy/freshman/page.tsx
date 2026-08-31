@@ -1,4 +1,5 @@
 import { freshmanSubjects } from "@/data/freshman";
+import { isFreshmanSubjectReady } from "@/data/content-availability";
 import CategoryBackButton from "@/components/CategoryBackButton";
 import SubjectCard from "@/components/SubjectCard";
 import BranchLeaderboard from "@/components/BranchLeaderboard";
@@ -29,8 +30,8 @@ export default function FreshmanPage() {
             <span className="text-purple-400">Freshman</span> subjects
           </h1>
           <p className="text-wisdom-muted text-lg max-w-2xl leading-relaxed">
-            Core first-year courses. Open any subject for materials and support — or build a custom
-            semester GPA below.
+            Core first-year courses. Mathematics is live; other subjects can be explored — full
+            materials are uploading soon.
           </p>
           <p className="mt-3 text-sm text-purple-400/90 font-medium">
             {freshmanSubjects.length} subjects
@@ -45,7 +46,6 @@ export default function FreshmanPage() {
           <BranchLeaderboard branchName="Freshman" accent="text-purple-400" />
         </div>
 
-        {/* GPA calculator */}
         <div className="max-w-4xl mx-auto mb-14 md:mb-16">
           <GpaCalculator />
         </div>
@@ -55,7 +55,7 @@ export default function FreshmanPage() {
             Subject catalog
           </p>
           <p className="text-xs text-wisdom-muted/80 hidden sm:block">
-            Select a course to open learning hubs
+            Green = Ready · others explore hubs only for now
           </p>
         </div>
 
@@ -67,6 +67,7 @@ export default function FreshmanPage() {
               name={subject.name}
               description={subject.description}
               image={subject.image}
+              ready={isFreshmanSubjectReady(subject.id)}
             />
           ))}
         </div>
