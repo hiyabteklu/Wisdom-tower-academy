@@ -12,6 +12,7 @@ import AnalyticsPanel from "@/components/admin/AnalyticsPanel";
 import UsersPanel from "@/components/admin/UsersPanel";
 import InquiriesPanel from "@/components/admin/InquiriesPanel";
 import CatalogPanel from "@/components/admin/CatalogPanel";
+import ContentPanel from "@/components/admin/ContentPanel";
 import {
   LogOut,
   CreditCard,
@@ -21,15 +22,22 @@ import {
   ExternalLink,
   GraduationCap,
   Package,
+  BookOpen,
 } from "lucide-react";
 
-type AcademyTab = "overview" | "catalog" | "payments" | "users" | "inquiries";
+type AcademyTab =
+  | "overview"
+  | "content"
+  | "catalog"
+  | "payments"
+  | "users"
+  | "inquiries";
 
 export default function AdminPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [academyTab, setAcademyTab] = useState<AcademyTab>("overview");
+  const [academyTab, setAcademyTab] = useState<AcademyTab>("content");
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -58,8 +66,9 @@ export default function AdminPage() {
   }
 
   const academyTabs: { id: AcademyTab; label: string; icon: typeof LayoutDashboard }[] = [
-    { id: "overview", label: "Overview", icon: LayoutDashboard },
+    { id: "content", label: "Content", icon: BookOpen },
     { id: "catalog", label: "Catalog", icon: Package },
+    { id: "overview", label: "Overview", icon: LayoutDashboard },
     { id: "payments", label: "Payments", icon: CreditCard },
     { id: "users", label: "Users", icon: Users },
     { id: "inquiries", label: "Inquiries", icon: Inbox },
@@ -125,6 +134,7 @@ export default function AdminPage() {
           ))}
         </div>
 
+        {academyTab === "content" && <ContentPanel />}
         {academyTab === "overview" && <AnalyticsPanel />}
         {academyTab === "catalog" && <CatalogPanel />}
         {academyTab === "payments" && user.email && <PaymentsPanel adminEmail={user.email} />}
