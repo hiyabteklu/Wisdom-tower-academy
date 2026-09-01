@@ -22,7 +22,7 @@ import HeaderLibraryLinks from "@/components/HeaderLibraryLinks";
 
 const DIGITAL_URL =
   process.env.NEXT_PUBLIC_DIGITAL_URL?.replace(/\/$/, "") ||
-  "https://wisdom-tower-digital.vercel.app";
+  "https://wisdomtower.tech";
 
 const mainNavLinks = [
   { href: "/", label: "Home" },
