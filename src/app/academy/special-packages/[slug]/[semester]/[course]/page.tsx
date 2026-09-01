@@ -6,6 +6,7 @@ import CategoryBackButton from "@/components/CategoryBackButton";
 import SubjectHeroImage from "@/components/SubjectHeroImage";
 import AcademicResultSaver from "@/components/AcademicResultSaver";
 import ResourceHubGrid from "@/components/ResourceHubGrid";
+import { eceScope } from "@/lib/content";
 
 export function generateStaticParams() {
   const params: { slug: string; semester: string; course: string }[] = [];
@@ -43,6 +44,8 @@ export default async function CoursePage({
   const { pkg, sem, course } = found;
 
   const basePath = `/academy/special-packages/${pkg.slug}/${sem.id}/${course.slug}`;
+  // Must match hub pages + admin Content panel scope_path
+  const scopePath = eceScope(sem.id, course.slug);
 
   return (
     <div className="relative min-h-[80vh]">
@@ -72,6 +75,7 @@ export default async function CoursePage({
             scopeId={`special-${pkg.slug}-${sem.id}-${course.slug}`}
             scopeLabel={`${course.code} · ${course.title}`}
             accent="text-violet-400"
+            scopePath={scopePath}
           />
         </div>
 
