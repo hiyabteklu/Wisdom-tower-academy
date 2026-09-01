@@ -12,10 +12,22 @@ function img(id: string) {
 
 export const freshmanSubjects: FreshmanSubject[] = [
   {
-    id: "mathematics",
-    name: "Mathematics",
-    description: "Core college mathematics foundations",
-    image: img("mathematics"),
+    id: "math-natural",
+    name: "Math Natural",
+    description: "College mathematics for natural science stream",
+    image: img("math-natural"),
+  },
+  {
+    id: "math-social",
+    name: "Math Social",
+    description: "College mathematics for social science stream",
+    image: img("math-social"),
+  },
+  {
+    id: "physical-fitness",
+    name: "Physical Fitness",
+    description: "Health, fitness, and wellness foundations",
+    image: img("physical-fitness"),
   },
   {
     id: "english-1",
@@ -130,3 +142,8 @@ export const freshmanSubjects: FreshmanSubject[] = [
 export function getFreshmanSubject(id: string) {
   return freshmanSubjects.find((s) => s.id === id);
 }
+
+/** Legacy id → current id (for redirects / content migration). */
+export const FRESHMAN_SUBJECT_ALIASES: Record<string, string> = {
+  mathematics: "math-natural",
+};
