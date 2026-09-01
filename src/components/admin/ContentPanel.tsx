@@ -50,16 +50,9 @@ export default function ContentPanel() {
   const scopePath = current?.scopePath;
   const packageId = current?.packageId || "freshman";
 
-  const atHubLevel =
-    hub &&
-    scopePath &&
-    current &&
-    !current.children?.length;
-
-  // When last crumb is a hub leaf (has scopePath and id is hub id)
   const hubIds = [
     "books",
-    "references",
+    "short-notes",
     "videos",
     "flashcards",
     "question-banks",
@@ -232,9 +225,7 @@ export default function ContentPanel() {
   }
 
   const listNodes =
-    crumbs.length === 0
-      ? ADMIN_CONTENT_TREE
-      : current?.children || [];
+    crumbs.length === 0 ? ADMIN_CONTENT_TREE : current?.children || [];
 
   return (
     <div className="space-y-4">
@@ -276,7 +267,6 @@ export default function ContentPanel() {
         )}
       </div>
 
-      {/* Breadcrumb */}
       <nav className="flex flex-wrap items-center gap-1 text-sm">
         <button
           type="button"
@@ -303,7 +293,6 @@ export default function ContentPanel() {
         ))}
       </nav>
 
-      {/* Folder steps */}
       {!isOnHub && (
         <ul className="grid sm:grid-cols-2 gap-2">
           {listNodes.map((node) => (
@@ -322,7 +311,6 @@ export default function ContentPanel() {
         </ul>
       )}
 
-      {/* Hub items */}
       {isOnHub && (
         <div className="space-y-3">
           <p className="text-xs text-wisdom-muted">
@@ -373,9 +361,9 @@ export default function ContentPanel() {
                   </div>
                 </label>
               )}
-              {(hub === "references" || hub === "videos") && (
+              {(hub === "short-notes" || hub === "videos") && (
                 <label className="block text-xs text-wisdom-muted">
-                  {hub === "videos" ? "Video URL (or notes)" : "Notes (Markdown)"}
+                  {hub === "videos" ? "Video URL (or notes)" : "Short notes (Markdown)"}
                   <textarea
                     value={bodyMd}
                     onChange={(e) => setBodyMd(e.target.value)}
@@ -384,7 +372,7 @@ export default function ContentPanel() {
                     placeholder={
                       hub === "videos"
                         ? "https://youtube.com/..."
-                        : "## Chapter title\n\nYour short notes…"
+                        : "## Topic\n\nYour short notes…"
                     }
                   />
                 </label>
