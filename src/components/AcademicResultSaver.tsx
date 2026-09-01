@@ -228,7 +228,7 @@ export default function AcademicResultSaver({
     };
   }, [results]);
 
-  const isBooks = hub === "books" || hub === "references";
+  const isBooks = hub === "books" || hub === "short-notes";
   const isFlash = hub === "flashcards";
   const isQuizHub = hub === "question-banks" || hub === "exams";
   const isVideo = hub === "videos";
@@ -243,6 +243,13 @@ export default function AcademicResultSaver({
   const hasAttempts = results.length > 0;
   const hasAnything = hasStudy || hasAttempts;
 
+  const hubLabel =
+    hub === "short-notes"
+      ? "short notes"
+      : hub
+        ? hub.replace(/-/g, " ")
+        : "all hubs";
+
   return (
     <section className="rounded-3xl border border-white/12 bg-wisdom-card overflow-hidden shadow-card-3d">
       <div className="px-5 sm:px-6 py-5 border-b border-white/10 flex flex-wrap items-center justify-between gap-3">
@@ -255,8 +262,7 @@ export default function AcademicResultSaver({
               Progress <span className={accent}>Tracker</span>
             </h2>
             <p className="text-xs text-wisdom-muted">
-              {scopeLabel}
-              {hub ? ` · ${hub}` : " · all hubs"} · live activity
+              {scopeLabel} · {hubLabel} · live activity
             </p>
           </div>
         </div>
