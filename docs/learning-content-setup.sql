@@ -3,13 +3,13 @@
 -- Run in Supabase → SQL Editor → New query → Run
 -- ============================================================
 
--- 1) Resources (books, notes, questions, exams, videos, flashcards)
+-- 1) Resources (books, short notes, questions, exams, videos, flashcards)
 create table if not exists public.learning_resources (
   id uuid primary key default gen_random_uuid(),
   package_id text not null,
   scope_path text not null,
   hub text not null check (hub in (
-    'books','references','videos','flashcards','question-banks','exams'
+    'books','short-notes','videos','flashcards','question-banks','exams'
   )),
   title text not null,
   chapter int,
@@ -76,15 +76,11 @@ alter table public.learning_progress enable row level security;
 alter table public.exam_attempts enable row level security;
 alter table public.ai_explanations enable row level security;
 
--- Published resources: anyone authenticated can read (ownership checked in app;
--- tighten later with a security-definer function if needed)
 drop policy if exists "learning_resources_select" on public.learning_resources;
 create policy "learning_resources_select" on public.learning_resources
   for select to authenticated
   using (published = true or true);
 
--- Admins write via anon key + admin email check in app;
--- For production, prefer service role for admin writes.
 drop policy if exists "learning_resources_write_auth" on public.learning_resources;
 create policy "learning_resources_write_auth" on public.learning_resources
   for all to authenticated
@@ -116,7 +112,6 @@ insert into storage.buckets (id, name, public)
 values ('learning-content', 'learning-content', false)
 on conflict (id) do nothing;
 
--- Allow authenticated users to read objects they are allowed to (signed URLs preferred)
 drop policy if exists "learning_content_read" on storage.objects;
 create policy "learning_content_read" on storage.objects
   for select to authenticated
@@ -136,7 +131,3 @@ drop policy if exists "learning_content_delete" on storage.objects;
 create policy "learning_content_delete" on storage.objects
   for delete to authenticated
   using (bucket_id = 'learning-content');
-
--- Done.
--- Next: Storage → learning-content → confirm private
--- NEXT_PUBLIC_ADMIN_EMAILS must include your admin emails

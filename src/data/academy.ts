@@ -2,7 +2,7 @@ import { packageImages } from "@/data/packages";
 
 export type ResourceType =
   | "books"
-  | "references"
+  | "short-notes"
   | "videos"
   | "flashcards"
   | "question-banks"
@@ -21,6 +21,15 @@ export interface ResourceHub {
 
 function hubImg(id: ResourceType) {
   return `/images/hubs/${id}.jpg`;
+}
+
+/** Legacy hub URL/id → current id */
+export const HUB_ALIASES: Record<string, ResourceType> = {
+  references: "short-notes",
+};
+
+export function resolveHubId(id: string): string {
+  return HUB_ALIASES[id] || id;
 }
 
 export interface Grade {
@@ -88,13 +97,13 @@ export const resourceHubs: ResourceHub[] = [
     image: hubImg("books"),
   },
   {
-    id: "references",
-    name: "References",
-    description: "Notes, summaries, and study guides",
+    id: "short-notes",
+    name: "Short Notes",
+    description: "Concise notes, summaries, and study guides",
     accent: "text-violet-400",
     glow: "group-hover:shadow-violet-500/20",
     icon: "library",
-    image: hubImg("references"),
+    image: hubImg("short-notes"),
   },
   {
     id: "videos",
@@ -139,5 +148,6 @@ export function getGrade(id: string) {
 }
 
 export function getResource(id: string) {
-  return resourceHubs.find((r) => r.id === id);
+  const resolved = resolveHubId(id);
+  return resourceHubs.find((r) => r.id === resolved);
 }

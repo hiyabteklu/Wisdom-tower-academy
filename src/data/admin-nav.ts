@@ -61,11 +61,11 @@ export const HUB_CONTENT_DEFAULTS: Record<
 > = {
   books: {
     contentType: "pdf",
-    hint: "Upload a PDF. Students open it in the web reader and can download.",
+    hint: "Upload a PDF. Students open it in the in-app reader.",
   },
-  references: {
+  "short-notes": {
     contentType: "markdown",
-    hint: "Chapter notes in Markdown. Supports headings, lists, bold.",
+    hint: "Short notes in Markdown. Supports headings, lists, [[terms]], ==highlights==.",
   },
   videos: {
     contentType: "video_url",

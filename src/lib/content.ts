@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 
 export type HubId =
   | "books"
-  | "references"
+  | "short-notes"
   | "videos"
   | "flashcards"
   | "question-banks"
@@ -104,11 +104,13 @@ export type ScopeStats = {
 };
 
 function rowToResource(row: Record<string, unknown>): LearningResource {
+  const rawHub = String(row.hub);
+  const hub = (rawHub === "references" ? "short-notes" : rawHub) as HubId;
   return {
     id: String(row.id),
     packageId: String(row.package_id),
     scopePath: String(row.scope_path),
-    hub: row.hub as HubId,
+    hub,
     title: String(row.title),
     chapter: row.chapter != null ? Number(row.chapter) : null,
     sortOrder: Number(row.sort_order ?? 0),
@@ -132,7 +134,12 @@ export async function listResources(opts: {
       ascending: true,
     });
     if (opts.scopePath) q = q.eq("scope_path", opts.scopePath);
-    if (opts.hub) q = q.eq("hub", opts.hub);
+    // Support legacy hub value during migration window
+    if (opts.hub === "short-notes") {
+      q = q.in("hub", ["short-notes", "references"]);
+    } else if (opts.hub) {
+      q = q.eq("hub", opts.hub);
+    }
     if (opts.packageId) q = q.eq("package_id", opts.packageId);
     if (opts.publishedOnly) q = q.eq("published", true);
 
@@ -328,7 +335,6 @@ export async function saveExamAttempt(opts: {
     meta: { total: opts.total },
   });
 
-  // Also mirror into academic_results for Progress Tracker board
   if (opts.scopeId && opts.total > 0) {
     const missed = Math.max(0, opts.total - opts.score);
     const percent = Math.round((opts.score / opts.total) * 1000) / 10;
@@ -347,7 +353,6 @@ export async function saveExamAttempt(opts: {
   return { ok: true };
 }
 
-/** Aggregate learning_progress for all resources under a scope_path (exact or prefix). */
 export async function getScopeStats(opts: {
   scopePath: string;
   hub?: HubId;
@@ -373,12 +378,15 @@ export async function getScopeStats(opts: {
   } = await supabase.auth.getSession();
   if (!session?.user) return { stats: empty };
 
-  // Resources in this scope
   let rq = supabase
     .from("learning_resources")
     .select("id, title, hub, content_type, scope_path")
     .eq("scope_path", opts.scopePath);
-  if (opts.hub) rq = rq.eq("hub", opts.hub);
+  if (opts.hub === "short-notes") {
+    rq = rq.in("hub", ["short-notes", "references"]);
+  } else if (opts.hub) {
+    rq = rq.eq("hub", opts.hub);
+  }
 
   const { data: resources, error: rErr } = await rq;
   if (rErr) return { stats: empty, error: rErr.message };
@@ -386,14 +394,18 @@ export async function getScopeStats(opts: {
 
   const ids = resources.map((r) => String(r.id));
   const byId = new Map(
-    resources.map((r) => [
-      String(r.id),
-      {
-        title: String(r.title),
-        hub: r.hub as HubId,
-        contentType: r.content_type as ContentType,
-      },
-    ])
+    resources.map((r) => {
+      const rawHub = String(r.hub);
+      const hub = (rawHub === "references" ? "short-notes" : rawHub) as HubId;
+      return [
+        String(r.id),
+        {
+          title: String(r.title),
+          hub,
+          contentType: r.content_type as ContentType,
+        },
+      ];
+    })
   );
 
   const { data: prog, error: pErr } = await supabase
@@ -440,7 +452,7 @@ export async function getScopeStats(opts: {
     if (q) {
       quizAttempted += Number(q.attempted || 0);
       quizCorrect += Number(q.correct || 0);
-      quizWrong +=
+      quizWrong =
         q.wrong != null
           ? Number(q.wrong)
           : Math.max(0, Number(q.attempted || 0) - Number(q.correct || 0));
@@ -464,7 +476,6 @@ export async function getScopeStats(opts: {
     }
   }
 
-  // Simple consecutive-day streak ending today or yesterday
   const days = Array.from(daySet).sort().reverse();
   let streakDays = 0;
   if (days.length) {
