@@ -139,11 +139,16 @@ export const freshmanSubjects: FreshmanSubject[] = [
   },
 ];
 
-export function getFreshmanSubject(id: string) {
-  return freshmanSubjects.find((s) => s.id === id);
-}
-
-/** Legacy id → current id (for redirects / content migration). */
+/** Legacy URL/id → current id */
 export const FRESHMAN_SUBJECT_ALIASES: Record<string, string> = {
   mathematics: "math-natural",
 };
+
+export function resolveFreshmanSubjectId(id: string): string {
+  return FRESHMAN_SUBJECT_ALIASES[id] || id;
+}
+
+export function getFreshmanSubject(id: string) {
+  const resolved = resolveFreshmanSubjectId(id);
+  return freshmanSubjects.find((s) => s.id === resolved);
+}

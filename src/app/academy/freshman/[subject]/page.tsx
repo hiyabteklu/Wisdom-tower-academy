@@ -1,6 +1,10 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { freshmanSubjects, getFreshmanSubject } from "@/data/freshman";
+import {
+  freshmanSubjects,
+  getFreshmanSubject,
+  FRESHMAN_SUBJECT_ALIASES,
+} from "@/data/freshman";
 import CategoryBackButton from "@/components/CategoryBackButton";
 import SubjectHeroImage from "@/components/SubjectHeroImage";
 import AcademicResultSaver from "@/components/AcademicResultSaver";
@@ -17,9 +21,15 @@ export default async function FreshmanSubjectPage({
   params: Promise<{ subject: string }>;
 }) {
   const { subject: subjectId } = await params;
-  const subject = getFreshmanSubject(subjectId);
 
+  if (FRESHMAN_SUBJECT_ALIASES[subjectId]) {
+    redirect(`/academy/freshman/${FRESHMAN_SUBJECT_ALIASES[subjectId]}`);
+  }
+
+  const subject = getFreshmanSubject(subjectId);
   if (!subject) notFound();
+
+  const scopePath = `freshman/${subject.id}`;
 
   return (
     <div className="relative min-h-[80vh]">
@@ -36,7 +46,10 @@ export default async function FreshmanSubjectPage({
                 Freshman · Subject
               </p>
               <h1 className="inline-flex items-center justify-center gap-2 font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-                <BadgeCheck className="w-6 h-6 sm:w-7 sm:h-7 shrink-0 text-sky-400" aria-label="Verified" />
+                <BadgeCheck
+                  className="w-6 h-6 sm:w-7 sm:h-7 shrink-0 text-sky-400"
+                  aria-label="Verified"
+                />
                 {subject.name}
               </h1>
             </div>
@@ -48,6 +61,7 @@ export default async function FreshmanSubjectPage({
             scopeId={`freshman-${subject.id}`}
             scopeLabel={`Freshman · ${subject.name}`}
             accent="text-purple-400"
+            scopePath={scopePath}
           />
         </div>
 

@@ -1,6 +1,10 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { freshmanSubjects, getFreshmanSubject } from "@/data/freshman";
+import {
+  freshmanSubjects,
+  getFreshmanSubject,
+  FRESHMAN_SUBJECT_ALIASES,
+} from "@/data/freshman";
 import { getResource, resourceHubs } from "@/data/academy";
 import CategoryBackButton from "@/components/CategoryBackButton";
 import AcademicResultSaver from "@/components/AcademicResultSaver";
@@ -23,6 +27,13 @@ export default async function FreshmanSubjectResourcePage({
   params: Promise<{ subject: string; resource: string }>;
 }) {
   const { subject: subjectId, resource: resourceId } = await params;
+
+  if (FRESHMAN_SUBJECT_ALIASES[subjectId]) {
+    redirect(
+      `/academy/freshman/${FRESHMAN_SUBJECT_ALIASES[subjectId]}/${resourceId}`
+    );
+  }
+
   const subject = getFreshmanSubject(subjectId);
   const resource = getResource(resourceId);
 
