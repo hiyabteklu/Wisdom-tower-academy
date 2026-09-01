@@ -183,7 +183,7 @@ export default function HubContentView({
     const fc = progMeta.flashcards;
     const vid = progMeta.video;
     const isBookLike = hub === "books" || active.contentType === "pdf";
-    const isRef = hub === "references" || active.contentType === "markdown";
+    const isNotes = hub === "short-notes" || active.contentType === "markdown";
 
     return (
       <div className="space-y-4">
@@ -199,9 +199,8 @@ export default function HubContentView({
           <h2 className={`font-display text-xl font-bold ${accent}`}>{active.title}</h2>
         </div>
 
-        {/* Hub-specific progress chips only */}
         <div className="flex flex-wrap gap-2 text-xs">
-          {(isBookLike || isRef) && (
+          {(isBookLike || isNotes) && (
             <>
               <Chip tone="cyan">
                 <Clock className="w-3 h-3 inline mr-1" />
@@ -211,9 +210,7 @@ export default function HubContentView({
                 <Gauge className="w-3 h-3 inline mr-1" />
                 Focus {focusLabel(focusSeconds, seconds)}
               </Chip>
-              <Chip>
-                Session {completionLabel(progressPct)}
-              </Chip>
+              <Chip>Session {completionLabel(progressPct)}</Chip>
               <Chip tone="emerald">
                 <BarChart3 className="w-3 h-3 inline mr-1" />
                 {Math.round(progressPct)}% complete
@@ -232,7 +229,9 @@ export default function HubContentView({
 
           {hub === "flashcards" && fc && (
             <>
-              <Chip>Cards {fc.seen}/{fc.total}</Chip>
+              <Chip>
+                Cards {fc.seen}/{fc.total}
+              </Chip>
               <Chip tone="emerald">Know {fc.know}</Chip>
               <Chip tone="amber">Learning {fc.learning}</Chip>
               <Chip tone="rose">Again {fc.again}</Chip>
@@ -242,18 +241,25 @@ export default function HubContentView({
 
           {(hub === "question-banks" || hub === "exams") && quiz && (
             <>
-              <Chip>Attempted {quiz.attempted}/{quiz.total}</Chip>
+              <Chip>
+                Attempted {quiz.attempted}/{quiz.total}
+              </Chip>
               <Chip tone="emerald">Correct {quiz.correct}</Chip>
               {"wrong" in quiz && (
-                <Chip tone="rose">Wrong {Number((quiz as { wrong?: number }).wrong || 0)}</Chip>
+                <Chip tone="rose">
+                  Wrong {Number((quiz as { wrong?: number }).wrong || 0)}
+                </Chip>
               )}
               {"skipped" in quiz && (
-                <Chip>Skipped {Number((quiz as { skipped?: number }).skipped || 0)}</Chip>
+                <Chip>
+                  Skipped {Number((quiz as { skipped?: number }).skipped || 0)}
+                </Chip>
               )}
               <Chip tone="amber">Accuracy {quiz.accuracy}%</Chip>
               {"elapsedSec" in quiz && (
                 <Chip tone="cyan">
-                  Time {formatTime(Number((quiz as { elapsedSec?: number }).elapsedSec || 0))}
+                  Time{" "}
+                  {formatTime(Number((quiz as { elapsedSec?: number }).elapsedSec || 0))}
                 </Chip>
               )}
             </>
@@ -399,7 +405,9 @@ function Chip({
     cyan: "border-cyan-400/25 text-cyan-200 bg-cyan-500/10",
   };
   return (
-    <span className={`inline-flex items-center rounded-lg border px-2.5 py-1 font-medium ${map[tone]}`}>
+    <span
+      className={`inline-flex items-center rounded-lg border px-2.5 py-1 font-medium ${map[tone]}`}
+    >
       {children}
     </span>
   );
