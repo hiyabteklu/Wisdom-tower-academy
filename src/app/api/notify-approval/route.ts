@@ -17,7 +17,7 @@ function siteUrl(): string {
     process.env.NEXT_PUBLIC_SITE_URL ||
     process.env.VERCEL_PROJECT_PRODUCTION_URL ||
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "") ||
-    "https://wisdom-tower-academy.vercel.app";
+    "https://wisdom-tower-academy.live";
   return fromEnv.replace(/\/$/, "");
 }
 

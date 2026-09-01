@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 /** External Digital product — set NEXT_PUBLIC_DIGITAL_URL in Vercel */
 const DIGITAL =
   process.env.NEXT_PUBLIC_DIGITAL_URL?.replace(/\/$/, "") ||
-  "https://wisdom-tower-digital.vercel.app";
+  "https://wisdomtower.tech";
 
 const nextConfig: NextConfig = {
   async redirects() {

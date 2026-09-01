@@ -2,7 +2,7 @@ import Link from "next/link";
 
 const DIGITAL_URL =
   process.env.NEXT_PUBLIC_DIGITAL_URL?.replace(/\/$/, "") ||
-  "https://wisdom-tower-digital.vercel.app";
+  "https://wisdomtower.tech";
 
 export const SOCIAL = {
   telegramGroup: "https://t.me/wisdom_tower1",

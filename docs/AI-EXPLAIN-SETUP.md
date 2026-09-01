@@ -37,7 +37,7 @@ The API prefers Groq when `GROQ_API_KEY` is set.
 
 ## Test
 
-https://wisdom-tower-digital.vercel.app/academy/quiz-demo  
+https://wisdom-tower-academy.live/academy/quiz-demo  
 Answer → Check → **Explain** → real tutor text (not “temporarily unavailable”).
 
 ## How the route works

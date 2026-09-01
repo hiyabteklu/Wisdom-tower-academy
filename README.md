@@ -3,7 +3,8 @@
 Isolated education platform — Grades 9–12, Freshman, UAT, GAT, COC & Exit Exam pathways.
 
 Sister product: [Wisdom-tower-digital](https://github.com/hiyabteklu/Wisdom-tower-digital)  
-Live Digital: https://wisdom-tower-digital.vercel.app
+Live Digital: https://wisdomtower.tech  
+Live Academy: https://wisdom-tower-academy.live
 
 ## Stack
 - Next.js 15 + TypeScript + Tailwind
@@ -15,4 +16,4 @@ Live Digital: https://wisdom-tower-digital.vercel.app
 npm install
 cp .env.example .env.local   # fill NEW Supabase keys + NEXT_PUBLIC_DIGITAL_URL
 npm run dev
-
+```
