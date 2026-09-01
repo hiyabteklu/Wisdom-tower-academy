@@ -16,15 +16,8 @@ type ExplainBody = {
   difficulty?: string;
 };
 
-const FALLBACK =
-  "Explanation is temporarily unavailable. Review the correct option, compare it with your choice, and try a similar practice question to lock in the idea.";
+const FALLBACK = "Wisdom Tower AI is currently unavailable.";
 
-/**
- * Ordered fallback chain. Retired/dead models removed.
- * gpt-oss-20b is tried first (currently working on Groq).
- * Gateway is last — only reached if both Groq attempts fail.
- * Override first model with AI_EXPLAIN_MODEL if needed.
- */
 const GROQ_MODELS = [
   process.env.AI_EXPLAIN_MODEL,
   "openai/gpt-oss-20b",
@@ -32,8 +25,6 @@ const GROQ_MODELS = [
 ].filter((m): m is string => Boolean(m && m.trim()));
 
 const GATEWAY_MODEL = process.env.AI_EXPLAIN_MODEL || "openai/gpt-4o-mini";
-
-/** Fail fast per attempt so one dead path cannot eat the full 30s budget. */
 const PER_ATTEMPT_TIMEOUT_MS = 8000;
 
 function clientIp(req: NextRequest): string {
@@ -71,17 +62,13 @@ Write a concise educational explanation (max ~180 words):
 - Explain why the correct answer is right.
 - If the student was wrong, briefly say why their choice does not fit (no shame).
 - Teach the underlying idea so they can solve similar questions.
-- For math, use LaTeX with delimiters \\(...\\) for inline and \\[...\\] for display. Example: \\(2^{3} = 8\\).
+- For math, use LaTeX with delimiters \\(...\\) for inline and \\[...\\] for display.
 - Do NOT only restate the answer. No markdown headings. Plain paragraphs only.`;
 }
 
 function errorMessage(e: unknown): string {
   if (e instanceof Error) return e.message.slice(0, 400);
   return String(e).slice(0, 400);
-}
-
-function isCardRequiredError(msg: string): boolean {
-  return /credit card|customer_verification|add a card|unlock your free credits/i.test(msg);
 }
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
@@ -133,7 +120,6 @@ async function groqChat(model: string, prompt: string, key: string): Promise<str
   return text;
 }
 
-/** Free path: Groq OpenAI-compatible API (ordered chain, fail-fast per model). */
 async function generateWithGroq(prompt: string): Promise<{ text: string; model: string }> {
   const key = process.env.GROQ_API_KEY;
   if (!key) throw new Error("GROQ_API_KEY not set");
@@ -160,7 +146,6 @@ async function generateWithGroq(prompt: string): Promise<{ text: string; model: 
   throw new Error(lastErr || "All Groq models failed");
 }
 
-/** Vercel AI Gateway (needs card on file to unlock free credits) — last resort. */
 async function generateWithGateway(prompt: string): Promise<{ text: string; model: string }> {
   if (!process.env.AI_GATEWAY_API_KEY) {
     throw new Error("AI_GATEWAY_API_KEY not configured");
@@ -233,7 +218,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Cache hit
   if (supabase) {
     try {
       const { data: cached } = await supabase
@@ -267,19 +251,15 @@ export async function POST(req: NextRequest) {
   const hasGateway = Boolean(process.env.AI_GATEWAY_API_KEY);
 
   if (!hasGroq && !hasGateway) {
-    console.error("[explain] no AI provider keys configured");
     return NextResponse.json({
       explanation: FALLBACK,
       cached: false,
       fallback: true,
-      reason: "no_provider",
-      detail: "Set GROQ_API_KEY (free) or AI_GATEWAY_API_KEY on Vercel",
     });
   }
 
   let lastError = "";
 
-  // 1) Prefer Groq (works without Vercel card) — ordered chain with per-attempt timeout
   if (hasGroq) {
     try {
       const result = await generateWithGroq(prompt);
@@ -311,7 +291,6 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // 2) AI Gateway last resort
   if (hasGateway) {
     try {
       const result = await generateWithGateway(prompt);
@@ -340,17 +319,6 @@ export async function POST(req: NextRequest) {
     } catch (e) {
       lastError = errorMessage(e);
       console.error("[explain] Gateway failed:", lastError);
-
-      if (isCardRequiredError(lastError)) {
-        return NextResponse.json({
-          explanation: FALLBACK,
-          cached: false,
-          fallback: true,
-          reason: "card_required",
-          detail:
-            "Vercel AI Gateway needs a card on file to unlock free credits. Groq is preferred when GROQ_API_KEY is set.",
-        });
-      }
     }
   }
 
@@ -358,7 +326,5 @@ export async function POST(req: NextRequest) {
     explanation: FALLBACK,
     cached: false,
     fallback: true,
-    reason: "ai_unavailable",
-    detail: lastError || "All providers failed",
   });
 }

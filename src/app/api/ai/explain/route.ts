@@ -4,8 +4,7 @@ import { generateText } from "ai";
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
-const FALLBACK =
-  "AI is temporarily unavailable. Re-read the key definitions, try a similar practice item, and check back shortly.";
+const FALLBACK = "Wisdom Tower AI is currently unavailable.";
 
 const PER_ATTEMPT_MS = 7000;
 
@@ -97,8 +96,6 @@ async function raceProviders(system: string, user: string) {
   if (process.env.GROQ_API_KEY) jobs.push(tryGroq(system, user));
   if (process.env.AI_GATEWAY_API_KEY) jobs.push(tryGateway(system, user));
   if (!jobs.length) throw new Error("No AI keys configured");
-
-  // Promise.any = first fulfilled; if all reject, throws AggregateError
   return Promise.any(jobs);
 }
 
@@ -125,7 +122,7 @@ function buildMessages(body: Record<string, unknown>) {
     return {
       system:
         "You are a patient tutor. Explain why the correct option is right and why common wrong options fail. Plain paragraphs, max ~180 words. Use LaTeX as \\(...\\) when needed.",
-      user: `Question:\n${text}\n\nChoices:\n${choiceLines || "(none)"}\n\nStudent answer: ${studentAnswer || "(not given)"}\nCorrect answer: ${correctAnswer || solution || "(see solution)"}\n\nOfficial solution:\n${solution || "(none)"}`,
+      user: `Question:\n${text}\n\nChoices:\n${choiceLines || "(none)"}\n\nStudent answer: ${studentAnswer || "(not answered)"}\nCorrect answer: ${correctAnswer || solution || "(see solution)"}\n\nOfficial solution:\n${solution || "(none)"}`,
     };
   }
 
@@ -155,7 +152,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         explanation: FALLBACK,
         fallback: true,
-        detail: errMsg(e),
       });
     }
   } catch (e) {

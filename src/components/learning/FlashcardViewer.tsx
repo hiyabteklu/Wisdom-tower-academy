@@ -31,7 +31,6 @@ export default function FlashcardViewer({ meta, resourceId }: Props) {
     return { know, learning, again, seen, total: cards.length };
   }, [grades, cards.length]);
 
-  // Persist flashcard report into learning_progress.meta
   useEffect(() => {
     if (!resourceId || stats.seen === 0) return;
     const pct =
@@ -54,6 +53,11 @@ export default function FlashcardViewer({ meta, resourceId }: Props) {
       },
     });
   }, [stats, resourceId, cards.length]);
+
+  // Reset flip when card index changes
+  useEffect(() => {
+    setFlipped(false);
+  }, [i]);
 
   if (!cards.length) {
     return <p className="text-sm text-wisdom-muted">No cards in this deck.</p>;
@@ -95,10 +99,7 @@ export default function FlashcardViewer({ meta, resourceId }: Props) {
           <p className="mt-4 text-sm text-white/80">
             Mastery:{" "}
             <span className="font-bold text-amber-200">
-              {stats.total
-                ? Math.round((stats.know / stats.total) * 100)
-                : 0}
-              %
+              {stats.total ? Math.round((stats.know / stats.total) * 100) : 0}%
             </span>
           </p>
         </div>
@@ -124,21 +125,63 @@ export default function FlashcardViewer({ meta, resourceId }: Props) {
         </span>
       </div>
 
-      <button
-        type="button"
+      {/* 3D flip stage */}
+      <div
+        className="relative w-full cursor-pointer"
+        style={{ perspective: "1200px", minHeight: 220 }}
         onClick={() => setFlipped((f) => !f)}
-        className="w-full min-h-[200px] rounded-2xl border border-white/15 bg-gradient-to-br from-wisdom-card to-wisdom-navy/80 p-6 text-center shadow-lg transition-transform active:scale-[0.99]"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setFlipped((f) => !f);
+          }
+        }}
+        aria-label={flipped ? "Show prompt" : "Show answer"}
       >
-        <p className="text-[10px] uppercase tracking-wider text-wisdom-muted mb-3">
-          {flipped ? "Answer" : "Prompt"} · tap to flip
-        </p>
-        <p className="text-lg sm:text-xl font-semibold text-white leading-snug">
-          {flipped ? card.back : card.front}
-        </p>
-      </button>
+        <div
+          className="relative w-full h-full transition-transform duration-500 ease-out"
+          style={{
+            transformStyle: "preserve-3d",
+            transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
+            minHeight: 220,
+          }}
+        >
+          {/* Front */}
+          <div
+            className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl border border-white/15 bg-gradient-to-br from-[#1a2332] via-wisdom-card to-[#0f172a] p-6 text-center shadow-xl"
+            style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
+          >
+            <p className="text-[10px] uppercase tracking-wider text-amber-300/80 mb-3 font-semibold">
+              Prompt · tap to flip
+            </p>
+            <p className="text-lg sm:text-xl font-semibold text-white leading-snug">
+              {card.front}
+            </p>
+          </div>
+
+          {/* Back — green */}
+          <div
+            className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl border border-emerald-400/40 bg-gradient-to-br from-emerald-700 via-emerald-600 to-teal-700 p-6 text-center shadow-xl shadow-emerald-900/40"
+            style={{
+              backfaceVisibility: "hidden",
+              WebkitBackfaceVisibility: "hidden",
+              transform: "rotateY(180deg)",
+            }}
+          >
+            <p className="text-[10px] uppercase tracking-wider text-emerald-100/90 mb-3 font-semibold">
+              Answer · tap to flip back
+            </p>
+            <p className="text-lg sm:text-xl font-semibold text-white leading-snug">
+              {card.back}
+            </p>
+          </div>
+        </div>
+      </div>
 
       {flipped ? (
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-2 animate-in fade-in duration-300">
           <button
             type="button"
             onClick={() => grade("again")}
