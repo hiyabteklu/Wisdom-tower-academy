@@ -1,5 +1,7 @@
+import { createHash } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { generateText } from "ai";
+import { createServiceClient } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -31,6 +33,90 @@ function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
 
 function errMsg(e: unknown) {
   return e instanceof Error ? e.message.slice(0, 300) : String(e).slice(0, 300);
+}
+
+/** Stable cache key for identical AI requests (shared across users). */
+function makeContextKey(body: Record<string, unknown>): string {
+  const mode = String(body.mode || "notes");
+  const payload = JSON.stringify({
+    mode,
+    text: String(body.text || body.question || "").slice(0, 8000),
+    solution: body.solution ? String(body.solution).slice(0, 2000) : "",
+    choices: Array.isArray(body.choices) ? body.choices.map(String) : [],
+    // Include student answer so different choices get different tutor replies
+    studentAnswer: body.studentAnswer ? String(body.studentAnswer) : "",
+    correctAnswer: body.correctAnswer ? String(body.correctAnswer) : "",
+    resourceId: body.resourceId ? String(body.resourceId) : "",
+  });
+  return createHash("sha256").update(payload).digest("hex").slice(0, 56);
+}
+
+function parseResourceUuid(raw: unknown): string | null {
+  if (typeof raw !== "string") return null;
+  const s = raw.trim();
+  if (
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      s
+    )
+  ) {
+    return s;
+  }
+  return null;
+}
+
+async function readCache(contextKey: string) {
+  const supabase = createServiceClient();
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase
+      .from("ai_explanations")
+      .select("explanation, model")
+      .eq("context_key", contextKey)
+      .maybeSingle();
+    if (error || !data?.explanation) return null;
+    return {
+      explanation: String(data.explanation),
+      model: data.model ? String(data.model) : undefined,
+    };
+  } catch (e) {
+    console.warn("[ai/explain] cache read failed", errMsg(e));
+    return null;
+  }
+}
+
+async function writeCache(opts: {
+  contextKey: string;
+  explanation: string;
+  model: string;
+  mode: string;
+  resourceId: string | null;
+  promptPreview: string;
+}) {
+  const supabase = createServiceClient();
+  if (!supabase) return;
+  try {
+    // Prefer upsert on context_key (requires unique index — see SQL migration)
+    const row: Record<string, unknown> = {
+      context_key: opts.contextKey,
+      explanation: opts.explanation,
+      model: opts.model,
+      mode: opts.mode,
+      prompt: opts.promptPreview.slice(0, 500),
+      updated_at: new Date().toISOString(),
+    };
+    if (opts.resourceId) row.resource_id = opts.resourceId;
+
+    const { error } = await supabase.from("ai_explanations").upsert(row, {
+      onConflict: "context_key",
+    });
+    if (error) {
+      // Fallback: plain insert if upsert constraint missing
+      console.warn("[ai/explain] cache upsert failed, try insert", error.message);
+      await supabase.from("ai_explanations").insert(row);
+    }
+  } catch (e) {
+    console.warn("[ai/explain] cache write failed", errMsg(e));
+  }
 }
 
 async function groqOnce(model: string, system: string, user: string, key: string) {
@@ -90,7 +176,6 @@ async function tryGateway(system: string, user: string) {
   return { text: trimmed, model: `gateway/${GATEWAY_MODEL}` };
 }
 
-/** Race every available provider; first success wins (fail-fast). */
 async function raceProviders(system: string, user: string) {
   const jobs: Promise<{ text: string; model: string }>[] = [];
   if (process.env.GROQ_API_KEY) jobs.push(tryGroq(system, user));
@@ -135,23 +220,53 @@ function buildMessages(body: Record<string, unknown>) {
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as Record<string, unknown>;
-    const { system, user } = buildMessages(body);
-    if (!String(body.text || body.question || "").trim()) {
+    const mode = String(body.mode || "notes");
+    const sourceText = String(body.text || body.question || "").trim();
+    if (!sourceText) {
       return NextResponse.json({ error: "Nothing to explain" }, { status: 400 });
     }
 
+    const contextKey = makeContextKey(body);
+    const resourceId = parseResourceUuid(body.resourceId);
+
+    // 1) Serve from DB cache when available
+    const cached = await readCache(contextKey);
+    if (cached) {
+      return NextResponse.json({
+        explanation: cached.explanation,
+        model: cached.model,
+        fallback: false,
+        cached: true,
+      });
+    }
+
+    const { system, user } = buildMessages(body);
+
     try {
       const result = await raceProviders(system, user);
+
+      // 2) Persist for everyone (same question / same notes)
+      void writeCache({
+        contextKey,
+        explanation: result.text,
+        model: result.model,
+        mode,
+        resourceId,
+        promptPreview: user,
+      });
+
       return NextResponse.json({
         explanation: result.text,
         model: result.model,
         fallback: false,
+        cached: false,
       });
     } catch (e) {
       console.error("[ai/explain] all providers failed", errMsg(e));
       return NextResponse.json({
         explanation: FALLBACK,
         fallback: true,
+        cached: false,
       });
     }
   } catch (e) {
