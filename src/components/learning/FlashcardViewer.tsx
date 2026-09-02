@@ -13,6 +13,8 @@ type Props = {
 
 type Grade = "know" | "learning" | "again";
 
+const CARD_MIN_H = 300;
+
 export default function FlashcardViewer({ meta, resourceId }: Props) {
   const cards = (Array.isArray(meta.cards) ? meta.cards : []) as Card[];
   const [i, setI] = useState(0);
@@ -82,7 +84,7 @@ export default function FlashcardViewer({ meta, resourceId }: Props) {
 
   if (done) {
     return (
-      <div className="max-w-md mx-auto space-y-5">
+      <div className="max-w-lg mx-auto space-y-5">
         <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 p-6 text-center">
           <BarChart3 className="w-8 h-8 text-amber-300 mx-auto mb-3" />
           <h3 className="font-display text-xl font-bold text-white mb-1">
@@ -115,7 +117,7 @@ export default function FlashcardViewer({ meta, resourceId }: Props) {
   }
 
   return (
-    <div className="space-y-4 max-w-md mx-auto">
+    <div className="space-y-4 max-w-lg mx-auto">
       <div className="flex items-center justify-between text-xs text-wisdom-muted">
         <span>
           Card {i + 1}/{cards.length}
@@ -125,10 +127,10 @@ export default function FlashcardViewer({ meta, resourceId }: Props) {
         </span>
       </div>
 
-      {/* 3D flip stage */}
+      {/* 3D flip stage — larger card */}
       <div
         className="relative w-full cursor-pointer"
-        style={{ perspective: "1200px", minHeight: 220 }}
+        style={{ perspective: "1200px", minHeight: CARD_MIN_H }}
         onClick={() => setFlipped((f) => !f)}
         role="button"
         tabIndex={0}
@@ -145,35 +147,35 @@ export default function FlashcardViewer({ meta, resourceId }: Props) {
           style={{
             transformStyle: "preserve-3d",
             transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
-            minHeight: 220,
+            minHeight: CARD_MIN_H,
           }}
         >
           {/* Front */}
           <div
-            className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl border border-white/15 bg-gradient-to-br from-[#1a2332] via-wisdom-card to-[#0f172a] p-6 text-center shadow-xl"
+            className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl border border-white/15 bg-gradient-to-br from-[#1a2332] via-wisdom-card to-[#0f172a] p-7 sm:p-8 text-center shadow-xl"
             style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
           >
             <p className="text-[10px] uppercase tracking-wider text-amber-300/80 mb-3 font-semibold">
               Prompt · tap to flip
             </p>
-            <p className="text-lg sm:text-xl font-semibold text-white leading-snug">
+            <p className="text-xl sm:text-2xl font-semibold text-white leading-snug">
               {card.front}
             </p>
           </div>
 
-          {/* Back — green */}
+          {/* Back — deeper green (not bright) */}
           <div
-            className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl border border-emerald-400/40 bg-gradient-to-br from-emerald-700 via-emerald-600 to-teal-700 p-6 text-center shadow-xl shadow-emerald-900/40"
+            className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl border border-emerald-800/50 bg-gradient-to-br from-[#0d3b2e] via-[#0a2f25] to-[#06261e] p-7 sm:p-8 text-center shadow-xl shadow-emerald-950/50"
             style={{
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
               transform: "rotateY(180deg)",
             }}
           >
-            <p className="text-[10px] uppercase tracking-wider text-emerald-100/90 mb-3 font-semibold">
+            <p className="text-[10px] uppercase tracking-wider text-emerald-200/70 mb-3 font-semibold">
               Answer · tap to flip back
             </p>
-            <p className="text-lg sm:text-xl font-semibold text-white leading-snug">
+            <p className="text-xl sm:text-2xl font-semibold text-white leading-snug">
               {card.back}
             </p>
           </div>
