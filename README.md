@@ -10,10 +10,16 @@ Live Academy: https://wisdom-tower-academy.live
 - Next.js 15 + TypeScript + Tailwind
 - Supabase (use a **new** project — do not reuse Digital keys)
 - Vercel (new project)
+- **Android app:** Capacitor shell (see [docs/MOBILE-APP.md](docs/MOBILE-APP.md))
 
-## Setup
+## Setup (website)
 ```bash
 npm install
 cp .env.example .env.local   # fill NEW Supabase keys + NEXT_PUBLIC_DIGITAL_URL
 npm run dev
 ```
+
+## Android app
+Full step-by-step (screenshot protection, offline later):
+
+→ **[docs/MOBILE-APP.md](docs/MOBILE-APP.md)**
