@@ -118,7 +118,11 @@ export default function NotificationBell({
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener("mousedown", onPointer);
-    return () => document.removeEventListener("mousedown", onPointer);
+    document.addEventListener("touchstart", onPointer, { passive: true });
+    return () => {
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("touchstart", onPointer);
+    };
   }, [open]);
 
   if (!loggedIn) return null;
@@ -165,7 +169,11 @@ export default function NotificationBell({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-[min(20rem,calc(100vw-2rem))] rounded-2xl border border-white/12 bg-[#0a0f1a] shadow-2xl z-[70] overflow-hidden">
+        <div
+          className="fixed z-[70] w-[min(20rem,calc(100vw-1.5rem))] rounded-2xl border border-white/12 bg-[#0a0f1a] shadow-2xl overflow-hidden
+            left-1/2 -translate-x-1/2 top-[4.25rem]
+            sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:translate-x-0"
+        >
           <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
             <p className="text-sm font-semibold text-white">Notifications</p>
             <button

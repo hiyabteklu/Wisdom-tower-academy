@@ -8,7 +8,6 @@ import {
   GraduationCap as GradCap,
   Trees,
   BadgeCheck,
-  Sparkles,
 } from "lucide-react";
 import VoiceMessageCard from "@/components/VoiceMessageCard";
 import TestimonialMarquee from "@/components/TestimonialMarquee";
@@ -81,36 +80,54 @@ const freeResources = [
     name: "Success Stories",
     blurb: "Journeys of students who leveled up with Academy",
     icon: Trophy,
+    accent: "text-amber-300",
+    border: "border-white/12 hover:border-amber-400/35",
+    iconBg: "border-amber-400/25 bg-amber-500/10 text-amber-300",
   },
   {
     href: "/academy/study-techniques",
     name: "Study Techniques",
     blurb: "Methods to learn faster and retain under pressure",
     icon: Lightbulb,
+    accent: "text-cyan-300",
+    border: "border-white/12 hover:border-cyan-400/35",
+    iconBg: "border-cyan-400/25 bg-cyan-500/10 text-cyan-300",
   },
   {
     href: "/academy/campus-life",
     name: "Campus Life",
     blurb: "Friends, focus, burnout, lectures, facilities & group work",
     icon: Trees,
+    accent: "text-sky-300",
+    border: "border-white/12 hover:border-sky-400/35",
+    iconBg: "border-sky-400/25 bg-sky-500/10 text-sky-300",
   },
   {
     href: "/academy/universities",
     name: "Universities Info",
     blurb: "Explore institutions, programs, and pathways",
     icon: Building2,
+    accent: "text-violet-300",
+    border: "border-white/12 hover:border-violet-400/35",
+    iconBg: "border-violet-400/25 bg-violet-500/10 text-violet-300",
   },
   {
     href: "/academy/departments",
     name: "Department Info",
     blurb: "What each field of study actually involves",
     icon: Library,
+    accent: "text-orange-300",
+    border: "border-white/12 hover:border-orange-400/35",
+    iconBg: "border-orange-400/25 bg-orange-500/10 text-orange-300",
   },
   {
     href: "/academy/scholarships",
     name: "Scholarship Info",
     blurb: "Funding options and how to prepare applications",
     icon: GradCap,
+    accent: "text-rose-300",
+    border: "border-white/12 hover:border-rose-400/35",
+    iconBg: "border-rose-400/25 bg-rose-500/10 text-rose-300",
   },
 ];
 
@@ -204,8 +221,7 @@ export default function AcademyPage() {
           {/* Special packages: header OUTSIDE the card */}
           <section className="mt-20 md:mt-24" id="special-packages">
             <div className="text-center mb-8">
-              <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-violet-300/90 mb-3">
-                <Sparkles className="w-3.5 h-3.5" />
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-300/90 mb-3">
                 Beyond the six branches
               </p>
               <h2 className="font-display text-3xl md:text-4xl font-bold text-white mb-2">
@@ -236,11 +252,10 @@ export default function AcademyPage() {
             </Link>
           </section>
 
-          <div className="mt-24 md:mt-28 relative">
-            <div className="absolute -inset-x-4 -inset-y-8 rounded-[2rem] border border-teal-500/15 bg-gradient-to-b from-teal-500/[0.06] via-transparent to-transparent pointer-events-none" />
-
-            <div className="relative text-center mb-10 pt-4">
-              <p className="text-teal-300/90 text-sm mb-2 tracking-wide font-medium">
+          {/* Free resources — header outside cards; site tone (not teal wash) */}
+          <section className="mt-24 md:mt-28">
+            <div className="text-center mb-10">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-400/90 mb-3">
                 Open library · no enrollment required
               </p>
               <h2 className="font-display text-3xl md:text-4xl font-bold text-white mb-3">
@@ -252,23 +267,27 @@ export default function AcademyPage() {
               </p>
             </div>
 
-            <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {freeResources.map((item) => {
                 const Icon = item.icon;
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="group relative rounded-2xl border border-teal-400/20 bg-wisdom-dark/50 backdrop-blur-sm p-6 hover:border-teal-300/45 hover:bg-teal-500/[0.07] transition-all duration-300"
+                    className={`group relative rounded-2xl border bg-wisdom-card p-6 transition-all duration-300 hover:bg-white/[0.03] ${item.border}`}
                   >
-                    <div className="mb-4 inline-flex p-3 rounded-full border border-teal-400/25 bg-teal-500/10 text-teal-300 group-hover:scale-105 transition-transform">
+                    <div
+                      className={`mb-4 inline-flex p-3 rounded-xl border ${item.iconBg} group-hover:scale-105 transition-transform`}
+                    >
                       <Icon className="w-5 h-5" />
                     </div>
-                    <h3 className="font-display text-xl text-teal-50 mb-2 group-hover:text-teal-200 transition-colors font-semibold">
+                    <h3
+                      className={`font-display text-xl mb-2 font-semibold transition-colors ${item.accent}`}
+                    >
                       {item.name}
                     </h3>
                     <p className="text-sm text-wisdom-muted leading-relaxed">{item.blurb}</p>
-                    <span className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-teal-400/90">
+                    <span className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-wisdom-muted group-hover:text-white/80">
                       Explore
                       <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
                     </span>
@@ -276,7 +295,7 @@ export default function AcademyPage() {
                 );
               })}
             </div>
-          </div>
+          </section>
 
           <section className="mt-24 md:mt-28">
             <div className="text-center mb-10">

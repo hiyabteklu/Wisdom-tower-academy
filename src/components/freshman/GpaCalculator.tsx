@@ -5,7 +5,6 @@ import {
   Calculator,
   Plus,
   Trash2,
-  Sparkles,
   BookOpen,
   Info,
 } from "lucide-react";
@@ -331,7 +330,7 @@ export default function GpaCalculator() {
         {/* Results */}
         <div className="rounded-2xl border border-white/12 bg-wisdom-dark/50 overflow-hidden">
           <div className="px-4 sm:px-5 py-3 border-b border-white/10 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-purple-300" />
+            <Calculator className="w-4 h-4 text-purple-300" />
             <h3 className="font-display font-bold text-white text-sm sm:text-base">
               Semester result
             </h3>

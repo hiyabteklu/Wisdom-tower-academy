@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { CloudUpload, Sparkles, X } from "lucide-react";
+import { CloudUpload, X } from "lucide-react";
 import { COMING_SOON_BODY, COMING_SOON_TITLE } from "@/data/content-availability";
 
 type Props = {
@@ -63,7 +63,6 @@ export default function ComingSoonModal({ open, onClose, hubName }: Props) {
           </div>
 
           <p className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-amber-400/25 bg-amber-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-300">
-            <Sparkles className="w-3 h-3" />
             Coming soon
           </p>
 

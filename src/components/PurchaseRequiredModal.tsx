@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { Lock, ShoppingBag, X, Sparkles } from "lucide-react";
+import { Lock, ShoppingBag, X } from "lucide-react";
 import { formatEtb, getPackage } from "@/data/packages";
 import { PURCHASE_TITLE, PURCHASE_BODY_FRESHMAN } from "@/data/content-availability";
 
@@ -81,7 +81,6 @@ export default function PurchaseRequiredModal({
           </div>
 
           <p className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-amber-400/25 bg-amber-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-300">
-            <Sparkles className="w-3 h-3" />
             Unlock content
           </p>
 

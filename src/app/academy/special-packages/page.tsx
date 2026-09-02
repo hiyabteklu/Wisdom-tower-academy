@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, BadgeCheck, Sparkles } from "lucide-react";
+import { ArrowRight, BadgeCheck } from "lucide-react";
 import SafeCoverImage from "@/components/SafeCoverImage";
 import { formatEtb } from "@/data/packages";
 import { specialPackages } from "@/data/special-packages";
@@ -20,8 +20,7 @@ export default function SpecialPackagesPage() {
       <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Category header — outside any card */}
         <header className="text-center mb-8 md:mb-10">
-          <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-violet-300/90 mb-3">
-            <Sparkles className="w-3.5 h-3.5" />
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-300/90 mb-3">
             Department tracks
           </p>
           <h1 className="font-display text-3xl md:text-4xl font-extrabold text-white tracking-tight">
