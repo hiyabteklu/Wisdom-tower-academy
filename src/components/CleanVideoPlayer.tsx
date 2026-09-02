@@ -198,9 +198,6 @@ export default function CleanVideoPlayer({
         <Play className="h-6 w-6 fill-current ml-0.5" />
       </span>
       <p className="text-sm font-medium text-white/80">Video coming soon</p>
-      <p className="text-xs text-wisdom-muted max-w-[16rem] text-center px-4">
-        Add a direct video file for a clean built-in player, or a YouTube id with our custom cover.
-      </p>
     </div>
   );
 }
