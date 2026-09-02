@@ -39,6 +39,8 @@ export default function QuizExamViewer({
   const [idx, setIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [showSol, setShowSol] = useState(false);
+  /** Once solution is revealed for a question, lock that answer (practice mode). */
+  const [lockedBySolution, setLockedBySolution] = useState<Record<number, boolean>>({});
   const [left, setLeft] = useState(durationMin > 0 ? durationMin * 60 : 0);
   const [calc, setCalc] = useState("");
   const [ai, setAi] = useState("");
@@ -182,6 +184,18 @@ export default function QuizExamViewer({
   }
 
   const revealCorrectness = !isExam || submitted;
+  /** Cannot change answer after exam submit, or after opening solution on this question (practice). */
+  const answersLocked = submitted || Boolean(lockedBySolution[idx]);
+
+  function openOfficialSolution() {
+    setShowSol((v) => {
+      const next = !v;
+      if (next) {
+        setLockedBySolution((prev) => ({ ...prev, [idx]: true }));
+      }
+      return next;
+    });
+  }
 
   return (
     <div className="space-y-4">
@@ -229,7 +243,7 @@ export default function QuizExamViewer({
               type="button"
               onClick={() => {
                 setIdx(i);
-                setShowSol(false);
+                setShowSol(Boolean(lockedBySolution[i]));
                 setAi("");
               }}
               className={`w-8 h-8 rounded-lg text-xs font-bold border ${
@@ -253,6 +267,9 @@ export default function QuizExamViewer({
       <div className="rounded-2xl border border-white/12 bg-wisdom-card p-5">
         <p className="text-xs text-wisdom-muted mb-2">
           Question {idx + 1} of {questions.length}
+          {answersLocked && !submitted && (
+            <span className="ml-2 text-amber-300/80">· Answer locked (solution viewed)</span>
+          )}
         </p>
         <div className="text-white font-medium leading-relaxed mb-4 study-prose">
           <RichContent body={q.prompt} />
@@ -260,7 +277,6 @@ export default function QuizExamViewer({
         <div className="space-y-2">
           {(q.choices || []).map((c, ci) => {
             const selected = answers[idx] === ci;
-            const reveal = revealCorrectness && (submitted || !isExam);
             const isRight = q.correct === ci;
             // Practice: show right/wrong after selecting + opening solution, or always after pick if showSol
             const showMark = isExam ? submitted : showSol || submitted;
@@ -268,14 +284,10 @@ export default function QuizExamViewer({
               <button
                 key={ci}
                 type="button"
-                disabled={submitted}
+                disabled={answersLocked}
                 onClick={() => {
-                  if (submitted) return;
+                  if (answersLocked) return;
                   setAnswers((a) => ({ ...a, [idx]: ci }));
-                  // Exam: never reveal per-click
-                  if (!isExam) {
-                    /* practice keeps neutral until solution */
-                  }
                 }}
                 className={`w-full text-left px-3 py-2.5 rounded-xl border text-sm transition-colors ${
                   selected
@@ -287,7 +299,7 @@ export default function QuizExamViewer({
                   showMark && selected && !isRight
                     ? "!border-rose-400/40 !bg-rose-500/10"
                     : ""
-                }`}
+                } ${answersLocked ? "opacity-90 cursor-not-allowed" : ""}`}
               >
                 <span className="font-semibold text-amber-200/90 mr-1.5">
                   {String.fromCharCode(65 + ci)}.
@@ -303,7 +315,7 @@ export default function QuizExamViewer({
           <div className="mt-4 flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => setShowSol((v) => !v)}
+              onClick={openOfficialSolution}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-emerald-400/35 bg-emerald-500/10 text-emerald-200 text-xs font-bold"
             >
               <BadgeCheck className="w-4 h-4" />
@@ -349,7 +361,7 @@ export default function QuizExamViewer({
           disabled={idx === 0}
           onClick={() => {
             setIdx((i) => i - 1);
-            setShowSol(false);
+            setShowSol(Boolean(lockedBySolution[idx - 1]));
             setAi("");
           }}
           className="px-4 py-2 rounded-xl border border-white/12 text-sm disabled:opacity-40"
@@ -361,7 +373,7 @@ export default function QuizExamViewer({
           disabled={idx >= questions.length - 1}
           onClick={() => {
             setIdx((i) => i + 1);
-            setShowSol(false);
+            setShowSol(Boolean(lockedBySolution[idx + 1]));
             setAi("");
           }}
           className="px-4 py-2 rounded-xl bg-amber-500 text-wisdom-dark text-sm font-bold disabled:opacity-40"

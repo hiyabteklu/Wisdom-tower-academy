@@ -21,6 +21,7 @@ import {
   Layers,
   BarChart3,
   Gauge,
+  ChevronRight,
 } from "lucide-react";
 import NotesViewer from "@/components/learning/NotesViewer";
 import QuizExamViewer from "@/components/learning/QuizExamViewer";
@@ -58,6 +59,24 @@ function completionLabel(pct: number) {
   if (pct >= 40) return "Medium";
   if (pct > 0) return "Short";
   return "Not started";
+}
+
+function hubIcon(hub: HubId, className = "w-7 h-7") {
+  if (hub === "exams") return <Timer className={`${className} text-emerald-400`} />;
+  if (hub === "question-banks") return <HelpCircle className={`${className} text-cyan-400`} />;
+  if (hub === "flashcards") return <Layers className={`${className} text-violet-400`} />;
+  if (hub === "videos") return <Play className={`${className} text-rose-400`} />;
+  if (hub === "short-notes") return <FileText className={`${className} text-sky-400`} />;
+  return <BookOpen className={`${className} text-amber-400`} />;
+}
+
+function hubAccentClass(hub: HubId) {
+  if (hub === "exams") return "text-emerald-300";
+  if (hub === "question-banks") return "text-cyan-300";
+  if (hub === "flashcards") return "text-violet-300";
+  if (hub === "videos") return "text-rose-300";
+  if (hub === "short-notes") return "text-sky-300";
+  return "text-amber-300";
 }
 
 export default function HubContentView({
@@ -190,13 +209,13 @@ export default function HubContentView({
         <button
           type="button"
           onClick={() => setActive(null)}
-          className="text-sm text-cyan-300 hover:underline"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-cyan-300 hover:text-cyan-200 hover:underline"
         >
-          ← All items
+          ← Back to all items
         </button>
 
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <h2 className={`font-display text-xl font-bold ${accent}`}>{active.title}</h2>
+          <h2 className={`font-display text-xl sm:text-2xl font-bold ${accent}`}>{active.title}</h2>
         </div>
 
         <div className="flex flex-wrap gap-2 text-xs">
@@ -357,32 +376,31 @@ export default function HubContentView({
     );
   }
 
+  const titleAccent = accent || hubAccentClass(hub);
+
   return (
-    <ul className="space-y-2">
+    <ul className="space-y-3">
       {items.map((item) => (
         <li key={item.id}>
           <button
             type="button"
             onClick={() => void openItem(item)}
-            className="w-full flex items-center gap-3 rounded-2xl border border-white/12 bg-wisdom-card px-4 py-3.5 text-left hover:border-amber-400/35 transition-colors"
+            className="w-full flex items-center gap-4 rounded-2xl border border-white/12 bg-wisdom-card px-4 py-4 sm:px-5 sm:py-5 text-left hover:border-amber-400/40 hover:bg-wisdom-card/90 transition-colors shadow-sm group"
           >
-            {hub === "exams" ? (
-              <Timer className="w-5 h-5 text-emerald-400 shrink-0" />
-            ) : hub === "question-banks" ? (
-              <HelpCircle className="w-5 h-5 text-cyan-400 shrink-0" />
-            ) : hub === "flashcards" ? (
-              <Layers className="w-5 h-5 text-violet-400 shrink-0" />
-            ) : hub === "videos" ? (
-              <Play className="w-5 h-5 text-rose-400 shrink-0" />
-            ) : (
-              <BookOpen className="w-5 h-5 text-amber-400 shrink-0" />
-            )}
+            <div className="flex h-14 w-14 sm:h-16 sm:w-16 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-wisdom-dark/50">
+              {hubIcon(hub, "w-7 h-7 sm:w-8 sm:h-8")}
+            </div>
             <div className="min-w-0 flex-1">
-              <p className="font-semibold text-white truncate">{item.title}</p>
+              <p className={`font-display text-base sm:text-lg font-bold truncate ${titleAccent}`}>
+                {item.title}
+              </p>
               {item.chapter != null && (
-                <p className="text-xs text-wisdom-muted">Chapter {item.chapter}</p>
+                <p className="text-xs sm:text-sm text-wisdom-muted mt-0.5">
+                  Chapter {item.chapter}
+                </p>
               )}
             </div>
+            <ChevronRight className="w-5 h-5 text-wisdom-muted shrink-0 group-hover:text-amber-300 transition-colors" />
           </button>
         </li>
       ))}

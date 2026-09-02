@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Check, X, RotateCcw, BarChart3 } from "lucide-react";
+import { Check, X, RotateCcw, BarChart3, ChevronLeft, ChevronRight } from "lucide-react";
 import { saveProgress } from "@/lib/content";
 
 type Card = { front: string; back: string };
@@ -80,6 +80,21 @@ export default function FlashcardViewer({ meta, resourceId }: Props) {
     setFlipped(false);
     setGrades({});
     setDone(false);
+  }
+
+  function goPrev() {
+    if (i <= 0) return;
+    setI((x) => x - 1);
+    setFlipped(false);
+  }
+
+  function goNext() {
+    if (i >= cards.length - 1) {
+      setDone(true);
+      return;
+    }
+    setI((x) => x + 1);
+    setFlipped(false);
   }
 
   if (done) {
@@ -182,6 +197,34 @@ export default function FlashcardViewer({ meta, resourceId }: Props) {
         </div>
       </div>
 
+      {/* Clear Prev / Next navigation */}
+      <div className="flex items-center justify-between gap-3">
+        <button
+          type="button"
+          onClick={goPrev}
+          disabled={i === 0}
+          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-white/15 bg-wisdom-dark/50 text-sm font-semibold text-white disabled:opacity-40 disabled:cursor-not-allowed hover:border-cyan-400/40 transition-colors"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          Previous
+        </button>
+        <button
+          type="button"
+          onClick={() => setFlipped((f) => !f)}
+          className="px-3 py-2 rounded-xl border border-amber-400/30 bg-amber-500/10 text-amber-200 text-xs font-bold"
+        >
+          {flipped ? "Show prompt" : "Flip card"}
+        </button>
+        <button
+          type="button"
+          onClick={goNext}
+          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-500 text-wisdom-dark text-sm font-bold hover:bg-amber-400 transition-colors"
+        >
+          {i >= cards.length - 1 ? "Finish" : "Next"}
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+
       {flipped ? (
         <div className="grid grid-cols-3 gap-2 animate-in fade-in duration-300">
           <button
@@ -208,7 +251,7 @@ export default function FlashcardViewer({ meta, resourceId }: Props) {
         </div>
       ) : (
         <p className="text-center text-xs text-wisdom-muted">
-          Flip the card, then rate how well you knew it.
+          Flip the card, then rate how well you knew it — or use Previous / Next to move.
         </p>
       )}
     </div>
