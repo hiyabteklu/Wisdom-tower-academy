@@ -26,6 +26,7 @@ import NotesViewer from "@/components/learning/NotesViewer";
 import QuizExamViewer from "@/components/learning/QuizExamViewer";
 import FlashcardViewer from "@/components/learning/FlashcardViewer";
 import PdfReader from "@/components/learning/PdfReader";
+import { isPackageFreeForLoggedIn } from "@/data/packages";
 
 type Props = {
   scopePath: string;
@@ -162,17 +163,27 @@ export default function HubContentView({
   }
 
   if (!owned) {
+    const freeForSignedIn = isPackageFreeForLoggedIn(packageId);
     return (
       <div className="rounded-2xl border border-amber-400/25 bg-amber-500/10 p-6 text-center">
-        <p className="text-white font-semibold mb-2">Purchase required</p>
-        <p className="text-sm text-wisdom-muted mb-4">
-          Unlock this package to open books, notes, questions, and exams.
+        <p className="text-white font-semibold mb-2">
+          {freeForSignedIn ? "Sign in required" : "Purchase required"}
         </p>
+        {freeForSignedIn ? (
+          <p className="text-sm text-wisdom-muted mb-4">
+            This package is free for signed-in users. Log in to open books, notes, questions, and
+            exams.
+          </p>
+        ) : (
+          <p className="text-sm text-wisdom-muted mb-4">
+            Unlock this package to open books, notes, questions, and exams.
+          </p>
+        )}
         <Link
-          href={`/checkout/${packageId}`}
+          href={freeForSignedIn ? "/login" : `/checkout/${packageId}`}
           className="inline-flex rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-bold text-wisdom-dark"
         >
-          Buy package
+          {freeForSignedIn ? "Log in" : "Buy package"}
         </Link>
       </div>
     );

@@ -2,8 +2,8 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { Lock, ShoppingBag, X, Sparkles } from "lucide-react";
-import { formatEtb, getPackage } from "@/data/packages";
+import { Lock, ShoppingBag, X, Sparkles, LogIn } from "lucide-react";
+import { formatEtb, getPackage, isPackageFreeForLoggedIn } from "@/data/packages";
 import { PURCHASE_TITLE, PURCHASE_BODY_FRESHMAN } from "@/data/content-availability";
 
 type Props = {
@@ -22,6 +22,7 @@ export default function PurchaseRequiredModal({
   const pkg = getPackage(packageId);
   const price = pkg?.priceEtb ?? 300;
   const name = pkg?.name ?? "this package";
+  const freeForSignedIn = isPackageFreeForLoggedIn(packageId);
   const checkoutHref = `/checkout/${packageId}`;
 
   useEffect(() => {
@@ -41,7 +42,9 @@ export default function PurchaseRequiredModal({
   if (!open) return null;
 
   const body =
-    packageId === "freshman"
+    freeForSignedIn
+      ? `This package is free for signed-in users. Log in to open ${hubName || "the learning hubs"}.`
+      : packageId === "freshman"
       ? PURCHASE_BODY_FRESHMAN
       : `Unlock ${name} to open books, flashcards, videos, and the rest of the learning hubs. After payment is verified, access appears in My Learning.`;
 
@@ -97,17 +100,30 @@ export default function PurchaseRequiredModal({
           )}
 
           <p className="text-sm text-wisdom-muted leading-relaxed max-w-sm mx-auto mb-2">{body}</p>
-          <p className="text-lg font-bold text-amber-300 mb-6">{formatEtb(price)}</p>
+          {!freeForSignedIn && (
+            <p className="text-lg font-bold text-amber-300 mb-6">{formatEtb(price)}</p>
+          )}
 
           <div className="flex flex-col gap-2.5">
-            <Link
-              href={checkoutHref}
-              onClick={onClose}
-              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-amber-500 px-6 py-2.5 text-sm font-bold text-wisdom-dark hover:bg-amber-400"
-            >
-              <ShoppingBag className="w-4 h-4" />
-              Buy {name}
-            </Link>
+            {freeForSignedIn ? (
+              <Link
+                href={`/login?next=${encodeURIComponent(pkg?.href || "/learning")}`}
+                onClick={onClose}
+                className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-amber-500 px-6 py-2.5 text-sm font-bold text-wisdom-dark hover:bg-amber-400"
+              >
+                <LogIn className="w-4 h-4" />
+                Sign in for free access
+              </Link>
+            ) : (
+              <Link
+                href={checkoutHref}
+                onClick={onClose}
+                className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-amber-500 px-6 py-2.5 text-sm font-bold text-wisdom-dark hover:bg-amber-400"
+              >
+                <ShoppingBag className="w-4 h-4" />
+                Buy {name}
+              </Link>
+            )}
             <Link
               href="/packages"
               onClick={onClose}

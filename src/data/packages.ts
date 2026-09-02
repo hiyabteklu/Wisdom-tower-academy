@@ -1,5 +1,5 @@
 /**
- * Academy packages — Freshman 300; ECE S1 300 only (no full-year).
+ * Academy packages — Freshman 300; ECE semesters are free for signed-in users.
  * Other tracks 500 (not for sale until ready).
  */
 
@@ -18,6 +18,10 @@ export type AcademyPackage = {
 
 export const PACKAGE_PRICE_ETB = 500;
 export const FRESHMAN_PRICE_ETB = 300;
+export const FREE_FOR_LOGGED_IN_PACKAGE_IDS = new Set([
+  "ece-y3-sem-1",
+  "ece-y3-sem-2",
+]);
 
 export const packageImages = {
   "grade-9-12": "/images/packages/grade-9-12_9842aa.jpeg",
@@ -151,11 +155,11 @@ export const academyPackages: AcademyPackage[] = [
     name: "ECE Year 3 — Semester 1",
     shortName: "ECE S1",
     description:
-      "First semester — Engineering Thermodynamics, Networks, Machines, Digital Logic, and more.",
+      "First semester — Engineering Thermodynamics, Networks, Machines, Digital Logic, and more. Free for signed-in users.",
     priceEtb: 300,
     href: "/academy/special-packages/electrical-computer-engineering/sem-1",
     image: "/images/special-packages/ece-sem-1.jpg",
-    includes: ["7 courses · Semester 1", "Learning hubs per course", "300 ETB one-time"],
+    includes: ["7 courses · Semester 1", "Learning hubs per course", "Free for signed-in users"],
     enrolledLabel: "Special track",
     group: "special",
   },
@@ -168,7 +172,11 @@ export const academyPackages: AcademyPackage[] = [
     priceEtb: 300,
     href: "/academy/special-packages/electrical-computer-engineering/sem-2",
     image: "/images/special-packages/ece-sem-2.jpg",
-    includes: ["7 courses · Semester 2", "Learning hubs per course", "Coming soon"],
+    includes: [
+      "7 courses · Semester 2",
+      "Learning hubs per course",
+      "Coming soon · free for signed-in users when live",
+    ],
     enrolledLabel: "Special track",
     group: "special",
   },
@@ -176,6 +184,10 @@ export const academyPackages: AcademyPackage[] = [
 
 export function getPackage(id: string): AcademyPackage | undefined {
   return academyPackages.find((p) => p.id === id);
+}
+
+export function isPackageFreeForLoggedIn(packageId: string): boolean {
+  return FREE_FOR_LOGGED_IN_PACKAGE_IDS.has(packageId);
 }
 
 export function packageIdForGrade(gradeId: string): string {

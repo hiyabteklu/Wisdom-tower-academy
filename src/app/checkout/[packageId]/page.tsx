@@ -2,10 +2,10 @@
 
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
-import { getPackage, formatEtb } from "@/data/packages";
+import { getPackage, formatEtb, isPackageFreeForLoggedIn } from "@/data/packages";
 import { getPackageResolved } from "@/lib/catalog";
 import { isPackagePurchasable } from "@/data/content-availability";
-import { CloudUpload, ArrowLeft } from "lucide-react";
+import { CloudUpload, ArrowLeft, BookOpen, LogIn } from "lucide-react";
 import CheckoutForm from "@/components/CheckoutForm";
 
 /** Gate: only purchasable packages reach CheckoutForm. */
@@ -37,6 +37,38 @@ export default function CheckoutPage({
         <Link href="/packages" className="text-amber-300 text-sm hover:underline">
           Back to packages
         </Link>
+      </div>
+    );
+  }
+
+  if (isPackageFreeForLoggedIn(packageId)) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 text-center">
+        <div className="rounded-3xl border border-cyan-400/25 bg-wisdom-card p-8 shadow-card-3d">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-cyan-400/30 bg-cyan-500/10 text-cyan-300">
+            <BookOpen className="w-7 h-7" />
+          </div>
+          <h1 className="font-display text-xl font-bold text-white mb-2">No payment required</h1>
+          <p className="text-sm text-wisdom-muted leading-relaxed mb-6">
+            {pkg.name} is free for signed-in users. Log in and open the package directly from
+            Academy.
+          </p>
+          <div className="flex flex-col gap-2">
+            <Link
+              href={pkg.href}
+              className="inline-flex justify-center rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-wisdom-dark hover:bg-amber-400"
+            >
+              Open package
+            </Link>
+            <Link
+              href={`/login?next=${encodeURIComponent(pkg.href)}`}
+              className="inline-flex items-center justify-center gap-1 rounded-xl border border-white/15 px-4 py-2.5 text-sm text-white/90 hover:border-cyan-400/40 hover:text-cyan-300"
+            >
+              <LogIn className="w-4 h-4" />
+              Sign in
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }

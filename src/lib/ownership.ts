@@ -3,6 +3,7 @@
  */
 import { listMyEnrollments, listMyOrders } from "@/lib/orders";
 import { supabase } from "@/lib/supabase";
+import { FREE_FOR_LOGGED_IN_PACKAGE_IDS } from "@/data/packages";
 
 export type OwnershipMap = Set<string>;
 
@@ -45,6 +46,9 @@ export async function getOwnedPackageIds(force = false): Promise<OwnershipMap> {
     }
     for (const o of orders || []) {
       if (o.status === "verified" && o.packageId) ids.add(o.packageId);
+    }
+    for (const packageId of FREE_FOR_LOGGED_IN_PACKAGE_IDS) {
+      ids.add(packageId);
     }
 
     cache = { at: Date.now(), ids, userId };

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowRight, BadgeCheck } from "lucide-react";
 import SafeCoverImage from "@/components/SafeCoverImage";
 import AddToCartButton from "@/components/AddToCartButton";
-import { formatEtb } from "@/data/packages";
+import { formatEtb, isPackageFreeForLoggedIn } from "@/data/packages";
 import { getSpecialPackage, specialPackages } from "@/data/special-packages";
 
 export function generateStaticParams() {
@@ -68,9 +68,11 @@ export default async function SpecialPackagePage({
                   </h2>
                   <p className="mt-1 text-xs text-wisdom-muted">
                     {sem.courses.length} courses
-                    {sem.purchasable
-                      ? ` · ${formatEtb(sem.priceEtb)}`
-                      : " · not for sale yet"}
+                    {isPackageFreeForLoggedIn(sem.packageId)
+                      ? " · free for signed-in users"
+                      : sem.purchasable
+                        ? ` · ${formatEtb(sem.priceEtb)}`
+                        : " · not for sale yet"}
                   </p>
                   <span className="mt-2.5 inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-violet-400/90">
                     Open semester

@@ -2,9 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ShoppingBag, Check, BookOpen, CloudUpload } from "lucide-react";
+import { ShoppingBag, Check, BookOpen, CloudUpload, LogIn } from "lucide-react";
 import { addToCart, isInCart, CART_EVENT } from "@/lib/cart";
-import { formatEtb, PACKAGE_PRICE_ETB, getPackage } from "@/data/packages";
+import {
+  formatEtb,
+  PACKAGE_PRICE_ETB,
+  getPackage,
+  isPackageFreeForLoggedIn,
+} from "@/data/packages";
 import { getPackageResolved } from "@/lib/catalog";
 import { isPackageOwned, clearOwnershipCache } from "@/lib/ownership";
 import { isPackagePurchasable } from "@/data/content-availability";
@@ -24,12 +29,14 @@ export default function AddToCartButton({
 }: Props) {
   const [inCart, setInCart] = useState(false);
   const [owned, setOwned] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
   const [soonOpen, setSoonOpen] = useState(false);
   const pkg = getPackageResolved(packageId) || getPackage(packageId);
   const price = pkg?.priceEtb ?? PACKAGE_PRICE_ETB;
   const openHref = pkg?.href || "/learning";
   const purchasable = isPackagePurchasable(packageId);
+  const freeForSignedIn = isPackageFreeForLoggedIn(packageId);
 
   useEffect(() => {
     const syncCart = () => setInCart(isInCart(packageId));
@@ -41,9 +48,13 @@ export default function AddToCartButton({
         data: { session },
       } = await supabase.auth.getSession();
       if (!session?.user) {
-        if (!cancelled) setOwned(false);
+        if (!cancelled) {
+          setOwned(false);
+          setSignedIn(false);
+        }
         return;
       }
+      if (!cancelled) setSignedIn(true);
       const has = await isPackageOwned(packageId);
       if (!cancelled) setOwned(has);
     })();
@@ -53,8 +64,13 @@ export default function AddToCartButton({
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(() => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSignedIn(Boolean(session?.user));
       clearOwnershipCache();
+      if (!session?.user) {
+        setOwned(false);
+        return;
+      }
       void isPackageOwned(packageId).then((has) => {
         if (!cancelled) setOwned(has);
       });
@@ -95,6 +111,36 @@ export default function AddToCartButton({
           Open content
         </Link>
       </div>
+    );
+  }
+
+  if (freeForSignedIn) {
+    const loginHref = `/login?next=${encodeURIComponent(openHref)}`;
+    const baseClass =
+      variant === "compact"
+        ? "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold"
+        : variant === "ghost"
+          ? "inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-semibold"
+          : "inline-flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-semibold";
+    if (signedIn) {
+      return (
+        <Link
+          href={openHref}
+          className={`${baseClass} bg-amber-500 text-wisdom-dark hover:bg-amber-400 transition-colors ${className}`}
+        >
+          <BookOpen className="w-4 h-4" />
+          Open free content
+        </Link>
+      );
+    }
+    return (
+      <Link
+        href={loginHref}
+        className={`${baseClass} border border-cyan-400/40 text-cyan-200 hover:bg-cyan-500/10 ${className}`}
+      >
+        <LogIn className="w-4 h-4" />
+        Sign in for free access
+      </Link>
     );
   }
 

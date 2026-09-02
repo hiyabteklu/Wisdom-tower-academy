@@ -1,7 +1,7 @@
 /** Special packages — semester purchases only (no full-year cart).
- *
+*
  * ECE Y3: Semester 1 = 300 ETB (live). Semester 2 = coming soon.
- */
+*/
 
 export type SpecialCourse = {
   code: string;
@@ -77,7 +77,8 @@ export const specialPackages: SpecialPackage[] = [
     id: "ece-y3",
     slug: "electrical-computer-engineering",
     name: "Electrical & Computer Engineering",
-    blurb: "Year 3 — buy each semester separately (300 ETB). Semester 1 is live; Semester 2 coming soon.",
+    blurb:
+      "Year 3 — semester-based access. Semester 1 is free for signed-in users; Semester 2 is coming soon.",
     image: "/images/special-packages/ece.jpg",
     yearLabel: "3rd Year",
     semesterPriceEtb: ECE_SEMESTER_PRICE_ETB,

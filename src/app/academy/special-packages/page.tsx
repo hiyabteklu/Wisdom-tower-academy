@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, BadgeCheck, Sparkles } from "lucide-react";
 import SafeCoverImage from "@/components/SafeCoverImage";
-import { formatEtb } from "@/data/packages";
+import { formatEtb, isPackageFreeForLoggedIn } from "@/data/packages";
 import { specialPackages } from "@/data/special-packages";
 
 export const metadata = {
@@ -53,7 +53,9 @@ export default function SpecialPackagesPage() {
                 </h2>
                 <p className="mt-2 text-sm text-wisdom-muted leading-relaxed">{pkg.blurb}</p>
                 <p className="mt-2 text-sm font-semibold text-amber-300">
-                  {formatEtb(pkg.semesterPriceEtb)} per semester
+                  {pkg.semesters.some((s) => isPackageFreeForLoggedIn(s.packageId))
+                    ? "Free for signed-in users"
+                    : `${formatEtb(pkg.semesterPriceEtb)} per semester`}
                 </p>
                 <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-violet-400/90">
                   View semesters

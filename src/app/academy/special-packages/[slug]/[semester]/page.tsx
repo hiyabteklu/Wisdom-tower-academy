@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowRight, BadgeCheck } from "lucide-react";
 import SafeCoverImage from "@/components/SafeCoverImage";
 import AddToCartButton from "@/components/AddToCartButton";
-import { formatEtb } from "@/data/packages";
+import { formatEtb, isPackageFreeForLoggedIn } from "@/data/packages";
 import { getSemester, specialPackages } from "@/data/special-packages";
 
 export function generateStaticParams() {
@@ -52,7 +52,9 @@ export default async function SemesterPage({
         {sem.purchasable ? (
           <>
             <p className="text-sm text-amber-300 font-semibold mb-6">
-              {formatEtb(sem.priceEtb)} · this semester only
+              {isPackageFreeForLoggedIn(sem.packageId)
+                ? "Free for signed-in users"
+                : `${formatEtb(sem.priceEtb)} · this semester only`}
             </p>
             <div className="mb-8 max-w-sm">
               <AddToCartButton packageId={sem.packageId} />
