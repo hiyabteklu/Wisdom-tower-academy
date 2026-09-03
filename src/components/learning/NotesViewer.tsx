@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Lightbulb, ListTree } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Lightbulb } from "lucide-react";
 import RichContent, { type TocItem } from "@/components/learning/RichContent";
 
 type Props = {
@@ -14,31 +14,107 @@ export default function NotesViewer({ body, resourceId, onProgress }: Props) {
   const [ai, setAi] = useState("");
   const [loading, setLoading] = useState(false);
   const [toc, setToc] = useState<TocItem[]>([]);
-  const [showToc, setShowToc] = useState(true);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [scrubPct, setScrubPct] = useState(0);
+  const articleRef = useRef<HTMLDivElement>(null);
   const reported = useRef(false);
+  const dragging = useRef(false);
 
-  // Progress from the notes scroll window (not the whole page)
+  // Window scroll → reading progress + active section + scrubber position
   useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
     reported.current = false;
 
     const onScroll = () => {
-      const max = el.scrollHeight - el.clientHeight;
-      const pct =
-        max <= 0 ? 100 : Math.min(100, Math.round((el.scrollTop / max) * 100));
+      if (dragging.current) return;
+
+      const el = articleRef.current;
+      if (!el) return;
+
+      const rect = el.getBoundingClientRect();
+      const pageH = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+      const scrolled = window.scrollY || document.documentElement.scrollTop;
+      const pct = Math.min(100, Math.round((scrolled / pageH) * 100));
+      setScrubPct(pct);
       onProgress?.(pct);
       if (pct >= 95 && !reported.current) {
         reported.current = true;
         onProgress?.(100);
       }
+
+      // Highlight the section nearest the top of the viewport
+      if (toc.length) {
+        let best = 0;
+        for (let i = 0; i < toc.length; i++) {
+          const node = document.getElementById(toc[i].id);
+          if (!node) continue;
+          const top = node.getBoundingClientRect().top;
+          if (top <= 120) best = i;
+        }
+        setActiveIdx(best);
+      }
+
+      // Keep TS happy — rect used for layout readiness
+      void rect.height;
     };
 
     onScroll();
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
-  }, [body, onProgress]);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [body, onProgress, toc]);
+
+  const jumpToSection = useCallback((id: string, index: number) => {
+    const node = document.getElementById(id);
+    if (!node) return;
+    setActiveIdx(index);
+    const y = node.getBoundingClientRect().top + window.scrollY - 88;
+    window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+  }, []);
+
+  /** Drag / tap on the horizontal track to fast-scroll the page */
+  const scrubFromClientX = useCallback((clientX: number, track: HTMLElement) => {
+    const rect = track.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    const pct = Math.round(ratio * 100);
+    setScrubPct(pct);
+
+    const pageH = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    window.scrollTo({ top: pageH * ratio, behavior: "auto" });
+
+    // Snap active section to whatever is under the new viewport
+    if (toc.length) {
+      let best = 0;
+      for (let i = 0; i < toc.length; i++) {
+        const node = document.getElementById(toc[i].id);
+        if (!node) continue;
+        if (node.getBoundingClientRect().top <= 120) best = i;
+      }
+      setActiveIdx(best);
+    }
+  }, [toc]);
+
+  const onTrackPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    dragging.current = true;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    scrubFromClientX(e.clientX, e.currentTarget);
+  };
+
+  const onTrackPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragging.current) return;
+    scrubFromClientX(e.clientX, e.currentTarget);
+  };
+
+  const onTrackPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    dragging.current = false;
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      /* ignore */
+    }
+  };
 
   async function summarize() {
     setLoading(true);
@@ -62,95 +138,76 @@ export default function NotesViewer({ body, resourceId, onProgress }: Props) {
     setLoading(false);
   }
 
+  // Prefer major headings for the chip row (h1/h2); fall back to all toc
+  const chips = toc.filter((t) => t.level <= 2);
+  const navItems = chips.length ? chips : toc;
+
   return (
     <div className="space-y-4 w-full max-w-full">
-      <div className="flex flex-wrap items-center gap-2">
-        {toc.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setShowToc((v) => !v)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/12 text-xs font-semibold text-wisdom-muted hover:text-white"
-          >
-            <ListTree className="w-3.5 h-3.5" />
-            {showToc ? "Hide outline" : "Outline"}
-          </button>
-        )}
-      </div>
+      {/* Horizontal fast-scroll indicator (gallery-style) */}
+      {(navItems.length > 0 || true) && (
+        <div className="sticky top-[4.25rem] z-20 -mx-1 px-1">
+          <div className="rounded-2xl border border-white/10 bg-[#0b1220]/95 backdrop-blur-md shadow-lg p-3 space-y-2.5">
+            {/* Draggable progress track */}
+            <div
+              role="slider"
+              aria-label="Reading position"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={scrubPct}
+              tabIndex={0}
+              className="relative h-3 rounded-full bg-white/10 cursor-pointer touch-none select-none"
+              onPointerDown={onTrackPointerDown}
+              onPointerMove={onTrackPointerMove}
+              onPointerUp={onTrackPointerUp}
+              onPointerCancel={onTrackPointerUp}
+            >
+              <div
+                className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-amber-400 to-cyan-400 transition-[width] duration-75"
+                style={{ width: `${scrubPct}%` }}
+              />
+              <div
+                className="absolute top-1/2 -translate-y-1/2 h-4 w-4 rounded-full bg-white border-2 border-amber-400 shadow-md pointer-events-none"
+                style={{ left: `calc(${scrubPct}% - 8px)` }}
+              />
+            </div>
 
-      {/* Outline: full width on mobile, sidebar on large screens */}
-      {showToc && toc.length > 0 && (
-        <nav className="w-full rounded-2xl border border-white/10 bg-wisdom-dark/50 p-4 lg:hidden">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-amber-300/90 mb-3">
-            Topics
-          </p>
-          <ul className="space-y-1.5 max-h-[40vh] overflow-y-auto text-sm">
-            {toc.map((t) => (
-              <li key={t.id} style={{ paddingLeft: (t.level - 1) * 10 }}>
-                <a
-                  href={`#${t.id}`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    const target = scrollRef.current?.querySelector(`#${CSS.escape(t.id)}`);
-                    target?.scrollIntoView({ behavior: "smooth", block: "start" });
-                  }}
-                  className={`block truncate rounded-lg px-2 py-1 transition-colors hover:bg-white/5 ${
-                    t.level === 1
-                      ? "font-semibold text-white"
-                      : t.level === 2
-                        ? "text-white/80"
-                        : "text-wisdom-muted text-xs"
-                  }`}
-                >
-                  {t.text}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </nav>
+            {/* Section chips — tap to jump */}
+            {navItems.length > 0 && (
+              <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-thin">
+                {navItems.map((t) => {
+                  const globalIdx = toc.findIndex((x) => x.id === t.id);
+                  const active = globalIdx === activeIdx;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => jumpToSection(t.id, globalIdx >= 0 ? globalIdx : 0)}
+                      className={`shrink-0 max-w-[10rem] truncate rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition-colors ${
+                        active
+                          ? "bg-amber-500/90 text-wisdom-dark"
+                          : "bg-white/5 text-white/70 border border-white/10 hover:bg-white/10 hover:text-white"
+                      }`}
+                      title={t.text}
+                    >
+                      {t.text}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            <p className="text-[10px] tabular-nums text-white/40 text-right">{scrubPct}% through</p>
+          </div>
+        </div>
       )}
 
-      <div className="grid gap-4 w-full max-w-full lg:grid-cols-[minmax(0,1fr)_220px]">
-        {/* Fixed-height scroll window — page stays put, notes scroll inside */}
-        <div
-          ref={scrollRef}
-          className="w-full max-w-full rounded-2xl border border-white/12 bg-wisdom-card/90 p-5 sm:p-7 shadow-card-3d overflow-y-auto overflow-x-hidden overscroll-contain"
-          style={{ height: "min(70vh, 640px)", maxHeight: "70vh" }}
-        >
-          <RichContent body={body} onToc={setToc} />
-        </div>
-
-        {showToc && toc.length > 0 && (
-          <nav className="hidden lg:block lg:sticky lg:top-20 h-fit rounded-2xl border border-white/10 bg-wisdom-dark/50 p-4">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-amber-300/90 mb-3">
-              Topics
-            </p>
-            <ul className="space-y-1.5 max-h-[60vh] overflow-y-auto text-sm">
-              {toc.map((t) => (
-                <li key={t.id} style={{ paddingLeft: (t.level - 1) * 10 }}>
-                  <a
-                    href={`#${t.id}`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      const target = scrollRef.current?.querySelector(
-                        `#${CSS.escape(t.id)}`
-                      );
-                      target?.scrollIntoView({ behavior: "smooth", block: "start" });
-                    }}
-                    className={`block truncate rounded-lg px-2 py-1 transition-colors hover:bg-white/5 ${
-                      t.level === 1
-                        ? "font-semibold text-white"
-                        : t.level === 2
-                          ? "text-white/80"
-                          : "text-wisdom-muted text-xs"
-                    }`}
-                  >
-                    {t.text}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        )}
+      {/* Full-page notes content (no fixed window) */}
+      <div
+        ref={articleRef}
+        className="w-full max-w-full rounded-2xl border border-white/12 bg-wisdom-card/90 p-5 sm:p-7 shadow-card-3d"
+      >
+        <RichContent body={body} onToc={setToc} />
       </div>
 
       <div className="pt-2 border-t border-white/8">
