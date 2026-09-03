@@ -6,6 +6,7 @@ import {
   listResources,
   saveProgress,
   getMyProgress,
+  focusStatusLabel,
   type LearningResource,
   type HubId,
   type ProgressMeta,
@@ -22,6 +23,7 @@ import {
   BarChart3,
   Gauge,
   ChevronRight,
+  ArrowLeft,
 } from "lucide-react";
 import NotesViewer from "@/components/learning/NotesViewer";
 import QuizExamViewer from "@/components/learning/QuizExamViewer";
@@ -46,18 +48,10 @@ function formatTime(sec: number) {
   return `${m}m ${s}s`;
 }
 
-function focusLabel(focusSec: number, totalSec: number) {
-  if (totalSec < 30) return "—";
-  const ratio = focusSec / Math.max(1, totalSec);
-  if (ratio >= 0.75) return "Intense";
-  if (ratio >= 0.4) return "Medium";
-  return "Fast";
-}
-
 function completionLabel(pct: number) {
-  if (pct >= 85) return "Long";
-  if (pct >= 40) return "Medium";
-  if (pct > 0) return "Short";
+  if (pct >= 85) return "Nearly done";
+  if (pct >= 40) return "In progress";
+  if (pct > 0) return "Just started";
   return "Not started";
 }
 
@@ -77,6 +71,16 @@ function hubAccentClass(hub: HubId) {
   if (hub === "videos") return "text-rose-300";
   if (hub === "short-notes") return "text-sky-300";
   return "text-amber-300";
+}
+
+function hubItemsLabel(hub: HubId) {
+  if (hub === "books") return "all books";
+  if (hub === "short-notes") return "all notes";
+  if (hub === "videos") return "all videos";
+  if (hub === "flashcards") return "all decks";
+  if (hub === "question-banks") return "all question banks";
+  if (hub === "exams") return "all exams";
+  return "all items";
 }
 
 export default function HubContentView({
@@ -174,6 +178,11 @@ export default function HubContentView({
     }
   }
 
+  function backToItems() {
+    setActive(null);
+    setPdfUrl(null);
+  }
+
   if (loading) {
     return (
       <p className="text-center text-wisdom-muted py-12 text-sm">Loading materials…</p>
@@ -203,15 +212,18 @@ export default function HubContentView({
     const vid = progMeta.video;
     const isBookLike = hub === "books" || active.contentType === "pdf";
     const isNotes = hub === "short-notes" || active.contentType === "markdown";
+    const focusNow = focusStatusLabel(focusSeconds, seconds);
 
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 w-full max-w-full">
+        {/* Always visible — returns to the items list, not the parent hub route */}
         <button
           type="button"
-          onClick={() => setActive(null)}
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-cyan-300 hover:text-cyan-200 hover:underline"
+          onClick={backToItems}
+          className="sticky top-[4.25rem] z-20 inline-flex items-center gap-2 rounded-xl border border-cyan-400/35 bg-[#0b1220]/95 px-3.5 py-2.5 text-sm font-bold text-cyan-200 shadow-lg backdrop-blur-md hover:bg-cyan-500/15 hover:border-cyan-400/55 transition-colors"
         >
-          ← Back to all items
+          <ArrowLeft className="w-4 h-4" />
+          Back to {hubItemsLabel(hub)}
         </button>
 
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -227,9 +239,9 @@ export default function HubContentView({
               </Chip>
               <Chip tone="amber">
                 <Gauge className="w-3 h-3 inline mr-1" />
-                Focus {focusLabel(focusSeconds, seconds)}
+                Focus: {focusNow}
               </Chip>
-              <Chip>Session {completionLabel(progressPct)}</Chip>
+              <Chip>Session: {completionLabel(progressPct)}</Chip>
               <Chip tone="emerald">
                 <BarChart3 className="w-3 h-3 inline mr-1" />
                 {Math.round(progressPct)}% complete
@@ -379,7 +391,7 @@ export default function HubContentView({
   const titleAccent = accent || hubAccentClass(hub);
 
   return (
-    <ul className="space-y-3">
+    <ul className="space-y-3 w-full max-w-full">
       {items.map((item) => (
         <li key={item.id}>
           <button
