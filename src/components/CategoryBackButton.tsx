@@ -17,7 +17,7 @@ export default function CategoryBackButton({
   return (
     <Link
       href={fallback}
-      className="inline-flex items-center gap-2 text-sm font-semibold text-wisdom-muted hover:text-wisdom-cyan transition-colors mb-8"
+      className="inline-flex items-center gap-2 mb-6 sm:mb-8 rounded-xl border border-white/12 bg-white/[0.04] px-3.5 py-2.5 text-sm font-semibold text-white/85 hover:border-cyan-400/40 hover:bg-cyan-500/10 hover:text-cyan-200 transition-colors"
     >
       <ArrowLeft className="w-4 h-4" />
       {label}
