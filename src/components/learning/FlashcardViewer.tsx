@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Check, X, RotateCcw, BarChart3, ChevronLeft, ChevronRight } from "lucide-react";
 import { saveProgress } from "@/lib/content";
+import RichContent from "@/components/learning/RichContent";
 
 type Card = { front: string; back: string };
 
@@ -167,20 +168,20 @@ export default function FlashcardViewer({ meta, resourceId }: Props) {
         >
           {/* Front */}
           <div
-            className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl border border-white/15 bg-gradient-to-br from-[#1a2332] via-wisdom-card to-[#0f172a] p-7 sm:p-8 text-center shadow-xl"
+            className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl border border-white/15 bg-gradient-to-br from-[#1a2332] via-wisdom-card to-[#0f172a] p-7 sm:p-8 text-center shadow-xl overflow-y-auto"
             style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
           >
             <p className="text-[10px] uppercase tracking-wider text-amber-300/80 mb-3 font-semibold">
               Prompt · tap to flip
             </p>
-            <p className="text-xl sm:text-2xl font-semibold text-white leading-snug">
-              {card.front}
-            </p>
+            <div className="text-xl sm:text-2xl font-semibold text-white leading-snug study-prose w-full">
+              <RichContent body={card.front} />
+            </div>
           </div>
 
           {/* Back — deeper green (not bright) */}
           <div
-            className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl border border-emerald-800/50 bg-gradient-to-br from-[#0d3b2e] via-[#0a2f25] to-[#06261e] p-7 sm:p-8 text-center shadow-xl shadow-emerald-950/50"
+            className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl border border-emerald-800/50 bg-gradient-to-br from-[#0d3b2e] via-[#0a2f25] to-[#06261e] p-7 sm:p-8 text-center shadow-xl shadow-emerald-950/50 overflow-y-auto"
             style={{
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
@@ -190,9 +191,9 @@ export default function FlashcardViewer({ meta, resourceId }: Props) {
             <p className="text-[10px] uppercase tracking-wider text-emerald-200/70 mb-3 font-semibold">
               Answer · tap to flip back
             </p>
-            <p className="text-xl sm:text-2xl font-semibold text-white leading-snug">
-              {card.back}
-            </p>
+            <div className="text-xl sm:text-2xl font-semibold text-white leading-snug study-prose w-full">
+              <RichContent body={card.back} />
+            </div>
           </div>
         </div>
       </div>
