@@ -14,6 +14,10 @@ import {
   Filter,
   Star,
   ArrowRight,
+  Route,
+  Mountain,
+  Target,
+  BookOpen,
 } from "lucide-react";
 import CategoryBackButton from "@/components/CategoryBackButton";
 import {
@@ -23,13 +27,21 @@ import {
   type Region,
 } from "@/data/universities";
 
-function UniversityCard({ uni, expanded, onToggle }: { uni: University; expanded: boolean; onToggle: () => void }) {
+function UniversityCard({
+  uni,
+  expanded,
+  onToggle,
+}: {
+  uni: University;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
   return (
     <article
-      className={`group relative overflow-hidden rounded-2xl border transition-all duration-400
+      className={`group relative overflow-hidden rounded-2xl border transition-all duration-500 ease-out
         ${expanded
-          ? "border-wisdom-cyan/40 bg-wisdom-card shadow-glow"
-          : "border-white/12 bg-wisdom-card/90 hover:border-wisdom-cyan/25 hover:bg-wisdom-card"
+          ? "border-wisdom-cyan/45 bg-wisdom-card shadow-[0_0_40px_-12px_rgba(34,211,238,0.35)] md:col-span-2"
+          : "border-white/12 bg-wisdom-card/90 hover:border-wisdom-cyan/30 hover:bg-wisdom-card hover:-translate-y-0.5 hover:shadow-lg hover:shadow-cyan-500/5"
         }`}
     >
       <button
@@ -48,6 +60,11 @@ function UniversityCard({ uni, expanded, onToggle }: { uni: University; expanded
                   <Star className="w-3 h-3" /> Featured
                 </span>
               )}
+              {uni.detailed && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-semibold uppercase tracking-wider bg-violet-500/15 text-violet-200 border border-violet-400/25">
+                  Full guide
+                </span>
+              )}
               <span className="text-xs text-wisdom-muted">{uni.region}</span>
             </div>
             <h3 className="font-display text-lg sm:text-xl font-bold text-white group-hover:text-wisdom-cyan transition-colors leading-snug">
@@ -57,6 +74,22 @@ function UniversityCard({ uni, expanded, onToggle }: { uni: University; expanded
               <MapPin className="w-3.5 h-3.5 shrink-0 text-wisdom-cyan/70" />
               <span className="truncate">{uni.location}</span>
             </p>
+            <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
+              {uni.distanceFromAddisKm != null && (
+                <span className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-white/75">
+                  <Route className="w-3 h-3 text-cyan-300" />
+                  {uni.distanceFromAddisKm === 0
+                    ? "In Addis Ababa"
+                    : `~${uni.distanceFromAddisKm} km from Addis`}
+                </span>
+              )}
+              {uni.elevationM != null && (
+                <span className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-white/75">
+                  <Mountain className="w-3 h-3 text-amber-300" />
+                  ~{uni.elevationM} m
+                </span>
+              )}
+            </div>
           </div>
           <div
             className={`shrink-0 p-2 rounded-xl border border-white/10 bg-wisdom-dark/50 text-wisdom-muted transition-transform duration-300
@@ -66,15 +99,15 @@ function UniversityCard({ uni, expanded, onToggle }: { uni: University; expanded
           </div>
         </div>
 
-        {!expanded && uni.strengths.length > 0 && (
+        {!expanded && (
           <p className="mt-3 text-sm text-wisdom-muted/90 line-clamp-2 leading-relaxed">
-            {uni.strengths[0]}
+            {uni.knownFor?.[0] || uni.strengths[0]}
           </p>
         )}
       </button>
 
       <div
-        className={`grid transition-all duration-400 ease-spring
+        className={`grid transition-all duration-500 ease-out
           ${expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
       >
         <div className="overflow-hidden">
@@ -85,13 +118,29 @@ function UniversityCard({ uni, expanded, onToggle }: { uni: University; expanded
               </p>
             )}
 
+            {uni.distanceNote && (
+              <div className="flex gap-3">
+                <div className="shrink-0 p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-300">
+                  <Route className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-cyan-300/90 mb-1">
+                    Distance from Addis Ababa
+                  </p>
+                  <p className="text-sm text-wisdom-muted leading-relaxed">{uni.distanceNote}</p>
+                </div>
+              </div>
+            )}
+
             {uni.campuses && (
               <div className="flex gap-3">
-                <div className="shrink-0 p-2 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-300">
+                <div className="shrink-0 p-2 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-300">
                   <Building2 className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-teal-300/90 mb-1">Campuses</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-sky-300/90 mb-1">
+                    Campuses
+                  </p>
                   <p className="text-sm text-wisdom-muted leading-relaxed">{uni.campuses}</p>
                 </div>
               </div>
@@ -103,8 +152,33 @@ function UniversityCard({ uni, expanded, onToggle }: { uni: University; expanded
                   <Thermometer className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-amber-300/90 mb-1">Climate</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-amber-300/90 mb-1">
+                    Weather & climate
+                  </p>
                   <p className="text-sm text-wisdom-muted leading-relaxed">{uni.climate}</p>
+                </div>
+              </div>
+            )}
+
+            {uni.knownFor && uni.knownFor.length > 0 && (
+              <div className="flex gap-3">
+                <div className="shrink-0 p-2 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-300">
+                  <BookOpen className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-violet-300/90 mb-2">
+                    Well known for
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {uni.knownFor.map((k) => (
+                      <span
+                        key={k}
+                        className="rounded-lg border border-violet-400/25 bg-violet-500/10 px-2.5 py-1 text-xs font-medium text-violet-100"
+                      >
+                        {k}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
@@ -115,7 +189,9 @@ function UniversityCard({ uni, expanded, onToggle }: { uni: University; expanded
                   <GraduationCap className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-wisdom-cyan/90 mb-2">Strengths</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-wisdom-cyan/90 mb-2">
+                    Strengths
+                  </p>
                   <ul className="space-y-1.5">
                     {uni.strengths.map((s) => (
                       <li key={s} className="text-sm text-wisdom-muted flex gap-2 leading-relaxed">
@@ -131,12 +207,15 @@ function UniversityCard({ uni, expanded, onToggle }: { uni: University; expanded
             {uni.whatToExpect.length > 0 && (
               <div className="rounded-xl bg-wisdom-dark/60 border border-white/8 p-4">
                 <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-3 flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-wisdom-cyan" />
-                  What to expect
+                  <span className="w-1.5 h-1.5 rounded-full bg-wisdom-cyan animate-pulse" />
+                  What campus life is like
                 </p>
                 <ul className="space-y-2">
                   {uni.whatToExpect.map((item) => (
-                    <li key={item} className="text-sm text-wisdom-muted leading-relaxed pl-3 border-l-2 border-wisdom-cyan/25">
+                    <li
+                      key={item}
+                      className="text-sm text-wisdom-muted leading-relaxed pl-3 border-l-2 border-wisdom-cyan/25"
+                    >
                       {item}
                     </li>
                   ))}
@@ -144,13 +223,29 @@ function UniversityCard({ uni, expanded, onToggle }: { uni: University; expanded
               </div>
             )}
 
+            {uni.studentFit && (
+              <div className="flex gap-3">
+                <div className="shrink-0 p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300">
+                  <Target className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-emerald-300/90 mb-1">
+                    Who thrives here
+                  </p>
+                  <p className="text-sm text-wisdom-muted leading-relaxed">{uni.studentFit}</p>
+                </div>
+              </div>
+            )}
+
             {uni.tips && uni.tips.length > 0 && (
               <div className="flex gap-3">
-                <div className="shrink-0 p-2 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-300">
+                <div className="shrink-0 p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300">
                   <Lightbulb className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-violet-300/90 mb-2">Tips for new students</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-amber-300/90 mb-2">
+                    Tips for new students
+                  </p>
                   <ul className="space-y-1.5">
                     {uni.tips.map((t) => (
                       <li key={t} className="text-sm text-wisdom-muted leading-relaxed">
@@ -185,11 +280,18 @@ export default function UniversitiesPage() {
   const [region, setRegion] = useState<Region | "all">("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
+  const [showDetailedOnly, setShowDetailedOnly] = useState(false);
+
+  const detailedCount = useMemo(
+    () => universities.filter((u) => u.detailed).length,
+    []
+  );
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return universities.filter((u) => {
       if (showFeaturedOnly && !u.featured) return false;
+      if (showDetailedOnly && !u.detailed) return false;
       if (region !== "all" && u.region !== region) return false;
       if (!q) return true;
       return (
@@ -197,24 +299,25 @@ export default function UniversitiesPage() {
         u.abbr.toLowerCase().includes(q) ||
         u.location.toLowerCase().includes(q) ||
         u.region.toLowerCase().includes(q) ||
-        u.strengths.some((s) => s.toLowerCase().includes(q))
+        u.strengths.some((s) => s.toLowerCase().includes(q)) ||
+        (u.knownFor?.some((s) => s.toLowerCase().includes(q)) ?? false)
       );
     });
-  }, [query, region, showFeaturedOnly]);
+  }, [query, region, showFeaturedOnly, showDetailedOnly]);
 
   return (
     <div className="relative min-h-screen">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/3 w-[28rem] h-[28rem] bg-teal-500/10 rounded-full blur-3xl" />
-        <div className="absolute top-40 right-0 w-80 h-80 bg-wisdom-cyan/8 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 left-0 w-72 h-72 bg-cyan-600/5 rounded-full blur-3xl" />
+        <div className="absolute top-0 left-1/3 w-[28rem] h-[28rem] bg-cyan-500/10 rounded-full blur-3xl" />
+        <div className="absolute top-40 right-0 w-80 h-80 bg-violet-500/8 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 left-0 w-72 h-72 bg-amber-500/5 rounded-full blur-3xl" />
       </div>
 
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">
         <CategoryBackButton fallback="/academy" />
 
         <header className="mb-10 md:mb-14 animate-fade-up">
-          <p className="text-sm font-semibold tracking-[0.2em] uppercase text-teal-300/90 mb-3">
+          <p className="text-sm font-semibold tracking-[0.2em] uppercase text-amber-400/90 mb-3">
             Wisdom Tower Academy · Free resource
           </p>
           <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight mb-4">
@@ -222,29 +325,35 @@ export default function UniversitiesPage() {
             <span className="text-wisdom-cyan">Universities</span>
           </h1>
           <p className="text-wisdom-muted text-lg max-w-2xl leading-relaxed">
-            Practical guides for public universities — campuses, climate, strengths, and what life on
-            campus is really like. No outdated prices. Official links included.
+            Practical guides for public universities — distance from Addis, climate, campuses,
+            departments they are known for, and what life is really like for first-year students.
           </p>
           <div className="mt-6 flex flex-wrap gap-3 text-sm">
             <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-wisdom-card border border-white/10 text-wisdom-muted">
               <Building2 className="w-3.5 h-3.5 text-wisdom-cyan" />
-              {universities.length}+ institutions
+              {universities.length} institutions
             </span>
             <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-wisdom-card border border-white/10 text-wisdom-muted">
-              <MapPin className="w-3.5 h-3.5 text-teal-300" />
+              <BookOpen className="w-3.5 h-3.5 text-violet-300" />
+              {detailedCount} full guides
+            </span>
+            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-wisdom-card border border-white/10 text-wisdom-muted">
+              <MapPin className="w-3.5 h-3.5 text-amber-300" />
               All regions
             </span>
           </div>
         </header>
 
-        <div className="sticky top-0 z-20 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 py-4 mb-8
-          bg-wisdom-dark/85 backdrop-blur-xl border-b border-white/5">
+        <div
+          className="sticky top-0 z-20 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 py-4 mb-8
+          bg-wisdom-dark/85 backdrop-blur-xl border-b border-white/5"
+        >
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-wisdom-muted" />
               <input
                 type="search"
-                placeholder="Search by name, abbreviation, city…"
+                placeholder="Search by name, city, department…"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="field-input pl-10 py-3 text-sm"
@@ -280,11 +389,24 @@ export default function UniversitiesPage() {
                 <Star className="w-3.5 h-3.5" />
                 Featured
               </button>
+              <button
+                type="button"
+                onClick={() => setShowDetailedOnly((v) => !v)}
+                className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium border transition-all
+                  ${showDetailedOnly
+                    ? "bg-violet-500/20 border-violet-500/40 text-violet-200"
+                    : "bg-wisdom-card border-white/12 text-wisdom-muted hover:border-white/25"
+                  }`}
+              >
+                Full guides
+              </button>
             </div>
           </div>
           <p className="mt-2 text-xs text-wisdom-muted">
             Showing <span className="text-white font-medium">{filtered.length}</span> of{" "}
             {universities.length}
+            {" · "}
+            Tap a card to expand distance, weather, departments, and tips
           </p>
         </div>
 
@@ -297,6 +419,7 @@ export default function UniversitiesPage() {
                 setQuery("");
                 setRegion("all");
                 setShowFeaturedOnly(false);
+                setShowDetailedOnly(false);
               }}
               className="text-wisdom-cyan text-sm font-medium hover:underline"
             >
@@ -304,7 +427,7 @@ export default function UniversitiesPage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 stagger-children">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
             {filtered.map((uni) => (
               <UniversityCard
                 key={uni.id}
@@ -316,12 +439,14 @@ export default function UniversitiesPage() {
           </div>
         )}
 
-        <div className="mt-14 md:mt-20 rounded-3xl border border-white/10 bg-gradient-to-br from-teal-500/10 via-wisdom-card to-wisdom-card p-8 md:p-10 text-center">
-          <h2 className="font-display text-xl md:text-2xl font-bold mb-3">Planning your next step?</h2>
+        <div className="mt-14 md:mt-20 rounded-3xl border border-white/10 bg-gradient-to-br from-cyan-500/10 via-wisdom-card to-wisdom-card p-8 md:p-10 text-center">
+          <h2 className="font-display text-xl md:text-2xl font-bold mb-3">
+            Choosing where you will study
+          </h2>
           <p className="text-wisdom-muted max-w-lg mx-auto mb-6 leading-relaxed">
-            Placement depends on your UAT/entrance results and program choices. Use this guide to
-            understand climate, campuses, and culture — then verify the latest details on each
-            university's official site.
+            Placement is decided centrally from your exam results and preferences — but knowing
+            climate, distance, and campus culture helps you rank options wisely. Always verify the
+            latest details on each university&apos;s official site.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
@@ -339,8 +464,8 @@ export default function UniversitiesPage() {
             </Link>
           </div>
           <p className="mt-8 text-[11px] text-wisdom-muted/70 max-w-md mx-auto">
-            Info compiled from public sources and student-oriented guides. Living costs and schedules
-            change — always check the official website and registrar for current details.
+            Distances are approximate road figures. Climate and facilities change — treat this as a
+            fresher orientation guide, not an official admissions document.
           </p>
         </div>
       </div>
