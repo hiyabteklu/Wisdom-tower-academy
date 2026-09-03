@@ -15,6 +15,7 @@ import {
   Flame,
   BookOpen,
   SkipForward,
+  Eye,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
@@ -251,17 +252,17 @@ export default function AcademicResultSaver({
         : "all hubs";
 
   return (
-    <section className="rounded-3xl border border-white/12 bg-wisdom-card overflow-hidden shadow-card-3d">
+    <section className="rounded-3xl border border-white/12 bg-wisdom-card overflow-hidden shadow-card-3d w-full max-w-full">
       <div className="px-5 sm:px-6 py-5 border-b border-white/10 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-500/15 border border-cyan-400/30 text-cyan-400">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-cyan-500/15 border border-cyan-400/30 text-cyan-400">
             <Gauge className="w-5 h-5" />
           </div>
-          <div>
+          <div className="min-w-0">
             <h2 className="font-display text-lg sm:text-xl font-bold tracking-tight">
               Progress <span className={accent}>Tracker</span>
             </h2>
-            <p className="text-xs text-wisdom-muted">
+            <p className="text-xs text-wisdom-muted truncate">
               {scopeLabel} · {hubLabel} · live activity
             </p>
           </div>
@@ -318,6 +319,14 @@ export default function AcademicResultSaver({
                   label="Avg progress"
                   value={`${study.avgProgressPct}%`}
                   color="text-amber-300"
+                />
+              )}
+              {(isCombined || isBooks) && (
+                <StatChip
+                  icon={Eye}
+                  label="Avg focus"
+                  value={study.avgFocusLabel || "—"}
+                  color="text-violet-300"
                 />
               )}
               {(isCombined || isQuizHub) && (
@@ -492,12 +501,12 @@ function StatChip({
   color: string;
 }) {
   return (
-    <div className="bg-wisdom-card px-4 py-4">
+    <div className="bg-wisdom-card px-4 py-4 min-w-0">
       <div className="flex items-center gap-1.5 text-wisdom-muted mb-1">
-        <Icon className={`w-3.5 h-3.5 ${color}`} />
-        <span className="text-[10px] font-semibold uppercase tracking-wider">{label}</span>
+        <Icon className={`w-3.5 h-3.5 shrink-0 ${color}`} />
+        <span className="text-[10px] font-semibold uppercase tracking-wider truncate">{label}</span>
       </div>
-      <p className={`font-display text-xl font-bold tabular-nums ${color}`}>{value}</p>
+      <p className={`font-display text-xl font-bold tabular-nums truncate ${color}`}>{value}</p>
     </div>
   );
 }
