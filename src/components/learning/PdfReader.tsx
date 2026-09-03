@@ -30,21 +30,24 @@ type Props = {
 };
 
 /** How many pages around the current one stay painted as canvases */
-const WINDOW = 2; // render current ± 2
+const WINDOW = 2; // current ± 2
 const DEFAULT_PAGE_H = 520;
 
 /**
  * Memory-safe PDF reader:
- * - Loads the PDF once (cached)
- * - Only paints a small window of pages to canvas
- * - Other pages are lightweight spacers (no canvas / no GPU texture)
- * - Caps devicePixelRatio on mobile
+ * - Loads the PDF once (cached) with real download progress
+ * - Only paints a small window of pages to canvas (HD via devicePixelRatio)
+ * - Other pages are lightweight spacers
+ * - Single mount for inline vs fullscreen (avoids black pages on toggle)
  */
 export default function PdfReader({ url, title, onOpened, onPageChange }: Props) {
   const [fullscreen, setFullscreen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  /** 0–100 download progress; null while parsing after download */
+  const [loadProgress, setLoadProgress] = useState(0);
+  const [loadPhase, setLoadPhase] = useState<"download" | "parse">("download");
   const [numPages, setNumPages] = useState(0);
   const [scale, setScale] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
@@ -67,7 +70,10 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const measure = () => setScrollWidth(el.clientWidth || 360);
+    const measure = () => {
+      const w = el.clientWidth || 360;
+      setScrollWidth((prev) => (Math.abs(prev - w) < 2 ? prev : w));
+    };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
@@ -103,6 +109,8 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
     setNumPages(0);
     setCurrentPage(1);
     setPageHeights({});
+    setLoadProgress(0);
+    setLoadPhase("download");
     pdfRef.current = null;
     openedRef.current = false;
 
@@ -111,10 +119,20 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
         const pdfjs = await import("pdfjs-dist");
         pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
 
-        const data = await fetchPdfCached(url);
+        const data = await fetchPdfCached(url, (loaded, total) => {
+          if (cancelled) return;
+          if (total && total > 0) {
+            setLoadProgress(Math.min(99, Math.round((loaded / total) * 100)));
+          } else {
+            // Indeterminate-ish: climb slowly with bytes
+            setLoadProgress((p) => Math.min(90, Math.max(p, Math.round(loaded / 50000))));
+          }
+        });
         if (cancelled) return;
 
-        // Disable auto-fetch of full range for memory; we already have the buffer
+        setLoadPhase("parse");
+        setLoadProgress(99);
+
         const doc = await pdfjs.getDocument({
           data,
           disableAutoFetch: true,
@@ -126,6 +144,7 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
         }
         pdfRef.current = doc;
         setNumPages(doc.numPages);
+        setLoadProgress(100);
         setLoading(false);
         if (!openedRef.current) {
           openedRef.current = true;
@@ -151,7 +170,7 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
     };
   }, [url]);
 
-  // Detect current page from scroll position (cheap — no observers per page)
+  // Detect current page from scroll position
   useEffect(() => {
     const root = scrollRef.current;
     if (!root || !numPages) return;
@@ -169,7 +188,7 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
             page = i;
             break;
           }
-          acc += h + 12; // gap
+          acc += h + 12;
           page = i;
         }
         setCurrentPage((prev) => {
@@ -327,8 +346,27 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
         className="overflow-y-auto overflow-x-hidden flex-1 min-h-0 bg-[#121212]"
       >
         {loading && (
-          <div className="flex items-center justify-center w-full py-28">
-            <p className="text-sm text-white/40">Loading…</p>
+          <div className="flex flex-col items-center justify-center w-full py-24 px-6 gap-4">
+            <p className="text-sm text-white/50">
+              {loadPhase === "parse" ? "Opening book…" : "Loading book…"}
+            </p>
+            <div className="w-full max-w-sm">
+              <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-amber-400 transition-[width] duration-200 ease-out"
+                  style={{
+                    width: `${Math.max(4, loadProgress)}%`,
+                  }}
+                  role="progressbar"
+                  aria-valuenow={loadProgress}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                />
+              </div>
+              <p className="mt-2 text-center text-[11px] tabular-nums text-white/40">
+                {loadProgress}%
+              </p>
+            </div>
           </div>
         )}
         {error && (
@@ -375,41 +413,35 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
     </>
   );
 
-  const inlineShell = (
+  // Single mount only — never render readerChrome in both inline and portal
+  // (dual mount caused black pages after fullscreen toggle).
+  if (mounted && fullscreen) {
+    return createPortal(
+      <div
+        className="fixed inset-0 z-[9999] flex flex-col bg-[#0a0a0a]"
+        style={{ height: "100dvh", width: "100vw" }}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+      >
+        {readerChrome}
+        <button
+          type="button"
+          onClick={() => setFullscreen(false)}
+          className="absolute top-[max(0.75rem,env(safe-area-inset-top))] right-3 z-[10000] inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-rose-500 text-white text-sm font-bold shadow-xl"
+        >
+          <X className="w-5 h-5" />
+          Exit
+        </button>
+      </div>,
+      document.body
+    );
+  }
+
+  return (
     <div className="relative flex flex-col rounded-2xl border border-white/12 bg-neutral-950 overflow-hidden h-[min(72vh,680px)]">
       {readerChrome}
     </div>
-  );
-
-  const fullscreenShell =
-    mounted && fullscreen
-      ? createPortal(
-          <div
-            className="fixed inset-0 z-[9999] flex flex-col bg-[#0a0a0a]"
-            style={{ height: "100dvh", width: "100vw" }}
-            role="dialog"
-            aria-modal="true"
-            aria-label={title}
-          >
-            {readerChrome}
-            <button
-              type="button"
-              onClick={() => setFullscreen(false)}
-              className="absolute top-[max(0.75rem,env(safe-area-inset-top))] right-3 z-[10000] inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-rose-500 text-white text-sm font-bold shadow-xl"
-            >
-              <X className="w-5 h-5" />
-              Exit
-            </button>
-          </div>,
-          document.body
-        )
-      : null;
-
-  return (
-    <>
-      <div className={fullscreen ? "hidden" : undefined}>{inlineShell}</div>
-      {fullscreenShell}
-    </>
   );
 }
 
@@ -450,10 +482,12 @@ function PdfPage({
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [busy, setBusy] = useState(true);
+  const renderGen = useRef(0);
 
   useEffect(() => {
     if (!pdf || !canvasRef.current) return;
     let cancelled = false;
+    const gen = ++renderGen.current;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let task: { cancel: () => void; promise: Promise<void> } | null = null;
 
@@ -461,7 +495,7 @@ function PdfPage({
       try {
         setBusy(true);
         const pageObj = await pdf.getPage(pageNumber);
-        if (cancelled) return;
+        if (cancelled || gen !== renderGen.current) return;
 
         const base = pageObj.getViewport({ scale: 1 });
         const fit =
@@ -475,31 +509,46 @@ function PdfPage({
         const ctx = canvas.getContext("2d", { alpha: false });
         if (!ctx) return;
 
-        // Cap DPR — full retina × huge pages kills mobile RAM
+        // HD: use full devicePixelRatio (cap only on very high-DPI to limit RAM)
         const rawDpr =
           typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
-        const dpr = Math.min(rawDpr, 1.5);
+        const dpr = Math.min(rawDpr, 2.5);
 
         const w = Math.floor(viewport.width);
         const h = Math.floor(viewport.height);
-        canvas.width = Math.floor(w * dpr);
-        canvas.height = Math.floor(h * dpr);
+
+        // Keep previous pixels visible until the new frame is ready (no black flash)
         canvas.style.width = `${w}px`;
         canvas.style.height = `${h}px`;
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        // Render into an offscreen canvas, then copy — avoids clearing the live canvas
+        const off = document.createElement("canvas");
+        off.width = Math.floor(w * dpr);
+        off.height = Math.floor(h * dpr);
+        const offCtx = off.getContext("2d", { alpha: false });
+        if (!offCtx) return;
+        offCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
         const renderTask = pageObj.render({
-          canvasContext: ctx,
+          canvasContext: offCtx,
           viewport,
-          // intent reduces quality cost slightly on some builds
           intent: "display",
         });
         task = renderTask;
         await renderTask.promise;
-        if (!cancelled) {
-          setBusy(false);
-          onMeasured(pageNumber, h);
+
+        if (cancelled || gen !== renderGen.current) return;
+
+        canvas.width = off.width;
+        canvas.height = off.height;
+        const live = canvas.getContext("2d", { alpha: false });
+        if (live) {
+          live.setTransform(1, 0, 0, 1, 0, 0);
+          live.drawImage(off, 0, 0);
         }
+
+        setBusy(false);
+        onMeasured(pageNumber, h);
       } catch (e) {
         if (
           e &&
@@ -516,19 +565,27 @@ function PdfPage({
     return () => {
       cancelled = true;
       task?.cancel();
-      // Release canvas pixels when page leaves the window
+      // Do NOT zero canvas size here — that caused black pages on fullscreen /
+      // resize re-renders. Canvas is released when the page leaves the window
+      // (component unmounts) via React removing the node.
+    };
+  }, [pdf, pageNumber, scale, containerWidth, onMeasured]);
+
+  // Release GPU memory only when this page fully unmounts (left the render window)
+  useEffect(() => {
+    return () => {
       const c = canvasRef.current;
       if (c) {
         c.width = 0;
         c.height = 0;
       }
     };
-  }, [pdf, pageNumber, scale, containerWidth, onMeasured]);
+  }, []);
 
   return (
     <div className="relative shadow-lg shadow-black/30 rounded-sm overflow-hidden bg-white">
       {busy && (
-        <div className="absolute inset-0 flex items-center justify-center bg-neutral-800 text-white/30 text-xs min-h-[120px] z-10">
+        <div className="absolute inset-0 flex items-center justify-center bg-neutral-800/80 text-white/40 text-xs min-h-[120px] z-10">
           {pageNumber}
         </div>
       )}
