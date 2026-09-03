@@ -11,6 +11,7 @@ import {
   type HubId,
   type ProgressMeta,
 } from "@/lib/content";
+import { getSeenResourceIds, markResourceSeen } from "@/lib/seenItems";
 import { isPackageOwned } from "@/lib/ownership";
 import {
   BookOpen,
@@ -99,7 +100,12 @@ export default function HubContentView({
   const [seconds, setSeconds] = useState(0);
   const [focusSeconds, setFocusSeconds] = useState(0);
   const [progMeta, setProgMeta] = useState<ProgressMeta>({});
+  const [seenIds, setSeenIds] = useState<Set<string>>(new Set());
   const videoWatchRef = useRef(0);
+
+  useEffect(() => {
+    setSeenIds(getSeenResourceIds());
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -163,6 +169,10 @@ export default function HubContentView({
   }, [active, owned, progressPct, progMeta.video?.watchSeconds]);
 
   async function openItem(item: LearningResource) {
+    // First open clears the New badge permanently on this device
+    markResourceSeen(item.id);
+    setSeenIds(getSeenResourceIds());
+
     setActive(item);
     videoWatchRef.current = 0;
     const prog = await getMyProgress(item.id);
@@ -216,7 +226,6 @@ export default function HubContentView({
 
     return (
       <div className="space-y-4 w-full max-w-full">
-        {/* Always visible — returns to the items list, not the parent hub route */}
         <button
           type="button"
           onClick={backToItems}
@@ -392,30 +401,45 @@ export default function HubContentView({
 
   return (
     <ul className="space-y-3 w-full max-w-full">
-      {items.map((item) => (
-        <li key={item.id}>
-          <button
-            type="button"
-            onClick={() => void openItem(item)}
-            className="w-full flex items-center gap-4 rounded-2xl border border-white/12 bg-wisdom-card px-4 py-4 sm:px-5 sm:py-5 text-left hover:border-amber-400/40 hover:bg-wisdom-card/90 transition-colors shadow-sm group"
-          >
-            <div className="flex h-14 w-14 sm:h-16 sm:w-16 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-wisdom-dark/50">
-              {hubIcon(hub, "w-7 h-7 sm:w-8 sm:h-8")}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className={`font-display text-base sm:text-lg font-bold truncate ${titleAccent}`}>
-                {item.title}
-              </p>
-              {item.chapter != null && (
-                <p className="text-xs sm:text-sm text-wisdom-muted mt-0.5">
-                  Chapter {item.chapter}
-                </p>
-              )}
-            </div>
-            <ChevronRight className="w-5 h-5 text-wisdom-muted shrink-0 group-hover:text-amber-300 transition-colors" />
-          </button>
-        </li>
-      ))}
+      {items.map((item) => {
+        const isNew = !seenIds.has(item.id);
+        return (
+          <li key={item.id}>
+            <button
+              type="button"
+              onClick={() => void openItem(item)}
+              className="w-full flex items-center gap-4 rounded-2xl border border-white/12 bg-wisdom-card px-4 py-4 sm:px-5 sm:py-5 text-left hover:border-amber-400/40 hover:bg-wisdom-card/90 transition-colors shadow-sm group"
+            >
+              <div className="relative flex h-14 w-14 sm:h-16 sm:w-16 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-wisdom-dark/50">
+                {hubIcon(hub, "w-7 h-7 sm:w-8 sm:h-8")}
+                {isNew && (
+                  <span className="absolute -top-1.5 -right-1.5 rounded-md bg-rose-500 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-white shadow-sm">
+                    New
+                  </span>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className={`font-display text-base sm:text-lg font-bold truncate ${titleAccent}`}>
+                    {item.title}
+                  </p>
+                  {isNew && (
+                    <span className="shrink-0 rounded-md border border-rose-400/40 bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rose-200">
+                      New
+                    </span>
+                  )}
+                </div>
+                {item.chapter != null && (
+                  <p className="text-xs sm:text-sm text-wisdom-muted mt-0.5">
+                    Chapter {item.chapter}
+                  </p>
+                )}
+              </div>
+              <ChevronRight className="w-5 h-5 text-wisdom-muted shrink-0 group-hover:text-amber-300 transition-colors" />
+            </button>
+          </li>
+        );
+      })}
     </ul>
   );
 }
