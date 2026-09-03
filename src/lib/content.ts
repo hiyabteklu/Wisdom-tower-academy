@@ -90,7 +90,10 @@ export type ScopeProgressRow = {
 export type ScopeStats = {
   rows: ScopeProgressRow[];
   totalStudySeconds: number;
+  totalFocusSeconds: number;
   avgProgressPct: number;
+  /** Human label for average focus across this scope */
+  avgFocusLabel: string;
   quizAttempted: number;
   quizCorrect: number;
   quizWrong: number;
@@ -102,6 +105,16 @@ export type ScopeStats = {
   avgExamPercent: number;
   streakDays: number;
 };
+
+/** Focus quality from focus-seconds vs total study seconds. */
+export function focusStatusLabel(focusSec: number, totalSec: number): string {
+  if (totalSec < 20) return "Getting started";
+  const ratio = focusSec / Math.max(1, totalSec);
+  if (ratio >= 0.75) return "Focused";
+  if (ratio >= 0.5) return "Steady";
+  if (ratio >= 0.25) return "Skimming";
+  return "Distracted";
+}
 
 function rowToResource(row: Record<string, unknown>): LearningResource {
   const rawHub = String(row.hub);
@@ -134,7 +147,6 @@ export async function listResources(opts: {
       ascending: true,
     });
     if (opts.scopePath) q = q.eq("scope_path", opts.scopePath);
-    // Support legacy hub value during migration window
     if (opts.hub === "short-notes") {
       q = q.in("hub", ["short-notes", "references"]);
     } else if (opts.hub) {
@@ -360,7 +372,9 @@ export async function getScopeStats(opts: {
   const empty: ScopeStats = {
     rows: [],
     totalStudySeconds: 0,
+    totalFocusSeconds: 0,
     avgProgressPct: 0,
+    avgFocusLabel: "—",
     quizAttempted: 0,
     quizCorrect: 0,
     quizWrong: 0,
@@ -434,6 +448,7 @@ export async function getScopeStats(opts: {
   });
 
   let totalStudySeconds = 0;
+  let totalFocusSeconds = 0;
   let pctSum = 0;
   let quizAttempted = 0;
   let quizCorrect = 0;
@@ -447,6 +462,7 @@ export async function getScopeStats(opts: {
 
   for (const r of rows) {
     totalStudySeconds += r.totalSeconds;
+    totalFocusSeconds += r.focusSeconds;
     pctSum += r.progressPct;
     const q = r.meta.quiz;
     if (q) {
@@ -506,9 +522,11 @@ export async function getScopeStats(opts: {
     stats: {
       rows,
       totalStudySeconds,
+      totalFocusSeconds,
       avgProgressPct: rows.length
         ? Math.round((pctSum / rows.length) * 10) / 10
         : 0,
+      avgFocusLabel: focusStatusLabel(totalFocusSeconds, totalStudySeconds),
       quizAttempted,
       quizCorrect,
       quizWrong,
