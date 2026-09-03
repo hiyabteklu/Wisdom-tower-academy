@@ -15,20 +15,19 @@ export default function NotesViewer({ body, resourceId, onProgress }: Props) {
   const [loading, setLoading] = useState(false);
   const [toc, setToc] = useState<TocItem[]>([]);
   const [showToc, setShowToc] = useState(true);
-  const articleRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const reported = useRef(false);
 
+  // Progress from the notes scroll window (not the whole page)
   useEffect(() => {
-    const el = articleRef.current;
+    const el = scrollRef.current;
     if (!el) return;
+    reported.current = false;
 
     const onScroll = () => {
-      const rect = el.getBoundingClientRect();
-      const visible = Math.min(
-        1,
-        Math.max(0, (window.innerHeight - rect.top) / (rect.height || 1))
-      );
-      const pct = Math.round(visible * 100);
+      const max = el.scrollHeight - el.clientHeight;
+      const pct =
+        max <= 0 ? 100 : Math.min(100, Math.round((el.scrollTop / max) * 100));
       onProgress?.(pct);
       if (pct >= 95 && !reported.current) {
         reported.current = true;
@@ -37,8 +36,8 @@ export default function NotesViewer({ body, resourceId, onProgress }: Props) {
     };
 
     onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
   }, [body, onProgress]);
 
   async function summarize() {
@@ -64,7 +63,7 @@ export default function NotesViewer({ body, resourceId, onProgress }: Props) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full max-w-full">
       <div className="flex flex-wrap items-center gap-2">
         {toc.length > 0 && (
           <button
@@ -78,16 +77,50 @@ export default function NotesViewer({ body, resourceId, onProgress }: Props) {
         )}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px]">
+      {/* Outline: full width on mobile, sidebar on large screens */}
+      {showToc && toc.length > 0 && (
+        <nav className="w-full rounded-2xl border border-white/10 bg-wisdom-dark/50 p-4 lg:hidden">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-amber-300/90 mb-3">
+            Topics
+          </p>
+          <ul className="space-y-1.5 max-h-[40vh] overflow-y-auto text-sm">
+            {toc.map((t) => (
+              <li key={t.id} style={{ paddingLeft: (t.level - 1) * 10 }}>
+                <a
+                  href={`#${t.id}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const target = scrollRef.current?.querySelector(`#${CSS.escape(t.id)}`);
+                    target?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
+                  className={`block truncate rounded-lg px-2 py-1 transition-colors hover:bg-white/5 ${
+                    t.level === 1
+                      ? "font-semibold text-white"
+                      : t.level === 2
+                        ? "text-white/80"
+                        : "text-wisdom-muted text-xs"
+                  }`}
+                >
+                  {t.text}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      )}
+
+      <div className="grid gap-4 w-full max-w-full lg:grid-cols-[minmax(0,1fr)_220px]">
+        {/* Fixed-height scroll window — page stays put, notes scroll inside */}
         <div
-          ref={articleRef}
-          className="rounded-2xl border border-white/12 bg-wisdom-card/90 p-5 sm:p-7 shadow-card-3d"
+          ref={scrollRef}
+          className="w-full max-w-full rounded-2xl border border-white/12 bg-wisdom-card/90 p-5 sm:p-7 shadow-card-3d overflow-y-auto overflow-x-hidden overscroll-contain"
+          style={{ height: "min(70vh, 640px)", maxHeight: "70vh" }}
         >
           <RichContent body={body} onToc={setToc} />
         </div>
 
         {showToc && toc.length > 0 && (
-          <nav className="lg:sticky lg:top-20 h-fit rounded-2xl border border-white/10 bg-wisdom-dark/50 p-4">
+          <nav className="hidden lg:block lg:sticky lg:top-20 h-fit rounded-2xl border border-white/10 bg-wisdom-dark/50 p-4">
             <p className="text-[10px] font-bold uppercase tracking-wider text-amber-300/90 mb-3">
               Topics
             </p>
@@ -96,6 +129,13 @@ export default function NotesViewer({ body, resourceId, onProgress }: Props) {
                 <li key={t.id} style={{ paddingLeft: (t.level - 1) * 10 }}>
                   <a
                     href={`#${t.id}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      const target = scrollRef.current?.querySelector(
+                        `#${CSS.escape(t.id)}`
+                      );
+                      target?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }}
                     className={`block truncate rounded-lg px-2 py-1 transition-colors hover:bg-white/5 ${
                       t.level === 1
                         ? "font-semibold text-white"
