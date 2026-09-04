@@ -34,7 +34,8 @@ const programs = [
     image: packageImages.freshman,
     accent: "text-purple-400",
     border: "hover:border-purple-400/40",
-    cta: "Open",
+    cta: "Opening tomorrow",
+    locked: true,
   },
   {
     id: "uat",
@@ -186,39 +187,68 @@ export default function AcademyPage() {
           </div>
 
           <div className="perspective-scene grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
-            {programs.map((program) => (
-              <Link
-                key={program.id}
-                href={program.href}
-                className={`card-3d group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card ${program.border}`}
-              >
-                <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={program.image}
-                    alt={program.name}
-                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-                  />
-                </div>
-                <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8">
-                  <h3
-                    className={`flex items-center gap-1.5 font-display text-base sm:text-lg font-bold ${program.accent}`}
-                  >
-                    <BadgeCheck className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-sky-400" aria-label="Verified" />
-                    {program.name}
-                  </h3>
-                  <div
-                    className={`mt-2.5 flex items-center gap-1 text-xs sm:text-sm font-semibold ${program.accent}`}
-                  >
-                    {program.cta}
-                    <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+            {programs.map((program) => {
+              const locked = "locked" in program && program.locked;
+              const body = (
+                <>
+                  <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={program.image}
+                      alt={program.name}
+                      className={`absolute inset-0 h-full w-full object-cover transition-transform duration-700 ${
+                        locked ? "saturate-[0.85]" : "group-hover:scale-[1.03]"
+                      }`}
+                    />
+                    {locked && (
+                      <div className="absolute inset-0 bg-wisdom-dark/40 flex items-end justify-end p-3">
+                        <span className="rounded-lg border border-amber-400/40 bg-amber-500/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-200">
+                          Opening tomorrow
+                        </span>
+                      </div>
+                    )}
                   </div>
-                </div>
-              </Link>
-            ))}
+                  <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8">
+                    <h3
+                      className={`flex items-center gap-1.5 font-display text-base sm:text-lg font-bold ${program.accent}`}
+                    >
+                      <BadgeCheck
+                        className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-sky-400"
+                        aria-label="Verified"
+                      />
+                      {program.name}
+                    </h3>
+                    <div
+                      className={`mt-2.5 flex items-center gap-1 text-xs sm:text-sm font-semibold ${
+                        locked ? "text-amber-200/90" : program.accent
+                      }`}
+                    >
+                      {program.cta}
+                      {!locked && (
+                        <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                      )}
+                    </div>
+                  </div>
+                </>
+              );
+              const cls = `card-3d group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card ${program.border} ${
+                locked ? "cursor-not-allowed opacity-95" : ""
+              }`;
+              if (locked) {
+                return (
+                  <div key={program.id} className={cls} aria-disabled="true">
+                    {body}
+                  </div>
+                );
+              }
+              return (
+                <Link key={program.id} href={program.href} className={cls}>
+                  {body}
+                </Link>
+              );
+            })}
           </div>
 
-          {/* Special packages: header OUTSIDE the card */}
           <section className="mt-20 md:mt-24" id="special-packages">
             <div className="text-center mb-8">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-300/90 mb-3">
@@ -252,7 +282,6 @@ export default function AcademyPage() {
             </Link>
           </section>
 
-          {/* Free resources — header outside cards; site tone (not teal wash) */}
           <section className="mt-24 md:mt-28">
             <div className="text-center mb-10">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-400/90 mb-3">
