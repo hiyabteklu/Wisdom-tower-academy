@@ -1,7 +1,7 @@
 /**
  * Live vs uploading + purchase gates.
  *
- * Purchasable: Freshman (300) + ECE Semester 1 only (300).
+ * Freshman + ECE Semester 1 are free for any signed-in user (see ownership.ts).
  * ECE Semester 2 = coming soon (not for sale).
  * No full-year ECE package.
  */
@@ -57,6 +57,6 @@ export const COMING_SOON_TITLE = "Resources are being uploaded";
 export const COMING_SOON_BODY =
   "This learning hub is almost ready. Check back soon — we’re adding books, videos, flashcards, and practice materials.";
 
-export const PURCHASE_TITLE = "Purchase required";
+export const PURCHASE_TITLE = "Sign in required";
 export const PURCHASE_BODY_FRESHMAN =
-  "Unlock all Freshman subjects with one package. After payment is verified, every subject’s books, flashcards, videos, and more open for you.";
+  "Create a free account to unlock every Freshman subject — books, flashcards, videos, and more. No payment needed for registered students.";
