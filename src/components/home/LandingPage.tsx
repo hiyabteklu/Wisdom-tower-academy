@@ -253,11 +253,15 @@ export default function LandingPage() {
             Education · Excellence
           </p>
 
-          <h1 className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tight mb-6 text-depth-title">
-            <span className="hero-word inline-block text-white">Wisdom</span>{" "}
-            <span className="hero-word hero-word-accent inline-block text-wisdom-cyan relative">
+          <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight mb-6 text-depth-title">
+            <span className="hero-word inline-block bg-gradient-to-r from-white via-cyan-100 to-white bg-clip-text text-transparent">
+              Wisdom
+            </span>{" "}
+            <span className="hero-word hero-word-accent inline-block relative bg-gradient-to-r from-cyan-300 via-amber-300 to-orange-400 bg-clip-text text-transparent animate-hero-gradient">
+              Tower
+            </span>{" "}
+            <span className="hero-word inline-block bg-gradient-to-r from-white via-cyan-100 to-white bg-clip-text text-transparent">
               Academy
-              <span className="hero-shine" aria-hidden />
             </span>
           </h1>
 
@@ -289,7 +293,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Single main Academy 16:9 — not competing with Digital */}
       <section className="pb-16 md:pb-20 relative" ref={pathSection.ref}>
         <div className="depth-well" aria-hidden />
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 perspective-scene relative z-10">
@@ -326,7 +329,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Stats: sliding image cards + fixed infinity — unchanged */}
       <section className="pb-20 md:pb-28 relative" ref={statsSection.ref}>
         <div className="depth-well depth-well-soft" aria-hidden />
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -341,7 +343,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Secondary Digital link only — not a competing banner */}
       <section className="pb-16 relative" ref={crossSection.ref}>
         <div className="max-w-3xl mx-auto px-4 relative z-10">
           <div
