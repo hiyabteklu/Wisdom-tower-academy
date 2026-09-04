@@ -17,6 +17,9 @@ import SafeCoverImage from "@/components/SafeCoverImage";
 import { packageImages } from "@/data/packages";
 import { SPECIAL_PACKAGES_HUB_IMAGE } from "@/data/special-packages";
 
+/** Flip to true when real student voices and quotes are ready. */
+const SHOW_STUDENT_VOICES = false;
+
 const programs = [
   {
     id: "grade-9-12",
@@ -97,7 +100,7 @@ const freeResources = [
   {
     href: "/academy/campus-life",
     name: "Campus Life",
-    blurb: "Friends, focus, burnout, lectures, facilities & group work",
+    blurb: "Friends, focus, burnout, lectures, facilities and group work",
     icon: Trees,
     accent: "text-sky-300",
     border: "border-white/12 hover:border-sky-400/35",
@@ -174,7 +177,7 @@ export default function AcademyPage() {
               Wisdom Tower Academy
             </h1>
             <p className="mt-4 text-wisdom-muted max-w-2xl mx-auto text-lg leading-relaxed">
-              Six structured branches — each with its own path when you open it.
+              Six structured branches, each with its own path when you open it.
             </p>
           </div>
 
@@ -182,7 +185,7 @@ export default function AcademyPage() {
             <WelcomeVideoCard
               variant="academy"
               title="What you’ll find here"
-              subtitle="A short look at how Academy is organized — pathways, practice, and support for real study goals."
+              subtitle="A short look at how Academy is organized: pathways, practice, and support for real study goals."
             />
           </div>
 
@@ -258,7 +261,7 @@ export default function AcademyPage() {
                 Special packages
               </h2>
               <p className="text-wisdom-muted max-w-lg mx-auto text-sm leading-relaxed">
-                Department tracks by year and semester — buy each semester separately.
+                Department tracks by year and semester. Buy each semester separately.
               </p>
             </div>
 
@@ -291,7 +294,7 @@ export default function AcademyPage() {
                 Free resources
               </h2>
               <p className="text-wisdom-muted max-w-lg mx-auto text-base leading-relaxed">
-                Guidance beyond the six academic branches — stories, techniques, campus life,
+                Guidance beyond the six academic branches: stories, techniques, campus life,
                 universities, departments, and scholarships.
               </p>
             </div>
@@ -326,33 +329,35 @@ export default function AcademyPage() {
             </div>
           </section>
 
-          <section className="mt-24 md:mt-28">
-            <div className="text-center mb-10">
-              <p className="text-sm font-semibold tracking-[0.2em] uppercase text-amber-400/90 mb-3">
-                Real voices
-              </p>
-              <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
-                What students say about us
-              </h2>
-              <p className="text-wisdom-muted max-w-xl mx-auto">
-                Short voice notes and written feedback from learners across our programs.
-              </p>
-            </div>
+          {SHOW_STUDENT_VOICES && (
+            <section className="mt-24 md:mt-28">
+              <div className="text-center mb-10">
+                <p className="text-sm font-semibold tracking-[0.2em] uppercase text-amber-400/90 mb-3">
+                  Real voices
+                </p>
+                <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
+                  What students say about us
+                </h2>
+                <p className="text-wisdom-muted max-w-xl mx-auto">
+                  Short voice notes and written feedback from learners across our programs.
+                </p>
+              </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-              {voiceStudents.map((s) => (
-                <VoiceMessageCard
-                  key={s.name}
-                  name={s.name}
-                  program={s.program}
-                  duration={s.duration}
-                  accent={s.accent}
-                />
-              ))}
-            </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+                {voiceStudents.map((s) => (
+                  <VoiceMessageCard
+                    key={s.name}
+                    name={s.name}
+                    program={s.program}
+                    duration={s.duration}
+                    accent={s.accent}
+                  />
+                ))}
+              </div>
 
-            <TestimonialMarquee />
-          </section>
+              <TestimonialMarquee />
+            </section>
+          )}
 
           <section className="mt-24 md:mt-28" id="partnership">
             <div className="max-w-3xl mx-auto">
