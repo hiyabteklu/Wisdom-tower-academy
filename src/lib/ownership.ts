@@ -1,10 +1,14 @@
 /**
  * Which packages the signed-in user already owns (enrolled or verified order).
+ * Freshman and ECE Year 3 Semester 1 are free for any registered (signed-in) user.
  */
 import { listMyEnrollments, listMyOrders } from "@/lib/orders";
 import { supabase } from "@/lib/supabase";
 
 export type OwnershipMap = Set<string>;
+
+/** Packages unlocked automatically for every signed-in user (no payment). */
+export const FREE_FOR_REGISTERED_PACKAGE_IDS = ["freshman", "ece-y3-sem-1"] as const;
 
 let cache: { at: number; ids: OwnershipMap; userId: string | null } | null = null;
 const TTL_MS = 30_000;
@@ -40,6 +44,10 @@ export async function getOwnedPackageIds(force = false): Promise<OwnershipMap> {
     ]);
 
     const ids = new Set<string>();
+    // Free for all registered users
+    for (const id of FREE_FOR_REGISTERED_PACKAGE_IDS) {
+      ids.add(id);
+    }
     for (const e of enrolls || []) {
       if (e.packageId) ids.add(e.packageId);
     }
