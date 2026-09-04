@@ -26,7 +26,7 @@ const previewCards = [
     image: ECE_SEM1_IMAGE,
     badge: "Special package",
     title: "ECE · Semester 1",
-    blurb: "Year 3 Electrical & Computer Engineering — free for registered students.",
+    blurb: "Year 3 Electrical and Computer Engineering. Free for registered students.",
     cta: "Open Semester 1",
     accent: "text-violet-300",
     borderHover: "hover:border-violet-400/45",
@@ -39,7 +39,7 @@ const previewCards = [
     image: FRESHMAN_IMAGE,
     badge: "Pathway",
     title: "Freshman courses",
-    blurb: "First-year subjects and learning hubs — opens tomorrow.",
+    blurb: "First-year subjects and learning hubs. Opens tomorrow.",
     cta: "Opening tomorrow",
     accent: "text-purple-300",
     borderHover: "hover:border-purple-400/30",
@@ -119,22 +119,22 @@ function StatsSlider({ visible, reduced }: { visible: boolean; reduced: boolean 
         return (
           <div
             key={stat.label}
-            className={`relative overflow-hidden rounded-2xl border border-white/12 bg-wisdom-card min-h-[12.5rem] md:min-h-[14rem] transition-all duration-500 ${
-              active ? "opacity-100 scale-100" : "opacity-70 scale-[0.98]"
+            className={`relative overflow-hidden rounded-2xl border border-white/12 bg-wisdom-navy min-h-[12.5rem] md:min-h-[14rem] transition-all duration-500 ${
+              active ? "opacity-100 scale-100" : "opacity-90 scale-[0.99]"
             }`}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={stat.image}
               alt=""
-              className="absolute inset-0 h-full w-full object-cover opacity-40"
+              className="absolute inset-0 h-full w-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-wisdom-dark via-wisdom-dark/70 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/70 to-transparent pointer-events-none" />
             <div className="relative z-10 flex h-full flex-col justify-end p-5 sm:p-6">
-              <p className="font-display text-3xl sm:text-4xl font-black text-white tabular-nums">
+              <p className="font-display text-3xl sm:text-4xl font-black text-white tabular-nums drop-shadow-md">
                 <CountUp target={stat.value} suffix={stat.suffix} active={visible} />
               </p>
-              <p className="text-sm font-semibold text-wisdom-muted mt-1">{stat.label}</p>
+              <p className="text-sm font-semibold text-white/90 mt-1 drop-shadow-sm">{stat.label}</p>
             </div>
           </div>
         );
@@ -175,7 +175,7 @@ export default function LandingPage() {
               <span className="hero-word text-white">Academy</span>
             </h1>
             <p className="text-lg sm:text-xl text-wisdom-muted leading-relaxed max-w-xl mb-8">
-              Empowering minds through education — Grades 9–12, Freshman, UAT, GAT, COC & Exit Exam.
+              Structured pathways for secondary and university learners.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link
@@ -200,7 +200,7 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <Link
             href="/academy"
-            className={`card-3d card-elevated group relative block overflow-hidden rounded-2xl sm:rounded-3xl border border-white/14 bg-wisdom-card hover:border-cyan-400/40 transition-all duration-300 reveal-item ${
+            className={`card-3d group relative block overflow-hidden rounded-2xl sm:rounded-3xl border border-white/14 bg-wisdom-navy hover:border-cyan-400/40 transition-all duration-300 reveal-item ${
               academySection.inView ? "is-visible" : ""
             }`}
           >
@@ -211,16 +211,13 @@ export default function LandingPage() {
                 alt="Wisdom Tower Academy"
                 className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-wisdom-dark/85 via-wisdom-dark/20 to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8">
-                <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-black text-white mb-2">
+              <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/55 to-transparent pointer-events-none" />
+              <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 flex items-end justify-between gap-3">
+                <span className="font-display text-base sm:text-lg font-semibold text-white/95 drop-shadow-md">
                   Wisdom Tower Academy
-                </h2>
-                <p className="text-sm sm:text-base text-white/80 max-w-lg mb-4">
-                  Grades 9–12, Freshman, UAT, GAT, COC & Exit Exam pathways.
-                </p>
-                <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-400 text-wisdom-dark text-sm font-bold">
-                  Explore Academy
+                </span>
+                <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-400 text-wisdom-dark text-sm font-bold shadow-lg">
+                  Explore
                   <ArrowRight className="w-4 h-4" />
                 </span>
               </div>
@@ -270,13 +267,9 @@ export default function LandingPage() {
                       src={card.image}
                       alt={card.title}
                       className={`absolute inset-0 h-full w-full object-cover transition-transform duration-700 ${
-                        card.locked ? "scale-100 saturate-[0.85]" : "group-hover:scale-[1.04]"
+                        card.locked ? "scale-100" : "group-hover:scale-[1.04]"
                       }`}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-wisdom-dark/80 via-transparent to-transparent" />
-                    {card.locked && (
-                      <div className="absolute inset-0 bg-wisdom-dark/45 backdrop-blur-[1px]" />
-                    )}
                     <span
                       className={`absolute top-3 left-3 inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm ${card.badgeClass}`}
                     >
@@ -290,7 +283,7 @@ export default function LandingPage() {
                       </span>
                     )}
                   </div>
-                  <div className="p-5 sm:p-6 border-t border-white/8">
+                  <div className="p-5 sm:p-6 border-t border-white/8 bg-wisdom-card">
                     <h3
                       className={`font-display text-xl sm:text-2xl font-bold mb-1.5 text-white ${card.accent}`}
                     >
@@ -311,7 +304,7 @@ export default function LandingPage() {
                 </>
               );
 
-              const shellClass = `card-3d card-elevated group relative block overflow-hidden rounded-2xl sm:rounded-3xl border border-white/14 bg-wisdom-card ${card.borderHover} transition-all duration-300 reveal-item ${
+              const shellClass = `card-3d group relative block overflow-hidden rounded-2xl sm:rounded-3xl border border-white/14 bg-wisdom-navy ${card.borderHover} transition-all duration-300 reveal-item ${
                 previewSection.inView ? "is-visible" : ""
               } ${card.locked ? "cursor-not-allowed" : ""}`;
 
@@ -338,7 +331,6 @@ export default function LandingPage() {
       </section>
 
       <section className="pb-20 md:pb-28 relative" ref={statsSection.ref}>
-        <div className="depth-well depth-well-soft" aria-hidden />
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6 items-stretch">
             <StatsSlider visible={statsSection.inView} reduced={reduced} />
@@ -362,7 +354,7 @@ export default function LandingPage() {
               Want digital services instead?
             </h2>
             <p className="text-wisdom-muted text-sm md:text-base mb-6 leading-relaxed">
-              Design, writing, web, marketing, data & business solutions on our Digital site.
+              Design, writing, web, marketing, data and business solutions on our Digital site.
             </p>
             <a
               href={DIGITAL_URL}
