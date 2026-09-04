@@ -36,8 +36,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10">
           <div className="md:col-span-2">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center font-bold text-wisdom-dark text-sm">
-                WA
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center font-bold text-wisdom-dark text-[10px]">
+                WTA
               </div>
               <span className="font-semibold text-lg text-white">Wisdom Tower Academy</span>
             </div>
