@@ -4,9 +4,15 @@ import SubjectCard from "@/components/SubjectCard";
 import BranchLeaderboard from "@/components/BranchLeaderboard";
 import PackageOfferBanner from "@/components/PackageOfferBanner";
 import GpaCalculator from "@/components/freshman/GpaCalculator";
+import FreshmanLockedPanel from "@/components/FreshmanLockedPanel";
+import { FRESHMAN_LOCKED_UNTIL_OPENING } from "@/lib/ownership";
 import { GraduationCap } from "lucide-react";
 
 export default function FreshmanPage() {
+  if (FRESHMAN_LOCKED_UNTIL_OPENING) {
+    return <FreshmanLockedPanel />;
+  }
+
   return (
     <div className="relative min-h-[80vh]">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
