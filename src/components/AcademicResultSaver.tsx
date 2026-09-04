@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState, type ComponentType } from "r
 import Link from "next/link";
 import {
   Target, CheckCircle2, XCircle, Activity, Calendar, LogIn, Gauge, Clock,
-  Layers, Flame, BookOpen, SkipForward, Eye, ChevronDown, ChevronRight, Sparkles,
+  Layers, Flame, BookOpen, SkipForward, Eye, ChevronDown, ChevronRight,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
@@ -221,7 +221,7 @@ export default function AcademicResultSaver({
               colorClass={overall.colorClass} toneOverride={overall.tone} size={150} stroke={11} />
             <div className="text-center sm:text-left max-w-xs space-y-1.5">
               <p className="text-xs font-bold uppercase tracking-wider text-wisdom-muted inline-flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5" /> Student status
+                <Gauge className="w-3.5 h-3.5" /> Student status
               </p>
               <p className={`font-display text-2xl font-bold ${overall.colorClass}`}>{overall.label}</p>
               <p className="text-sm text-wisdom-muted leading-relaxed">
@@ -268,7 +268,7 @@ export default function AcademicResultSaver({
                   value={study.streakDays > 0 ? `${study.streakDays}🔥` : "—"} color="text-orange-300" />
               )}
               {isCombined && (
-                <StatChip icon={Sparkles} label="Overall" value={`${overall.score}`} color={overall.colorClass} />
+                <StatChip icon={Gauge} label="Overall" value={`${overall.score}`} color={overall.colorClass} />
               )}
             </div>
           )}
