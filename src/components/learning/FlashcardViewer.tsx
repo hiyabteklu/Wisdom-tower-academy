@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, X, RotateCcw, BarChart3, ChevronLeft, ChevronRight } from "lucide-react";
 import { saveProgress } from "@/lib/content";
 import RichContent from "@/components/learning/RichContent";
@@ -14,7 +14,10 @@ type Props = {
 
 type Grade = "know" | "learning" | "again";
 
+type SlidePhase = "idle" | "exit" | "enter";
+
 const CARD_MIN_H = 300;
+const SLIDE_MS = 280;
 
 export default function FlashcardViewer({ meta, resourceId }: Props) {
   const cards = (Array.isArray(meta.cards) ? meta.cards : []) as Card[];
@@ -22,6 +25,12 @@ export default function FlashcardViewer({ meta, resourceId }: Props) {
   const [flipped, setFlipped] = useState(false);
   const [grades, setGrades] = useState<Record<number, Grade>>({});
   const [done, setDone] = useState(false);
+
+  // Slide transition state
+  const [phase, setPhase] = useState<SlidePhase>("idle");
+  const [direction, setDirection] = useState<1 | -1>(1); // 1 = next (left), -1 = prev (right)
+  const pendingIndex = useRef<number | null>(null);
+  const animLock = useRef(false);
 
   const card = cards[i];
 
@@ -62,6 +71,33 @@ export default function FlashcardViewer({ meta, resourceId }: Props) {
     setFlipped(false);
   }, [i]);
 
+  function slideTo(nextIndex: number, dir: 1 | -1) {
+    if (animLock.current || nextIndex === i) return;
+    if (nextIndex < 0 || nextIndex >= cards.length) return;
+    animLock.current = true;
+    pendingIndex.current = nextIndex;
+    setDirection(dir);
+    setPhase("exit");
+
+    window.setTimeout(() => {
+      const target = pendingIndex.current;
+      if (target != null) setI(target);
+      setFlipped(false);
+      setPhase("enter");
+
+      // Force enter start frame, then animate to idle
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setPhase("idle");
+          window.setTimeout(() => {
+            animLock.current = false;
+            pendingIndex.current = null;
+          }, SLIDE_MS);
+        });
+      });
+    }, SLIDE_MS);
+  }
+
   if (!cards.length) {
     return <p className="text-sm text-wisdom-muted">No cards in this deck.</p>;
   }
@@ -72,7 +108,7 @@ export default function FlashcardViewer({ meta, resourceId }: Props) {
     if (i >= cards.length - 1) {
       setDone(true);
     } else {
-      setI((x) => x + 1);
+      slideTo(i + 1, 1);
     }
   }
 
@@ -81,22 +117,50 @@ export default function FlashcardViewer({ meta, resourceId }: Props) {
     setFlipped(false);
     setGrades({});
     setDone(false);
+    setPhase("idle");
+    animLock.current = false;
+    pendingIndex.current = null;
   }
 
   function goPrev() {
-    if (i <= 0) return;
-    setI((x) => x - 1);
-    setFlipped(false);
+    if (i <= 0 || animLock.current) return;
+    slideTo(i - 1, -1);
   }
 
   function goNext() {
+    if (animLock.current) return;
     if (i >= cards.length - 1) {
       setDone(true);
       return;
     }
-    setI((x) => x + 1);
-    setFlipped(false);
+    slideTo(i + 1, 1);
   }
+
+  // Transform for slide phases
+  const slideStyle = ((): React.CSSProperties => {
+    const ease = "cubic-bezier(0.22, 1, 0.36, 1)";
+    if (phase === "exit") {
+      return {
+        transform: `translateX(${direction === 1 ? "-110%" : "110%"}) scale(0.94)`,
+        opacity: 0,
+        transition: `transform ${SLIDE_MS}ms ${ease}, opacity ${SLIDE_MS}ms ease`,
+      };
+    }
+    if (phase === "enter") {
+      // Start off-screen from the opposite side (no transition yet)
+      return {
+        transform: `translateX(${direction === 1 ? "110%" : "-110%"}) scale(0.94)`,
+        opacity: 0,
+        transition: "none",
+      };
+    }
+    // idle — settled
+    return {
+      transform: "translateX(0) scale(1)",
+      opacity: 1,
+      transition: `transform ${SLIDE_MS}ms ${ease}, opacity ${SLIDE_MS}ms ease`,
+    };
+  })();
 
   if (done) {
     return (
@@ -143,56 +207,62 @@ export default function FlashcardViewer({ meta, resourceId }: Props) {
         </span>
       </div>
 
-      {/* 3D flip stage — larger card */}
-      <div
-        className="relative w-full cursor-pointer"
-        style={{ perspective: "1200px", minHeight: CARD_MIN_H }}
-        onClick={() => setFlipped((f) => !f)}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            setFlipped((f) => !f);
-          }
-        }}
-        aria-label={flipped ? "Show prompt" : "Show answer"}
-      >
+      {/* Slide stage — overflow hides entering/exiting cards */}
+      <div className="relative w-full overflow-hidden rounded-2xl" style={{ minHeight: CARD_MIN_H }}>
         <div
-          className="relative w-full h-full transition-transform duration-500 ease-out"
-          style={{
-            transformStyle: "preserve-3d",
-            transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
-            minHeight: CARD_MIN_H,
+          className="relative w-full cursor-pointer will-change-transform"
+          style={{ perspective: "1200px", minHeight: CARD_MIN_H, ...slideStyle }}
+          onClick={() => {
+            if (phase !== "idle") return;
+            setFlipped((f) => !f);
           }}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              if (phase !== "idle") return;
+              setFlipped((f) => !f);
+            }
+          }}
+          aria-label={flipped ? "Show prompt" : "Show answer"}
         >
-          {/* Front */}
           <div
-            className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl border border-white/15 bg-gradient-to-br from-[#1a2332] via-wisdom-card to-[#0f172a] p-7 sm:p-8 text-center shadow-xl overflow-y-auto"
-            style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
-          >
-            <p className="text-[10px] uppercase tracking-wider text-amber-300/80 mb-3 font-semibold">
-              Prompt · tap to flip
-            </p>
-            <div className="text-xl sm:text-2xl font-semibold text-white leading-snug study-prose w-full">
-              <RichContent body={card.front} />
-            </div>
-          </div>
-
-          {/* Back — deeper green (not bright) */}
-          <div
-            className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl border border-emerald-800/50 bg-gradient-to-br from-[#0d3b2e] via-[#0a2f25] to-[#06261e] p-7 sm:p-8 text-center shadow-xl shadow-emerald-950/50 overflow-y-auto"
+            className="relative w-full h-full transition-transform duration-500 ease-out"
             style={{
-              backfaceVisibility: "hidden",
-              WebkitBackfaceVisibility: "hidden",
-              transform: "rotateY(180deg)",
+              transformStyle: "preserve-3d",
+              transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
+              minHeight: CARD_MIN_H,
             }}
           >
-            <p className="text-[10px] uppercase tracking-wider text-emerald-200/70 mb-3 font-semibold">
-              Answer · tap to flip back
-            </p>
-            <div className="text-xl sm:text-2xl font-semibold text-white leading-snug study-prose w-full">
-              <RichContent body={card.back} />
+            {/* Front */}
+            <div
+              className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl border border-white/15 bg-gradient-to-br from-[#1a2332] via-wisdom-card to-[#0f172a] p-7 sm:p-8 text-center shadow-xl overflow-y-auto"
+              style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
+            >
+              <p className="text-[10px] uppercase tracking-wider text-amber-300/80 mb-3 font-semibold">
+                Prompt · tap to flip
+              </p>
+              <div className="text-xl sm:text-2xl font-semibold text-white leading-snug study-prose w-full">
+                <RichContent body={card.front} />
+              </div>
+            </div>
+
+            {/* Back — deeper green */}
+            <div
+              className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl border border-emerald-800/50 bg-gradient-to-br from-[#0d3b2e] via-[#0a2f25] to-[#06261e] p-7 sm:p-8 text-center shadow-xl shadow-emerald-950/50 overflow-y-auto"
+              style={{
+                backfaceVisibility: "hidden",
+                WebkitBackfaceVisibility: "hidden",
+                transform: "rotateY(180deg)",
+              }}
+            >
+              <p className="text-[10px] uppercase tracking-wider text-emerald-200/70 mb-3 font-semibold">
+                Answer · tap to flip back
+              </p>
+              <div className="text-xl sm:text-2xl font-semibold text-white leading-snug study-prose w-full">
+                <RichContent body={card.back} />
+              </div>
             </div>
           </div>
         </div>
@@ -203,7 +273,7 @@ export default function FlashcardViewer({ meta, resourceId }: Props) {
         <button
           type="button"
           onClick={goPrev}
-          disabled={i === 0}
+          disabled={i === 0 || phase !== "idle"}
           className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-white/15 bg-wisdom-dark/50 text-sm font-semibold text-white disabled:opacity-40 disabled:cursor-not-allowed hover:border-cyan-400/40 transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />
@@ -212,21 +282,23 @@ export default function FlashcardViewer({ meta, resourceId }: Props) {
         <button
           type="button"
           onClick={() => setFlipped((f) => !f)}
-          className="px-3 py-2 rounded-xl border border-amber-400/30 bg-amber-500/10 text-amber-200 text-xs font-bold"
+          disabled={phase !== "idle"}
+          className="px-3 py-2 rounded-xl border border-amber-400/30 bg-amber-500/10 text-amber-200 text-xs font-bold disabled:opacity-40"
         >
           {flipped ? "Show prompt" : "Flip card"}
         </button>
         <button
           type="button"
           onClick={goNext}
-          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-500 text-wisdom-dark text-sm font-bold hover:bg-amber-400 transition-colors"
+          disabled={phase !== "idle"}
+          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-500 text-wisdom-dark text-sm font-bold hover:bg-amber-400 transition-colors disabled:opacity-60"
         >
           {i >= cards.length - 1 ? "Finish" : "Next"}
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>
 
-      {flipped ? (
+      {flipped && phase === "idle" ? (
         <div className="grid grid-cols-3 gap-2 animate-in fade-in duration-300">
           <button
             type="button"
