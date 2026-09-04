@@ -1,10 +1,11 @@
 import { notFound, redirect } from "next/navigation";
-import Link from "next/link";
 import {
   freshmanSubjects,
   getFreshmanSubject,
   FRESHMAN_SUBJECT_ALIASES,
 } from "@/data/freshman";
+import FreshmanLockedPanel from "@/components/FreshmanLockedPanel";
+import { FRESHMAN_LOCKED_UNTIL_OPENING } from "@/lib/ownership";
 import CategoryBackButton from "@/components/CategoryBackButton";
 import SubjectHeroImage from "@/components/SubjectHeroImage";
 import AcademicResultSaver from "@/components/AcademicResultSaver";
@@ -20,6 +21,10 @@ export default async function FreshmanSubjectPage({
 }: {
   params: Promise<{ subject: string }>;
 }) {
+  if (FRESHMAN_LOCKED_UNTIL_OPENING) {
+    return <FreshmanLockedPanel />;
+  }
+
   const { subject: subjectId } = await params;
 
   if (FRESHMAN_SUBJECT_ALIASES[subjectId]) {
@@ -65,32 +70,7 @@ export default async function FreshmanSubjectPage({
           />
         </div>
 
-        <p className="text-sm font-semibold tracking-[0.15em] uppercase text-wisdom-muted mb-4 text-center sm:text-left">
-          Learning hubs
-        </p>
-
         <ResourceHubGrid basePath={`/academy/freshman/${subject.id}`} />
-
-        <div className="mt-14 pt-10 border-t border-white/10">
-          <p className="text-sm text-wisdom-muted mb-4 font-medium text-center sm:text-left">
-            Other freshman subjects
-          </p>
-          <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-            {freshmanSubjects.map((s) => (
-              <Link
-                key={s.id}
-                href={`/academy/freshman/${s.id}`}
-                className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold border transition-all ${
-                  s.id === subject.id
-                    ? "text-purple-400 border-purple-400/50 bg-purple-500/10"
-                    : "border-white/10 text-wisdom-muted hover:border-white/25 hover:text-white"
-                }`}
-              >
-                {s.name}
-              </Link>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );
