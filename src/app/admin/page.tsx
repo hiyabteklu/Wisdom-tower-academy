@@ -84,7 +84,7 @@ export default function AdminPage() {
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-amber-300/90">
-                Wisdom Academy
+                Wisdom Tower Academy
               </p>
               <h1 className="text-2xl font-bold">Admin Dashboard</h1>
             </div>
