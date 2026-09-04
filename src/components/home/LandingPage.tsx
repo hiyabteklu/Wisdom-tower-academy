@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowRight, ExternalLink } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowRight, ExternalLink, Sparkles } from "lucide-react";
 import { useInView } from "@/hooks/useInView";
 import InfinityCard from "@/components/home/InfinityCard";
 
@@ -14,9 +14,38 @@ const stats = [
 
 const ACADEMY_IMAGE = "/images/home/academy.jpg";
 const HERO_BG = "/images/home/hero-bg.jpg";
+const FRESHMAN_IMAGE = "/images/packages/freshman_00241b.jpeg";
+const ECE_SEM1_IMAGE = "/images/special-packages/ece-sem-1.jpg";
 const DIGITAL_URL =
   process.env.NEXT_PUBLIC_DIGITAL_URL?.replace(/\/$/, "") ||
   "https://wisdomtower.tech";
+
+const previewCards = [
+  {
+    href: "/academy/special-packages/electrical-computer-engineering/sem-1",
+    image: ECE_SEM1_IMAGE,
+    badge: "Special package",
+    title: "ECE · Semester 1",
+    blurb: "Year 3 Electrical & Computer Engineering — free for registered students.",
+    cta: "Open Semester 1",
+    accent: "text-violet-300",
+    borderHover: "hover:border-violet-400/45",
+    badgeClass: "border-violet-400/35 bg-violet-500/15 text-violet-200",
+    ctaClass: "bg-violet-500 text-white shadow-violet-500/30 group-hover:shadow-violet-400/40",
+  },
+  {
+    href: "/academy/freshman",
+    image: FRESHMAN_IMAGE,
+    badge: "Pathway",
+    title: "Freshman courses",
+    blurb: "All first-year subjects and learning hubs — free when you sign in.",
+    cta: "Open Freshman",
+    accent: "text-purple-300",
+    borderHover: "hover:border-purple-400/45",
+    badgeClass: "border-purple-400/35 bg-purple-500/15 text-purple-200",
+    ctaClass: "bg-purple-500 text-white shadow-purple-500/30 group-hover:shadow-purple-400/40",
+  },
+] as const;
 
 function usePrefersReducedMotion() {
   const [reduced, setReduced] = useState(false);
@@ -177,6 +206,7 @@ export default function LandingPage() {
   const [loaded, setLoaded] = useState(false);
 
   const pathSection = useInView({ threshold: 0.15, rootMargin: "0px 0px -60px 0px" });
+  const previewSection = useInView({ threshold: 0.12, rootMargin: "0px 0px -50px 0px" });
   const statsSection = useInView({ threshold: 0.25, rootMargin: "0px 0px -40px 0px" });
   const crossSection = useInView({ threshold: 0.2, rootMargin: "0px 0px -40px 0px" });
   const ctaSection = useInView({ threshold: 0.3, rootMargin: "0px 0px -40px 0px" });
@@ -293,7 +323,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="pb-16 md:pb-20 relative" ref={pathSection.ref}>
+      <section className="pb-12 md:pb-14 relative" ref={pathSection.ref}>
         <div className="depth-well" aria-hidden />
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 perspective-scene relative z-10">
           <Link
@@ -326,6 +356,81 @@ export default function LandingPage() {
               </span>
             </div>
           </Link>
+        </div>
+      </section>
+
+      {/* Limited time preview — ECE Sem 1 + Freshman */}
+      <section className="pb-16 md:pb-20 relative" ref={previewSection.ref}>
+        <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[36rem] h-[18rem] rounded-full bg-amber-500/10 blur-3xl preview-glow" />
+          <div className="absolute top-1/3 right-[15%] w-40 h-40 rounded-full bg-violet-500/15 blur-2xl preview-glow-delayed" />
+        </div>
+
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div
+            className={`text-center mb-8 md:mb-10 reveal-item ${
+              previewSection.inView ? "is-visible" : ""
+            }`}
+          >
+            <div className="inline-flex items-center justify-center gap-2 mb-3">
+              <span className="preview-badge-pulse inline-flex h-2 w-2 rounded-full bg-amber-400" />
+              <p className="text-[11px] sm:text-xs font-black uppercase tracking-[0.28em] text-amber-300/95">
+                Limited time
+              </p>
+              <span className="preview-badge-pulse inline-flex h-2 w-2 rounded-full bg-amber-400" style={{ animationDelay: "0.6s" }} />
+            </div>
+            <h2 className="preview-title font-display text-3xl sm:text-4xl md:text-5xl font-black tracking-tight">
+              <span className="preview-title-gradient">Limited time preview</span>
+            </h2>
+            <p className="mt-3 text-sm md:text-base text-wisdom-muted max-w-lg mx-auto leading-relaxed">
+              Free for registered students — open these pathways while the preview lasts.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6 perspective-scene">
+            {previewCards.map((card, idx) => (
+              <Link
+                key={card.href}
+                href={card.href}
+                className={`card-3d card-elevated group relative block overflow-hidden rounded-2xl sm:rounded-3xl border border-white/14 bg-wisdom-card ${card.borderHover} transition-all duration-300 reveal-item ${
+                  previewSection.inView ? "is-visible" : ""
+                }`}
+                style={{
+                  transitionDelay: previewSection.inView ? `${120 + idx * 100}ms` : undefined,
+                }}
+              >
+                <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={card.image}
+                    alt={card.title}
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-wisdom-dark/80 via-transparent to-transparent" />
+                  <span
+                    className={`absolute top-3 left-3 inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm ${card.badgeClass}`}
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    {card.badge}
+                  </span>
+                </div>
+                <div className="p-5 sm:p-6 border-t border-white/8">
+                  <h3
+                    className={`font-display text-xl sm:text-2xl font-bold mb-1.5 text-white group-hover:opacity-95 transition-colors ${card.accent}`}
+                  >
+                    {card.title}
+                  </h3>
+                  <p className="text-sm text-wisdom-muted mb-4 leading-relaxed">{card.blurb}</p>
+                  <span
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold shadow-lg group-hover:scale-[1.03] transition-all duration-300 ${card.ctaClass}`}
+                  >
+                    {card.cta}
+                    <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 
