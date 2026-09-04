@@ -5,6 +5,9 @@ import SafeCoverImage from "@/components/SafeCoverImage";
 import AddToCartButton from "@/components/AddToCartButton";
 import { formatEtb } from "@/data/packages";
 import { getSpecialPackage, specialPackages } from "@/data/special-packages";
+import { FREE_FOR_REGISTERED_PACKAGE_IDS } from "@/lib/ownership";
+
+const FREE_SET = new Set<string>(FREE_FOR_REGISTERED_PACKAGE_IDS);
 
 export function generateStaticParams() {
   return specialPackages.map((p) => ({ slug: p.slug }));
@@ -42,53 +45,62 @@ export default async function SpecialPackagePage({
         </h1>
         <p className="text-wisdom-muted text-sm mb-8 max-w-xl">{pkg.blurb}</p>
 
-        {/* Semesters only — no full-year buy */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 md:gap-6">
-          {pkg.semesters.map((sem) => (
-            <div
-              key={sem.id}
-              className="flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card"
-            >
-              <Link
-                href={`/academy/special-packages/${pkg.slug}/${sem.id}`}
-                className="group flex flex-col flex-1"
+          {pkg.semesters.map((sem) => {
+            const isFree = FREE_SET.has(sem.packageId);
+            return (
+              <div
+                key={sem.id}
+                className="flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card"
               >
-                <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
-                  <SafeCoverImage src={sem.image} alt="" />
-                  {!sem.purchasable && (
-                    <span className="absolute top-2 right-2 rounded-lg border border-white/20 bg-black/60 px-2 py-0.5 text-[10px] font-bold uppercase text-white/90">
-                      Soon
+                <Link
+                  href={`/academy/special-packages/${pkg.slug}/${sem.id}`}
+                  className="group flex flex-col flex-1"
+                >
+                  <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
+                    <SafeCoverImage src={sem.image} alt="" />
+                    {!sem.purchasable && (
+                      <span className="absolute top-2 right-2 rounded-lg border border-white/20 bg-black/60 px-2 py-0.5 text-[10px] font-bold uppercase text-white/90">
+                        Soon
+                      </span>
+                    )}
+                    {isFree && sem.purchasable && (
+                      <span className="absolute top-2 left-2 rounded-lg border border-emerald-400/40 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-100">
+                        Free
+                      </span>
+                    )}
+                  </div>
+                  <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8">
+                    <h2 className="flex items-center gap-1.5 font-display text-base sm:text-lg font-bold text-white group-hover:text-violet-200">
+                      <BadgeCheck className="w-4 h-4 shrink-0 text-sky-400" aria-hidden />
+                      {sem.label}
+                    </h2>
+                    <p className="mt-1 text-xs text-wisdom-muted">
+                      {sem.courses.length} courses
+                      {!sem.purchasable
+                        ? " · not for sale yet"
+                        : isFree
+                          ? " · free for registered students"
+                          : ` · ${formatEtb(sem.priceEtb)}`}
+                    </p>
+                    <span className="mt-2.5 inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-violet-400/90">
+                      Open semester
+                      <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
                     </span>
+                  </div>
+                </Link>
+                <div className="px-4 pb-4 sm:px-5 sm:pb-5">
+                  {sem.purchasable ? (
+                    <AddToCartButton packageId={sem.packageId} variant="ghost" />
+                  ) : (
+                    <p className="text-center text-xs text-wisdom-muted py-2 border border-white/10 rounded-xl">
+                      Coming soon · not available to purchase
+                    </p>
                   )}
                 </div>
-                <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8">
-                  <h2 className="flex items-center gap-1.5 font-display text-base sm:text-lg font-bold text-white group-hover:text-violet-200">
-                    <BadgeCheck className="w-4 h-4 shrink-0 text-sky-400" aria-hidden />
-                    {sem.label}
-                  </h2>
-                  <p className="mt-1 text-xs text-wisdom-muted">
-                    {sem.courses.length} courses
-                    {sem.purchasable
-                      ? ` · ${formatEtb(sem.priceEtb)}`
-                      : " · not for sale yet"}
-                  </p>
-                  <span className="mt-2.5 inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-violet-400/90">
-                    Open semester
-                    <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-                  </span>
-                </div>
-              </Link>
-              <div className="px-4 pb-4 sm:px-5 sm:pb-5">
-                {sem.purchasable ? (
-                  <AddToCartButton packageId={sem.packageId} variant="ghost" />
-                ) : (
-                  <p className="text-center text-xs text-wisdom-muted py-2 border border-white/10 rounded-xl">
-                    Coming soon — not available to purchase
-                  </p>
-                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <p className="mt-10 text-sm text-wisdom-muted">
