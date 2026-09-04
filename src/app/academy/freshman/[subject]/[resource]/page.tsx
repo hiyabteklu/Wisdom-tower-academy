@@ -1,15 +1,17 @@
 import { notFound, redirect } from "next/navigation";
-import Link from "next/link";
 import {
   freshmanSubjects,
   getFreshmanSubject,
   FRESHMAN_SUBJECT_ALIASES,
 } from "@/data/freshman";
 import { getResource, resourceHubs } from "@/data/academy";
+import FreshmanLockedPanel from "@/components/FreshmanLockedPanel";
+import { FRESHMAN_LOCKED_UNTIL_OPENING } from "@/lib/ownership";
 import CategoryBackButton from "@/components/CategoryBackButton";
 import AcademicResultSaver from "@/components/AcademicResultSaver";
 import HubContentView from "@/components/learning/HubContentView";
 import type { HubId } from "@/lib/content";
+import Link from "next/link";
 
 export function generateStaticParams() {
   const params: { subject: string; resource: string }[] = [];
@@ -26,6 +28,10 @@ export default async function FreshmanSubjectResourcePage({
 }: {
   params: Promise<{ subject: string; resource: string }>;
 }) {
+  if (FRESHMAN_LOCKED_UNTIL_OPENING) {
+    return <FreshmanLockedPanel />;
+  }
+
   const { subject: subjectId, resource: resourceId } = await params;
 
   if (FRESHMAN_SUBJECT_ALIASES[subjectId]) {
@@ -81,10 +87,10 @@ export default async function FreshmanSubjectResourcePage({
             <Link
               key={h.id}
               href={`/academy/freshman/${subject.id}/${h.id}`}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+              className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
                 h.id === resource.id
-                  ? `${h.accent} border-current bg-white/5`
-                  : "border-white/10 text-wisdom-muted hover:border-white/20"
+                  ? "border-white/25 bg-white/10 text-white"
+                  : "border-white/10 text-wisdom-muted hover:border-white/20 hover:text-white"
               }`}
             >
               {h.name}
