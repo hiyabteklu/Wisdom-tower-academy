@@ -27,12 +27,41 @@ function formatTime(sec: number) {
   return `${h}h ${m % 60}m`;
 }
 
-function overallGrade(score: number): { label: string; colorClass: string; tone: string } {
-  if (score >= 85) return { label: "Extraordinary", colorClass: "text-cyan-300", tone: "#22d3ee" };
-  if (score >= 70) return { label: "Excellent", colorClass: "text-emerald-300", tone: "#34d399" };
-  if (score >= 55) return { label: "Good", colorClass: "text-amber-300", tone: "#fbbf24" };
-  if (score >= 40) return { label: "Improve", colorClass: "text-orange-300", tone: "#fb923c" };
-  return { label: "In danger", colorClass: "text-rose-300", tone: "#fb7185" };
+function overallGrade(score: number): { label: string; colorClass: string; tone: string; message: string } {
+  if (score >= 85)
+    return {
+      label: "Extraordinary",
+      colorClass: "text-cyan-300",
+      tone: "#22d3ee",
+      message: "You're the best by far on this course — keep that standard and push even higher.",
+    };
+  if (score >= 70)
+    return {
+      label: "Excellent",
+      colorClass: "text-emerald-300",
+      tone: "#34d399",
+      message: "Strong work — stay consistent and you can reach extraordinary.",
+    };
+  if (score >= 55)
+    return {
+      label: "Good",
+      colorClass: "text-amber-300",
+      tone: "#fbbf24",
+      message: "Keep improving — a bit more practice each day will lift your results.",
+    };
+  if (score >= 40)
+    return {
+      label: "Improve",
+      colorClass: "text-orange-300",
+      tone: "#fb923c",
+      message: "Keep practicing — your results need focused study to climb out of this range.",
+    };
+  return {
+    label: "In danger",
+    colorClass: "text-rose-300",
+    tone: "#fb7185",
+    message: "Keep practicing — your result is low right now; open materials and review every day.",
+  };
 }
 
 function computeOverallScore(study: ScopeStats | null, examAvg: number, hasAttempts: boolean): number {
@@ -225,7 +254,7 @@ export default function AcademicResultSaver({
               </p>
               <p className={`font-display text-2xl font-bold ${overall.colorClass}`}>{overall.label}</p>
               <p className="text-sm text-wisdom-muted leading-relaxed">
-                Blended from progress, focus, practice accuracy, exams, and cards — scored out of 100.
+                {overall.message}
               </p>
             </div>
           </div>
@@ -343,10 +372,10 @@ export default function AcademicResultSaver({
                           <SkipForward className="w-3 h-3" /> {Math.max(0, r.total - r.correct - r.missed)} skipped
                         </span>
                         <span className="inline-flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {new Date(r.date).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                          <Calendar className="w-3 h-3" /> {new Date(r.date).toLocaleDateString()}
                         </span>
                       </div>
+                      {r.notes && <p className="mt-1.5 text-xs text-wisdom-muted/80 line-clamp-2">{r.notes}</p>}
                     </li>
                   ))}
                 </ul>
@@ -363,12 +392,12 @@ function StatChip({ icon: Icon, label, value, color }: {
   icon: ComponentType<{ className?: string }>; label: string; value: string; color: string;
 }) {
   return (
-    <div className="bg-wisdom-card px-4 py-4 min-w-0">
-      <div className="flex items-center gap-1.5 text-wisdom-muted mb-1">
-        <Icon className={`w-3.5 h-3.5 shrink-0 ${color}`} />
+    <div className="bg-wisdom-card px-3 py-3.5 sm:px-4 sm:py-4 min-w-0">
+      <div className={`flex items-center gap-1.5 mb-1 ${color}`}>
+        <Icon className="w-3.5 h-3.5 shrink-0" />
         <span className="text-[10px] font-semibold uppercase tracking-wider truncate">{label}</span>
       </div>
-      <p className={`font-display text-xl font-bold tabular-nums truncate ${color}`}>{value}</p>
+      <p className={`font-display text-lg sm:text-xl font-bold tabular-nums truncate ${color}`}>{value}</p>
     </div>
   );
 }
