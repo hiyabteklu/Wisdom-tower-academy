@@ -92,7 +92,7 @@ export const academyPackages: AcademyPackage[] = [
     image: packageImages.freshman,
     includes: [
       "All freshman subjects",
-      "Books · videos · flashcards · exams",
+      "Books · notes · flashcards · exams",
       "300 ETB one-time",
     ],
     enrolledLabel: "890+ students",
