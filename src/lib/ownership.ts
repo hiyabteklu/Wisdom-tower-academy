@@ -1,7 +1,6 @@
 /**
  * Which packages the signed-in user already owns (enrolled or verified order).
- * ECE Year 3 Semester 1 is free for any registered (signed-in) user.
- * Freshman is temporarily locked (opening tomorrow) — not in the free list.
+ * ECE Year 3 Semester 1 and Freshman are free for any registered (signed-in) user.
  */
 import { listMyEnrollments, listMyOrders } from "@/lib/orders";
 import { supabase } from "@/lib/supabase";
@@ -9,10 +8,10 @@ import { supabase } from "@/lib/supabase";
 export type OwnershipMap = Set<string>;
 
 /** Packages unlocked automatically for every signed-in user (no payment). */
-export const FREE_FOR_REGISTERED_PACKAGE_IDS = ["ece-y3-sem-1"] as const;
+export const FREE_FOR_REGISTERED_PACKAGE_IDS = ["ece-y3-sem-1", "freshman"] as const;
 
 /** Soft-lock flag for UI (landing + academy). Content remains closed until this is flipped. */
-export const FRESHMAN_LOCKED_UNTIL_OPENING = true;
+export const FRESHMAN_LOCKED_UNTIL_OPENING = false;
 
 let cache: { at: number; ids: OwnershipMap; userId: string | null } | null = null;
 const TTL_MS = 30_000;
