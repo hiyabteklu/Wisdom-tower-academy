@@ -12,7 +12,7 @@ import {
   type ProgressMeta,
 } from "@/lib/content";
 import { getSeenResourceIds, markResourceSeen } from "@/lib/seenItems";
-import { isPackageOwned } from "@/lib/ownership";
+import { isFreeForRegistered, isPackageOwned } from "@/lib/ownership";
 import {
   BookOpen,
   Clock,
@@ -25,6 +25,7 @@ import {
   Gauge,
   ChevronRight,
   ArrowLeft,
+  LogIn,
 } from "lucide-react";
 import NotesViewer from "@/components/learning/NotesViewer";
 import QuizExamViewer from "@/components/learning/QuizExamViewer";
@@ -102,6 +103,7 @@ export default function HubContentView({
   const [progMeta, setProgMeta] = useState<ProgressMeta>({});
   const [seenIds, setSeenIds] = useState<Set<string>>(new Set());
   const videoWatchRef = useRef(0);
+  const freeForRegistered = isFreeForRegistered(packageId);
 
   useEffect(() => {
     setSeenIds(getSeenResourceIds());
@@ -200,6 +202,25 @@ export default function HubContentView({
   }
 
   if (!owned) {
+    if (freeForRegistered) {
+      return (
+        <div className="rounded-2xl border border-cyan-400/25 bg-cyan-500/10 p-6 text-center">
+          <p className="text-white font-semibold mb-2">Sign in to open</p>
+          <p className="text-sm text-wisdom-muted mb-4">
+            Create a free account to unlock books, notes, questions, and exams. No payment required for
+            registered students.
+          </p>
+          <Link
+            href="/auth"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-500 px-5 py-2.5 text-sm font-bold text-wisdom-dark hover:bg-cyan-400"
+          >
+            <LogIn className="w-4 h-4" />
+            Sign in free
+          </Link>
+        </div>
+      );
+    }
+
     return (
       <div className="rounded-2xl border border-amber-400/25 bg-amber-500/10 p-6 text-center">
         <p className="text-white font-semibold mb-2">Purchase required</p>

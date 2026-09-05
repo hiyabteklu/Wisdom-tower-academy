@@ -20,6 +20,10 @@ export function clearOwnershipCache() {
   cache = null;
 }
 
+function freePackageSet(): OwnershipMap {
+  return new Set<string>(FREE_FOR_REGISTERED_PACKAGE_IDS);
+}
+
 export async function getOwnedPackageIds(force = false): Promise<OwnershipMap> {
   try {
     const {
@@ -41,26 +45,30 @@ export async function getOwnedPackageIds(force = false): Promise<OwnershipMap> {
       return cache.ids;
     }
 
-    const [enrolls, orders] = await Promise.all([
-      listMyEnrollments(),
-      listMyOrders(),
-    ]);
+    // Always grant free packages first — never blocked by enroll/order errors
+    const ids = freePackageSet();
 
-    const ids = new Set<string>();
-    // Free for all registered users
-    for (const id of FREE_FOR_REGISTERED_PACKAGE_IDS) {
-      ids.add(id);
-    }
-    for (const e of enrolls || []) {
-      if (e.packageId) ids.add(e.packageId);
-    }
-    for (const o of orders || []) {
-      if (o.status === "verified" && o.packageId) ids.add(o.packageId);
+    try {
+      const [enrolls, orders] = await Promise.all([
+        listMyEnrollments(),
+        listMyOrders(),
+      ]);
+
+      for (const e of enrolls || []) {
+        if (e.packageId) ids.add(e.packageId);
+      }
+      for (const o of orders || []) {
+        if (o.status === "verified" && o.packageId) ids.add(o.packageId);
+      }
+    } catch {
+      // keep free packages only
     }
 
     cache = { at: Date.now(), ids, userId };
     return ids;
   } catch {
+    // If session read fails but we somehow had a user elsewhere, still try free set is unsafe.
+    // Without a confirmed userId, return empty.
     return new Set();
   }
 }
@@ -68,4 +76,9 @@ export async function getOwnedPackageIds(force = false): Promise<OwnershipMap> {
 export async function isPackageOwned(packageId: string): Promise<boolean> {
   const ids = await getOwnedPackageIds();
   return ids.has(packageId);
+}
+
+/** True when this package unlocks for any signed-in user (no payment). */
+export function isFreeForRegistered(packageId: string): boolean {
+  return (FREE_FOR_REGISTERED_PACKAGE_IDS as readonly string[]).includes(packageId);
 }
