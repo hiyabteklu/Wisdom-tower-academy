@@ -20,7 +20,17 @@ import { SPECIAL_PACKAGES_HUB_IMAGE } from "@/data/special-packages";
 /** Flip to true when real student voices and quotes are ready. */
 const SHOW_STUDENT_VOICES = false;
 
-const programs = [
+type ProgramCard = {
+  id: string;
+  href: string;
+  name: string;
+  image: string;
+  accent: string;
+  border: string;
+  cta: string;
+};
+
+const programs: ProgramCard[] = [
   {
     id: "grade-9-12",
     href: "/academy/grades",
@@ -189,66 +199,39 @@ export default function AcademyPage() {
           </div>
 
           <div className="perspective-scene grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
-            {programs.map((program) => {
-              const locked = "locked" in program && program.locked;
-              const body = (
-                <>
-                  <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={program.image}
-                      alt={program.name}
-                      className={`absolute inset-0 h-full w-full object-cover transition-transform duration-700 ${
-                        locked ? "saturate-[0.85]" : "group-hover:scale-[1.03]"
-                      }`}
+            {programs.map((program) => (
+              <Link
+                key={program.id}
+                href={program.href}
+                className={`card-3d group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card ${program.border}`}
+              >
+                <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={program.image}
+                    alt={program.name}
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                  />
+                </div>
+                <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8">
+                  <h3
+                    className={`flex items-center gap-1.5 font-display text-base sm:text-lg font-bold ${program.accent}`}
+                  >
+                    <BadgeCheck
+                      className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-sky-400"
+                      aria-label="Verified"
                     />
-                    {locked && (
-                      <div className="absolute inset-0 bg-wisdom-dark/40 flex items-end justify-end p-3">
-                        <span className="rounded-lg border border-amber-400/40 bg-amber-500/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-200">
-                          Opening tomorrow
-                        </span>
-                      </div>
-                    )}
+                    {program.name}
+                  </h3>
+                  <div
+                    className={`mt-2.5 flex items-center gap-1 text-xs sm:text-sm font-semibold ${program.accent}`}
+                  >
+                    {program.cta}
+                    <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
                   </div>
-                  <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8">
-                    <h3
-                      className={`flex items-center gap-1.5 font-display text-base sm:text-lg font-bold ${program.accent}`}
-                    >
-                      <BadgeCheck
-                        className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-sky-400"
-                        aria-label="Verified"
-                      />
-                      {program.name}
-                    </h3>
-                    <div
-                      className={`mt-2.5 flex items-center gap-1 text-xs sm:text-sm font-semibold ${
-                        locked ? "text-amber-200/90" : program.accent
-                      }`}
-                    >
-                      {program.cta}
-                      {!locked && (
-                        <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-                      )}
-                    </div>
-                  </div>
-                </>
-              );
-              const cls = `card-3d group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card ${program.border} ${
-                locked ? "cursor-not-allowed opacity-95" : ""
-              }`;
-              if (locked) {
-                return (
-                  <div key={program.id} className={cls} aria-disabled="true">
-                    {body}
-                  </div>
-                );
-              }
-              return (
-                <Link key={program.id} href={program.href} className={cls}>
-                  {body}
-                </Link>
-              );
-            })}
+                </div>
+              </Link>
+            ))}
           </div>
 
           <section className="mt-20 md:mt-24" id="special-packages">
