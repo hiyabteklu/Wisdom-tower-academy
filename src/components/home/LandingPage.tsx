@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, Clock, ExternalLink, Gift, Lock } from "lucide-react";
+import { ArrowRight, ExternalLink, Gift } from "lucide-react";
 import { useInView } from "@/hooks/useInView";
 import InfinityCard from "@/components/home/InfinityCard";
 
@@ -39,13 +39,13 @@ const previewCards = [
     image: FRESHMAN_IMAGE,
     badge: "Pathway",
     title: "Freshman courses",
-    blurb: "First-year subjects and learning hubs. Opens tomorrow.",
-    cta: "Opening tomorrow",
+    blurb: "All first-year subjects and learning hubs. Free for registered students.",
+    cta: "Open Freshman",
     accent: "text-purple-300",
-    borderHover: "hover:border-purple-400/30",
-    badgeClass: "border-amber-400/40 bg-amber-500/15 text-amber-200",
-    ctaClass: "bg-white/10 text-amber-100 border border-amber-400/30",
-    locked: true,
+    borderHover: "hover:border-purple-400/45",
+    badgeClass: "border-purple-400/35 bg-purple-500/15 text-purple-200",
+    ctaClass: "bg-purple-500 text-white shadow-purple-500/30 group-hover:shadow-purple-400/40",
+    locked: false,
   },
 ] as const;
 
@@ -253,7 +253,8 @@ export default function LandingPage() {
               <span className="preview-title-gradient">Limited time preview</span>
             </h2>
             <p className="mt-3 text-sm md:text-base text-wisdom-muted max-w-lg mx-auto leading-relaxed">
-              ECE Semester 1 is open for registered students. Freshman courses open tomorrow.
+              ECE Semester 1 and Freshman are open for registered students — free with a signed-in
+              account.
             </p>
           </div>
 
@@ -266,22 +267,14 @@ export default function LandingPage() {
                     <img
                       src={card.image}
                       alt={card.title}
-                      className={`absolute inset-0 h-full w-full object-cover transition-transform duration-700 ${
-                        card.locked ? "scale-100" : "group-hover:scale-[1.04]"
-                      }`}
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
                     />
                     <span
                       className={`absolute top-3 left-3 inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm ${card.badgeClass}`}
                     >
-                      {card.locked ? <Clock className="w-3 h-3" /> : <Gift className="w-3 h-3" />}
-                      {card.locked ? "Opening tomorrow" : card.badge}
+                      <Gift className="w-3 h-3" />
+                      {card.badge}
                     </span>
-                    {card.locked && (
-                      <span className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-black/40 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white/90 backdrop-blur-sm">
-                        <Lock className="w-3 h-3" />
-                        Locked
-                      </span>
-                    )}
                   </div>
                   <div className="p-5 sm:p-6 border-t border-white/8 bg-wisdom-card">
                     <h3
@@ -291,14 +284,10 @@ export default function LandingPage() {
                     </h3>
                     <p className="text-sm text-wisdom-muted mb-4 leading-relaxed">{card.blurb}</p>
                     <span
-                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold shadow-lg transition-all duration-300 ${card.ctaClass} ${
-                        card.locked ? "" : "group-hover:scale-[1.03]"
-                      }`}
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold shadow-lg transition-all duration-300 group-hover:scale-[1.03] ${card.ctaClass}`}
                     >
                       {card.cta}
-                      {!card.locked && (
-                        <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-                      )}
+                      <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                     </span>
                   </div>
                 </>
@@ -306,19 +295,11 @@ export default function LandingPage() {
 
               const shellClass = `card-3d group relative block overflow-hidden rounded-2xl sm:rounded-3xl border border-white/14 bg-wisdom-navy ${card.borderHover} transition-all duration-300 reveal-item ${
                 previewSection.inView ? "is-visible" : ""
-              } ${card.locked ? "cursor-not-allowed" : ""}`;
+              }`;
 
               const style = {
                 transitionDelay: previewSection.inView ? `${120 + idx * 100}ms` : undefined,
               };
-
-              if (card.locked) {
-                return (
-                  <div key={card.href} className={shellClass} style={style} aria-disabled="true">
-                    {inner}
-                  </div>
-                );
-              }
 
               return (
                 <Link key={card.href} href={card.href} className={shellClass} style={style}>

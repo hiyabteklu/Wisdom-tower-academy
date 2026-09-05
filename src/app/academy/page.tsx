@@ -37,8 +37,7 @@ const programs = [
     image: packageImages.freshman,
     accent: "text-purple-400",
     border: "hover:border-purple-400/40",
-    cta: "Opening tomorrow",
-    locked: true,
+    cta: "Open",
   },
   {
     id: "uat",
