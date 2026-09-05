@@ -55,8 +55,8 @@ export function areHubsReady(basePath: string): boolean {
 
 export const COMING_SOON_TITLE = "Resources are being uploaded";
 export const COMING_SOON_BODY =
-  "This learning hub is almost ready. Check back soon — we’re adding books, videos, flashcards, and practice materials.";
+  "This learning hub is almost ready. Check back soon — we’re adding books, short notes, flashcards, and practice materials.";
 
 export const PURCHASE_TITLE = "Sign in required";
 export const PURCHASE_BODY_FRESHMAN =
-  "Create a free account to unlock every Freshman subject — books, flashcards, videos, and more. No payment needed for registered students.";
+  "Create a free account to unlock every Freshman subject — books, short notes, flashcards, question banks, and exams. No payment needed for registered students.";

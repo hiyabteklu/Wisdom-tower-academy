@@ -35,8 +35,8 @@ export default function FreshmanPage() {
             <span className="text-purple-400">Freshman</span> subjects
           </h1>
           <p className="text-wisdom-muted text-lg max-w-2xl leading-relaxed">
-            Browse every subject and the six learning hubs. Sign in free to open books, flashcards,
-            videos, and more — no payment required for registered students.
+            Browse every subject and the five learning hubs. Sign in free to open books, short notes,
+            flashcards, question banks, and exams — no payment required for registered students.
           </p>
           <p className="mt-3 text-sm text-purple-400/90 font-medium">
             {freshmanSubjects.length} subjects · Free for registered users

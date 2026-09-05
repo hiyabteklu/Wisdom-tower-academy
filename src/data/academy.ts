@@ -15,7 +15,7 @@ export interface ResourceHub {
   accent: string;
   glow: string;
   icon: string;
-  /** public/images/hubs/{id}.jpg — same 6 images sitewide */
+  /** public/images/hubs/{id}.jpg — same images sitewide */
   image: string;
 }
 
@@ -86,6 +86,11 @@ export const grades: Grade[] = [
   },
 ];
 
+/**
+ * Public learning hubs shown on every subject/package.
+ * Videos are intentionally omitted until content is ready — keep "videos" in
+ * ResourceType / HubId so admin + DB can still use it later.
+ */
 export const resourceHubs: ResourceHub[] = [
   {
     id: "books",
@@ -104,15 +109,6 @@ export const resourceHubs: ResourceHub[] = [
     glow: "group-hover:shadow-violet-500/20",
     icon: "library",
     image: hubImg("short-notes"),
-  },
-  {
-    id: "videos",
-    name: "Videos",
-    description: "Lesson explainers and walkthroughs",
-    accent: "text-rose-400",
-    glow: "group-hover:shadow-rose-500/20",
-    icon: "video",
-    image: hubImg("videos"),
   },
   {
     id: "flashcards",
