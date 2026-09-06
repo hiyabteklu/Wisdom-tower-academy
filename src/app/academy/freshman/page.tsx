@@ -72,7 +72,6 @@ export default function FreshmanPage() {
               name={subject.name}
               description={subject.description}
               image={subject.image}
-              ready
             />
           ))}
         </div>
