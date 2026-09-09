@@ -1,3 +1,22 @@
+# DEPRECATED — Capacitor shell approach
+
+**This document is obsolete.**
+
+As of September 2026 the official Android direction for Wisdom Tower Academy is a **pure native Jetpack Compose** app.
+
+See the current plan here:
+
+→ **[docs/NATIVE-ANDROID.md](NATIVE-ANDROID.md)**
+
+The Capacitor WebView shell (loading the live website) is no longer the target architecture. `capacitor.config.ts` is kept only for historical reference and can be deleted later.
+
+---
+
+## Original Capacitor content (archived)
+
+<details>
+<summary>Click to expand the old Capacitor instructions (for reference only)</summary>
+
 # Wisdom Tower Academy — Android app (Capacitor)
 
 This turns your **existing website** into a real Android app:
@@ -184,3 +203,5 @@ Then Run again from Android Studio.
 - **Helper (me):** native code snippets, offline design, Play Store checklist, fixes when something fails
 
 Start with **Phase 1** on your PC, then tell me what you see after `npx cap add android`.
+
+</details>
