@@ -19,8 +19,17 @@ import {
   ZoomIn,
   ZoomOut,
   ChevronsUp,
+  Timer,
 } from "lucide-react";
 import { fetchPdfCached } from "@/lib/pdfCache";
+import PomodoroBreak from "@/components/learning/PomodoroBreak";
+import {
+  pickRandomQuote,
+  type MotivationalQuote,
+} from "@/data/motivational-quotes";
+
+/** Focused reading session length before break prompt (Pomodoro). */
+const POMODORO_SECONDS = 25 * 60;
 
 type Props = {
   url: string;
@@ -39,6 +48,7 @@ const DEFAULT_PAGE_H = 520;
  * - Only paints a small window of pages to canvas (HD via devicePixelRatio)
  * - Other pages are lightweight spacers
  * - Single mount for inline vs fullscreen (avoids black pages on toggle)
+ * - Pomodoro: after 25 min focused reading, shows a motivational break
  */
 export default function PdfReader({ url, title, onOpened, onPageChange }: Props) {
   const [fullscreen, setFullscreen] = useState(false);
@@ -55,6 +65,12 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
   const [scrollWidth, setScrollWidth] = useState(360);
   /** Estimated height per page for spacers (updated as pages render) */
   const [pageHeights, setPageHeights] = useState<Record<number, number>>({});
+
+  // Pomodoro: focused reading time (only while tab visible)
+  const [focusSeconds, setFocusSeconds] = useState(0);
+  const [breakOpen, setBreakOpen] = useState(false);
+  const [breakQuote, setBreakQuote] = useState<MotivationalQuote | null>(null);
+  const focusSecondsRef = useRef(0);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -100,6 +116,29 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [fullscreen]);
+
+  // Pomodoro focus clock — counts only when tab is visible and break is closed
+  useEffect(() => {
+    if (loading || error || breakOpen) return;
+    const id = window.setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      focusSecondsRef.current += 1;
+      const next = focusSecondsRef.current;
+      setFocusSeconds(next);
+      if (next >= POMODORO_SECONDS) {
+        setBreakQuote(pickRandomQuote());
+        setBreakOpen(true);
+      }
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [loading, error, breakOpen]);
+
+  function resetPomodoro() {
+    focusSecondsRef.current = 0;
+    setFocusSeconds(0);
+    setBreakOpen(false);
+    setBreakQuote(null);
+  }
 
   // Load document metadata only (no page rasterization)
   useEffect(() => {
@@ -254,6 +293,15 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
         <p className="text-xs sm:text-sm text-white/80 truncate font-medium flex-1 min-w-0">
           {title}
         </p>
+        {!loading && !error && (
+          <span
+            className="hidden sm:inline-flex items-center gap-1 rounded-lg border border-amber-400/25 bg-amber-500/10 px-2 py-1 text-[10px] font-semibold tabular-nums text-amber-200/90 shrink-0"
+            title="Focused reading time this session (Pomodoro)"
+          >
+            <Timer className="w-3 h-3" />
+            {Math.floor(focusSeconds / 60)}:{String(focusSeconds % 60).padStart(2, "0")}
+          </span>
+        )}
         <div className="flex items-center gap-1 shrink-0">
           <ToolBtn
             onClick={() => setScale((s) => Math.max(0.55, Math.round((s - 0.15) * 100) / 100))}
@@ -433,6 +481,13 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
           <X className="w-5 h-5" />
           Exit
         </button>
+        <PomodoroBreak
+          open={breakOpen}
+          quote={breakQuote}
+          sessionMinutes={Math.max(1, Math.round(focusSeconds / 60))}
+          onContinue={resetPomodoro}
+          onTakeBreak={resetPomodoro}
+        />
       </div>,
       document.body
     );
@@ -441,6 +496,13 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
   return (
     <div className="relative flex flex-col rounded-2xl border border-white/12 bg-neutral-950 overflow-hidden h-[min(72vh,680px)]">
       {readerChrome}
+      <PomodoroBreak
+        open={breakOpen}
+        quote={breakQuote}
+        sessionMinutes={Math.max(1, Math.round(focusSeconds / 60))}
+        onContinue={resetPomodoro}
+        onTakeBreak={resetPomodoro}
+      />
     </div>
   );
 }
