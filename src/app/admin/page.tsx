@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -56,7 +56,7 @@ function parseTab(raw: string | null): AcademyTab {
   return "grants";
 }
 
-export default function AdminPage() {
+function AdminDashboardInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
@@ -165,8 +165,8 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Tabs — horizontal scroll on mobile, no page exit */}
-        <div className="mb-6 -mx-4 px-4 overflow-x-auto scrollbar-thin">
+        {/* Tabs — horizontal scroll on mobile; stays inside admin */}
+        <div className="mb-6 -mx-4 px-4 overflow-x-auto">
           <div className="flex gap-2 min-w-max pb-1">
             {academyTabs.map(({ id, label, icon: Icon }) => (
               <button
@@ -203,5 +203,21 @@ export default function AdminPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function AdminFallback() {
+  return (
+    <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="w-8 h-8 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
+
+export default function AdminPage() {
+  return (
+    <Suspense fallback={<AdminFallback />}>
+      <AdminDashboardInner />
+    </Suspense>
   );
 }
