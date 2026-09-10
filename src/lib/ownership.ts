@@ -1,8 +1,14 @@
 /**
- * Which packages the signed-in user already owns (enrolled or verified order).
- * ECE Year 3 Semester 1 and Freshman are free for any registered (signed-in) user.
+ * Which packages the signed-in user already owns
+ * (enrollments, verified orders, or admin access grants).
+ * ECE Year 3 Semester 1 and Freshman are free for any registered user.
  */
 import { listMyEnrollments, listMyOrders } from "@/lib/orders";
+import {
+  listMyAccessGrants,
+  ALL_PACKAGES_ID,
+} from "@/lib/access-grants";
+import { academyPackages } from "@/data/packages";
 import { supabase } from "@/lib/supabase";
 
 export type OwnershipMap = Set<string>;
@@ -22,6 +28,10 @@ export function clearOwnershipCache() {
 
 function freePackageSet(): OwnershipMap {
   return new Set<string>(FREE_FOR_REGISTERED_PACKAGE_IDS);
+}
+
+function allCatalogIds(): string[] {
+  return academyPackages.map((p) => p.id);
 }
 
 export async function getOwnedPackageIds(force = false): Promise<OwnershipMap> {
@@ -49,16 +59,32 @@ export async function getOwnedPackageIds(force = false): Promise<OwnershipMap> {
     const ids = freePackageSet();
 
     try {
-      const [enrolls, orders] = await Promise.all([
+      const [enrolls, orders, grants] = await Promise.all([
         listMyEnrollments(),
         listMyOrders(),
+        listMyAccessGrants(),
       ]);
 
       for (const e of enrolls || []) {
-        if (e.packageId) ids.add(e.packageId);
+        if (e.packageId === ALL_PACKAGES_ID) {
+          for (const id of allCatalogIds()) ids.add(id);
+          ids.add(ALL_PACKAGES_ID);
+        } else if (e.packageId) {
+          ids.add(e.packageId);
+        }
       }
+
       for (const o of orders || []) {
         if (o.status === "verified" && o.packageId) ids.add(o.packageId);
+      }
+
+      for (const g of grants || []) {
+        if (g.packageId === ALL_PACKAGES_ID) {
+          for (const id of allCatalogIds()) ids.add(id);
+          ids.add(ALL_PACKAGES_ID);
+        } else if (g.packageId) {
+          ids.add(g.packageId);
+        }
       }
     } catch {
       // keep free packages only
@@ -67,14 +93,13 @@ export async function getOwnedPackageIds(force = false): Promise<OwnershipMap> {
     cache = { at: Date.now(), ids, userId };
     return ids;
   } catch {
-    // If session read fails but we somehow had a user elsewhere, still try free set is unsafe.
-    // Without a confirmed userId, return empty.
     return new Set();
   }
 }
 
 export async function isPackageOwned(packageId: string): Promise<boolean> {
   const ids = await getOwnedPackageIds();
+  if (ids.has(ALL_PACKAGES_ID)) return true;
   return ids.has(packageId);
 }
 
