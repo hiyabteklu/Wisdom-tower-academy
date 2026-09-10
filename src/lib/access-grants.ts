@@ -26,8 +26,7 @@ function normEmail(email: string): string {
 }
 
 function isValidEmail(email: string): boolean {
-  return /^[^
-\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 function packageLabel(packageId: string): string {
