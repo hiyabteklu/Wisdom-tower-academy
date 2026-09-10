@@ -13,6 +13,7 @@ import UsersPanel from "@/components/admin/UsersPanel";
 import InquiriesPanel from "@/components/admin/InquiriesPanel";
 import CatalogPanel from "@/components/admin/CatalogPanel";
 import ContentPanel from "@/components/admin/ContentPanel";
+import LocksPanel from "@/components/admin/LocksPanel";
 import {
   LogOut,
   CreditCard,
@@ -23,11 +24,13 @@ import {
   GraduationCap,
   Package,
   BookOpen,
+  Shield,
 } from "lucide-react";
 
 type AcademyTab =
   | "overview"
   | "content"
+  | "locks"
   | "catalog"
   | "payments"
   | "users"
@@ -67,6 +70,7 @@ export default function AdminPage() {
 
   const academyTabs: { id: AcademyTab; label: string; icon: typeof LayoutDashboard }[] = [
     { id: "content", label: "Content", icon: BookOpen },
+    { id: "locks", label: "Locks", icon: Shield },
     { id: "catalog", label: "Catalog", icon: Package },
     { id: "overview", label: "Overview", icon: LayoutDashboard },
     { id: "payments", label: "Payments", icon: CreditCard },
@@ -135,6 +139,7 @@ export default function AdminPage() {
         </div>
 
         {academyTab === "content" && <ContentPanel />}
+        {academyTab === "locks" && <LocksPanel />}
         {academyTab === "overview" && <AnalyticsPanel />}
         {academyTab === "catalog" && <CatalogPanel />}
         {academyTab === "payments" && user.email && <PaymentsPanel adminEmail={user.email} />}
