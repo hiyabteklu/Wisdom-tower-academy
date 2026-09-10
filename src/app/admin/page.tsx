@@ -14,6 +14,7 @@ import InquiriesPanel from "@/components/admin/InquiriesPanel";
 import CatalogPanel from "@/components/admin/CatalogPanel";
 import ContentPanel from "@/components/admin/ContentPanel";
 import LocksPanel from "@/components/admin/LocksPanel";
+import AccessGrantsPanel from "@/components/admin/AccessGrantsPanel";
 import {
   LogOut,
   CreditCard,
@@ -25,12 +26,14 @@ import {
   Package,
   BookOpen,
   Shield,
+  KeyRound,
 } from "lucide-react";
 
 type AcademyTab =
   | "overview"
   | "content"
   | "locks"
+  | "grants"
   | "catalog"
   | "payments"
   | "users"
@@ -40,7 +43,7 @@ export default function AdminPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [academyTab, setAcademyTab] = useState<AcademyTab>("content");
+  const [academyTab, setAcademyTab] = useState<AcademyTab>("grants");
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -69,6 +72,7 @@ export default function AdminPage() {
   }
 
   const academyTabs: { id: AcademyTab; label: string; icon: typeof LayoutDashboard }[] = [
+    { id: "grants", label: "Access", icon: KeyRound },
     { id: "content", label: "Content", icon: BookOpen },
     { id: "locks", label: "Locks", icon: Shield },
     { id: "catalog", label: "Catalog", icon: Package },
@@ -138,11 +142,16 @@ export default function AdminPage() {
           ))}
         </div>
 
+        {academyTab === "grants" && user.email && (
+          <AccessGrantsPanel adminEmail={user.email} />
+        )}
         {academyTab === "content" && <ContentPanel />}
         {academyTab === "locks" && <LocksPanel />}
         {academyTab === "overview" && <AnalyticsPanel />}
         {academyTab === "catalog" && <CatalogPanel />}
-        {academyTab === "payments" && user.email && <PaymentsPanel adminEmail={user.email} />}
+        {academyTab === "payments" && user.email && (
+          <PaymentsPanel adminEmail={user.email} />
+        )}
         {academyTab === "users" && <UsersPanel />}
         {academyTab === "inquiries" && <InquiriesPanel />}
       </div>
