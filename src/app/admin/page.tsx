@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { isAdminEmail } from "@/lib/admin";
 import { ensureProfile } from "@/lib/profile";
@@ -27,6 +27,7 @@ import {
   BookOpen,
   Shield,
   KeyRound,
+  ArrowLeft,
 } from "lucide-react";
 
 type AcademyTab =
@@ -39,11 +40,43 @@ type AcademyTab =
   | "users"
   | "inquiries";
 
+const VALID_TABS: AcademyTab[] = [
+  "grants",
+  "content",
+  "locks",
+  "catalog",
+  "overview",
+  "payments",
+  "users",
+  "inquiries",
+];
+
+function parseTab(raw: string | null): AcademyTab {
+  if (raw && (VALID_TABS as string[]).includes(raw)) return raw as AcademyTab;
+  return "grants";
+}
+
 export default function AdminPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [academyTab, setAcademyTab] = useState<AcademyTab>("grants");
+
+  // Sync tab from URL on load / browser back-forward
+  useEffect(() => {
+    setAcademyTab(parseTab(searchParams.get("tab")));
+  }, [searchParams]);
+
+  const goTab = useCallback(
+    (id: AcademyTab) => {
+      setAcademyTab(id);
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("tab", id);
+      router.replace(`/admin?${params.toString()}`, { scroll: false });
+    },
+    [router, searchParams]
+  );
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -84,17 +117,25 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-wisdom-dark text-white">
-      <div className="max-w-5xl mx-auto px-4 py-8 md:py-10">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-600/10 text-amber-300 border border-amber-400/20">
+      <div className="max-w-6xl mx-auto px-4 py-6 md:py-8">
+        {/* Top bar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+          <div className="flex items-center gap-3 min-w-0">
+            <Link
+              href="/account"
+              className="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-white/12 bg-white/5 text-wisdom-muted hover:text-white hover:bg-white/10 shrink-0"
+              title="Back to account"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-600/10 text-amber-300 border border-amber-400/20 shrink-0">
               <GraduationCap className="w-6 h-6" />
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-wider text-amber-300/90">
                 Wisdom Tower Academy
               </p>
-              <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+              <h1 className="text-xl sm:text-2xl font-bold truncate">Admin Dashboard</h1>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -102,21 +143,21 @@ export default function AdminPage() {
               href="https://supabase.com/dashboard"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1.5 min-h-[40px] px-4 py-2 rounded-xl border border-white/12 bg-white/5 text-sm font-medium hover:bg-white/10"
+              className="inline-flex items-center gap-1.5 min-h-[40px] px-3 sm:px-4 py-2 rounded-xl border border-white/12 bg-white/5 text-sm font-medium hover:bg-white/10"
             >
               Supabase
               <ExternalLink className="w-3.5 h-3.5 opacity-70" />
             </a>
             <Link
               href="/account"
-              className="inline-flex items-center min-h-[40px] px-4 py-2 rounded-xl border border-white/12 bg-white/5 text-sm font-medium hover:bg-white/10"
+              className="inline-flex items-center min-h-[40px] px-3 sm:px-4 py-2 rounded-xl border border-white/12 bg-white/5 text-sm font-medium hover:bg-white/10"
             >
               Profile
             </Link>
             <button
               type="button"
               onClick={handleLogout}
-              className="inline-flex items-center gap-2 min-h-[40px] px-4 py-2 rounded-xl border border-red-500/30 bg-red-500/10 text-sm font-medium text-red-400 hover:bg-red-500/20"
+              className="inline-flex items-center gap-2 min-h-[40px] px-3 sm:px-4 py-2 rounded-xl border border-red-500/30 bg-red-500/10 text-sm font-medium text-red-400 hover:bg-red-500/20"
             >
               <LogOut className="w-4 h-4" />
               Logout
@@ -124,36 +165,42 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2 mb-6">
-          {academyTabs.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setAcademyTab(id)}
-              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border ${
-                academyTab === id
-                  ? "border-amber-400/50 bg-amber-500/15 text-amber-200"
-                  : "border-white/10 text-wisdom-muted hover:text-white"
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              {label}
-            </button>
-          ))}
+        {/* Tabs — horizontal scroll on mobile, no page exit */}
+        <div className="mb-6 -mx-4 px-4 overflow-x-auto scrollbar-thin">
+          <div className="flex gap-2 min-w-max pb-1">
+            {academyTabs.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => goTab(id)}
+                className={`inline-flex items-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-xl text-sm font-semibold border whitespace-nowrap transition-colors ${
+                  academyTab === id
+                    ? "border-amber-400/50 bg-amber-500/15 text-amber-200 shadow-sm shadow-amber-500/10"
+                    : "border-white/10 text-wisdom-muted hover:text-white hover:border-white/20"
+                }`}
+              >
+                <Icon className="w-4 h-4 shrink-0" />
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {academyTab === "grants" && user.email && (
-          <AccessGrantsPanel adminEmail={user.email} />
-        )}
-        {academyTab === "content" && <ContentPanel />}
-        {academyTab === "locks" && <LocksPanel />}
-        {academyTab === "overview" && <AnalyticsPanel />}
-        {academyTab === "catalog" && <CatalogPanel />}
-        {academyTab === "payments" && user.email && (
-          <PaymentsPanel adminEmail={user.email} />
-        )}
-        {academyTab === "users" && <UsersPanel />}
-        {academyTab === "inquiries" && <InquiriesPanel />}
+        {/* Panel area */}
+        <div className="rounded-2xl border border-white/8 bg-wisdom-card/40 p-4 sm:p-6 min-h-[50vh]">
+          {academyTab === "grants" && user.email && (
+            <AccessGrantsPanel adminEmail={user.email} />
+          )}
+          {academyTab === "content" && <ContentPanel />}
+          {academyTab === "locks" && <LocksPanel />}
+          {academyTab === "overview" && <AnalyticsPanel />}
+          {academyTab === "catalog" && <CatalogPanel />}
+          {academyTab === "payments" && user.email && (
+            <PaymentsPanel adminEmail={user.email} />
+          )}
+          {academyTab === "users" && <UsersPanel />}
+          {academyTab === "inquiries" && <InquiriesPanel />}
+        </div>
       </div>
     </div>
   );

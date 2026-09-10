@@ -225,7 +225,7 @@ export default function Header() {
                             Settings
                           </Link>
                           {isAdmin && (
-                            <Link href="/admin" role="menuitem" className="flex items-center gap-3 px-4 py-2.5 text-sm text-amber-300 hover:bg-amber-500/10" onClick={() => setProfileOpen(false)}>
+                            <Link href="/admin?tab=grants" role="menuitem" className="flex items-center gap-3 px-4 py-2.5 text-sm text-amber-300 hover:bg-amber-500/10" onClick={() => setProfileOpen(false)}>
                               <Shield className="w-4 h-4" />
                               Admin
                             </Link>
@@ -285,6 +285,11 @@ export default function Header() {
                       <Link href="/account" className="flex items-center gap-2 text-sm py-1.5" onClick={() => setIsOpen(false)}>
                         <User className="w-4 h-4" /> Account
                       </Link>
+                      {isAdmin && (
+                        <Link href="/admin?tab=grants" className="flex items-center gap-2 text-sm py-1.5 text-amber-300" onClick={() => setIsOpen(false)}>
+                          <Shield className="w-4 h-4" /> Admin
+                        </Link>
+                      )}
                       <button type="button" onClick={() => void handleLogout()} className="flex items-center gap-2 text-sm text-red-400 py-1.5 w-full text-left">
                         <LogOut className="w-4 h-4" /> Logout
                       </button>
