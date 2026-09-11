@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, ExternalLink, Gift } from "lucide-react";
+import { ArrowRight, ExternalLink, Gift, LogIn, Sparkles } from "lucide-react";
 import { useInView } from "@/hooks/useInView";
 import InfinityCard from "@/components/home/InfinityCard";
 
@@ -154,19 +154,27 @@ export default function LandingPage() {
 
   return (
     <div className="relative">
+      {/* Hero */}
       <section className="relative overflow-hidden pt-8 pb-16 md:pt-12 md:pb-24" ref={heroSection.ref}>
         <div className="absolute inset-0" aria-hidden>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={HERO_BG} alt="" className="h-full w-full object-cover opacity-40" />
           <div className="absolute inset-0 bg-gradient-to-b from-wisdom-dark/80 via-wisdom-dark/90 to-wisdom-dark" />
+          {/* Animated shine orbs */}
+          <div className="landing-orb landing-orb-a" />
+          <div className="landing-orb landing-orb-b" />
+          <div className="landing-orb landing-orb-c" />
+          <div className="landing-shine-sweep" />
         </div>
+
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div
             className={`max-w-3xl reveal-item ${
               heroSection.inView ? "is-visible" : ""
             }`}
           >
-            <p className="text-sm font-semibold tracking-[0.2em] uppercase text-cyan-300/90 mb-4">
+            <p className="inline-flex items-center gap-2 text-sm font-semibold tracking-[0.2em] uppercase text-cyan-300/95 mb-4">
+              <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
               Wisdom Tower Academy
             </p>
             <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-black tracking-tight mb-5 leading-[1.1]">
@@ -177,21 +185,38 @@ export default function LandingPage() {
             <p className="text-lg sm:text-xl text-wisdom-muted leading-relaxed max-w-xl mb-8">
               Structured pathways for secondary and university learners.
             </p>
-            <div className="flex flex-wrap gap-3">
+
+            <div className="flex flex-wrap gap-3 items-center">
               <Link
                 href="/academy"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-cyan-400 text-wisdom-dark font-bold hover:bg-cyan-300 transition-colors"
+                className="landing-cta-primary group inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-cyan-400 text-wisdom-dark font-bold shadow-lg shadow-cyan-500/30 hover:bg-cyan-300 hover:shadow-cyan-400/40 transition-all duration-300 hover:-translate-y-0.5"
               >
                 Enter Academy
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
               </Link>
+
+              {/* Fixed: was /auth (no page) → /login */}
               <Link
-                href="/auth"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-white/20 text-white font-semibold hover:border-white/40 transition-colors"
+                href="/login"
+                className="landing-cta-signin group relative inline-flex items-center gap-2 px-6 py-3.5 rounded-xl font-bold text-white overflow-hidden
+                  border-2 border-amber-400/70 bg-amber-500/15
+                  shadow-[0_0_24px_-4px_rgba(251,191,36,0.45)]
+                  hover:bg-amber-500 hover:text-wisdom-dark hover:border-amber-300
+                  hover:shadow-[0_0_36px_-2px_rgba(251,191,36,0.65)]
+                  transition-all duration-300 hover:-translate-y-0.5"
               >
-                Sign in
+                <span className="landing-cta-signin-shine" aria-hidden />
+                <LogIn className="w-4 h-4 relative z-10" />
+                <span className="relative z-10">Sign in</span>
               </Link>
             </div>
+
+            <p className="mt-4 text-xs text-wisdom-muted/80">
+              New here?{" "}
+              <Link href="/signup" className="text-cyan-300 underline-offset-2 hover:underline font-semibold">
+                Create a free account
+              </Link>
+            </p>
           </div>
         </div>
       </section>
@@ -365,13 +390,22 @@ export default function LandingPage() {
             <p className="text-wisdom-muted mb-6 max-w-md mx-auto">
               Create a free account and start with the pathways that are open today.
             </p>
-            <Link
-              href="/auth"
-              className="inline-flex items-center gap-2 px-8 py-3 rounded-xl bg-cyan-400 text-wisdom-dark font-bold hover:bg-cyan-300 transition-colors"
-            >
-              Get started
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Link
+                href="/signup"
+                className="landing-cta-primary group inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-cyan-400 text-wisdom-dark font-bold shadow-lg shadow-cyan-500/30 hover:bg-cyan-300 transition-all duration-300 hover:-translate-y-0.5"
+              >
+                Get started
+                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+              <Link
+                href="/login"
+                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl border border-white/20 text-white font-semibold hover:border-amber-400/50 hover:bg-amber-500/10 transition-all"
+              >
+                <LogIn className="w-4 h-4" />
+                Sign in
+              </Link>
+            </div>
           </div>
         </div>
       </section>
