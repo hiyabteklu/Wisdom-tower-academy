@@ -1,9 +1,11 @@
 import type { NextConfig } from "next";
 
-/** External Digital product — set NEXT_PUBLIC_DIGITAL_URL in Vercel */
+/** Always use the custom domain — never a *.vercel.app deployment URL */
+const envDigital = process.env.NEXT_PUBLIC_DIGITAL_URL?.replace(/\/$/, "") || "";
 const DIGITAL =
-  process.env.NEXT_PUBLIC_DIGITAL_URL?.replace(/\/$/, "") ||
-  "https://wisdomtower.tech";
+  envDigital && !/vercel\.app/i.test(envDigital) && !/localhost/i.test(envDigital)
+    ? envDigital
+    : "https://wisdomtower.tech";
 
 const nextConfig: NextConfig = {
   async redirects() {

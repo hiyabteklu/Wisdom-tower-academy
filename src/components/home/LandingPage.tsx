@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowRight, ExternalLink, Gift, LogIn } from "lucide-react";
 import { useInView } from "@/hooks/useInView";
 import InfinityCard from "@/components/home/InfinityCard";
+import { DIGITAL_URL } from "@/lib/digital-url";
 
 const stats = [
   { value: 30, suffix: "K+", label: "Users", image: "/images/home/stat-users.jpg" },
@@ -16,9 +17,6 @@ const ACADEMY_IMAGE = "/images/home/academy.jpg";
 const HERO_BG = "/images/home/hero-bg.jpg";
 const FRESHMAN_IMAGE = "/images/packages/freshman_00241b.jpeg";
 const ECE_SEM1_IMAGE = "/images/special-packages/ece-sem-1.jpg";
-const DIGITAL_URL =
-  process.env.NEXT_PUBLIC_DIGITAL_URL?.replace(/\/$/, "") ||
-  "https://wisdomtower.tech";
 
 const previewCards = [
   {
@@ -160,7 +158,6 @@ export default function LandingPage() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={HERO_BG} alt="" className="h-full w-full object-cover opacity-40" />
           <div className="absolute inset-0 bg-gradient-to-b from-wisdom-dark/80 via-wisdom-dark/90 to-wisdom-dark" />
-          {/* Animated shine orbs */}
           <div className="landing-orb landing-orb-a" />
           <div className="landing-orb landing-orb-b" />
           <div className="landing-orb landing-orb-c" />
@@ -194,7 +191,6 @@ export default function LandingPage() {
                 <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
               </Link>
 
-              {/* Fixed: was /auth (no page) → /login */}
               <Link
                 href="/login"
                 className="landing-cta-signin group relative inline-flex items-center gap-2 px-6 py-3.5 rounded-xl font-bold text-white overflow-hidden
@@ -250,7 +246,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Limited time preview — ECE Sem 1 + Freshman */}
       <section className="pb-16 md:pb-20 relative" ref={previewSection.ref}>
         <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden>
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[36rem] h-[18rem] rounded-full bg-amber-500/10 blur-3xl preview-glow" />

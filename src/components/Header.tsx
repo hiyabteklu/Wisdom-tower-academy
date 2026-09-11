@@ -19,10 +19,7 @@ import { supabase, recoverSession } from "@/lib/supabase";
 import { isAdminEmail } from "@/lib/admin";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import HeaderLibraryLinks from "@/components/HeaderLibraryLinks";
-
-const DIGITAL_URL =
-  process.env.NEXT_PUBLIC_DIGITAL_URL?.replace(/\/$/, "") ||
-  "https://wisdomtower.tech";
+import { DIGITAL_URL } from "@/lib/digital-url";
 
 const mainNavLinks = [
   { href: "/", label: "Home" },

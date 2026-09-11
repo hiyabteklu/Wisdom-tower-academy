@@ -1,8 +1,5 @@
 import Link from "next/link";
-
-const DIGITAL_URL =
-  process.env.NEXT_PUBLIC_DIGITAL_URL?.replace(/\/$/, "") ||
-  "https://wisdomtower.tech";
+import { DIGITAL_URL } from "@/lib/digital-url";
 
 export const SOCIAL = {
   telegramGroup: "https://t.me/wisdom_tower1",
