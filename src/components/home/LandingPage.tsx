@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, ExternalLink, Gift, LogIn, Sparkles } from "lucide-react";
+import { ArrowRight, ExternalLink, Gift, LogIn } from "lucide-react";
 import { useInView } from "@/hooks/useInView";
 import InfinityCard from "@/components/home/InfinityCard";
 
@@ -173,8 +173,7 @@ export default function LandingPage() {
               heroSection.inView ? "is-visible" : ""
             }`}
           >
-            <p className="inline-flex items-center gap-2 text-sm font-semibold tracking-[0.2em] uppercase text-cyan-300/95 mb-4">
-              <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+            <p className="text-sm font-semibold tracking-[0.2em] uppercase text-cyan-300/95 mb-4">
               Wisdom Tower Academy
             </p>
             <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-black tracking-tight mb-5 leading-[1.1]">
