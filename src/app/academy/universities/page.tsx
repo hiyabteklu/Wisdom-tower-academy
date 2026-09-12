@@ -99,16 +99,16 @@ function UniversityCard({
 }) {
   return (
     <article
-      className={`group relative overflow-hidden rounded-2xl border transition-all duration-500 ease-out ${
+      className={`card-3d group relative overflow-hidden rounded-2xl sm:rounded-3xl border transition-all duration-500 ease-out ${
         expanded
           ? "border-wisdom-cyan/45 bg-wisdom-card shadow-[0_0_40px_-12px_rgba(34,211,238,0.35)] md:col-span-2"
-          : "border-white/12 bg-wisdom-card/90 hover:border-wisdom-cyan/30 hover:bg-wisdom-card"
+          : "border-white/12 bg-wisdom-card/90 hover:border-wisdom-cyan/30"
       }`}
     >
       {uni.imageUrl && (
         <div className="relative w-full aspect-[16/9] overflow-hidden bg-wisdom-dark">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={uni.imageUrl} alt={uni.name} className="absolute inset-0 h-full w-full object-cover" />
+          <img src={uni.imageUrl} alt={uni.name} className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
           <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card via-transparent to-transparent" />
         </div>
       )}
@@ -127,7 +127,7 @@ function UniversityCard({
               )}
               <span className="text-xs text-wisdom-muted">{uni.region}</span>
             </div>
-            <h3 className="font-display text-lg sm:text-xl font-bold text-white leading-snug">{uni.name}</h3>
+            <h3 className="font-display text-lg sm:text-xl font-bold text-white leading-snug group-hover:text-wisdom-cyan transition-colors">{uni.name}</h3>
             {uni.location && (
               <p className="mt-1.5 flex items-center gap-1.5 text-sm text-wisdom-muted">
                 <MapPin className="w-3.5 h-3.5 shrink-0 text-wisdom-cyan/70" />
@@ -168,9 +168,7 @@ function UniversityCard({
               <Section icon={BookOpen} label="Well known for" accent="bg-violet-500/10 border-violet-500/20 text-violet-300">
                 <div className="flex flex-wrap gap-2">
                   {uni.knownFor.map((k) => (
-                    <span key={k} className="rounded-lg border border-violet-400/25 bg-violet-500/10 px-2.5 py-1 text-xs font-medium text-violet-100">
-                      {k}
-                    </span>
+                    <span key={k} className="rounded-lg border border-violet-400/25 bg-violet-500/10 px-2.5 py-1 text-xs font-medium text-violet-100">{k}</span>
                   ))}
                 </div>
               </Section>
@@ -180,8 +178,7 @@ function UniversityCard({
                 <ul className="space-y-1.5">
                   {uni.strengths.map((s) => (
                     <li key={s} className="text-sm text-wisdom-muted flex gap-2 leading-relaxed">
-                      <span className="text-wisdom-cyan mt-1.5 shrink-0">•</span>
-                      <span>{s}</span>
+                      <span className="text-wisdom-cyan mt-1.5 shrink-0">•</span><span>{s}</span>
                     </li>
                   ))}
                 </ul>
@@ -192,9 +189,7 @@ function UniversityCard({
                 <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-3">What campus life is like</p>
                 <ul className="space-y-2">
                   {uni.whatToExpect.map((item) => (
-                    <li key={item} className="text-sm text-wisdom-muted leading-relaxed pl-3 border-l-2 border-wisdom-cyan/25">
-                      {item}
-                    </li>
+                    <li key={item} className="text-sm text-wisdom-muted leading-relaxed pl-3 border-l-2 border-wisdom-cyan/25">{item}</li>
                   ))}
                 </ul>
               </div>
@@ -209,8 +204,7 @@ function UniversityCard({
                 <ul className="space-y-1.5">
                   {uni.tips.map((t) => (
                     <li key={t} className="text-sm text-wisdom-muted flex gap-2 leading-relaxed">
-                      <span className="text-amber-300/80 mt-1.5 shrink-0">•</span>
-                      <span>{t}</span>
+                      <span className="text-amber-300/80 mt-1.5 shrink-0">•</span><span>{t}</span>
                     </li>
                   ))}
                 </ul>
@@ -222,15 +216,10 @@ function UniversityCard({
               </div>
             )}
             {uni.website && uni.website !== "#" && (
-              <a
-                href={uni.website}
-                target="_blank"
-                rel="noopener noreferrer"
+              <a href={uni.website} target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-wisdom-cyan/15 border border-wisdom-cyan/30 text-wisdom-cyan text-sm font-semibold"
-                onClick={(e) => e.stopPropagation()}
-              >
-                Official website
-                <ExternalLink className="w-3.5 h-3.5" />
+                onClick={(e) => e.stopPropagation()}>
+                Official website <ExternalLink className="w-3.5 h-3.5" />
               </a>
             )}
           </div>
@@ -267,9 +256,7 @@ export default function UniversitiesPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  useEffect(() => { void load(); }, [load]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -326,31 +313,18 @@ export default function UniversitiesPage() {
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-wisdom-muted" />
-              <input
-                type="search"
-                placeholder="Search by name, city…"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="field-input pl-10 py-3 text-sm"
-              />
+              <input type="search" placeholder="Search by name, city…" value={query}
+                onChange={(e) => setQuery(e.target.value)} className="field-input pl-10 py-3 text-sm" />
             </div>
-            <select
-              value={region}
-              onChange={(e) => setRegion(e.target.value as Region | "all")}
-              className="field-input py-3 text-sm min-w-[140px]"
-            >
+            <select value={region} onChange={(e) => setRegion(e.target.value as Region | "all")}
+              className="field-input py-3 text-sm min-w-[140px]">
               <option value="all">All regions</option>
-              {regions.map((r) => (
-                <option key={r} value={r}>{r}</option>
-              ))}
+              {regions.map((r) => (<option key={r} value={r}>{r}</option>))}
             </select>
-            <button
-              type="button"
-              onClick={() => setShowFeaturedOnly((v) => !v)}
+            <button type="button" onClick={() => setShowFeaturedOnly((v) => !v)}
               className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium border ${
                 showFeaturedOnly ? "bg-amber-500/20 border-amber-500/40 text-amber-200" : "bg-wisdom-card border-white/12 text-wisdom-muted"
-              }`}
-            >
+              }`}>
               <Star className="w-3.5 h-3.5" /> Featured
             </button>
           </div>
@@ -365,21 +339,16 @@ export default function UniversitiesPage() {
         {!loading && filtered.length === 0 && (
           <div className="text-center py-20 rounded-3xl border border-white/10 bg-wisdom-card/50">
             <p className="text-wisdom-muted mb-2">No universities match.</p>
-            <button type="button" onClick={() => { setQuery(""); setRegion("all"); setShowFeaturedOnly(false); }} className="text-wisdom-cyan text-sm">
-              Clear filters
-            </button>
+            <button type="button" onClick={() => { setQuery(""); setRegion("all"); setShowFeaturedOnly(false); }} className="text-wisdom-cyan text-sm">Clear filters</button>
           </div>
         )}
 
         {!loading && filtered.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+          <div className="perspective-scene grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
             {filtered.map((uni) => (
-              <UniversityCard
-                key={uni.id}
-                uni={uni}
+              <UniversityCard key={uni.id} uni={uni}
                 expanded={expandedId === uni.id}
-                onToggle={() => setExpandedId((id) => (id === uni.id ? null : uni.id))}
-              />
+                onToggle={() => setExpandedId((id) => (id === uni.id ? null : uni.id))} />
             ))}
           </div>
         )}
