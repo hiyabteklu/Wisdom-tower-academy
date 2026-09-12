@@ -46,38 +46,80 @@ body {
   background: var(--background);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.35s ease, color 0.35s ease;
 }
 
 .site-bg { background: var(--background); }
+
+.site-atmosphere {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+}
+.atm-base {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 120% 80% at 50% -20%, #153056 0%, transparent 55%),
+    radial-gradient(ellipse 90% 60% at 100% 50%, #122040 0%, transparent 50%),
+    radial-gradient(ellipse 80% 50% at 0% 80%, #0e1a32 0%, transparent 45%),
+    linear-gradient(180deg, #0a1220 0%, #070c16 40%, #060a12 100%);
+}
+.atm-vignette {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 80% 75% at 50% 45%, transparent 40%, rgba(0,0,0,0.35) 100%);
+}
+.atm-glow {
+  position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.55;
+}
+.atm-glow-1 {
+  width: 42vw; height: 42vw; max-width: 520px; max-height: 520px;
+  top: -8%; left: 15%; background: rgba(34, 180, 255, 0.42);
+}
+.atm-glow-2 {
+  width: 36vw; height: 36vw; max-width: 440px; max-height: 440px;
+  top: 35%; right: -5%; background: rgba(139, 92, 246, 0.32);
+}
+.atm-glow-3 {
+  width: 50vw; height: 30vw; max-width: 600px; max-height: 360px;
+  bottom: 5%; left: 30%; background: rgba(0, 160, 220, 0.28);
+}
 
 h1, h2, h3, h4, .font-display {
   font-family: var(--font-display);
   letter-spacing: -0.02em;
 }
 
-.field-input {
-  width: 100%;
-  min-height: 3rem;
-  padding: 0.9rem 1.1rem;
-  border-radius: 0.875rem;
-  background: rgb(var(--wt-dark-rgb) / 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  color: #ffffff;
-  font-size: 1rem;
-}
-
-.field-input:focus {
-  outline: none;
-  border-color: #22e0ff;
-  box-shadow: 0 0 0 3px rgba(34, 224, 255, 0.25);
-}
+.perspective-scene { perspective: 1400px; perspective-origin: 50% 40%; }
 
 .card-3d {
   transform-style: preserve-3d;
-  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.35s ease;
+}
+.card-3d:hover {
+  transform: translateY(-14px) rotateX(5deg) rotateY(-3deg) scale(1.02);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.14) inset,
+    0 8px 16px -4px rgba(0, 0, 0, 0.35),
+    0 28px 56px -16px rgba(0, 0, 0, 0.6),
+    0 48px 90px -20px rgba(34, 224, 255, 0.22),
+    0 0 0 1px rgba(34, 224, 255, 0.32);
+}
+.card-3d:active { transform: translateY(-4px) scale(0.99); transition-duration: 0.15s; }
+
+.field-input {
+  width: 100%; min-height: 3rem; padding: 0.9rem 1.1rem; border-radius: 0.875rem;
+  background: rgb(var(--wt-dark-rgb) / 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #ffffff; font-size: 1rem; transition: all 0.3s ease;
+}
+.field-input:focus {
+  outline: none; border-color: #22e0ff; box-shadow: 0 0 0 3px rgba(34, 224, 255, 0.25);
 }
 
-.perspective-scene { perspective: 1400px; }
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(28px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-fade-up { animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
 .formatted-body .md-h2 { font-family: var(--font-display), system-ui, sans-serif; font-size: 1.25rem; font-weight: 700; color: #fff; margin: 1.25rem 0 0.5rem; }
 .formatted-body .md-h3 { font-family: var(--font-display), system-ui, sans-serif; font-size: 1.05rem; font-weight: 700; color: rgba(255,255,255,0.92); margin: 1rem 0 0.4rem; }
@@ -87,3 +129,7 @@ h1, h2, h3, h4, .font-display {
 .formatted-body .md-mark { background: rgba(34, 224, 255, 0.12); color: #a5f3fc; padding: 0.05em 0.35em; border-radius: 0.35rem; font-weight: 600; }
 .formatted-body strong { color: rgba(255, 255, 255, 0.92); font-weight: 650; }
 .uni-list-block { white-space: pre-wrap; line-height: 1.7; }
+
+@media (prefers-reduced-motion: reduce) {
+  .card-3d, .animate-fade-up { animation: none !important; transform: none !important; }
+}
