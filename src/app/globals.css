@@ -1,1 +1,89 @@
-PLACEHOLDER_WILL_FAIL
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Source+Serif+4:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
+@import "./ui-polish.css";
+
+:root,
+.theme-dark {
+  --background: #070c16;
+  --foreground: #f4f7fb;
+  --cyan: #22e0ff;
+  --card: #1c283c;
+  --wt-dark: #0a101c;
+  --wt-navy: #111b2e;
+  --wt-card: #1c283c;
+  --wt-muted: #aab6c8;
+  --wt-dark-rgb: 10 16 28;
+  --wt-navy-rgb: 17 27 46;
+  --wt-card-rgb: 28 40 60;
+  --wt-muted-rgb: 170 182 200;
+  --font-display: 'Outfit', system-ui, sans-serif;
+  --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-reading: 'Source Serif 4', 'Georgia', 'Times New Roman', serif;
+}
+
+.theme-light {
+  --background: #d4e4f4;
+  --foreground: #0c1a2e;
+  --cyan: #0284c7;
+  --card: #eef5fc;
+  --wt-dark: #c5d8ec;
+  --wt-navy: #b8cee6;
+  --wt-card: #eef5fc;
+  --wt-muted: #3d5a73;
+  --wt-dark-rgb: 197 216 236;
+  --wt-navy-rgb: 184 206 230;
+  --wt-card-rgb: 238 245 252;
+  --wt-muted-rgb: 61 90 115;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+.site-bg { background: var(--background); }
+
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+.field-input {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.9rem 1.1rem;
+  border-radius: 0.875rem;
+  background: rgb(var(--wt-dark-rgb) / 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  font-size: 1rem;
+}
+
+.field-input:focus {
+  outline: none;
+  border-color: #22e0ff;
+  box-shadow: 0 0 0 3px rgba(34, 224, 255, 0.25);
+}
+
+.card-3d {
+  transform-style: preserve-3d;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.perspective-scene { perspective: 1400px; }
+
+.formatted-body .md-h2 { font-family: var(--font-display), system-ui, sans-serif; font-size: 1.25rem; font-weight: 700; color: #fff; margin: 1.25rem 0 0.5rem; }
+.formatted-body .md-h3 { font-family: var(--font-display), system-ui, sans-serif; font-size: 1.05rem; font-weight: 700; color: rgba(255,255,255,0.92); margin: 1rem 0 0.4rem; }
+.formatted-body .md-p { margin: 0 0 0.85rem; line-height: 1.7; }
+.formatted-body .md-ul { margin: 0.5rem 0 1rem; padding-left: 1.15rem; list-style: disc; }
+.formatted-body .md-li { margin: 0.35rem 0; line-height: 1.65; }
+.formatted-body .md-mark { background: rgba(34, 224, 255, 0.12); color: #a5f3fc; padding: 0.05em 0.35em; border-radius: 0.35rem; font-weight: 600; }
+.formatted-body strong { color: rgba(255, 255, 255, 0.92); font-weight: 650; }
+.uni-list-block { white-space: pre-wrap; line-height: 1.7; }
