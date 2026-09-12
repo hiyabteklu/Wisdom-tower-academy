@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Search,
@@ -18,21 +18,87 @@ import {
   Mountain,
   Target,
   BookOpen,
+  Loader2,
 } from "lucide-react";
 import CategoryBackButton from "@/components/CategoryBackButton";
 import {
-  universities,
+  universities as staticUniversities,
   regions,
   type University,
   type Region,
 } from "@/data/universities";
+import {
+  getFreeResourcePage,
+  listFreeResourceItems,
+  freeResourcePublicUrl,
+  type FreeResourcePage,
+  type FreeResourceItem,
+} from "@/lib/free-resources";
+
+type UniView = University & {
+  imageUrl?: string | null;
+  bodyMd?: string;
+};
+
+function asStringList(v: unknown): string[] {
+  if (Array.isArray(v)) return v.map(String).filter(Boolean);
+  if (typeof v === "string" && v.trim()) {
+    return v
+      .split("\n")
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+  return [];
+}
+
+function itemToUniversity(item: FreeResourceItem): UniView {
+  const m = item.meta || {};
+  const regionRaw = String(m.region || "Addis Ababa");
+  const region = (regions.includes(regionRaw as Region)
+    ? regionRaw
+    : "Addis Ababa") as Region;
+
+  return {
+    id: item.id,
+    name: item.title,
+    abbr: String(m.abbr || item.title.slice(0, 3).toUpperCase()),
+    region,
+    location: String(m.location || item.subtitle || ""),
+    website: String(m.website || item.externalUrl || "#"),
+    founded: m.founded != null ? String(m.founded) : undefined,
+    campuses: m.campuses != null ? String(m.campuses) : undefined,
+    climate: m.climate != null ? String(m.climate) : undefined,
+    distanceFromAddisKm:
+      typeof m.distanceFromAddisKm === "number"
+        ? m.distanceFromAddisKm
+        : m.distanceFromAddisKm != null && m.distanceFromAddisKm !== ""
+          ? Number(m.distanceFromAddisKm)
+          : undefined,
+    distanceNote: m.distanceNote != null ? String(m.distanceNote) : undefined,
+    elevationM:
+      typeof m.elevationM === "number"
+        ? m.elevationM
+        : m.elevationM != null && m.elevationM !== ""
+          ? Number(m.elevationM)
+          : undefined,
+    knownFor: asStringList(m.knownFor),
+    strengths: asStringList(m.strengths),
+    whatToExpect: asStringList(m.whatToExpect),
+    tips: asStringList(m.tips),
+    studentFit: m.studentFit != null ? String(m.studentFit) : undefined,
+    featured: item.featured,
+    detailed: m.detailed === true || Boolean(item.bodyMd?.trim()),
+    imageUrl: item.imagePath ? freeResourcePublicUrl(item.imagePath) : null,
+    bodyMd: item.bodyMd || "",
+  };
+}
 
 function UniversityCard({
   uni,
   expanded,
   onToggle,
 }: {
-  uni: University;
+  uni: UniView;
   expanded: boolean;
   onToggle: () => void;
 }) {
@@ -44,6 +110,18 @@ function UniversityCard({
           : "border-white/12 bg-wisdom-card/90 hover:border-wisdom-cyan/30 hover:bg-wisdom-card hover:-translate-y-0.5 hover:shadow-lg hover:shadow-cyan-500/5"
         }`}
     >
+      {uni.imageUrl && (
+        <div className="relative w-full aspect-[16/9] overflow-hidden bg-wisdom-dark">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={uni.imageUrl}
+            alt={uni.name}
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card via-transparent to-transparent" />
+        </div>
+      )}
+
       <button
         type="button"
         onClick={onToggle}
@@ -70,12 +148,14 @@ function UniversityCard({
             <h3 className="font-display text-lg sm:text-xl font-bold text-white group-hover:text-wisdom-cyan transition-colors leading-snug">
               {uni.name}
             </h3>
-            <p className="mt-1.5 flex items-center gap-1.5 text-sm text-wisdom-muted">
-              <MapPin className="w-3.5 h-3.5 shrink-0 text-wisdom-cyan/70" />
-              <span className="truncate">{uni.location}</span>
-            </p>
+            {uni.location && (
+              <p className="mt-1.5 flex items-center gap-1.5 text-sm text-wisdom-muted">
+                <MapPin className="w-3.5 h-3.5 shrink-0 text-wisdom-cyan/70" />
+                <span className="truncate">{uni.location}</span>
+              </p>
+            )}
             <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
-              {uni.distanceFromAddisKm != null && (
+              {uni.distanceFromAddisKm != null && !Number.isNaN(uni.distanceFromAddisKm) && (
                 <span className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-white/75">
                   <Route className="w-3 h-3 text-cyan-300" />
                   {uni.distanceFromAddisKm === 0
@@ -83,7 +163,7 @@ function UniversityCard({
                     : `~${uni.distanceFromAddisKm} km from Addis`}
                 </span>
               )}
-              {uni.elevationM != null && (
+              {uni.elevationM != null && !Number.isNaN(uni.elevationM) && (
                 <span className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-white/75">
                   <Mountain className="w-3 h-3 text-amber-300" />
                   ~{uni.elevationM} m
@@ -101,7 +181,7 @@ function UniversityCard({
 
         {!expanded && (
           <p className="mt-3 text-sm text-wisdom-muted/90 line-clamp-2 leading-relaxed">
-            {uni.knownFor?.[0] || uni.strengths[0]}
+            {uni.knownFor?.[0] || uni.strengths[0] || uni.campuses || uni.subtitle || ""}
           </p>
         )}
       </button>
@@ -141,7 +221,9 @@ function UniversityCard({
                   <p className="text-xs font-semibold uppercase tracking-wider text-sky-300/90 mb-1">
                     Campuses
                   </p>
-                  <p className="text-sm text-wisdom-muted leading-relaxed">{uni.campuses}</p>
+                  <p className="text-sm text-wisdom-muted leading-relaxed whitespace-pre-wrap">
+                    {uni.campuses}
+                  </p>
                 </div>
               </div>
             )}
@@ -257,17 +339,25 @@ function UniversityCard({
               </div>
             )}
 
-            <a
-              href={uni.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-wisdom-cyan/15 border border-wisdom-cyan/30 text-wisdom-cyan text-sm font-semibold
-                hover:bg-wisdom-cyan/25 hover:border-wisdom-cyan/50 transition-all duration-300"
-              onClick={(e) => e.stopPropagation()}
-            >
-              Official website
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
+            {uni.bodyMd?.trim() && (
+              <div className="text-sm text-wisdom-muted leading-relaxed whitespace-pre-wrap border-t border-white/8 pt-4">
+                {uni.bodyMd.trim()}
+              </div>
+            )}
+
+            {uni.website && uni.website !== "#" && (
+              <a
+                href={uni.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-wisdom-cyan/15 border border-wisdom-cyan/30 text-wisdom-cyan text-sm font-semibold
+                  hover:bg-wisdom-cyan/25 hover:border-wisdom-cyan/50 transition-all duration-300"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Official website
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            )}
           </div>
         </div>
       </div>
@@ -282,14 +372,43 @@ export default function UniversitiesPage() {
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
   const [showDetailedOnly, setShowDetailedOnly] = useState(false);
 
-  const detailedCount = useMemo(
-    () => universities.filter((u) => u.detailed).length,
-    []
-  );
+  const [page, setPage] = useState<FreeResourcePage | null>(null);
+  const [list, setList] = useState<UniView[]>([]);
+  const [fromDb, setFromDb] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const [pageRes, itemsRes] = await Promise.all([
+      getFreeResourcePage("universities"),
+      listFreeResourceItems({
+        pageSlug: "universities",
+        publishedOnly: true,
+        kind: "university",
+      }),
+    ]);
+    setPage(pageRes.item ?? null);
+
+    if (itemsRes.items.length > 0) {
+      setList(itemsRes.items.map(itemToUniversity));
+      setFromDb(true);
+    } else {
+      // Fallback: static file until you publish items in admin
+      setList(staticUniversities.map((u) => ({ ...u })));
+      setFromDb(false);
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const detailedCount = useMemo(() => list.filter((u) => u.detailed).length, [list]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return universities.filter((u) => {
+    return list.filter((u) => {
       if (showFeaturedOnly && !u.featured) return false;
       if (showDetailedOnly && !u.detailed) return false;
       if (region !== "all" && u.region !== region) return false;
@@ -303,7 +422,13 @@ export default function UniversitiesPage() {
         (u.knownFor?.some((s) => s.toLowerCase().includes(q)) ?? false)
       );
     });
-  }, [query, region, showFeaturedOnly, showDetailedOnly]);
+  }, [list, query, region, showFeaturedOnly, showDetailedOnly]);
+
+  const title = page?.title?.trim() || "Ethiopian Universities";
+  const subtitle =
+    page?.subtitle?.trim() ||
+    "Practical guides — distance, climate, campuses, and first-year life.";
+  const intro = page?.published ? (page.bodyMd || "").trim() : "";
 
   return (
     <div className="relative min-h-screen">
@@ -318,29 +443,34 @@ export default function UniversitiesPage() {
 
         <header className="mb-10 md:mb-14 animate-fade-up">
           <p className="text-sm font-semibold tracking-[0.2em] uppercase text-amber-400/90 mb-3">
-            Wisdom Tower Academy · Free resource
+            Free resource
           </p>
           <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight mb-4">
-            <span className="text-white">Ethiopian </span>
-            <span className="text-wisdom-cyan">Universities</span>
+            <span className="text-white">{title.split(" ").slice(0, -1).join(" ")} </span>
+            <span className="text-wisdom-cyan">{title.split(" ").slice(-1)[0]}</span>
           </h1>
-          <p className="text-wisdom-muted text-lg max-w-2xl leading-relaxed">
-            Practical guides for public universities — distance from Addis, climate, campuses,
-            departments they are known for, and what life is really like for first-year students.
-          </p>
+          {subtitle && (
+            <p className="text-wisdom-muted text-lg max-w-2xl leading-relaxed">{subtitle}</p>
+          )}
+          {intro && (
+            <div className="mt-4 text-wisdom-muted text-[15px] leading-relaxed whitespace-pre-wrap max-w-2xl">
+              {intro}
+            </div>
+          )}
           <div className="mt-6 flex flex-wrap gap-3 text-sm">
             <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-wisdom-card border border-white/10 text-wisdom-muted">
               <Building2 className="w-3.5 h-3.5 text-wisdom-cyan" />
-              {universities.length} institutions
+              {loading ? "…" : `${list.length} institutions`}
             </span>
             <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-wisdom-card border border-white/10 text-wisdom-muted">
               <BookOpen className="w-3.5 h-3.5 text-violet-300" />
-              {detailedCount} full guides
+              {loading ? "…" : `${detailedCount} full guides`}
             </span>
-            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-wisdom-card border border-white/10 text-wisdom-muted">
-              <MapPin className="w-3.5 h-3.5 text-amber-300" />
-              All regions
-            </span>
+            {fromDb && (
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-400/25 text-emerald-200 text-xs font-medium">
+                Live from admin
+              </span>
+            )}
           </div>
         </header>
 
@@ -404,13 +534,20 @@ export default function UniversitiesPage() {
           </div>
           <p className="mt-2 text-xs text-wisdom-muted">
             Showing <span className="text-white font-medium">{filtered.length}</span> of{" "}
-            {universities.length}
+            {list.length}
             {" · "}
-            Tap a card to expand distance, weather, departments, and tips
+            Tap a card to expand
           </p>
         </div>
 
-        {filtered.length === 0 ? (
+        {loading && (
+          <div className="flex items-center justify-center gap-2 py-20 text-wisdom-muted">
+            <Loader2 className="w-5 h-5 animate-spin text-wisdom-cyan" />
+            Loading universities…
+          </div>
+        )}
+
+        {!loading && filtered.length === 0 && (
           <div className="text-center py-20 rounded-3xl border border-white/10 bg-wisdom-card/50">
             <p className="text-wisdom-muted mb-2">No universities match your filters.</p>
             <button
@@ -426,7 +563,9 @@ export default function UniversitiesPage() {
               Clear filters
             </button>
           </div>
-        ) : (
+        )}
+
+        {!loading && filtered.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
             {filtered.map((uni) => (
               <UniversityCard
@@ -445,8 +584,7 @@ export default function UniversitiesPage() {
           </h2>
           <p className="text-wisdom-muted max-w-lg mx-auto mb-6 leading-relaxed">
             Placement is decided centrally from your exam results and preferences — but knowing
-            climate, distance, and campus culture helps you rank options wisely. Always verify the
-            latest details on each university&apos;s official site.
+            climate, distance, and campus culture helps you rank options wisely.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
@@ -463,10 +601,6 @@ export default function UniversitiesPage() {
               Back to Academy
             </Link>
           </div>
-          <p className="mt-8 text-[11px] text-wisdom-muted/70 max-w-md mx-auto">
-            Distances are approximate road figures. Climate and facilities change — treat this as a
-            fresher orientation guide, not an official admissions document.
-          </p>
         </div>
       </div>
     </div>
