@@ -1,1 +1,607 @@
-PLACEHOLDER
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import {
+  Search,
+  MapPin,
+  ExternalLink,
+  Building2,
+  Thermometer,
+  GraduationCap,
+  Lightbulb,
+  ChevronDown,
+  Filter,
+  Star,
+  ArrowRight,
+  Route,
+  Mountain,
+  Target,
+  BookOpen,
+  Loader2,
+} from "lucide-react";
+import CategoryBackButton from "@/components/CategoryBackButton";
+import {
+  universities as staticUniversities,
+  regions,
+  type University,
+  type Region,
+} from "@/data/universities";
+import {
+  getFreeResourcePage,
+  listFreeResourceItems,
+  freeResourcePublicUrl,
+  type FreeResourcePage,
+  type FreeResourceItem,
+} from "@/lib/free-resources";
+
+type UniView = University & {
+  imageUrl?: string | null;
+  bodyMd?: string;
+};
+
+function asStringList(v: unknown): string[] {
+  if (Array.isArray(v)) return v.map(String).filter(Boolean);
+  if (typeof v === "string" && v.trim()) {
+    return v
+      .split("\n")
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+  return [];
+}
+
+function itemToUniversity(item: FreeResourceItem): UniView {
+  const m = item.meta || {};
+  const regionRaw = String(m.region || "Addis Ababa");
+  const region = (regions.includes(regionRaw as Region)
+    ? regionRaw
+    : "Addis Ababa") as Region;
+
+  return {
+    id: item.id,
+    name: item.title,
+    abbr: String(m.abbr || item.title.slice(0, 3).toUpperCase()),
+    region,
+    location: String(m.location || item.subtitle || ""),
+    website: String(m.website || item.externalUrl || "#"),
+    founded: m.founded != null ? String(m.founded) : undefined,
+    campuses: m.campuses != null ? String(m.campuses) : undefined,
+    climate: m.climate != null ? String(m.climate) : undefined,
+    distanceFromAddisKm:
+      typeof m.distanceFromAddisKm === "number"
+        ? m.distanceFromAddisKm
+        : m.distanceFromAddisKm != null && m.distanceFromAddisKm !== ""
+          ? Number(m.distanceFromAddisKm)
+          : undefined,
+    distanceNote: m.distanceNote != null ? String(m.distanceNote) : undefined,
+    elevationM:
+      typeof m.elevationM === "number"
+        ? m.elevationM
+        : m.elevationM != null && m.elevationM !== ""
+          ? Number(m.elevationM)
+          : undefined,
+    knownFor: asStringList(m.knownFor),
+    strengths: asStringList(m.strengths),
+    whatToExpect: asStringList(m.whatToExpect),
+    tips: asStringList(m.tips),
+    studentFit: m.studentFit != null ? String(m.studentFit) : undefined,
+    featured: item.featured,
+    detailed: m.detailed === true || Boolean(item.bodyMd?.trim()),
+    imageUrl: item.imagePath ? freeResourcePublicUrl(item.imagePath) : null,
+    bodyMd: item.bodyMd || "",
+  };
+}
+
+function UniversityCard({
+  uni,
+  expanded,
+  onToggle,
+}: {
+  uni: UniView;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <article
+      className={`group relative overflow-hidden rounded-2xl border transition-all duration-500 ease-out
+        ${expanded
+          ? "border-wisdom-cyan/45 bg-wisdom-card shadow-[0_0_40px_-12px_rgba(34,211,238,0.35)] md:col-span-2"
+          : "border-white/12 bg-wisdom-card/90 hover:border-wisdom-cyan/30 hover:bg-wisdom-card hover:-translate-y-0.5 hover:shadow-lg hover:shadow-cyan-500/5"
+        }`}
+    >
+      {uni.imageUrl && (
+        <div className="relative w-full aspect-[16/9] overflow-hidden bg-wisdom-dark">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={uni.imageUrl}
+            alt={uni.name}
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card via-transparent to-transparent" />
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full text-left p-5 sm:p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-wisdom-cyan/50 rounded-2xl"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-bold tracking-wide bg-wisdom-cyan/15 text-wisdom-cyan border border-wisdom-cyan/25">
+                {uni.abbr}
+              </span>
+              {uni.featured && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-semibold uppercase tracking-wider bg-amber-500/15 text-amber-300 border border-amber-500/25">
+                  <Star className="w-3 h-3" /> Featured
+                </span>
+              )}
+              {uni.detailed && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-semibold uppercase tracking-wider bg-violet-500/15 text-violet-200 border border-violet-400/25">
+                  Full guide
+                </span>
+              )}
+              <span className="text-xs text-wisdom-muted">{uni.region}</span>
+            </div>
+            <h3 className="font-display text-lg sm:text-xl font-bold text-white group-hover:text-wisdom-cyan transition-colors leading-snug">
+              {uni.name}
+            </h3>
+            {uni.location && (
+              <p className="mt-1.5 flex items-center gap-1.5 text-sm text-wisdom-muted">
+                <MapPin className="w-3.5 h-3.5 shrink-0 text-wisdom-cyan/70" />
+                <span className="truncate">{uni.location}</span>
+              </p>
+            )}
+            <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
+              {uni.distanceFromAddisKm != null && !Number.isNaN(uni.distanceFromAddisKm) && (
+                <span className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-white/75">
+                  <Route className="w-3 h-3 text-cyan-300" />
+                  {uni.distanceFromAddisKm === 0
+                    ? "In Addis Ababa"
+                    : `~${uni.distanceFromAddisKm} km from Addis`}
+                </span>
+              )}
+              {uni.elevationM != null && !Number.isNaN(uni.elevationM) && (
+                <span className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-white/75">
+                  <Mountain className="w-3 h-3 text-amber-300" />
+                  ~{uni.elevationM} m
+                </span>
+              )}
+            </div>
+          </div>
+          <div
+            className={`shrink-0 p-2 rounded-xl border border-white/10 bg-wisdom-dark/50 text-wisdom-muted transition-transform duration-300
+              ${expanded ? "rotate-180 text-wisdom-cyan border-wisdom-cyan/30" : "group-hover:text-wisdom-cyan"}`}
+          >
+            <ChevronDown className="w-5 h-5" />
+          </div>
+        </div>
+
+        {!expanded && (
+          <p className="mt-3 text-sm text-wisdom-muted/90 line-clamp-2 leading-relaxed">
+            {uni.knownFor?.[0] || uni.strengths[0] || uni.campuses || ""}
+          </p>
+        )}
+      </button>
+
+      <div
+        className={`grid transition-all duration-500 ease-out
+          ${expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
+      >
+        <div className="overflow-hidden">
+          <div className="px-5 sm:px-6 pb-6 space-y-5 border-t border-white/8 pt-5">
+            {uni.founded && (
+              <p className="text-xs text-wisdom-muted">
+                Established <span className="text-white/80 font-medium">{uni.founded}</span>
+              </p>
+            )}
+
+            {uni.distanceNote && (
+              <div className="flex gap-3">
+                <div className="shrink-0 p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-300">
+                  <Route className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-cyan-300/90 mb-1">
+                    Distance from Addis Ababa
+                  </p>
+                  <p className="text-sm text-wisdom-muted leading-relaxed">{uni.distanceNote}</p>
+                </div>
+              </div>
+            )}
+
+            {uni.campuses && (
+              <div className="flex gap-3">
+                <div className="shrink-0 p-2 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-300">
+                  <Building2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-sky-300/90 mb-1">
+                    Campuses
+                  </p>
+                  <p className="text-sm text-wisdom-muted leading-relaxed whitespace-pre-wrap">
+                    {uni.campuses}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {uni.climate && (
+              <div className="flex gap-3">
+                <div className="shrink-0 p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300">
+                  <Thermometer className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-amber-300/90 mb-1">
+                    Weather & climate
+                  </p>
+                  <p className="text-sm text-wisdom-muted leading-relaxed">{uni.climate}</p>
+                </div>
+              </div>
+            )}
+
+            {uni.knownFor && uni.knownFor.length > 0 && (
+              <div className="flex gap-3">
+                <div className="shrink-0 p-2 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-300">
+                  <BookOpen className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-violet-300/90 mb-2">
+                    Well known for
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {uni.knownFor.map((k) => (
+                      <span
+                        key={k}
+                        className="rounded-lg border border-violet-400/25 bg-violet-500/10 px-2.5 py-1 text-xs font-medium text-violet-100"
+                      >
+                        {k}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {uni.strengths.length > 0 && (
+              <div className="flex gap-3">
+                <div className="shrink-0 p-2 rounded-xl bg-wisdom-cyan/10 border border-wisdom-cyan/20 text-wisdom-cyan">
+                  <GraduationCap className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-wisdom-cyan/90 mb-2">
+                    Strengths
+                  </p>
+                  <ul className="space-y-1.5">
+                    {uni.strengths.map((s) => (
+                      <li key={s} className="text-sm text-wisdom-muted flex gap-2 leading-relaxed">
+                        <span className="text-wisdom-cyan mt-1.5 shrink-0">•</span>
+                        <span>{s}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {uni.whatToExpect.length > 0 && (
+              <div className="rounded-xl bg-wisdom-dark/60 border border-white/8 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-3 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-wisdom-cyan animate-pulse" />
+                  What campus life is like
+                </p>
+                <ul className="space-y-2">
+                  {uni.whatToExpect.map((item) => (
+                    <li
+                      key={item}
+                      className="text-sm text-wisdom-muted leading-relaxed pl-3 border-l-2 border-wisdom-cyan/25"
+                    >
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {uni.studentFit && (
+              <div className="flex gap-3">
+                <div className="shrink-0 p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300">
+                  <Target className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-emerald-300/90 mb-1">
+                    Who thrives here
+                  </p>
+                  <p className="text-sm text-wisdom-muted leading-relaxed">{uni.studentFit}</p>
+                </div>
+              </div>
+            )}
+
+            {uni.tips && uni.tips.length > 0 && (
+              <div className="flex gap-3">
+                <div className="shrink-0 p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300">
+                  <Lightbulb className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-amber-300/90 mb-2">
+                    Tips for new students
+                  </p>
+                  <ul className="space-y-1.5">
+                    {uni.tips.map((t) => (
+                      <li key={t} className="text-sm text-wisdom-muted leading-relaxed">
+                        {t}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {uni.bodyMd?.trim() && (
+              <div className="text-sm text-wisdom-muted leading-relaxed whitespace-pre-wrap border-t border-white/8 pt-4">
+                {uni.bodyMd.trim()}
+              </div>
+            )}
+
+            {uni.website && uni.website !== "#" && (
+              <a
+                href={uni.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-wisdom-cyan/15 border border-wisdom-cyan/30 text-wisdom-cyan text-sm font-semibold
+                  hover:bg-wisdom-cyan/25 hover:border-wisdom-cyan/50 transition-all duration-300"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Official website
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+export default function UniversitiesPage() {
+  const [query, setQuery] = useState("");
+  const [region, setRegion] = useState<Region | "all">("all");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
+  const [showDetailedOnly, setShowDetailedOnly] = useState(false);
+
+  const [page, setPage] = useState<FreeResourcePage | null>(null);
+  const [list, setList] = useState<UniView[]>([]);
+  const [fromDb, setFromDb] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const [pageRes, itemsRes] = await Promise.all([
+      getFreeResourcePage("universities"),
+      listFreeResourceItems({
+        pageSlug: "universities",
+        publishedOnly: true,
+        kind: "university",
+      }),
+    ]);
+    setPage(pageRes.item ?? null);
+
+    if (itemsRes.items.length > 0) {
+      setList(itemsRes.items.map(itemToUniversity));
+      setFromDb(true);
+    } else {
+      setList(staticUniversities.map((u) => ({ ...u })));
+      setFromDb(false);
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const detailedCount = useMemo(() => list.filter((u) => u.detailed).length, [list]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return list.filter((u) => {
+      if (showFeaturedOnly && !u.featured) return false;
+      if (showDetailedOnly && !u.detailed) return false;
+      if (region !== "all" && u.region !== region) return false;
+      if (!q) return true;
+      return (
+        u.name.toLowerCase().includes(q) ||
+        u.abbr.toLowerCase().includes(q) ||
+        u.location.toLowerCase().includes(q) ||
+        u.region.toLowerCase().includes(q) ||
+        u.strengths.some((s) => s.toLowerCase().includes(q)) ||
+        (u.knownFor?.some((s) => s.toLowerCase().includes(q)) ?? false)
+      );
+    });
+  }, [list, query, region, showFeaturedOnly, showDetailedOnly]);
+
+  const title = page?.title?.trim() || "Ethiopian Universities";
+  const subtitle =
+    page?.subtitle?.trim() ||
+    "Practical guides — distance, climate, campuses, and first-year life.";
+  const intro = page?.published ? (page.bodyMd || "").trim() : "";
+
+  return (
+    <div className="relative min-h-screen">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 left-1/3 w-[28rem] h-[28rem] bg-cyan-500/10 rounded-full blur-3xl" />
+        <div className="absolute top-40 right-0 w-80 h-80 bg-violet-500/8 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 left-0 w-72 h-72 bg-amber-500/5 rounded-full blur-3xl" />
+      </div>
+
+      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">
+        <CategoryBackButton fallback="/academy" />
+
+        <header className="mb-10 md:mb-14 animate-fade-up">
+          <p className="text-sm font-semibold tracking-[0.2em] uppercase text-amber-400/90 mb-3">
+            Free resource
+          </p>
+          <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight mb-4">
+            <span className="text-white">{title.split(" ").slice(0, -1).join(" ")} </span>
+            <span className="text-wisdom-cyan">{title.split(" ").slice(-1)[0]}</span>
+          </h1>
+          {subtitle && (
+            <p className="text-wisdom-muted text-lg max-w-2xl leading-relaxed">{subtitle}</p>
+          )}
+          {intro && (
+            <div className="mt-4 text-wisdom-muted text-[15px] leading-relaxed whitespace-pre-wrap max-w-2xl">
+              {intro}
+            </div>
+          )}
+          <div className="mt-6 flex flex-wrap gap-3 text-sm">
+            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-wisdom-card border border-white/10 text-wisdom-muted">
+              <Building2 className="w-3.5 h-3.5 text-wisdom-cyan" />
+              {loading ? "…" : `${list.length} institutions`}
+            </span>
+            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-wisdom-card border border-white/10 text-wisdom-muted">
+              <BookOpen className="w-3.5 h-3.5 text-violet-300" />
+              {loading ? "…" : `${detailedCount} full guides`}
+            </span>
+            {fromDb && (
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-400/25 text-emerald-200 text-xs font-medium">
+                Live from admin
+              </span>
+            )}
+          </div>
+        </header>
+
+        <div
+          className="sticky top-0 z-20 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 py-4 mb-8
+          bg-wisdom-dark/85 backdrop-blur-xl border-b border-white/5"
+        >
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-wisdom-muted" />
+              <input
+                type="search"
+                placeholder="Search by name, city, department…"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="field-input pl-10 py-3 text-sm"
+                aria-label="Search universities"
+              />
+            </div>
+            <div className="flex gap-2 flex-wrap sm:flex-nowrap">
+              <div className="relative">
+                <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-wisdom-muted pointer-events-none" />
+                <select
+                  value={region}
+                  onChange={(e) => setRegion(e.target.value as Region | "all")}
+                  className="field-input pl-9 pr-8 py-3 text-sm appearance-none cursor-pointer min-w-[160px]"
+                  aria-label="Filter by region"
+                >
+                  <option value="all">All regions</option>
+                  {regions.map((r) => (
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowFeaturedOnly((v) => !v)}
+                className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium border transition-all
+                  ${showFeaturedOnly
+                    ? "bg-amber-500/20 border-amber-500/40 text-amber-200"
+                    : "bg-wisdom-card border-white/12 text-wisdom-muted hover:border-white/25"
+                  }`}
+              >
+                <Star className="w-3.5 h-3.5" />
+                Featured
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowDetailedOnly((v) => !v)}
+                className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium border transition-all
+                  ${showDetailedOnly
+                    ? "bg-violet-500/20 border-violet-500/40 text-violet-200"
+                    : "bg-wisdom-card border-white/12 text-wisdom-muted hover:border-white/25"
+                  }`}
+              >
+                Full guides
+              </button>
+            </div>
+          </div>
+          <p className="mt-2 text-xs text-wisdom-muted">
+            Showing <span className="text-white font-medium">{filtered.length}</span> of{" "}
+            {list.length}
+            {" · "}
+            Tap a card to expand
+          </p>
+        </div>
+
+        {loading && (
+          <div className="flex items-center justify-center gap-2 py-20 text-wisdom-muted">
+            <Loader2 className="w-5 h-5 animate-spin text-wisdom-cyan" />
+            Loading universities…
+          </div>
+        )}
+
+        {!loading && filtered.length === 0 && (
+          <div className="text-center py-20 rounded-3xl border border-white/10 bg-wisdom-card/50">
+            <p className="text-wisdom-muted mb-2">No universities match your filters.</p>
+            <button
+              type="button"
+              onClick={() => {
+                setQuery("");
+                setRegion("all");
+                setShowFeaturedOnly(false);
+                setShowDetailedOnly(false);
+              }}
+              className="text-wisdom-cyan text-sm font-medium hover:underline"
+            >
+              Clear filters
+            </button>
+          </div>
+        )}
+
+        {!loading && filtered.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+            {filtered.map((uni) => (
+              <UniversityCard
+                key={uni.id}
+                uni={uni}
+                expanded={expandedId === uni.id}
+                onToggle={() => setExpandedId((id) => (id === uni.id ? null : uni.id))}
+              />
+            ))}
+          </div>
+        )}
+
+        <div className="mt-14 md:mt-20 rounded-3xl border border-white/10 bg-gradient-to-br from-cyan-500/10 via-wisdom-card to-wisdom-card p-8 md:p-10 text-center">
+          <h2 className="font-display text-xl md:text-2xl font-bold mb-3">
+            Choosing where you will study
+          </h2>
+          <p className="text-wisdom-muted max-w-lg mx-auto mb-6 leading-relaxed">
+            Placement is decided centrally from your exam results and preferences — but knowing
+            climate, distance, and campus culture helps you rank options wisely.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              href="/academy/uat"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-wisdom-cyan text-wisdom-dark font-semibold hover:bg-wisdom-cyan-dark transition-colors"
+            >
+              UAT preparation
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link
+              href="/academy"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-white/15 text-sm font-medium hover:border-white/30 transition-colors"
+            >
+              Back to Academy
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
