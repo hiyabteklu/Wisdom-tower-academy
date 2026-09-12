@@ -70,6 +70,8 @@ export type FreeResourceItem = {
   subtitle: string | null;
   bodyMd: string;
   imagePath: string | null;
+  /** Optional; not persisted as a column — kept for form state compat */
+  gallery?: string[];
   externalUrl: string | null;
   deadline: string | null;
   meta: Record<string, unknown>;
