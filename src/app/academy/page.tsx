@@ -91,7 +91,7 @@ const freeResources = [
   {
     href: "/academy/success-stories",
     name: "Success Stories",
-    blurb: "Journeys of students who leveled up with Academy",
+    blurb: "Ethiopian top scorers — scores, journeys, and what stood out",
     icon: Trophy,
     accent: "text-amber-300",
     border: "border-white/12 hover:border-amber-400/35",
