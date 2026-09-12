@@ -13,6 +13,7 @@ import UsersPanel from "@/components/admin/UsersPanel";
 import InquiriesPanel from "@/components/admin/InquiriesPanel";
 import CatalogPanel from "@/components/admin/CatalogPanel";
 import ContentPanel from "@/components/admin/ContentPanel";
+import FreeResourcesPanel from "@/components/admin/FreeResourcesPanel";
 import LocksPanel from "@/components/admin/LocksPanel";
 import AccessGrantsPanel from "@/components/admin/AccessGrantsPanel";
 import {
@@ -28,11 +29,13 @@ import {
   Shield,
   KeyRound,
   ArrowLeft,
+  Library,
 } from "lucide-react";
 
 type AcademyTab =
   | "overview"
   | "content"
+  | "free-resources"
   | "locks"
   | "grants"
   | "catalog"
@@ -43,6 +46,7 @@ type AcademyTab =
 const VALID_TABS: AcademyTab[] = [
   "grants",
   "content",
+  "free-resources",
   "locks",
   "catalog",
   "overview",
@@ -107,6 +111,7 @@ function AdminDashboardInner() {
   const academyTabs: { id: AcademyTab; label: string; icon: typeof LayoutDashboard }[] = [
     { id: "grants", label: "Access", icon: KeyRound },
     { id: "content", label: "Content", icon: BookOpen },
+    { id: "free-resources", label: "Free resources", icon: Library },
     { id: "locks", label: "Locks", icon: Shield },
     { id: "catalog", label: "Catalog", icon: Package },
     { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -192,6 +197,7 @@ function AdminDashboardInner() {
             <AccessGrantsPanel adminEmail={user.email} />
           )}
           {academyTab === "content" && <ContentPanel />}
+          {academyTab === "free-resources" && <FreeResourcesPanel />}
           {academyTab === "locks" && <LocksPanel />}
           {academyTab === "overview" && <AnalyticsPanel />}
           {academyTab === "catalog" && <CatalogPanel />}
