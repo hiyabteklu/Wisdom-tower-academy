@@ -3,20 +3,24 @@
 /** Turn literal \\n / \\t from JSON paste into real characters. */
 export function unescapeText(input: string): string {
   if (!input) return "";
-  return input
-    .replace(/\\n/g, "\n")
-    .replace(/\\t/g, "\t")
-    .replace(/\\r/g, "")
-    .replace(/\r\n/g, "\n");
+  let s = String(input);
+  // Repeatedly flatten escaped sequences (paste sometimes double-escapes)
+  for (let i = 0; i < 3; i++) {
+    const next = s
+      .replace(/\\n/g, "\n")
+      .replace(/\\t/g, "\t")
+      .replace(/\\r/g, "")
+      .replace(/\r\n/g, "\n");
+    if (next === s) break;
+    s = next;
+  }
+  return s;
 }
 
-/** Split multi-line field into clean list items (handles real and literal \\n). */
+/** Split multi-line field into clean list items. */
 export function toLines(value: unknown): string[] {
   if (Array.isArray(value)) {
-    return value
-      .flatMap((v) => toLines(v))
-      .map((s) => s.trim())
-      .filter(Boolean);
+    return value.flatMap((v) => toLines(v)).map((s) => s.trim()).filter(Boolean);
   }
   if (value == null) return [];
   const raw = unescapeText(String(value));
@@ -26,15 +30,16 @@ export function toLines(value: unknown): string[] {
     .filter(Boolean);
 }
 
-/** Very small markdown → HTML for our own CMS content. */
+export function asStringList(value: unknown): string[] {
+  return toLines(value);
+}
+
+/** Light markdown → HTML for CMS body/intro. */
 export function simpleMarkdownToHtml(src: string): string {
   let t = unescapeText(src).trim();
   if (!t) return "";
 
-  t = t
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+  t = t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
   t = t.replace(/^### (.+)$/gm, '<h3 class="md-h3">$1</h3>');
   t = t.replace(/^## (.+)$/gm, '<h2 class="md-h2">$1</h2>');
@@ -46,9 +51,7 @@ export function simpleMarkdownToHtml(src: string): string {
   t = t.replace(/==(.+?)==/g, '<mark class="md-mark">$1</mark>');
 
   t = t.replace(/^(?:[-•*]\s+)(.+)$/gm, '<li class="md-li">$1</li>');
-  t = t.replace(/(?:<li class="md-li">.*<\/li>\n?)+/g, (block) => {
-    return `<ul class="md-ul">${block}</ul>`;
-  });
+  t = t.replace(/(?:<li class="md-li">.*<\/li>\n?)+/g, (block) => `<ul class="md-ul">${block}</ul>`);
 
   const parts = t.split(/\n{2,}/);
   t = parts
@@ -62,9 +65,4 @@ export function simpleMarkdownToHtml(src: string): string {
     .join("\n");
 
   return t;
-}
-
-/** Alias used by university mapping */
-export function asStringList(value: unknown): string[] {
-  return toLines(value);
 }
