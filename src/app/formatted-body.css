@@ -1,0 +1,43 @@
+.formatted-body .md-h2 {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 1.25rem 0 0.5rem;
+  letter-spacing: -0.02em;
+}
+.formatted-body .md-h3 {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.92);
+  margin: 1rem 0 0.4rem;
+}
+.formatted-body .md-p {
+  margin: 0 0 0.85rem;
+  line-height: 1.7;
+}
+.formatted-body .md-ul {
+  margin: 0.5rem 0 1rem;
+  padding-left: 1.15rem;
+  list-style: disc;
+}
+.formatted-body .md-li {
+  margin: 0.35rem 0;
+  line-height: 1.65;
+}
+.formatted-body .md-mark {
+  background: rgba(34, 224, 255, 0.12);
+  color: #a5f3fc;
+  padding: 0.05em 0.35em;
+  border-radius: 0.35rem;
+  font-weight: 600;
+}
+.formatted-body strong {
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 650;
+}
+.uni-list-block {
+  white-space: pre-wrap;
+  line-height: 1.7;
+}

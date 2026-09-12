@@ -1,6 +1,7 @@
 "use client";
 
 import { simpleMarkdownToHtml } from "@/lib/format-content";
+import "@/app/formatted-body.css";
 
 type Props = {
   text: string;
