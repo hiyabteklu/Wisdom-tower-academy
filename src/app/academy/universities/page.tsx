@@ -1,226 +1,262 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  Search, MapPin, ExternalLink, Building2, Thermometer, GraduationCap,
-  Lightbulb, ChevronDown, Star, ArrowRight, Target, BookOpen, Loader2,
+  Search,
+  MapPin,
+  ExternalLink,
+  Building2,
+  Thermometer,
+  GraduationCap,
+  Lightbulb,
+  ChevronDown,
+  Filter,
+  Star,
+  ArrowRight,
+  Route,
+  Mountain,
+  Target,
+  BookOpen,
 } from "lucide-react";
 import CategoryBackButton from "@/components/CategoryBackButton";
 import {
-  universities as staticUniversities,
+  universities,
   regions,
   type University,
   type Region,
 } from "@/data/universities";
-import {
-  getFreeResourcePage,
-  listFreeResourceItems,
-  freeResourcePublicUrl,
-  type FreeResourcePage,
-  type FreeResourceItem,
-} from "@/lib/free-resources";
-import { toLines, unescapeText } from "@/lib/format-content";
-import FormattedBody from "@/components/FormattedBody";
-
-type UniView = University & { imageUrl?: string | null; bodyMd?: string };
-
-function itemToUniversity(item: FreeResourceItem): UniView {
-  const m = item.meta || {};
-  const regionRaw = String(m.region || "Addis Ababa");
-  const region = (regions.includes(regionRaw as Region) ? regionRaw : "Addis Ababa") as Region;
-  return {
-    id: item.id,
-    name: item.title,
-    abbr: String(m.abbr || item.title.slice(0, 3).toUpperCase()),
-    region,
-    location: String(m.location || item.subtitle || ""),
-    website: String(m.website || item.externalUrl || "#"),
-    founded: m.founded != null ? String(m.founded) : undefined,
-    campuses: m.campuses != null ? unescapeText(String(m.campuses)) : undefined,
-    climate: m.climate != null ? unescapeText(String(m.climate)) : undefined,
-    distanceFromAddisKm:
-      typeof m.distanceFromAddisKm === "number"
-        ? m.distanceFromAddisKm
-        : m.distanceFromAddisKm != null && String(m.distanceFromAddisKm) !== ""
-          ? Number(m.distanceFromAddisKm)
-          : undefined,
-    distanceNote: m.distanceNote != null ? unescapeText(String(m.distanceNote)) : undefined,
-    elevationM:
-      typeof m.elevationM === "number"
-        ? m.elevationM
-        : m.elevationM != null && String(m.elevationM) !== ""
-          ? Number(m.elevationM)
-          : undefined,
-    knownFor: toLines(m.knownFor),
-    strengths: toLines(m.strengths),
-    whatToExpect: toLines(m.whatToExpect),
-    tips: toLines(m.tips),
-    studentFit: m.studentFit != null ? unescapeText(String(m.studentFit)) : undefined,
-    featured: item.featured,
-    detailed: m.detailed === true || Boolean(item.bodyMd?.trim()),
-    imageUrl: item.imagePath ? freeResourcePublicUrl(item.imagePath) : null,
-    bodyMd: item.bodyMd ? unescapeText(item.bodyMd) : "",
-  };
-}
-
-function Section({
-  icon: Icon,
-  label,
-  accent,
-  children,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  accent: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex gap-3">
-      <div className={`shrink-0 p-2 rounded-xl border ${accent}`}>
-        <Icon className="w-4 h-4" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-1.5">{label}</p>
-        {children}
-      </div>
-    </div>
-  );
-}
 
 function UniversityCard({
   uni,
   expanded,
   onToggle,
 }: {
-  uni: UniView;
+  uni: University;
   expanded: boolean;
   onToggle: () => void;
 }) {
   return (
     <article
-      className={`card-3d group relative overflow-hidden rounded-2xl sm:rounded-3xl border transition-all duration-500 ease-out ${
-        expanded
-          ? "border-wisdom-cyan/45 bg-wisdom-card shadow-[0_0_40px_-12px_rgba(34,211,238,0.35)] md:col-span-2"
-          : "border-white/12 bg-wisdom-card/90 hover:border-wisdom-cyan/30"
-      }`}
+      className={`card-3d group relative overflow-hidden rounded-2xl border transition-all duration-500 ease-out
+        ${
+          expanded
+            ? "border-wisdom-cyan/40 bg-wisdom-card shadow-[0_0_40px_-12px_rgba(34,211,238,0.35)] md:col-span-2"
+            : "border-white/12 bg-wisdom-card/90 hover:border-wisdom-cyan/25 hover:bg-wisdom-card"
+        }`}
     >
-      {uni.imageUrl && (
-        <div className="relative w-full aspect-[16/9] overflow-hidden bg-wisdom-dark">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={uni.imageUrl} alt={uni.name} className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
-          <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card via-transparent to-transparent" />
-        </div>
-      )}
-
-      <button type="button" onClick={onToggle} className="w-full text-left p-5 sm:p-6">
-        <div className="flex items-start justify-between gap-4">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full text-left p-5 sm:p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-wisdom-cyan/50 rounded-2xl"
+        aria-expanded={expanded}
+      >
+        <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2 mb-2">
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-bold bg-wisdom-cyan/15 text-wisdom-cyan border border-wisdom-cyan/25">
                 {uni.abbr}
               </span>
               {uni.featured && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-semibold uppercase bg-amber-500/15 text-amber-300 border border-amber-500/25">
-                  <Star className="w-3 h-3" /> Featured
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-semibold uppercase tracking-wide bg-amber-500/15 text-amber-300 border border-amber-500/25">
+                  <Star className="w-3 h-3" />
+                  Featured
+                </span>
+              )}
+              {uni.detailed && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-semibold uppercase tracking-wide bg-violet-500/15 text-violet-300 border border-violet-500/25">
+                  Full guide
                 </span>
               )}
               <span className="text-xs text-wisdom-muted">{uni.region}</span>
             </div>
-            <h3 className="font-display text-lg sm:text-xl font-bold text-white leading-snug group-hover:text-wisdom-cyan transition-colors">{uni.name}</h3>
-            {uni.location && (
-              <p className="mt-1.5 flex items-center gap-1.5 text-sm text-wisdom-muted">
-                <MapPin className="w-3.5 h-3.5 shrink-0 text-wisdom-cyan/70" />
-                <span className="truncate">{uni.location}</span>
-              </p>
+            <h3 className="font-display text-lg sm:text-xl font-bold text-white group-hover:text-wisdom-cyan transition-colors leading-snug">
+              {uni.name}
+            </h3>
+            <p className="mt-1.5 flex items-center gap-1.5 text-sm text-wisdom-muted">
+              <MapPin className="w-3.5 h-3.5 shrink-0 text-wisdom-cyan/70" />
+              <span className="truncate">{uni.location}</span>
+            </p>
+            {uni.website && uni.website !== "#" && (
+              <a
+                href={uni.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="mt-2 inline-flex items-center gap-1 text-xs text-wisdom-cyan/80 hover:text-wisdom-cyan"
+              >
+                <ExternalLink className="w-3 h-3" />
+                Official site
+              </a>
             )}
           </div>
-          <div className={`shrink-0 p-2 rounded-xl border border-white/10 transition-transform ${expanded ? "rotate-180 text-wisdom-cyan" : ""}`}>
+          <div
+            className={`shrink-0 p-2 rounded-xl border border-white/10 bg-wisdom-dark/40 text-wisdom-muted transition-transform duration-300 ${
+              expanded ? "rotate-180 text-wisdom-cyan border-wisdom-cyan/30" : ""
+            }`}
+          >
             <ChevronDown className="w-5 h-5" />
           </div>
         </div>
+
         {!expanded && (
-          <p className="mt-3 text-sm text-wisdom-muted/90 line-clamp-2">
-            {uni.knownFor?.[0] || uni.strengths[0] || uni.campuses || ""}
-          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {(uni.knownFor ?? uni.strengths).slice(0, 3).map((k) => (
+              <span
+                key={k}
+                className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] text-wisdom-muted"
+              >
+                {k}
+              </span>
+            ))}
+          </div>
         )}
       </button>
 
-      <div className={`grid transition-all duration-500 ${expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
+      <div
+        className={`grid transition-[grid-template-rows] duration-500 ease-out ${
+          expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+        }`}
+      >
         <div className="overflow-hidden">
           <div className="px-5 sm:px-6 pb-6 space-y-5 border-t border-white/8 pt-5">
-            {uni.founded && (
-              <p className="text-xs text-wisdom-muted">
-                Established <span className="text-white/80 font-medium">{uni.founded}</span>
-              </p>
+            {(uni.distanceFromAddisKm != null || uni.elevationM != null) && (
+              <div className="flex flex-wrap gap-3 text-xs">
+                {uni.distanceFromAddisKm != null && (
+                  <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-wisdom-dark/50 px-2.5 py-1.5 text-wisdom-muted">
+                    <Route className="w-3.5 h-3.5 text-amber-300" />
+                    {uni.distanceFromAddisKm === 0
+                      ? "In Addis Ababa"
+                      : `~${uni.distanceFromAddisKm} km from Addis`}
+                  </span>
+                )}
+                {uni.elevationM != null && (
+                  <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-wisdom-dark/50 px-2.5 py-1.5 text-wisdom-muted">
+                    <Mountain className="w-3.5 h-3.5 text-sky-300" />
+                    ~{uni.elevationM} m elevation
+                  </span>
+                )}
+                {uni.founded && (
+                  <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-wisdom-dark/50 px-2.5 py-1.5 text-wisdom-muted">
+                    Est. {uni.founded}
+                  </span>
+                )}
+              </div>
             )}
+
             {uni.campuses && (
-              <Section icon={Building2} label="Campuses" accent="bg-sky-500/10 border-sky-500/20 text-sky-300">
-                <p className="text-sm text-wisdom-muted leading-relaxed uni-list-block">{uni.campuses}</p>
-              </Section>
-            )}
-            {uni.climate && (
-              <Section icon={Thermometer} label="Weather & climate" accent="bg-amber-500/10 border-amber-500/20 text-amber-300">
-                <p className="text-sm text-wisdom-muted leading-relaxed uni-list-block">{uni.climate}</p>
-              </Section>
-            )}
-            {uni.knownFor && uni.knownFor.length > 0 && (
-              <Section icon={BookOpen} label="Well known for" accent="bg-violet-500/10 border-violet-500/20 text-violet-300">
-                <div className="flex flex-wrap gap-2">
-                  {uni.knownFor.map((k) => (
-                    <span key={k} className="rounded-lg border border-violet-400/25 bg-violet-500/10 px-2.5 py-1 text-xs font-medium text-violet-100">{k}</span>
-                  ))}
+              <div className="flex gap-3">
+                <div className="shrink-0 p-2 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-300">
+                  <Building2 className="w-4 h-4" />
                 </div>
-              </Section>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-1">Campuses</p>
+                  <p className="text-sm text-wisdom-muted leading-relaxed">{uni.campuses}</p>
+                </div>
+              </div>
             )}
-            {uni.strengths.length > 0 && (
-              <Section icon={GraduationCap} label="Strengths" accent="bg-wisdom-cyan/10 border-wisdom-cyan/20 text-wisdom-cyan">
+
+            {uni.climate && (
+              <div className="flex gap-3">
+                <div className="shrink-0 p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300">
+                  <Thermometer className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-1">Weather & climate</p>
+                  <p className="text-sm text-wisdom-muted leading-relaxed">{uni.climate}</p>
+                </div>
+              </div>
+            )}
+
+            {uni.knownFor && uni.knownFor.length > 0 && (
+              <div className="flex gap-3">
+                <div className="shrink-0 p-2 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-300">
+                  <BookOpen className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-2">Well known for</p>
+                  <div className="flex flex-wrap gap-2">
+                    {uni.knownFor.map((k) => (
+                      <span
+                        key={k}
+                        className="rounded-lg border border-violet-400/25 bg-violet-500/10 px-2.5 py-1 text-xs font-medium text-violet-100"
+                      >
+                        {k}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <div className="shrink-0 p-2 rounded-xl bg-wisdom-cyan/10 border border-wisdom-cyan/20 text-wisdom-cyan">
+                <GraduationCap className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-2">Strengths</p>
                 <ul className="space-y-1.5">
                   {uni.strengths.map((s) => (
                     <li key={s} className="text-sm text-wisdom-muted flex gap-2 leading-relaxed">
-                      <span className="text-wisdom-cyan mt-1.5 shrink-0">•</span><span>{s}</span>
+                      <span className="text-wisdom-cyan mt-1.5 shrink-0">•</span>
+                      <span>{s}</span>
                     </li>
                   ))}
                 </ul>
-              </Section>
-            )}
+              </div>
+            </div>
+
             {uni.whatToExpect.length > 0 && (
               <div className="rounded-xl bg-wisdom-dark/60 border border-white/8 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-3">What campus life is like</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-3">
+                  What campus life is like
+                </p>
                 <ul className="space-y-2">
                   {uni.whatToExpect.map((item) => (
-                    <li key={item} className="text-sm text-wisdom-muted leading-relaxed pl-3 border-l-2 border-wisdom-cyan/25">{item}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {uni.studentFit && (
-              <Section icon={Target} label="Who thrives here" accent="bg-emerald-500/10 border-emerald-500/20 text-emerald-300">
-                <p className="text-sm text-wisdom-muted leading-relaxed">{uni.studentFit}</p>
-              </Section>
-            )}
-            {uni.tips && uni.tips.length > 0 && (
-              <Section icon={Lightbulb} label="Tips for new students" accent="bg-amber-500/10 border-amber-500/20 text-amber-300">
-                <ul className="space-y-1.5">
-                  {uni.tips.map((t) => (
-                    <li key={t} className="text-sm text-wisdom-muted flex gap-2 leading-relaxed">
-                      <span className="text-amber-300/80 mt-1.5 shrink-0">•</span><span>{t}</span>
+                    <li
+                      key={item}
+                      className="text-sm text-wisdom-muted leading-relaxed pl-3 border-l-2 border-wisdom-cyan/25"
+                    >
+                      {item}
                     </li>
                   ))}
                 </ul>
-              </Section>
-            )}
-            {uni.bodyMd?.trim() && (
-              <div className="border-t border-white/8 pt-4">
-                <FormattedBody text={uni.bodyMd} />
               </div>
             )}
-            {uni.website && uni.website !== "#" && (
-              <a href={uni.website} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-wisdom-cyan/15 border border-wisdom-cyan/30 text-wisdom-cyan text-sm font-semibold"
-                onClick={(e) => e.stopPropagation()}>
-                Official website <ExternalLink className="w-3.5 h-3.5" />
-              </a>
+
+            {uni.studentFit && (
+              <div className="flex gap-3">
+                <div className="shrink-0 p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300">
+                  <Target className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-1">Who thrives here</p>
+                  <p className="text-sm text-wisdom-muted leading-relaxed">{uni.studentFit}</p>
+                </div>
+              </div>
+            )}
+
+            {uni.tips && uni.tips.length > 0 && (
+              <div className="flex gap-3">
+                <div className="shrink-0 p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300">
+                  <Lightbulb className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-2">Tips for new students</p>
+                  <ul className="space-y-1.5">
+                    {uni.tips.map((tip) => (
+                      <li key={tip} className="text-sm text-wisdom-muted flex gap-2 leading-relaxed">
+                        <span className="text-amber-300/80 mt-1.5 shrink-0">•</span>
+                        <span>{tip}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {uni.distanceNote && (
+              <p className="text-xs text-wisdom-muted/80 border-t border-white/8 pt-3">{uni.distanceNote}</p>
             )}
           </div>
         </div>
@@ -234,34 +270,13 @@ export default function UniversitiesPage() {
   const [region, setRegion] = useState<Region | "all">("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
-  const [page, setPage] = useState<FreeResourcePage | null>(null);
-  const [list, setList] = useState<UniView[]>([]);
-  const [fromDb, setFromDb] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    const [pageRes, itemsRes] = await Promise.all([
-      getFreeResourcePage("universities"),
-      listFreeResourceItems({ pageSlug: "universities", publishedOnly: true, kind: "university" }),
-    ]);
-    setPage(pageRes.item ?? null);
-    if (itemsRes.items.length > 0) {
-      setList(itemsRes.items.map(itemToUniversity));
-      setFromDb(true);
-    } else {
-      setList(staticUniversities.map((u) => ({ ...u })));
-      setFromDb(false);
-    }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { void load(); }, [load]);
+  const [showDetailedOnly, setShowDetailedOnly] = useState(false);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return list.filter((u) => {
+    return universities.filter((u) => {
       if (showFeaturedOnly && !u.featured) return false;
+      if (showDetailedOnly && !u.detailed) return false;
       if (region !== "all" && u.region !== region) return false;
       if (!q) return true;
       return (
@@ -273,11 +288,9 @@ export default function UniversitiesPage() {
         (u.knownFor?.some((s) => s.toLowerCase().includes(q)) ?? false)
       );
     });
-  }, [list, query, region, showFeaturedOnly]);
+  }, [query, region, showFeaturedOnly, showDetailedOnly]);
 
-  const title = page?.title?.trim() || "Ethiopian Universities";
-  const subtitle = page?.subtitle?.trim() || "Practical guides — distance, climate, campuses, and first-year life.";
-  const intro = page?.published ? unescapeText(page.bodyMd || "").trim() : "";
+  const detailedCount = universities.filter((u) => u.detailed).length;
 
   return (
     <div className="relative min-h-screen">
@@ -285,82 +298,158 @@ export default function UniversitiesPage() {
         <CategoryBackButton fallback="/academy" />
 
         <header className="mb-10 md:mb-14 animate-fade-up">
-          <p className="text-sm font-semibold tracking-[0.2em] uppercase text-amber-400/90 mb-3">Free resource</p>
+          <p className="text-sm font-semibold tracking-[0.2em] uppercase text-amber-400/90 mb-3">
+            Free resource
+          </p>
           <h1 className="font-display text-4xl sm:text-5xl font-extrabold tracking-tight mb-4">
-            <span className="text-white">{title.split(" ").slice(0, -1).join(" ")} </span>
-            <span className="text-wisdom-cyan">{title.split(" ").slice(-1)[0]}</span>
+            <span className="text-white">Ethiopian </span>
+            <span className="text-wisdom-cyan">Universities</span>
           </h1>
-          {subtitle && <p className="text-wisdom-muted text-lg max-w-2xl leading-relaxed">{subtitle}</p>}
-          {intro && (
-            <div className="mt-4 max-w-2xl">
-              <FormattedBody text={intro} className="text-base" />
-            </div>
-          )}
+          <p className="text-wisdom-muted text-lg max-w-2xl leading-relaxed">
+            Distance, climate, campuses, and first-year life — one university at a time.
+          </p>
+          <div className="mt-5 max-w-2xl space-y-3 text-[15px] text-wisdom-muted leading-relaxed">
+            <p>
+              Most people pick a university the way they pick a lottery ticket. They hear a name,
+              feel a flicker of pride or fear, and let that flicker decide four years of their life.
+            </p>
+            <p>
+              That is backwards. A university is not a prize you win. It is a place you will wake up in,
+              eat in, get sick in, fall behind in, and rebuild yourself in, semester after semester.
+              The name on the certificate matters far less than whether the place fits the person who
+              has to actually live inside it.
+            </p>
+            <p>
+              Rankings measure the institution. They do not measure you. Sit with distance, climate,
+              what the place is known for in <em className="text-white/80 not-italic">your</em> field,
+              daily campus life, and who tends to thrive there — then use the details below the way
+              you'd interrogate a decision that will shape your next four years.
+            </p>
+          </div>
           <div className="mt-6 flex flex-wrap gap-3 text-sm">
             <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-wisdom-card border border-white/10 text-wisdom-muted">
               <Building2 className="w-3.5 h-3.5 text-wisdom-cyan" />
-              {loading ? "…" : `${list.length} institutions`}
+              {universities.length} institutions
             </span>
-            {fromDb && (
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-400/25 text-emerald-200 text-xs font-medium">
-                Live from admin
-              </span>
-            )}
+            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-wisdom-card border border-white/10 text-wisdom-muted">
+              <BookOpen className="w-3.5 h-3.5 text-violet-300" />
+              {detailedCount} full guides
+            </span>
+            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-wisdom-card border border-white/10 text-wisdom-muted">
+              <MapPin className="w-3.5 h-3.5 text-amber-300" />
+              All regions
+            </span>
           </div>
         </header>
 
-        <div className="sticky top-0 z-20 -mx-4 px-4 py-4 mb-8 bg-wisdom-dark/85 backdrop-blur-xl border-b border-white/5">
+        <div
+          className="sticky top-0 z-20 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 py-4 mb-8
+          bg-wisdom-dark/85 backdrop-blur-xl border-b border-white/5"
+        >
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-wisdom-muted" />
-              <input type="search" placeholder="Search by name, city…" value={query}
-                onChange={(e) => setQuery(e.target.value)} className="field-input pl-10 py-3 text-sm" />
+              <input
+                type="search"
+                placeholder="Search by name, city, department…"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="field-input pl-10 py-3 text-sm"
+              />
             </div>
-            <select value={region} onChange={(e) => setRegion(e.target.value as Region | "all")}
-              className="field-input py-3 text-sm min-w-[140px]">
-              <option value="all">All regions</option>
-              {regions.map((r) => (<option key={r} value={r}>{r}</option>))}
-            </select>
-            <button type="button" onClick={() => setShowFeaturedOnly((v) => !v)}
-              className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium border ${
-                showFeaturedOnly ? "bg-amber-500/20 border-amber-500/40 text-amber-200" : "bg-wisdom-card border-white/12 text-wisdom-muted"
-              }`}>
-              <Star className="w-3.5 h-3.5" /> Featured
-            </button>
+            <div className="flex gap-2 flex-wrap">
+              <select
+                value={region}
+                onChange={(e) => setRegion(e.target.value as Region | "all")}
+                className="field-input py-3 text-sm min-w-[140px]"
+              >
+                <option value="all">All regions</option>
+                {regions.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => setShowFeaturedOnly((v) => !v)}
+                className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium border transition-colors ${
+                  showFeaturedOnly
+                    ? "bg-amber-500/20 border-amber-500/40 text-amber-200"
+                    : "bg-wisdom-card border-white/12 text-wisdom-muted hover:border-white/20"
+                }`}
+              >
+                <Star className="w-3.5 h-3.5" />
+                Featured
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowDetailedOnly((v) => !v)}
+                className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium border transition-colors ${
+                  showDetailedOnly
+                    ? "bg-violet-500/20 border-violet-500/40 text-violet-200"
+                    : "bg-wisdom-card border-white/12 text-wisdom-muted hover:border-white/20"
+                }`}
+              >
+                <Filter className="w-3.5 h-3.5" />
+                Full guides
+              </button>
+            </div>
           </div>
         </div>
 
-        {loading && (
-          <div className="flex items-center justify-center gap-2 py-20 text-wisdom-muted">
-            <Loader2 className="w-5 h-5 animate-spin text-wisdom-cyan" /> Loading…
-          </div>
-        )}
-
-        {!loading && filtered.length === 0 && (
+        {filtered.length === 0 ? (
           <div className="text-center py-20 rounded-3xl border border-white/10 bg-wisdom-card/50">
-            <p className="text-wisdom-muted mb-2">No universities match.</p>
-            <button type="button" onClick={() => { setQuery(""); setRegion("all"); setShowFeaturedOnly(false); }} className="text-wisdom-cyan text-sm">Clear filters</button>
+            <p className="text-wisdom-muted mb-2">No universities match your filters.</p>
+            <button
+              type="button"
+              onClick={() => {
+                setQuery("");
+                setRegion("all");
+                setShowFeaturedOnly(false);
+                setShowDetailedOnly(false);
+              }}
+              className="text-wisdom-cyan text-sm font-medium hover:underline"
+            >
+              Clear filters
+            </button>
           </div>
-        )}
-
-        {!loading && filtered.length > 0 && (
+        ) : (
           <div className="perspective-scene grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
             {filtered.map((uni) => (
-              <UniversityCard key={uni.id} uni={uni}
+              <UniversityCard
+                key={uni.id}
+                uni={uni}
                 expanded={expandedId === uni.id}
-                onToggle={() => setExpandedId((id) => (id === uni.id ? null : uni.id))} />
+                onToggle={() => setExpandedId((id) => (id === uni.id ? null : uni.id))}
+              />
             ))}
           </div>
         )}
 
-        <div className="mt-14 rounded-3xl border border-white/10 bg-gradient-to-br from-cyan-500/10 via-wisdom-card to-wisdom-card p-8 text-center">
-          <h2 className="font-display text-xl font-bold mb-3">Choosing where you will study</h2>
+        <div className="mt-14 md:mt-20 rounded-3xl border border-white/10 bg-gradient-to-br from-cyan-500/10 via-wisdom-card to-wisdom-card p-8 md:p-10 text-center">
+          <h2 className="font-display text-xl md:text-2xl font-bold mb-3">
+            Choosing where you will study
+          </h2>
           <p className="text-wisdom-muted max-w-lg mx-auto mb-6 leading-relaxed">
-            Know climate, distance, and campus culture before you rank options.
+            Placement is decided centrally from your exam results and preferences — but knowing
+            climate, distance, and campus culture helps you rank options wisely.
           </p>
-          <Link href="/academy" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-white/15 text-sm font-medium">
-            Back to Academy <ArrowRight className="w-4 h-4" />
-          </Link>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              href="/academy/uat"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-wisdom-cyan text-wisdom-dark font-semibold hover:bg-wisdom-cyan-dark transition-colors"
+            >
+              UAT preparation
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link
+              href="/academy"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-white/15 text-sm font-medium hover:border-white/30 transition-colors"
+            >
+              Back to Academy
+            </Link>
+          </div>
         </div>
       </div>
     </div>
