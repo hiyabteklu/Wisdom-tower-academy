@@ -1,4 +1,4 @@
-/** Free resource pages + individual items (success stories, scholarships). */
+/** Free resource pages + individual items (success stories, scholarships, admin notes). */
 
 import { supabase } from "@/lib/supabase";
 
@@ -18,10 +18,14 @@ export type FreeResourceItemKind =
   | "tip"
   | "general";
 
-/** Admin dashboard only manages these (others are hardcoded public pages). */
+/** Full admin tabs: stories, scholarships, plus additive notes for hard-coded pages. */
 export const FREE_RESOURCE_SLUGS: FreeResourceSlug[] = [
   "success-stories",
   "scholarships",
+  "universities",
+  "departments",
+  "campus-life",
+  "study-techniques",
 ];
 
 export const ALL_FREE_RESOURCE_SLUGS: FreeResourceSlug[] = [
@@ -33,18 +37,30 @@ export const ALL_FREE_RESOURCE_SLUGS: FreeResourceSlug[] = [
   "scholarships",
 ];
 
+/** Pages whose public body stays hard-coded; admin only manages additive notes. */
+export const NOTE_ONLY_SLUGS: FreeResourceSlug[] = [
+  "universities",
+  "departments",
+  "campus-life",
+  "study-techniques",
+];
+
 export const FREE_RESOURCE_LABELS: Record<FreeResourceSlug, string> = {
   "success-stories": "Success Stories",
-  "study-techniques": "Study Techniques",
-  "campus-life": "Campus Life",
-  universities: "Universities",
-  departments: "Departments",
+  "study-techniques": "Study Techniques notes",
+  "campus-life": "Campus Life notes",
+  universities: "University notes",
+  departments: "Department notes",
   scholarships: "Scholarships",
 };
 
 export const PAGE_ITEM_KIND: Partial<Record<FreeResourceSlug, FreeResourceItemKind>> = {
   "success-stories": "success_story",
   scholarships: "scholarship",
+  universities: "university",
+  departments: "department",
+  "campus-life": "general",
+  "study-techniques": "tip",
 };
 
 export const EDITORIAL_SLUGS: FreeResourceSlug[] = [];
@@ -70,7 +86,6 @@ export type FreeResourceItem = {
   subtitle: string | null;
   bodyMd: string;
   imagePath: string | null;
-  /** Optional; not persisted as a column — kept for form state compat */
   gallery?: string[];
   externalUrl: string | null;
   deadline: string | null;
@@ -286,4 +301,20 @@ export function freeResourcePublicUrl(storagePath: string | null | undefined): s
   if (storagePath.startsWith("http://") || storagePath.startsWith("https://")) return storagePath;
   const { data } = supabase.storage.from("free-resources").getPublicUrl(storagePath);
   return data.publicUrl;
+}
+
+/** Published notes for a hard-coded page, optionally filtered by meta key (e.g. universityId). */
+export async function listPublishedNotes(opts: {
+  pageSlug: FreeResourceSlug;
+  metaKey?: string;
+  metaValue?: string;
+}): Promise<FreeResourceItem[]> {
+  const { items } = await listFreeResourceItems({
+    pageSlug: opts.pageSlug,
+    publishedOnly: true,
+  });
+  if (!opts.metaKey) return items;
+  return items.filter(
+    (it) => String(it.meta?.[opts.metaKey!] ?? "") === String(opts.metaValue ?? "")
+  );
 }
