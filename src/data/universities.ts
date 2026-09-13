@@ -1,5 +1,6 @@
 import _aau from "./uni-aau.json";
 import _aastu from "./uni-aastu.json";
+import _astu from "./uni-astu-adama.json";
 import _ju from "./uni-ju.json";
 import _mu from "./uni-mu.json";
 import _hru from "./uni-hru.json";
@@ -103,10 +104,11 @@ export const universitiesIntro = {
     "Read the one for your university, or the one you are hoping to be placed at. Then read it again in your first month there and see how much of it turns out to be true.",
 };
 
-/** All 44 authentic full guides. */
+/** All authentic full guides including ASTU Adama. */
 export const universities: University[] = [
   _aau as University,
   _aastu as University,
+  _astu as University,
   _ju as University,
   _mu as University,
   _hru as University,
