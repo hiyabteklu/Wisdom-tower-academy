@@ -94,8 +94,9 @@ const freeResources = [
     blurb: "Ethiopian top scorers — scores, journeys, and what stood out",
     icon: Trophy,
     accent: "text-amber-300",
-    border: "border-white/12 hover:border-amber-400/35",
-    iconBg: "border-amber-400/25 bg-amber-500/10 text-amber-300",
+    border: "border-white/12 hover:border-amber-400/40",
+    iconBg: "border-amber-400/30 bg-amber-500/15 text-amber-300",
+    glow: "group-hover:shadow-[0_12px_40px_-16px_rgba(251,191,36,0.35)]",
   },
   {
     href: "/academy/study-techniques",
@@ -103,8 +104,9 @@ const freeResources = [
     blurb: "Methods to learn faster and retain under pressure",
     icon: Lightbulb,
     accent: "text-cyan-300",
-    border: "border-white/12 hover:border-cyan-400/35",
-    iconBg: "border-cyan-400/25 bg-cyan-500/10 text-cyan-300",
+    border: "border-white/12 hover:border-cyan-400/40",
+    iconBg: "border-cyan-400/30 bg-cyan-500/15 text-cyan-300",
+    glow: "group-hover:shadow-[0_12px_40px_-16px_rgba(34,211,238,0.3)]",
   },
   {
     href: "/academy/campus-life",
@@ -112,8 +114,9 @@ const freeResources = [
     blurb: "Friends, focus, burnout, lectures, facilities and group work",
     icon: Trees,
     accent: "text-sky-300",
-    border: "border-white/12 hover:border-sky-400/35",
-    iconBg: "border-sky-400/25 bg-sky-500/10 text-sky-300",
+    border: "border-white/12 hover:border-sky-400/40",
+    iconBg: "border-sky-400/30 bg-sky-500/15 text-sky-300",
+    glow: "group-hover:shadow-[0_12px_40px_-16px_rgba(56,189,248,0.3)]",
   },
   {
     href: "/academy/universities",
@@ -121,8 +124,9 @@ const freeResources = [
     blurb: "Explore institutions, programs, and pathways",
     icon: Building2,
     accent: "text-violet-300",
-    border: "border-white/12 hover:border-violet-400/35",
-    iconBg: "border-violet-400/25 bg-violet-500/10 text-violet-300",
+    border: "border-white/12 hover:border-violet-400/40",
+    iconBg: "border-violet-400/30 bg-violet-500/15 text-violet-300",
+    glow: "group-hover:shadow-[0_12px_40px_-16px_rgba(167,139,250,0.3)]",
   },
   {
     href: "/academy/departments",
@@ -130,8 +134,9 @@ const freeResources = [
     blurb: "What each field of study actually involves",
     icon: Library,
     accent: "text-orange-300",
-    border: "border-white/12 hover:border-orange-400/35",
-    iconBg: "border-orange-400/25 bg-orange-500/10 text-orange-300",
+    border: "border-white/12 hover:border-orange-400/40",
+    iconBg: "border-orange-400/30 bg-orange-500/15 text-orange-300",
+    glow: "group-hover:shadow-[0_12px_40px_-16px_rgba(251,146,60,0.3)]",
   },
   {
     href: "/academy/scholarships",
@@ -139,8 +144,9 @@ const freeResources = [
     blurb: "Funding options and how to prepare applications",
     icon: GradCap,
     accent: "text-rose-300",
-    border: "border-white/12 hover:border-rose-400/35",
-    iconBg: "border-rose-400/25 bg-rose-500/10 text-rose-300",
+    border: "border-white/12 hover:border-rose-400/40",
+    iconBg: "border-rose-400/30 bg-rose-500/15 text-rose-300",
+    glow: "group-hover:shadow-[0_12px_40px_-16px_rgba(244,63,94,0.3)]",
   },
 ];
 
@@ -249,13 +255,13 @@ export default function AcademyPage() {
 
             <Link
               href="/academy/special-packages"
-              className="group block max-w-xl mx-auto overflow-hidden rounded-2xl sm:rounded-3xl border border-violet-400/30 bg-wisdom-card hover:border-violet-300/50 transition-all"
+              className="group block max-w-xl mx-auto overflow-hidden rounded-2xl sm:rounded-3xl border border-violet-400/30 bg-wisdom-card hover:border-violet-300/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_48px_-16px_rgba(167,139,250,0.35)]"
             >
               <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
                 <SafeCoverImage src={SPECIAL_PACKAGES_HUB_IMAGE} alt="" />
               </div>
               <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8 text-left">
-                <h3 className="flex items-center gap-1.5 font-display text-base sm:text-lg font-bold text-white group-hover:text-violet-200">
+                <h3 className="flex items-center gap-1.5 font-display text-base sm:text-lg font-bold text-white group-hover:text-violet-200 transition-colors">
                   <BadgeCheck className="w-4 h-4 shrink-0 text-sky-400" aria-hidden />
                   Browse special packages
                 </h3>
@@ -282,16 +288,17 @@ export default function AcademyPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {freeResources.map((item) => {
+              {freeResources.map((item, index) => {
                 const Icon = item.icon;
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`group relative rounded-2xl border bg-wisdom-card p-6 transition-all duration-300 hover:bg-white/[0.03] ${item.border}`}
+                    className={`group relative rounded-2xl border bg-wisdom-card/95 p-6 transition-all duration-400 ease-out hover:-translate-y-1.5 hover:bg-white/[0.04] ${item.border} ${item.glow}`}
+                    style={{ animationDelay: `${index * 60}ms` }}
                   >
                     <div
-                      className={`mb-4 inline-flex p-3 rounded-xl border ${item.iconBg} group-hover:scale-105 transition-transform`}
+                      className={`mb-4 inline-flex p-3 rounded-xl border ${item.iconBg} transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[-3deg]`}
                     >
                       <Icon className="w-5 h-5" />
                     </div>
@@ -301,9 +308,9 @@ export default function AcademyPage() {
                       {item.name}
                     </h3>
                     <p className="text-sm text-wisdom-muted leading-relaxed">{item.blurb}</p>
-                    <span className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-wisdom-muted group-hover:text-white/80">
+                    <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-wisdom-muted group-hover:text-white/90 transition-colors">
                       Explore
-                      <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                      <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1.5" />
                     </span>
                   </Link>
                 );
