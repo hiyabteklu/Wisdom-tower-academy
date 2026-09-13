@@ -1,27 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   BookOpen,
-  Play,
-  CheckCircle2,
   Clock,
-  ShoppingBag,
-  ArrowRight,
-  LogIn,
   Lock,
+  ShoppingBag,
+  GraduationCap,
 } from "lucide-react";
-import {
-  academyPackages,
-  formatEtb,
-  getPackage,
-  type AcademyPackage,
-} from "@/data/packages";
-import { getPackageResolved } from "@/lib/catalog";
 import { listMyEnrollments, listMyOrders, type ManualOrder } from "@/lib/orders";
+import { getPackage, formatEtb, type AcademyPackage } from "@/data/packages";
+import { getPackageResolved } from "@/lib/catalog";
+import { listSellablePackages } from "@/lib/catalog";
 import { supabase } from "@/lib/supabase";
-import UserHubNav from "@/components/UserHubNav";
+import StudyPlanner from "@/components/learning/StudyPlanner";
 
 type UnlockedRow = {
   id: string;
@@ -32,13 +25,7 @@ type UnlockedRow = {
   enrolledAt?: string;
 };
 
-/** Learning hub URL — never /packages/{id} (that route does not exist). */
-function learningHrefForPackage(packageId: string, packageName?: string): {
-  href: string;
-  title: string;
-  subtitle: string;
-  image: string;
-} {
+function learningHrefForPackage(packageId: string, packageName?: string) {
   const pkg = getPackageResolved(packageId) || getPackage(packageId);
   if (pkg) {
     return {
@@ -59,6 +46,7 @@ function learningHrefForPackage(packageId: string, packageName?: string): {
 export default function LearningPage() {
   const [unlocked, setUnlocked] = useState<UnlockedRow[]>([]);
   const [pending, setPending] = useState<ManualOrder[]>([]);
+  const [lockedPackages, setLockedPackages] = useState<AcademyPackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [loggedIn, setLoggedIn] = useState(false);
 
@@ -75,9 +63,10 @@ export default function LearningPage() {
         return;
       }
       try {
-        const [enrolls, orders] = await Promise.all([
+        const [enrolls, orders, catalog] = await Promise.all([
           listMyEnrollments(),
           listMyOrders(),
+          listSellablePackages(),
         ]);
         if (cancelled) return;
 
@@ -98,7 +87,6 @@ export default function LearningPage() {
           });
         }
 
-        // Also unlock from verified orders (in case enrollment row missing)
         for (const o of orders || []) {
           if (o.status !== "verified") continue;
           if (seen.has(o.packageId)) continue;
@@ -117,100 +105,88 @@ export default function LearningPage() {
         setUnlocked(rows);
         setPending(
           (orders || []).filter(
-            (o) =>
-              o.status === "pending_payment" || o.status === "pending_verification"
+            (o) => o.status === "pending_verification" || o.status === "pending_payment"
           )
         );
-      } catch {
-        setUnlocked([]);
-        setPending([]);
+        setLockedPackages((catalog || []).filter((p) => !seen.has(p.id)));
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-      setLoading(false);
     })();
     return () => {
       cancelled = true;
     };
   }, []);
 
-  const unlockedIds = useMemo(() => new Set(unlocked.map((u) => u.id)), [unlocked]);
-  const pendingIds = useMemo(() => new Set(pending.map((p) => p.packageId)), [pending]);
-  const lockedPackages = useMemo(
-    () => academyPackages.filter((p) => !unlockedIds.has(p.id) && !pendingIds.has(p.id)),
-    [unlockedIds, pendingIds]
-  );
-
   return (
-    <div className="relative min-h-[80vh]">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/3 w-96 h-96 bg-cyan-500/8 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-0 w-80 h-80 bg-amber-500/6 rounded-full blur-3xl" />
-      </div>
-
-      <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-        <UserHubNav />
-
-        <div className="mb-10 md:mb-12">
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-400/90 mb-2">
-            Academy hub
+    <div className="relative min-h-[70vh]">
+      <div className="relative max-w-3xl mx-auto px-4 sm:px-6 py-12 md:py-16">
+        <div className="mb-10">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-400/90 mb-1">
+            Dashboard
           </p>
-          <h1 className="font-display text-3xl md:text-4xl font-extrabold text-white tracking-tight mb-2">
+          <h1 className="font-display text-3xl sm:text-4xl font-extrabold text-white tracking-tight flex items-center gap-2">
+            <GraduationCap className="w-8 h-8 text-cyan-300" />
             My Learning
           </h1>
-          <p className="text-wisdom-muted text-base md:text-lg max-w-2xl">
-            Your unlocked packages and content hubs. After admin approval, open a package to
-            study subjects, notes, and practice.
+          <p className="mt-2 text-sm text-wisdom-muted">
+            Your unlocked packages, weekly study plan, and next steps.
           </p>
         </div>
 
-        {!loggedIn && !loading && (
-          <div className="surface-card rounded-2xl border border-white/12 p-8 text-center mb-10">
-            <LogIn className="w-10 h-10 text-wisdom-cyan mx-auto mb-3" />
+        {!loggedIn && !loading ? (
+          <div className="rounded-3xl border border-white/12 bg-wisdom-card p-8 text-center mb-10">
+            <BookOpen className="w-10 h-10 text-white/20 mx-auto mb-3" />
             <p className="font-semibold text-white mb-2">Sign in to see your learning</p>
-            <Link href="/login" className="btn-primary inline-flex mt-2">
+            <p className="text-sm text-wisdom-muted mb-5">
+              Packages you purchase unlock here after verification.
+            </p>
+            <Link
+              href="/login?next=/learning"
+              className="inline-flex rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-bold text-wisdom-dark"
+            >
               Sign in
             </Link>
           </div>
-        )}
+        ) : null}
+
+        {/* Study planner — available to everyone browsing this page */}
+        <StudyPlanner />
 
         {loading ? (
-          <div className="py-16 flex justify-center">
-            <div className="w-8 h-8 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
-          </div>
+          <p className="text-sm text-wisdom-muted">Loading your packages…</p>
         ) : (
           <>
             <section className="mb-12">
               <h2 className="font-display text-xl font-bold text-white mb-4 flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                Unlocked
+                <BookOpen className="w-5 h-5 text-emerald-400" />
+                Unlocked packages
               </h2>
               {unlocked.length === 0 ? (
-                <div className="surface-card rounded-2xl border border-dashed border-white/15 p-8 text-center">
-                  <BookOpen className="w-10 h-10 text-white/25 mx-auto mb-3" />
-                  <p className="text-wisdom-muted text-sm mb-4">No packages unlocked yet.</p>
-                  <Link href="/packages" className="btn-primary inline-flex">
-                    Browse packages
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </div>
+                <p className="text-sm text-wisdom-muted rounded-2xl border border-white/10 bg-wisdom-card/60 px-4 py-6">
+                  No packages unlocked yet. Browse the catalog when you are ready.
+                </p>
               ) : (
-                <ul className="grid sm:grid-cols-2 gap-4">
-                  {unlocked.map((u) => (
-                    <li key={u.id}>
+                <ul className="space-y-3">
+                  {unlocked.map((row) => (
+                    <li key={row.id}>
                       <Link
-                        href={u.href}
-                        className="surface-card flex gap-3 rounded-2xl border border-white/12 p-3 hover:border-amber-400/40 transition"
+                        href={row.href}
+                        className="flex gap-3 rounded-2xl border border-white/12 bg-wisdom-card p-3 sm:p-4 hover:border-cyan-400/35 transition"
                       >
-                        <div
-                          className="w-16 h-16 rounded-xl bg-cover bg-center shrink-0 border border-white/10 bg-wisdom-dark"
-                          style={{
-                            backgroundImage: u.image ? `url(${u.image})` : undefined,
-                          }}
-                        />
-                        <div className="min-w-0">
-                          <p className="font-semibold text-white truncate">{u.title}</p>
-                          <p className="text-xs text-wisdom-muted">{u.subtitle}</p>
-                          <span className="inline-flex items-center gap-1 text-xs text-emerald-400 mt-1">
-                            <Play className="w-3 h-3" /> Open content
+                        {row.image ? (
+                          <div
+                            className="w-16 h-16 rounded-xl bg-cover bg-center shrink-0 border border-white/10"
+                            style={{ backgroundImage: `url(${row.image})` }}
+                          />
+                        ) : (
+                          <div className="w-16 h-16 rounded-xl bg-wisdom-navy shrink-0 border border-white/10" />
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-white truncate">{row.title}</p>
+                          <p className="text-xs text-wisdom-muted">{row.subtitle}</p>
+                          <span className="text-xs font-semibold text-cyan-300 mt-1 inline-block">
+                            Open pathway →
                           </span>
                         </div>
                       </Link>
@@ -267,7 +243,7 @@ export default function LearningPage() {
                 ))}
               </ul>
               <div className="mt-6">
-                <Link href="/packages" className="btn-secondary inline-flex">
+                <Link href="/packages" className="btn-secondary inline-flex items-center gap-2">
                   <ShoppingBag className="w-4 h-4" />
                   All packages
                 </Link>
