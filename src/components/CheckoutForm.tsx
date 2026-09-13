@@ -11,9 +11,8 @@ import {
   Building2,
   Upload,
   FileText,
-  Image as ImageIcon,
-  X,
   LogIn,
+  Zap,
 } from "lucide-react";
 import {
   getPackage,
@@ -63,6 +62,8 @@ function BankLogo({
   );
 }
 
+const AUTO_VERIFY_METHODS: PaymentMethodId[] = ["telebirr", "cbe", "abyssinia"];
+
 export default function CheckoutForm({ packageId }: Props) {
   const pkg = useMemo(
     () => getPackageResolved(packageId) || getPackage(packageId),
@@ -75,7 +76,7 @@ export default function CheckoutForm({ packageId }: Props) {
 
   const [method, setMethod] = useState<PaymentMethodId>("telebirr");
   const [orderRef] = useState(() => generateOrderRef());
-  const [confirmMode, setConfirmMode] = useState<ConfirmMode>("receipt");
+  const [confirmMode, setConfirmMode] = useState<ConfirmMode>("details");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -86,7 +87,11 @@ export default function CheckoutForm({ packageId }: Props) {
   const [copied, setCopied] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+  const [autoVerified, setAutoVerified] = useState(false);
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
+
+  const canAutoVerify = AUTO_VERIFY_METHODS.includes(method);
 
   useEffect(() => {
     let cancelled = false;
@@ -146,8 +151,135 @@ export default function CheckoutForm({ packageId }: Props) {
     e.preventDefault();
     if (!pkg || !signedIn) return;
     setError("");
+    setInfo("");
     setSubmitting(true);
 
+    if (!name.trim() || !phone.trim()) {
+      setError("Name and phone are required.");
+      setSubmitting(false);
+      return;
+    }
+
+    // Path A: TX reference → Verify.ET auto-check
+    if (confirmMode === "details" && canAutoVerify) {
+      if (!txRef.trim()) {
+        setError("Enter the transaction reference from your SMS or receipt.");
+        setSubmitting(false);
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/verify-payment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderId: orderRef,
+            packageId: pkg.id,
+            packageName: pkg.name,
+            amountEtb: pkg.priceEtb,
+            paymentMethod: method,
+            transactionRef: txRef.trim(),
+            studentName: name.trim(),
+            phone: phone.trim(),
+            email: email.trim() || undefined,
+            note: note.trim() || undefined,
+            userId,
+          }),
+        });
+        const data = (await res.json()) as {
+          ok?: boolean;
+          verified?: boolean;
+          pending?: boolean;
+          error?: string;
+          message?: string;
+          code?: string;
+        };
+
+        if (data.code === "NOT_CONFIGURED" || res.status === 503) {
+          // Fall back to manual order so checkout still works
+          const order: ManualOrder = {
+            id: orderRef,
+            packageId: pkg.id,
+            packageName: pkg.name,
+            amountEtb: pkg.priceEtb,
+            status: "pending_verification",
+            paymentMethod: method,
+            studentName: name.trim(),
+            phone: phone.trim(),
+            email: email.trim() || undefined,
+            transactionRef: txRef.trim(),
+            note: note.trim() || undefined,
+            createdAt: new Date().toISOString(),
+            userId,
+          };
+          await saveOrder(order);
+          removeFromCart(pkg.id);
+          setDone(true);
+          setSubmitting(false);
+          return;
+        }
+
+        if (data.verified) {
+          // Also mirror locally for My Orders UX
+          await saveOrder({
+            id: orderRef,
+            packageId: pkg.id,
+            packageName: pkg.name,
+            amountEtb: pkg.priceEtb,
+            status: "verified",
+            paymentMethod: method,
+            studentName: name.trim(),
+            phone: phone.trim(),
+            email: email.trim() || undefined,
+            transactionRef: txRef.trim(),
+            note: note.trim() || undefined,
+            createdAt: new Date().toISOString(),
+            userId,
+            verifiedAt: new Date().toISOString(),
+            verifiedBy: "verify.et",
+          });
+          removeFromCart(pkg.id);
+          setAutoVerified(true);
+          setDone(true);
+          setSubmitting(false);
+          return;
+        }
+
+        // Not verified: still saved as pending by API (or save locally)
+        await saveOrder({
+          id: orderRef,
+          packageId: pkg.id,
+          packageName: pkg.name,
+          amountEtb: pkg.priceEtb,
+          status: "pending_verification",
+          paymentMethod: method,
+          studentName: name.trim(),
+          phone: phone.trim(),
+          email: email.trim() || undefined,
+          transactionRef: txRef.trim(),
+          note: [note.trim(), data.error || data.message]
+            .filter(Boolean)
+            .join(" | ") || undefined,
+          createdAt: new Date().toISOString(),
+          userId,
+        });
+        removeFromCart(pkg.id);
+        setInfo(
+          data.error ||
+            data.message ||
+            "We could not confirm automatically. Your order is pending admin review."
+        );
+        setDone(true);
+        setSubmitting(false);
+        return;
+      } catch {
+        setError("Verification request failed. Try again or upload a receipt.");
+        setSubmitting(false);
+        return;
+      }
+    }
+
+    // Path B: receipt upload or non-auto method → manual queue
     let receiptUrl: string | undefined;
     if (confirmMode === "receipt") {
       if (!receiptFile) {
@@ -168,12 +300,6 @@ export default function CheckoutForm({ packageId }: Props) {
         setSubmitting(false);
         return;
       }
-    }
-
-    if (!name.trim() || !phone.trim()) {
-      setError("Name and phone are required.");
-      setSubmitting(false);
-      return;
     }
 
     const order: ManualOrder = {
@@ -248,19 +374,36 @@ export default function CheckoutForm({ packageId }: Props) {
       <div className="max-w-md mx-auto px-4 py-16 text-center">
         <div className="rounded-3xl border border-emerald-400/30 bg-wisdom-card p-8">
           <Check className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
-          <h1 className="text-xl font-bold text-white mb-2">Submitted for verification</h1>
+          <h1 className="text-xl font-bold text-white mb-2">
+            {autoVerified ? "Payment verified" : "Submitted for verification"}
+          </h1>
           <p className="text-sm text-wisdom-muted mb-2">
             Order <span className="font-mono text-amber-300">{orderRef}</span>
           </p>
-          <p className="text-sm text-wisdom-muted mb-6">
-            We will unlock {pkg.name} in My Learning after confirming your payment.
-          </p>
-          <Link
-            href="/orders"
-            className="inline-flex rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-bold text-wisdom-dark"
-          >
-            View orders
-          </Link>
+          {autoVerified ? (
+            <p className="text-sm text-wisdom-muted mb-6">
+              {pkg.name} is unlocked in My Learning. You can start studying now.
+            </p>
+          ) : (
+            <p className="text-sm text-wisdom-muted mb-6">
+              {info ||
+                `We will unlock ${pkg.name} in My Learning after confirming your payment.`}
+            </p>
+          )}
+          <div className="flex flex-col sm:flex-row gap-2 justify-center">
+            <Link
+              href="/my-learning"
+              className="inline-flex rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-bold text-wisdom-dark"
+            >
+              My Learning
+            </Link>
+            <Link
+              href="/orders"
+              className="inline-flex rounded-xl border border-white/15 px-5 py-2.5 text-sm font-semibold text-white"
+            >
+              View orders
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -344,17 +487,6 @@ export default function CheckoutForm({ packageId }: Props) {
         <div className="flex gap-2 mb-2">
           <button
             type="button"
-            onClick={() => setConfirmMode("receipt")}
-            className={`flex-1 py-2 rounded-xl text-xs font-semibold border ${
-              confirmMode === "receipt"
-                ? "border-amber-400/40 bg-amber-500/10 text-amber-200"
-                : "border-white/10 text-wisdom-muted"
-            }`}
-          >
-            Upload receipt
-          </button>
-          <button
-            type="button"
             onClick={() => setConfirmMode("details")}
             className={`flex-1 py-2 rounded-xl text-xs font-semibold border ${
               confirmMode === "details"
@@ -363,6 +495,22 @@ export default function CheckoutForm({ packageId }: Props) {
             }`}
           >
             Enter TX ID
+            {canAutoVerify && (
+              <span className="ml-1 inline-flex items-center gap-0.5 text-[10px] text-emerald-300">
+                <Zap className="w-3 h-3" /> auto
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirmMode("receipt")}
+            className={`flex-1 py-2 rounded-xl text-xs font-semibold border ${
+              confirmMode === "receipt"
+                ? "border-amber-400/40 bg-amber-500/10 text-amber-200"
+                : "border-white/10 text-wisdom-muted"
+            }`}
+          >
+            Upload receipt
           </button>
         </div>
 
@@ -400,6 +548,12 @@ export default function CheckoutForm({ packageId }: Props) {
               className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2.5 text-sm text-white"
               placeholder="From SMS or bank receipt"
             />
+            {canAutoVerify && (
+              <p className="mt-1.5 text-[11px] text-emerald-300/90 flex items-center gap-1">
+                <Zap className="w-3 h-3" />
+                We verify Telebirr, CBE, and Abyssinia transfers automatically when possible.
+              </p>
+            )}
           </label>
         )}
 
@@ -450,12 +604,20 @@ export default function CheckoutForm({ packageId }: Props) {
           disabled={submitting}
           className="w-full py-3 rounded-xl bg-amber-500 text-wisdom-dark text-sm font-bold hover:bg-amber-400 disabled:opacity-50"
         >
-          {submitting ? "Submitting…" : "Submit for verification"}
+          {submitting
+            ? confirmMode === "details" && canAutoVerify
+              ? "Verifying payment…"
+              : "Submitting…"
+            : confirmMode === "details" && canAutoVerify
+              ? "Verify & unlock"
+              : "Submit for verification"}
         </button>
 
         <p className="flex items-start gap-2 text-[11px] text-wisdom-muted">
           <Shield className="w-3.5 h-3.5 shrink-0 mt-0.5 text-cyan-400" />
-          Manual verification — access unlocks in My Learning after we confirm payment.
+          {canAutoVerify && confirmMode === "details"
+            ? "Automatic check via Verify.ET when the reference matches. Otherwise your order stays pending for admin review."
+            : "Manual verification — access unlocks in My Learning after we confirm payment."}
         </p>
       </form>
 
