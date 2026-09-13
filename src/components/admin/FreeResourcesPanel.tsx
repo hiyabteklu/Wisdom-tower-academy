@@ -5,7 +5,7 @@ import {
   FREE_RESOURCE_LABELS,
   FREE_RESOURCE_SLUGS,
   PAGE_ITEM_KIND,
-  EDITORIAL_SLUGS,
+  NOTE_ONLY_SLUGS,
   listFreeResourcePages,
   listFreeResourceItems,
   upsertFreeResourcePage,
@@ -18,11 +18,11 @@ import {
   type FreeResourceSlug,
   type FreeResourceItemKind,
 } from "@/lib/free-resources";
+import { universities } from "@/data/universities";
 import {
   BookOpen,
   Save,
   RefreshCw,
-  Upload,
   ExternalLink,
   CheckCircle2,
   Circle,
@@ -32,18 +32,25 @@ import {
   X,
   ImageIcon,
   Star,
+  StickyNote,
 } from "lucide-react";
 
 const inputCls =
   "mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2.5 text-sm text-white";
 const labelCls = "block text-xs text-wisdom-muted";
 
-function emptyMetaFor(kind: FreeResourceItemKind): Record<string, unknown> {
+function emptyMetaFor(kind: FreeResourceItemKind, slug: FreeResourceSlug): Record<string, unknown> {
   if (kind === "success_story") {
     return { studentName: "", program: "", result: "", year: "", quote: "" };
   }
   if (kind === "scholarship") {
     return { organization: "", amount: "", eligibility: "", status: "open" };
+  }
+  if (kind === "university" || slug === "universities") {
+    return { universityId: "" };
+  }
+  if (kind === "department" || slug === "departments") {
+    return { departmentId: "" };
   }
   return {};
 }
@@ -77,7 +84,7 @@ export default function FreeResourcesPanel() {
   const [savingItem, setSavingItem] = useState(false);
 
   const itemKind = PAGE_ITEM_KIND[activeSlug];
-  const isEditorial = EDITORIAL_SLUGS.includes(activeSlug);
+  const isNoteOnly = NOTE_ONLY_SLUGS.includes(activeSlug);
   const hasItemList = Boolean(itemKind);
 
   const load = useCallback(async () => {
@@ -135,10 +142,10 @@ export default function FreeResourcesPanel() {
     });
     setSavingPage(false);
     if (!res.ok) {
-      setToast(res.error || "Page save failed — run docs/free-resources-setup.sql");
+      setToast(res.error || "Page save failed. Run docs/free-resources-setup.sql");
       return;
     }
-    setToast(pagePublished ? "Page saved & published" : "Page saved (draft)");
+    setToast(pagePublished ? "Page saved and published" : "Page saved (draft)");
     await load();
   }
 
@@ -153,7 +160,7 @@ export default function FreeResourcesPanel() {
       subtitle: null,
       bodyMd: "",
       imagePath: null,
-      meta: emptyMetaFor(itemKind),
+      meta: emptyMetaFor(itemKind, activeSlug),
       featured: false,
       published: false,
       sortOrder: items.length * 10,
@@ -165,7 +172,7 @@ export default function FreeResourcesPanel() {
     setItTitle("");
     setItSubtitle("");
     setItBody("");
-    setItMeta(emptyMetaFor(itemKind));
+    setItMeta(emptyMetaFor(itemKind, activeSlug));
     setItPublished(false);
     setItFeatured(false);
     setItDeadline("");
@@ -180,7 +187,7 @@ export default function FreeResourcesPanel() {
     setItTitle(item.title);
     setItSubtitle(item.subtitle || "");
     setItBody(item.bodyMd || "");
-    setItMeta({ ...emptyMetaFor(item.kind), ...item.meta });
+    setItMeta({ ...emptyMetaFor(item.kind, activeSlug), ...item.meta });
     setItPublished(item.published);
     setItFeatured(item.featured);
     setItDeadline(item.deadline || "");
@@ -221,7 +228,7 @@ export default function FreeResourcesPanel() {
     });
     setSavingItem(false);
     if (!res.ok) {
-      setToast(res.error || "Item save failed — run docs/free-resources-setup.sql");
+      setToast(res.error || "Item save failed. Run docs/free-resources-setup.sql");
       return;
     }
     setToast(itPublished ? "Item published" : "Item saved as draft");
@@ -245,6 +252,13 @@ export default function FreeResourcesPanel() {
     setItMeta((m) => ({ ...m, [key]: value }));
   }
 
+  const addLabel =
+    itemKind === "success_story"
+      ? "Add story"
+      : itemKind === "scholarship"
+        ? "Add opportunity"
+        : "Add note";
+
   return (
     <div className="space-y-5">
       {toast && (
@@ -260,10 +274,15 @@ export default function FreeResourcesPanel() {
             Free resources
           </h2>
           <p className="text-sm text-wisdom-muted mt-0.5 max-w-xl">
-            Success stories and scholarship opportunities — each card has its own photo. Add one, publish, then add the next.
+            Stories and scholarships are full cards. University, department, campus life, and study
+            technique notes only append at the end of the hard-coded guides.
           </p>
         </div>
-        <button type="button" onClick={load} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/12 text-sm">
+        <button
+          type="button"
+          onClick={load}
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/12 text-sm"
+        >
           <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
           Refresh
         </button>
@@ -273,6 +292,7 @@ export default function FreeResourcesPanel() {
         {FREE_RESOURCE_SLUGS.map((slug) => {
           const page = pages.find((p) => p.slug === slug);
           const isActive = activeSlug === slug;
+          const noteOnly = NOTE_ONLY_SLUGS.includes(slug);
           return (
             <button
               key={slug}
@@ -284,7 +304,9 @@ export default function FreeResourcesPanel() {
                   : "border-white/10 text-wisdom-muted hover:text-white hover:border-white/20"
               }`}
             >
-              {page?.published ? (
+              {noteOnly ? (
+                <StickyNote className="w-3.5 h-3.5 text-amber-300" />
+              ) : page?.published ? (
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
               ) : (
                 <Circle className="w-3.5 h-3.5 opacity-50" />
@@ -295,51 +317,91 @@ export default function FreeResourcesPanel() {
         })}
       </div>
 
-      <div className="rounded-2xl border border-white/12 bg-wisdom-card p-4 sm:p-5 space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
+      {!isNoteOnly && (
+        <div className="rounded-2xl border border-white/12 bg-wisdom-card p-4 sm:p-5 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs uppercase tracking-wider text-wisdom-muted">
               Page settings · <code className="text-cyan-300">{activeSlug}</code>
             </p>
+            <a
+              href={`/academy/${activeSlug}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm text-cyan-300 hover:underline"
+            >
+              Open live page <ExternalLink className="w-3.5 h-3.5" />
+            </a>
           </div>
-          <a href={`/academy/${activeSlug}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm text-cyan-300 hover:underline">
+
+          <div className="grid sm:grid-cols-2 gap-3">
+            <label className={labelCls}>
+              Page title
+              <input className={inputCls} value={pageTitle} onChange={(e) => setPageTitle(e.target.value)} />
+            </label>
+            <label className={labelCls}>
+              Subtitle
+              <input
+                className={inputCls}
+                value={pageSubtitle}
+                onChange={(e) => setPageSubtitle(e.target.value)}
+                placeholder="One line under the title"
+              />
+            </label>
+          </div>
+
+          <label className={labelCls}>
+            {activeSlug === "scholarships" ? "Tips and guidance (Markdown)" : "Intro blurb (Markdown, optional)"}
+            <textarea
+              className={`${inputCls} font-mono leading-relaxed`}
+              rows={activeSlug === "scholarships" ? 10 : 4}
+              value={pageBody}
+              onChange={(e) => setPageBody(e.target.value)}
+              placeholder={"## Heading\n\nYour content…"}
+            />
+          </label>
+
+          <div className="flex flex-wrap items-center gap-4">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={pagePublished}
+                onChange={(e) => setPagePublished(e.target.checked)}
+              />
+              Page published
+            </label>
+            <button
+              type="button"
+              disabled={savingPage}
+              onClick={savePage}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500 text-wisdom-dark text-sm font-bold disabled:opacity-50"
+            >
+              <Save className="w-4 h-4" />
+              {savingPage ? "Saving…" : "Save page"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {isNoteOnly && (
+        <div className="rounded-2xl border border-amber-400/25 bg-amber-500/5 p-4 text-sm text-wisdom-muted">
+          <p className="font-semibold text-amber-200 mb-1 flex items-center gap-2">
+            <StickyNote className="w-4 h-4" />
+            Additive notes only
+          </p>
+          <p>
+            Hard-coded page content stays in code. Notes you publish here appear at the end of the
+            matching card or section on the live page.
+          </p>
+          <a
+            href={`/academy/${activeSlug === "universities" ? "universities" : activeSlug}`}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 text-cyan-300 hover:underline mt-2"
+          >
             Open live page <ExternalLink className="w-3.5 h-3.5" />
           </a>
         </div>
-
-        <div className="grid sm:grid-cols-2 gap-3">
-          <label className={labelCls}>
-            Page title
-            <input className={inputCls} value={pageTitle} onChange={(e) => setPageTitle(e.target.value)} />
-          </label>
-          <label className={labelCls}>
-            Subtitle
-            <input className={inputCls} value={pageSubtitle} onChange={(e) => setPageSubtitle(e.target.value)} placeholder="One line under the title" />
-          </label>
-        </div>
-
-        <label className={labelCls}>
-          {activeSlug === "scholarships" ? "Tips & guidance (Markdown)" : "Intro blurb (Markdown, optional)"}
-          <textarea
-            className={`${inputCls} font-mono leading-relaxed`}
-            rows={activeSlug === "scholarships" ? 10 : 4}
-            value={pageBody}
-            onChange={(e) => setPageBody(e.target.value)}
-            placeholder="## Heading\n\nYour content…"
-          />
-        </label>
-
-        <div className="flex flex-wrap items-center gap-4">
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={pagePublished} onChange={(e) => setPagePublished(e.target.checked)} />
-            Page published
-          </label>
-          <button type="button" disabled={savingPage} onClick={savePage} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500 text-wisdom-dark text-sm font-bold disabled:opacity-50">
-            <Save className="w-4 h-4" />
-            {savingPage ? "Saving…" : "Save page"}
-          </button>
-        </div>
-      </div>
+      )}
 
       {hasItemList && (
         <div className="space-y-3">
@@ -347,13 +409,18 @@ export default function FreeResourcesPanel() {
             <h3 className="font-semibold text-white">
               {itemKind === "success_story" && "Student stories"}
               {itemKind === "scholarship" && "Opportunity listings"}
+              {isNoteOnly && "Published notes"}
               <span className="ml-2 text-sm font-normal text-wisdom-muted">
                 {items.length} · {items.filter((i) => i.published).length} live
               </span>
             </h3>
-            <button type="button" onClick={openNewItem} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500 text-wisdom-dark text-sm font-bold">
+            <button
+              type="button"
+              onClick={openNewItem}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500 text-wisdom-dark text-sm font-bold"
+            >
               <Plus className="w-4 h-4" />
-              {itemKind === "success_story" ? "Add story" : "Add opportunity"}
+              {addLabel}
             </button>
           </div>
 
@@ -366,42 +433,62 @@ export default function FreeResourcesPanel() {
           )}
 
           <ul className="space-y-2">
-            {items.map((item) => (
-              <li key={item.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-white/12 bg-wisdom-card p-3">
-                <div className="w-12 h-12 rounded-xl overflow-hidden bg-white/5 border border-white/10 shrink-0 flex items-center justify-center">
-                  {item.imagePath ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={freeResourcePublicUrl(item.imagePath)} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <ImageIcon className="w-5 h-5 text-wisdom-muted" />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-white truncate flex items-center gap-2">
-                    {item.title}
-                    {item.featured && <Star className="w-3.5 h-3.5 text-amber-300" />}
-                  </p>
-                  <p className="text-xs text-wisdom-muted truncate">
-                    {item.subtitle || item.kind}
-                    {item.deadline ? ` · deadline ${item.deadline}` : ""}
-                    {item.published ? " · published" : " · draft"}
-                  </p>
-                </div>
-                <button type="button" onClick={() => openEditItem(item)} className="px-3 py-1.5 rounded-lg border border-white/12 text-xs font-semibold">
-                  <Pencil className="w-3.5 h-3.5 inline" /> Edit
-                </button>
-                <button type="button" onClick={() => removeItem(item.id)} className="px-3 py-1.5 rounded-lg border border-rose-400/30 text-xs text-rose-300">
-                  <Trash2 className="w-3.5 h-3.5 inline" />
-                </button>
-              </li>
-            ))}
+            {items.map((item) => {
+              const uniId = String(item.meta?.universityId || "");
+              const uni = universities.find((u) => u.id === uniId);
+              return (
+                <li
+                  key={item.id}
+                  className="flex flex-wrap items-center gap-3 rounded-2xl border border-white/12 bg-wisdom-card p-3"
+                >
+                  <div className="w-12 h-12 rounded-xl overflow-hidden bg-white/5 border border-white/10 shrink-0 flex items-center justify-center">
+                    {item.imagePath ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={freeResourcePublicUrl(item.imagePath)}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <ImageIcon className="w-5 h-5 text-wisdom-muted" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-white truncate flex items-center gap-2">
+                      {item.title}
+                      {item.featured && <Star className="w-3.5 h-3.5 text-amber-300" />}
+                    </p>
+                    <p className="text-xs text-wisdom-muted truncate">
+                      {uni ? `${uni.abbr} · ${uni.name}` : item.subtitle || item.kind}
+                      {item.published ? " · published" : " · draft"}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => openEditItem(item)}
+                    className="px-3 py-1.5 rounded-lg border border-white/12 text-xs font-semibold"
+                  >
+                    <Pencil className="w-3.5 h-3.5 inline" /> Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeItem(item.id)}
+                    className="px-3 py-1.5 rounded-lg border border-rose-400/30 text-xs text-rose-300"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 inline" />
+                  </button>
+                </li>
+              );
+            })}
           </ul>
 
           {editing && (
             <div className="rounded-2xl border border-amber-400/30 bg-wisdom-card p-4 sm:p-5 space-y-3">
               <div className="flex justify-between items-center">
                 <h3 className="font-semibold text-white">{isNew ? "New item" : "Edit item"}</h3>
-                <button type="button" onClick={() => setEditing(null)} className="p-2"><X className="w-4 h-4" /></button>
+                <button type="button" onClick={() => setEditing(null)} className="p-2">
+                  <X className="w-4 h-4" />
+                </button>
               </div>
 
               <div className="grid sm:grid-cols-2 gap-3">
@@ -411,31 +498,74 @@ export default function FreeResourcesPanel() {
                 </label>
                 <label className={labelCls}>
                   Subtitle
-                  <input className={inputCls} value={itSubtitle} onChange={(e) => setItSubtitle(e.target.value)} />
+                  <input
+                    className={inputCls}
+                    value={itSubtitle}
+                    onChange={(e) => setItSubtitle(e.target.value)}
+                  />
                 </label>
               </div>
+
+              {activeSlug === "universities" && (
+                <label className={labelCls}>
+                  University *
+                  <select
+                    className={inputCls}
+                    value={String(itMeta.universityId || "")}
+                    onChange={(e) => setMetaField("universityId", e.target.value)}
+                  >
+                    <option value="">Select university…</option>
+                    {universities.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.abbr} · {u.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
 
               {itemKind === "success_story" && (
                 <div className="grid sm:grid-cols-2 gap-3">
                   <label className={labelCls}>
                     Student name
-                    <input className={inputCls} value={String(itMeta.studentName || "")} onChange={(e) => setMetaField("studentName", e.target.value)} />
+                    <input
+                      className={inputCls}
+                      value={String(itMeta.studentName || "")}
+                      onChange={(e) => setMetaField("studentName", e.target.value)}
+                    />
                   </label>
                   <label className={labelCls}>
                     Result / score
-                    <input className={inputCls} value={String(itMeta.result || "")} onChange={(e) => setMetaField("result", e.target.value)} placeholder="e.g. 600/600" />
+                    <input
+                      className={inputCls}
+                      value={String(itMeta.result || "")}
+                      onChange={(e) => setMetaField("result", e.target.value)}
+                      placeholder="e.g. 600/600"
+                    />
                   </label>
                   <label className={labelCls}>
                     Program
-                    <input className={inputCls} value={String(itMeta.program || "")} onChange={(e) => setMetaField("program", e.target.value)} />
+                    <input
+                      className={inputCls}
+                      value={String(itMeta.program || "")}
+                      onChange={(e) => setMetaField("program", e.target.value)}
+                    />
                   </label>
                   <label className={labelCls}>
                     Year
-                    <input className={inputCls} value={String(itMeta.year || "")} onChange={(e) => setMetaField("year", e.target.value)} />
+                    <input
+                      className={inputCls}
+                      value={String(itMeta.year || "")}
+                      onChange={(e) => setMetaField("year", e.target.value)}
+                    />
                   </label>
                   <label className={`${labelCls} sm:col-span-2`}>
                     Quote
-                    <input className={inputCls} value={String(itMeta.quote || "")} onChange={(e) => setMetaField("quote", e.target.value)} />
+                    <input
+                      className={inputCls}
+                      value={String(itMeta.quote || "")}
+                      onChange={(e) => setMetaField("quote", e.target.value)}
+                    />
                   </label>
                 </div>
               )}
@@ -444,33 +574,61 @@ export default function FreeResourcesPanel() {
                 <div className="grid sm:grid-cols-2 gap-3">
                   <label className={labelCls}>
                     Organization
-                    <input className={inputCls} value={String(itMeta.organization || "")} onChange={(e) => setMetaField("organization", e.target.value)} />
+                    <input
+                      className={inputCls}
+                      value={String(itMeta.organization || "")}
+                      onChange={(e) => setMetaField("organization", e.target.value)}
+                    />
                   </label>
                   <label className={labelCls}>
                     Amount
-                    <input className={inputCls} value={String(itMeta.amount || "")} onChange={(e) => setMetaField("amount", e.target.value)} />
+                    <input
+                      className={inputCls}
+                      value={String(itMeta.amount || "")}
+                      onChange={(e) => setMetaField("amount", e.target.value)}
+                    />
                   </label>
                   <label className={labelCls}>
                     Deadline
-                    <input className={inputCls} type="date" value={itDeadline} onChange={(e) => setItDeadline(e.target.value)} />
+                    <input
+                      className={inputCls}
+                      type="date"
+                      value={itDeadline}
+                      onChange={(e) => setItDeadline(e.target.value)}
+                    />
                   </label>
                   <label className={labelCls}>
                     External URL
-                    <input className={inputCls} value={itUrl} onChange={(e) => setItUrl(e.target.value)} placeholder="https://…" />
+                    <input
+                      className={inputCls}
+                      value={itUrl}
+                      onChange={(e) => setItUrl(e.target.value)}
+                      placeholder="https://…"
+                    />
                   </label>
                   <label className={`${labelCls} sm:col-span-2`}>
                     Eligibility
-                    <textarea className={inputCls} rows={2} value={String(itMeta.eligibility || "")} onChange={(e) => setMetaField("eligibility", e.target.value)} />
+                    <textarea
+                      className={inputCls}
+                      rows={2}
+                      value={String(itMeta.eligibility || "")}
+                      onChange={(e) => setMetaField("eligibility", e.target.value)}
+                    />
                   </label>
                 </div>
               )}
 
               <label className={labelCls}>
-                Full text / story (Markdown)
-                <textarea className={`${inputCls} font-mono`} rows={6} value={itBody} onChange={(e) => setItBody(e.target.value)} />
+                {isNoteOnly ? "Note body (Markdown)" : "Full text / story (Markdown)"}
+                <textarea
+                  className={`${inputCls} font-mono`}
+                  rows={6}
+                  value={itBody}
+                  onChange={(e) => setItBody(e.target.value)}
+                />
               </label>
 
-              <div className="grid sm:grid-cols-2 gap-3">
+              {!isNoteOnly && (
                 <label className={labelCls}>
                   Photo
                   <input
@@ -479,29 +637,36 @@ export default function FreeResourcesPanel() {
                     className={`${inputCls} file:mr-3 file:rounded-lg file:border-0 file:bg-cyan-500/20 file:px-3 file:py-1 file:text-cyan-200`}
                     onChange={(e) => setItFile(e.target.files?.[0] || null)}
                   />
-                  {itImagePath && !itFile && (
-                    <p className="mt-1 text-xs text-wisdom-muted truncate">Current: {itImagePath}</p>
-                  )}
                 </label>
-                <div className="flex flex-col gap-2 justify-end">
+              )}
+
+              <div className="flex flex-wrap items-center gap-4">
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={itPublished}
+                    onChange={(e) => setItPublished(e.target.checked)}
+                  />
+                  Published
+                </label>
+                {!isNoteOnly && (
                   <label className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={itPublished} onChange={(e) => setItPublished(e.target.checked)} />
-                    Published
-                  </label>
-                  <label className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={itFeatured} onChange={(e) => setItFeatured(e.target.checked)} />
+                    <input
+                      type="checkbox"
+                      checked={itFeatured}
+                      onChange={(e) => setItFeatured(e.target.checked)}
+                    />
                     Featured
                   </label>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-2 pt-2">
-                <button type="button" disabled={savingItem} onClick={saveItem} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500 text-wisdom-dark text-sm font-bold disabled:opacity-50">
+                )}
+                <button
+                  type="button"
+                  disabled={savingItem}
+                  onClick={saveItem}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500 text-wisdom-dark text-sm font-bold disabled:opacity-50"
+                >
                   <Save className="w-4 h-4" />
-                  {savingItem ? "Saving…" : isNew ? "Create" : "Update"}
-                </button>
-                <button type="button" onClick={() => setEditing(null)} className="px-4 py-2 rounded-xl border border-white/12 text-sm">
-                  Cancel
+                  {savingItem ? "Saving…" : "Save item"}
                 </button>
               </div>
             </div>
