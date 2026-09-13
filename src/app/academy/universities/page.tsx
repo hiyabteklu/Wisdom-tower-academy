@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Search,
@@ -18,6 +18,9 @@ import {
   Mountain,
   Target,
   BookOpen,
+  StickyNote,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import CategoryBackButton from "@/components/CategoryBackButton";
 import {
@@ -27,15 +30,47 @@ import {
   type University,
   type Region,
 } from "@/data/universities";
+import {
+  listFreeResourceItems,
+  type FreeResourceItem,
+} from "@/lib/free-resources";
+import { simpleMarkdownToHtml } from "@/lib/format-content";
+
+function AdminNotesBlock({ notes }: { notes: FreeResourceItem[] }) {
+  if (!notes.length) return null;
+  return (
+    <div className="rounded-xl border border-amber-400/30 bg-amber-500/5 p-4 space-y-3">
+      <p className="text-xs font-semibold uppercase tracking-wider text-amber-200/90 flex items-center gap-2">
+        <StickyNote className="w-3.5 h-3.5" />
+        Extra notes
+      </p>
+      {notes.map((n) => (
+        <div key={n.id} className="space-y-1">
+          {n.title && (
+            <p className="text-sm font-semibold text-white/90">{n.title}</p>
+          )}
+          {n.bodyMd && (
+            <div
+              className="formatted-body text-sm text-wisdom-muted leading-relaxed font-reading"
+              dangerouslySetInnerHTML={{ __html: simpleMarkdownToHtml(n.bodyMd) }}
+            />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function UniversityCard({
   uni,
   expanded,
   onToggle,
+  notes,
 }: {
   uni: University;
   expanded: boolean;
   onToggle: () => void;
+  notes: FreeResourceItem[];
 }) {
   return (
     <article
@@ -43,76 +78,103 @@ function UniversityCard({
         ${
           expanded
             ? "is-expanded border-wisdom-cyan/40 bg-wisdom-card shadow-[0_0_40px_-12px_rgba(34,211,238,0.35)] md:col-span-2"
-            : "border-white/12 bg-wisdom-card/90 hover:border-wisdom-cyan/25 hover:bg-wisdom-card"
+            : "border-white/12 bg-wisdom-card/90 hover:border-wisdom-cyan/25 hover:bg-wisdom-card hover:-translate-y-0.5"
         }`}
     >
-      <button
-        type="button"
-        onClick={onToggle}
-        className="w-full text-left p-5 sm:p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-wisdom-cyan/50 rounded-2xl"
-        aria-expanded={expanded}
-      >
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2 mb-2">
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-bold bg-wisdom-cyan/15 text-wisdom-cyan border border-wisdom-cyan/25">
-                {uni.abbr}
-              </span>
-              {uni.featured && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-semibold uppercase tracking-wide bg-amber-500/15 text-amber-300 border border-amber-500/25">
-                  <Star className="w-3 h-3" />
-                  Featured
+      <div className="w-full text-left p-5 sm:p-6">
+        <button
+          type="button"
+          onClick={onToggle}
+          className="w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-wisdom-cyan/50 rounded-xl"
+          aria-expanded={expanded}
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-bold bg-wisdom-cyan/15 text-wisdom-cyan border border-wisdom-cyan/25">
+                  {uni.abbr}
                 </span>
-              )}
-              {uni.detailed && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-semibold uppercase tracking-wide bg-violet-500/15 text-violet-300 border border-violet-500/25">
-                  Full guide
-                </span>
-              )}
-              <span className="text-xs text-wisdom-muted">{uni.region}</span>
+                {uni.featured && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-semibold uppercase tracking-wide bg-amber-500/15 text-amber-300 border border-amber-500/25">
+                    <Star className="w-3 h-3" />
+                    Featured
+                  </span>
+                )}
+                {uni.detailed && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-semibold uppercase tracking-wide bg-violet-500/15 text-violet-300 border border-violet-500/25">
+                    Full guide
+                  </span>
+                )}
+                <span className="text-xs text-wisdom-muted">{uni.region}</span>
+              </div>
+              <h3 className="font-display text-lg sm:text-xl font-bold text-white group-hover:text-wisdom-cyan transition-colors leading-snug">
+                {uni.name}
+              </h3>
+              <p className="mt-1.5 flex items-center gap-1.5 text-sm text-wisdom-muted">
+                <MapPin className="w-3.5 h-3.5 shrink-0 text-wisdom-cyan/70" />
+                <span className="truncate">{uni.location}</span>
+              </p>
             </div>
-            <h3 className="font-display text-lg sm:text-xl font-bold text-white group-hover:text-wisdom-cyan transition-colors leading-snug">
-              {uni.name}
-            </h3>
-            <p className="mt-1.5 flex items-center gap-1.5 text-sm text-wisdom-muted">
-              <MapPin className="w-3.5 h-3.5 shrink-0 text-wisdom-cyan/70" />
-              <span className="truncate">{uni.location}</span>
-            </p>
-            {uni.website && uni.website !== "#" && (
-              <a
-                href={uni.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="mt-2 inline-flex items-center gap-1 text-xs text-wisdom-cyan/80 hover:text-wisdom-cyan"
-              >
-                <ExternalLink className="w-3 h-3" />
-                Official site
-              </a>
-            )}
+            <div
+              className={`shrink-0 p-2 rounded-xl border border-white/10 bg-wisdom-dark/40 text-wisdom-muted transition-transform duration-300 ${
+                expanded ? "rotate-180 text-wisdom-cyan border-wisdom-cyan/30" : ""
+              }`}
+            >
+              <ChevronDown className="w-5 h-5" />
+            </div>
           </div>
-          <div
-            className={`shrink-0 p-2 rounded-xl border border-white/10 bg-wisdom-dark/40 text-wisdom-muted transition-transform duration-300 ${
-              expanded ? "rotate-180 text-wisdom-cyan border-wisdom-cyan/30" : ""
-            }`}
-          >
-            <ChevronDown className="w-5 h-5" />
-          </div>
-        </div>
 
-        {!expanded && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {(uni.knownFor ?? uni.strengths).slice(0, 3).map((k) => (
-              <span
-                key={k}
-                className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] text-wisdom-muted"
-              >
-                {k}
-              </span>
-            ))}
-          </div>
+          {!expanded && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {(uni.knownFor ?? uni.strengths).slice(0, 3).map((k) => (
+                <span
+                  key={k}
+                  className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] text-wisdom-muted"
+                >
+                  {k}
+                </span>
+              ))}
+            </div>
+          )}
+        </button>
+
+        {uni.website && uni.website !== "#" && (
+          <a
+            href={uni.website}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 inline-flex items-center gap-1 text-xs text-wisdom-cyan/80 hover:text-wisdom-cyan"
+          >
+            <ExternalLink className="w-3 h-3" />
+            Official site
+          </a>
         )}
-      </button>
+
+        <div className="mt-4">
+          <button
+            type="button"
+            onClick={onToggle}
+            className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold transition-all duration-300
+              ${
+                expanded
+                  ? "border border-white/15 bg-wisdom-dark/60 text-white hover:border-white/25"
+                  : "bg-wisdom-cyan text-wisdom-dark shadow-[0_0_24px_-6px_rgba(34,211,238,0.55)] hover:brightness-110"
+              }`}
+          >
+            {expanded ? (
+              <>
+                <EyeOff className="w-4 h-4" />
+                Show less
+              </>
+            ) : (
+              <>
+                <Eye className="w-4 h-4" />
+                View more
+              </>
+            )}
+          </button>
+        </div>
+      </div>
 
       <div
         className={`grid transition-[grid-template-rows] duration-500 ease-out ${
@@ -163,7 +225,7 @@ function UniversityCard({
                   <Thermometer className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-1">Weather & climate</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-1">Weather and climate</p>
                   <p className="text-sm text-wisdom-muted leading-relaxed font-reading">{uni.climate}</p>
                 </div>
               </div>
@@ -259,6 +321,8 @@ function UniversityCard({
             {uni.distanceNote && (
               <p className="text-xs text-wisdom-muted/80 border-t border-white/8 pt-3 font-reading">{uni.distanceNote}</p>
             )}
+
+            <AdminNotesBlock notes={notes} />
           </div>
         </div>
       </div>
@@ -272,6 +336,32 @@ export default function UniversitiesPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
   const [showDetailedOnly, setShowDetailedOnly] = useState(false);
+  const [allNotes, setAllNotes] = useState<FreeResourceItem[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { items } = await listFreeResourceItems({
+        pageSlug: "universities",
+        publishedOnly: true,
+      });
+      if (!cancelled) setAllNotes(items);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const notesByUni = useMemo(() => {
+    const map: Record<string, FreeResourceItem[]> = {};
+    for (const n of allNotes) {
+      const id = String(n.meta?.universityId ?? "");
+      if (!id) continue;
+      if (!map[id]) map[id] = [];
+      map[id].push(n);
+    }
+    return map;
+  }, [allNotes]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -413,6 +503,7 @@ export default function UniversitiesPage() {
                 uni={uni}
                 expanded={expandedId === uni.id}
                 onToggle={() => setExpandedId((id) => (id === uni.id ? null : uni.id))}
+                notes={notesByUni[uni.id] || []}
               />
             ))}
           </div>
@@ -423,7 +514,7 @@ export default function UniversitiesPage() {
             Choosing where you will study
           </h2>
           <p className="text-wisdom-muted max-w-lg mx-auto mb-6 leading-relaxed font-reading">
-            Placement is decided centrally from your exam results and preferences — but knowing
+            Placement is decided centrally from your exam results and preferences, but knowing
             climate, distance, and campus culture helps you rank preferences with clearer eyes.
           </p>
           <Link
