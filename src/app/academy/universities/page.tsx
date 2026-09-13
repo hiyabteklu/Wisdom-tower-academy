@@ -22,6 +22,7 @@ import {
 import CategoryBackButton from "@/components/CategoryBackButton";
 import {
   universities,
+  universitiesIntro,
   regions,
   type University,
   type Region,
@@ -41,7 +42,7 @@ function UniversityCard({
       className={`card-3d group relative overflow-hidden rounded-2xl border transition-all duration-500 ease-out
         ${
           expanded
-            ? "border-wisdom-cyan/40 bg-wisdom-card shadow-[0_0_40px_-12px_rgba(34,211,238,0.35)] md:col-span-2"
+            ? "is-expanded border-wisdom-cyan/40 bg-wisdom-card shadow-[0_0_40px_-12px_rgba(34,211,238,0.35)] md:col-span-2"
             : "border-white/12 bg-wisdom-card/90 hover:border-wisdom-cyan/25 hover:bg-wisdom-card"
         }`}
     >
@@ -151,7 +152,7 @@ function UniversityCard({
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-1">Campuses</p>
-                  <p className="text-sm text-wisdom-muted leading-relaxed">{uni.campuses}</p>
+                  <p className="text-sm text-wisdom-muted leading-relaxed font-reading">{uni.campuses}</p>
                 </div>
               </div>
             )}
@@ -163,7 +164,7 @@ function UniversityCard({
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-1">Weather & climate</p>
-                  <p className="text-sm text-wisdom-muted leading-relaxed">{uni.climate}</p>
+                  <p className="text-sm text-wisdom-muted leading-relaxed font-reading">{uni.climate}</p>
                 </div>
               </div>
             )}
@@ -197,7 +198,7 @@ function UniversityCard({
                 <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-2">Strengths</p>
                 <ul className="space-y-1.5">
                   {uni.strengths.map((s) => (
-                    <li key={s} className="text-sm text-wisdom-muted flex gap-2 leading-relaxed">
+                    <li key={s} className="text-sm text-wisdom-muted flex gap-2 leading-relaxed font-reading">
                       <span className="text-wisdom-cyan mt-1.5 shrink-0">•</span>
                       <span>{s}</span>
                     </li>
@@ -215,7 +216,7 @@ function UniversityCard({
                   {uni.whatToExpect.map((item) => (
                     <li
                       key={item}
-                      className="text-sm text-wisdom-muted leading-relaxed pl-3 border-l-2 border-wisdom-cyan/25"
+                      className="text-sm text-wisdom-muted leading-relaxed pl-3 border-l-2 border-wisdom-cyan/25 font-reading"
                     >
                       {item}
                     </li>
@@ -231,7 +232,7 @@ function UniversityCard({
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-1">Who thrives here</p>
-                  <p className="text-sm text-wisdom-muted leading-relaxed">{uni.studentFit}</p>
+                  <p className="text-sm text-wisdom-muted leading-relaxed font-reading">{uni.studentFit}</p>
                 </div>
               </div>
             )}
@@ -245,7 +246,7 @@ function UniversityCard({
                   <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-2">Tips for new students</p>
                   <ul className="space-y-1.5">
                     {uni.tips.map((tip) => (
-                      <li key={tip} className="text-sm text-wisdom-muted flex gap-2 leading-relaxed">
+                      <li key={tip} className="text-sm text-wisdom-muted flex gap-2 leading-relaxed font-reading">
                         <span className="text-amber-300/80 mt-1.5 shrink-0">•</span>
                         <span>{tip}</span>
                       </li>
@@ -256,7 +257,7 @@ function UniversityCard({
             )}
 
             {uni.distanceNote && (
-              <p className="text-xs text-wisdom-muted/80 border-t border-white/8 pt-3">{uni.distanceNote}</p>
+              <p className="text-xs text-wisdom-muted/80 border-t border-white/8 pt-3 font-reading">{uni.distanceNote}</p>
             )}
           </div>
         </div>
@@ -305,25 +306,15 @@ export default function UniversitiesPage() {
             <span className="text-white">Ethiopian </span>
             <span className="text-wisdom-cyan">Universities</span>
           </h1>
-          <p className="text-wisdom-muted text-lg max-w-2xl leading-relaxed">
-            Distance, climate, campuses, and first-year life — one university at a time.
+          <p className="text-wisdom-muted text-lg max-w-2xl leading-relaxed font-reading">
+            {universitiesIntro.subtitle}
           </p>
-          <div className="mt-5 max-w-2xl space-y-3 text-[15px] text-wisdom-muted leading-relaxed">
-            <p>
-              Most people pick a university the way they pick a lottery ticket. They hear a name,
-              feel a flicker of pride or fear, and let that flicker decide four years of their life.
-            </p>
-            <p>
-              That is backwards. A university is not a prize you win. It is a place you will wake up in,
-              eat in, get sick in, fall behind in, and rebuild yourself in, semester after semester.
-              The name on the certificate matters far less than whether the place fits the person who
-              has to actually live inside it.
-            </p>
-            <p>
-              Rankings measure the institution. They do not measure you. Sit with distance, climate,
-              what the place is known for in <em className="text-white/80 not-italic">your</em> field,
-              daily campus life, and who tends to thrive there — then use the details below the way
-              you'd interrogate a decision that will shape your next four years.
+          <div className="mt-5 max-w-2xl space-y-3 text-[15px] text-wisdom-muted leading-relaxed font-reading">
+            {universitiesIntro.paragraphs.map((p) => (
+              <p key={p.slice(0, 48)}>{p}</p>
+            ))}
+            <p className="text-white/75 italic border-l-2 border-wisdom-cyan/40 pl-3">
+              {universitiesIntro.closing}
             </p>
           </div>
           <div className="mt-6 flex flex-wrap gap-3 text-sm">
@@ -415,7 +406,7 @@ export default function UniversitiesPage() {
             </button>
           </div>
         ) : (
-          <div className="perspective-scene grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
             {filtered.map((uni) => (
               <UniversityCard
                 key={uni.id}
@@ -431,25 +422,17 @@ export default function UniversitiesPage() {
           <h2 className="font-display text-xl md:text-2xl font-bold mb-3">
             Choosing where you will study
           </h2>
-          <p className="text-wisdom-muted max-w-lg mx-auto mb-6 leading-relaxed">
+          <p className="text-wisdom-muted max-w-lg mx-auto mb-6 leading-relaxed font-reading">
             Placement is decided centrally from your exam results and preferences — but knowing
-            climate, distance, and campus culture helps you rank options wisely.
+            climate, distance, and campus culture helps you rank preferences with clearer eyes.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link
-              href="/academy/uat"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-wisdom-cyan text-wisdom-dark font-semibold hover:bg-wisdom-cyan-dark transition-colors"
-            >
-              UAT preparation
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-            <Link
-              href="/academy"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-white/15 text-sm font-medium hover:border-white/30 transition-colors"
-            >
-              Back to Academy
-            </Link>
-          </div>
+          <Link
+            href="/academy"
+            className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-wisdom-cyan text-wisdom-dark font-bold text-sm"
+          >
+            Back to Academy
+            <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
       </div>
     </div>
