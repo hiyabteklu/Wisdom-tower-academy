@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Users, CheckCircle2, Shield } from "lucide-react";
+import { Users, CheckCircle2, Shield, FileText } from "lucide-react";
 import { formatEtb, type AcademyPackage } from "@/data/packages";
 import { listSellablePackages } from "@/lib/catalog";
 import AddToCartButton from "@/components/AddToCartButton";
@@ -30,7 +30,13 @@ function PackageGrid({ list }: { list: AcademyPackage[] }) {
             </div>
           </div>
           <div className="p-5 flex flex-col flex-1">
-            <p className="text-sm text-wisdom-muted leading-relaxed mb-3">{pkg.description}</p>
+            <div className="mb-3 rounded-xl border border-white/8 bg-wisdom-dark/30 p-3">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-400/90 mb-1 inline-flex items-center gap-1">
+                <FileText className="w-3 h-3" />
+                About this package
+              </p>
+              <p className="text-sm text-wisdom-muted leading-relaxed">{pkg.description}</p>
+            </div>
             <ul className="space-y-1.5 mb-3">
               {pkg.includes.map((line) => (
                 <li key={line} className="flex gap-2 text-xs text-white/85">
@@ -86,7 +92,9 @@ export default function PackagesCatalog() {
       {grades.length > 0 && (
         <>
           <h2 className="font-display text-xl font-bold text-white mb-4">Grades 9–12</h2>
-          <p className="text-sm text-wisdom-muted mb-6">Each grade is its own package.</p>
+          <p className="text-sm text-wisdom-muted mb-6">
+            Each grade is its own package. Prices: G9–G11 250 ETB · G12 400 ETB.
+          </p>
           <PackageGrid list={grades} />
         </>
       )}
