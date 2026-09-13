@@ -1,14 +1,12 @@
 import CategoryBackButton from "@/components/CategoryBackButton";
-import BranchLeaderboard from "@/components/BranchLeaderboard";
-import AcademicResultSaver from "@/components/AcademicResultSaver";
 import PackageOfferBanner from "@/components/PackageOfferBanner";
-import ResourceHubGrid from "@/components/ResourceHubGrid";
-import { FileCheck2 } from "lucide-react";
+import { FileCheck2, Clock } from "lucide-react";
+import { COMING_SOON_BODY, COMING_SOON_TITLE } from "@/data/content-availability";
 
 export default function ExitExamPage() {
   return (
     <div className="relative min-h-[80vh]">
-      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
+      <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
         <CategoryBackButton fallback="/academy" />
 
         <div className="mb-8 animate-fade-up text-center sm:text-left">
@@ -21,27 +19,31 @@ export default function ExitExamPage() {
             </p>
           </div>
           <h1 className="font-display text-4xl md:text-5xl font-extrabold tracking-tight mb-3">
-            <span className="text-fuchsia-400">Exit Exam</span> resources
+            <span className="text-fuchsia-400">Exit Exam</span> pathway
           </h1>
+          <p className="text-wisdom-muted text-base leading-relaxed max-w-xl">
+            Exit exam prep will open by department. Shared hubs are not used here while content is
+            prepared.
+          </p>
         </div>
 
-        <div className="max-w-2xl mx-auto sm:mx-0 mb-8">
+        <div className="mb-8">
           <PackageOfferBanner packageId="exit-exam" />
         </div>
 
-        <div className="max-w-2xl mx-auto sm:mx-0">
-          <BranchLeaderboard branchName="Exit Exam" accent="text-fuchsia-400" />
+        <div className="rounded-3xl border border-fuchsia-400/25 bg-wisdom-card p-8 sm:p-10 text-center shadow-card-3d">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-fuchsia-400/30 bg-fuchsia-500/10 text-fuchsia-300">
+            <Clock className="w-7 h-7" />
+          </div>
+          <h2 className="font-display text-xl font-bold text-white mb-2">{COMING_SOON_TITLE}</h2>
+          <p className="text-sm text-wisdom-muted leading-relaxed max-w-md mx-auto">
+            {COMING_SOON_BODY}
+          </p>
+          <p className="mt-4 text-xs text-wisdom-muted">
+            Leaderboard, progress tracker, books, and practice hubs stay off this page until
+            department materials ship.
+          </p>
         </div>
-
-        <div className="max-w-2xl mx-auto sm:mx-0 mb-12">
-          <AcademicResultSaver scopeId="exit-exam" scopeLabel="Exit Exam" accent="text-fuchsia-400" />
-        </div>
-
-        <p className="text-sm font-semibold tracking-[0.15em] uppercase text-wisdom-muted mb-4 text-center sm:text-left">
-          Learning hubs
-        </p>
-
-        <ResourceHubGrid basePath="/academy/exit-exam" />
       </div>
     </div>
   );

@@ -1,15 +1,23 @@
 /**
  * Live vs uploading + purchase gates.
  *
- * Freshman + ECE Semester 1 are free for any signed-in user (see ownership.ts).
- * ECE Semester 2 = coming soon (not for sale).
- * No full-year ECE package.
+ * Sellable: G9–12, UAT, COC, Freshman, ECE Sem 1.
+ * Coming soon (no hubs): GAT, Exit Exam, ECE Sem 2.
  */
 
 export const PURCHASABLE_PACKAGE_IDS = new Set([
+  "grade-9",
+  "grade-10",
+  "grade-11",
+  "grade-12",
   "freshman",
+  "uat",
+  "coc",
   "ece-y3-sem-1",
 ]);
+
+/** Pathways that intentionally have no resource hubs yet */
+export const COMING_SOON_PACKAGE_IDS = new Set(["gat", "exit-exam", "ece-y3-sem-2"]);
 
 export type HubLockMode = "open" | "require_purchase" | "coming_soon";
 
@@ -29,16 +37,28 @@ export function unlockPackageIdsForPath(basePath: string): string[] {
   if (basePath.includes("/academy/freshman")) {
     return ["freshman"];
   }
+  if (basePath.includes("/academy/grades/9")) return ["grade-9"];
+  if (basePath.includes("/academy/grades/10")) return ["grade-10"];
+  if (basePath.includes("/academy/grades/11")) return ["grade-11"];
+  if (basePath.includes("/academy/grades/12")) return ["grade-12"];
+  if (basePath.includes("/academy/uat")) return ["uat"];
+  if (basePath.includes("/academy/coc")) return ["coc"];
   if (basePath.includes("/special-packages/electrical-computer-engineering")) {
     if (basePath.includes("/sem-1")) return ["ece-y3-sem-1"];
-    // sem-2 not sellable yet
     return [];
   }
   return [];
 }
 
 export function getHubLockMode(basePath: string): HubLockMode {
+  if (basePath.includes("/academy/gat") || basePath.includes("/academy/exit-exam")) {
+    return "coming_soon";
+  }
   if (basePath.includes("/academy/freshman")) return "require_purchase";
+  if (basePath.includes("/academy/grades/")) return "require_purchase";
+  if (basePath.includes("/academy/uat") || basePath.includes("/academy/coc")) {
+    return "require_purchase";
+  }
   if (basePath.includes("/special-packages") && basePath.includes("/sem-1")) {
     return "require_purchase";
   }
@@ -53,10 +73,10 @@ export function areHubsReady(basePath: string): boolean {
   return getHubLockMode(basePath) === "open";
 }
 
-export const COMING_SOON_TITLE = "Resources are being uploaded";
+export const COMING_SOON_TITLE = "Coming soon";
 export const COMING_SOON_BODY =
-  "This learning hub is almost ready. Check back soon — we’re adding books, short notes, flashcards, and practice materials.";
+  "This pathway will open by department and field. Resource hubs (books, leaderboard, progress, and practice) are not live yet — check back when materials are ready.";
 
-export const PURCHASE_TITLE = "Sign in required";
+export const PURCHASE_TITLE = "Package required";
 export const PURCHASE_BODY_FRESHMAN =
-  "Create a free account to unlock every Freshman subject — books, short notes, flashcards, question banks, and exams. No payment needed for registered students.";
+  "Unlock this pathway with the matching package to access books, short notes, flashcards, question banks, and exams.";

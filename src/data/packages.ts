@@ -1,6 +1,7 @@
 /**
- * Academy packages — Freshman 300; ECE S1 300 only (no full-year).
- * Other tracks 500 (not for sale until ready).
+ * Academy packages — prices updated Sep 2026.
+ * G9–11 250 · G12 400 · COC 250 · UAT 300 · Freshman 350 · ECE S1 300.
+ * GAT & Exit Exam pathways are not sold yet (coming soon hubs).
  */
 
 export type AcademyPackage = {
@@ -16,8 +17,8 @@ export type AcademyPackage = {
   group: "grades" | "branch" | "special";
 };
 
-export const PACKAGE_PRICE_ETB = 500;
-export const FRESHMAN_PRICE_ETB = 300;
+export const PACKAGE_PRICE_ETB = 250;
+export const FRESHMAN_PRICE_ETB = 350;
 
 export const packageImages = {
   "grade-9-12": "/images/packages/grade-9-12_9842aa.jpeg",
@@ -38,10 +39,10 @@ export const academyPackages: AcademyPackage[] = [
     name: "Grade 9 Package",
     shortName: "G9",
     description: "Foundation year — core subjects, resources, and practice for Grade 9.",
-    priceEtb: PACKAGE_PRICE_ETB,
+    priceEtb: 250,
     href: "/academy/grades/9",
     image: packageImages["grade-9"],
-    includes: ["Grade 9 resource hubs", "Books · practice · exams path", "500 ETB one-time"],
+    includes: ["Grade 9 resource hubs", "Books · practice · exams path", "250 ETB one-time"],
     enrolledLabel: "320+ students",
     group: "grades",
   },
@@ -50,10 +51,10 @@ export const academyPackages: AcademyPackage[] = [
     name: "Grade 10 Package",
     shortName: "G10",
     description: "Build depth — practice and concept mastery for Grade 10.",
-    priceEtb: PACKAGE_PRICE_ETB,
+    priceEtb: 250,
     href: "/academy/grades/10",
     image: packageImages["grade-10"],
-    includes: ["Grade 10 resource hubs", "Books · practice · exams path", "500 ETB one-time"],
+    includes: ["Grade 10 resource hubs", "Books · practice · exams path", "250 ETB one-time"],
     enrolledLabel: "410+ students",
     group: "grades",
   },
@@ -62,10 +63,10 @@ export const academyPackages: AcademyPackage[] = [
     name: "Grade 11 Package",
     shortName: "G11",
     description: "Advance — exam readiness and application for Grade 11.",
-    priceEtb: PACKAGE_PRICE_ETB,
+    priceEtb: 250,
     href: "/academy/grades/11",
     image: packageImages["grade-11"],
-    includes: ["Grade 11 resource hubs", "Books · practice · exams path", "500 ETB one-time"],
+    includes: ["Grade 11 resource hubs", "Books · practice · exams path", "250 ETB one-time"],
     enrolledLabel: "480+ students",
     group: "grades",
   },
@@ -74,10 +75,10 @@ export const academyPackages: AcademyPackage[] = [
     name: "Grade 12 Package",
     shortName: "G12",
     description: "Peak year — finals focus and polish for Grade 12.",
-    priceEtb: PACKAGE_PRICE_ETB,
+    priceEtb: 400,
     href: "/academy/grades/12",
     image: packageImages["grade-12"],
-    includes: ["Grade 12 resource hubs", "Books · practice · exams path", "500 ETB one-time"],
+    includes: ["Grade 12 resource hubs", "Books · practice · exams path", "400 ETB one-time"],
     enrolledLabel: "560+ students",
     group: "grades",
   },
@@ -93,7 +94,7 @@ export const academyPackages: AcademyPackage[] = [
     includes: [
       "All freshman subjects",
       "Books · notes · flashcards · exams",
-      "300 ETB one-time",
+      "350 ETB one-time",
     ],
     enrolledLabel: "890+ students",
     group: "branch",
@@ -103,10 +104,10 @@ export const academyPackages: AcademyPackage[] = [
     name: "UAT Package",
     shortName: "UAT",
     description: "University Admission Test preparation — practice, mocks, and strategies.",
-    priceEtb: PACKAGE_PRICE_ETB,
+    priceEtb: 300,
     href: "/academy/uat",
     image: packageImages.uat,
-    includes: ["UAT track", "Timed practice style", "500 ETB one-time"],
+    includes: ["UAT track", "Timed practice style", "300 ETB one-time"],
     enrolledLabel: "610+ students",
     group: "branch",
   },
@@ -114,12 +115,13 @@ export const academyPackages: AcademyPackage[] = [
     id: "gat",
     name: "GAT Package",
     shortName: "GAT",
-    description: "Graduate Admission Test coaching — quantitative, verbal, and analytical.",
-    priceEtb: PACKAGE_PRICE_ETB,
+    description:
+      "Graduate Admission Test pathway — resources organized by field and department. Content is being prepared.",
+    priceEtb: 300,
     href: "/academy/gat",
     image: packageImages.gat,
-    includes: ["GAT track", "Section drills", "500 ETB one-time"],
-    enrolledLabel: "420+ students",
+    includes: ["Coming soon", "Department-focused tracks", "Not for sale yet"],
+    enrolledLabel: "Coming soon",
     group: "branch",
   },
   {
@@ -127,10 +129,10 @@ export const academyPackages: AcademyPackage[] = [
     name: "COC Package",
     shortName: "COC",
     description: "Certificate of Competency preparation — skills assessment and exam readiness.",
-    priceEtb: PACKAGE_PRICE_ETB,
+    priceEtb: 250,
     href: "/academy/coc",
     image: packageImages.coc,
-    includes: ["COC track", "Competency practice", "500 ETB one-time"],
+    includes: ["COC track", "Competency practice", "250 ETB one-time"],
     enrolledLabel: "380+ students",
     group: "branch",
   },
@@ -138,12 +140,13 @@ export const academyPackages: AcademyPackage[] = [
     id: "exit-exam",
     name: "Exit Exam Package",
     shortName: "Exit Exam",
-    description: "University exit exam preparation with structured review and practice tests.",
-    priceEtb: PACKAGE_PRICE_ETB,
+    description:
+      "University exit exam pathway by department. Structured review will open when materials are ready.",
+    priceEtb: 300,
     href: "/academy/exit-exam",
     image: packageImages["exit-exam"],
-    includes: ["Exit exam track", "Structured review", "500 ETB one-time"],
-    enrolledLabel: "510+ students",
+    includes: ["Coming soon", "Department tracks", "Not for sale yet"],
+    enrolledLabel: "Coming soon",
     group: "branch",
   },
   {

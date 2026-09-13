@@ -1,27 +1,54 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ShoppingBag,
   Trash2,
   ArrowRight,
   BookOpen,
+  CheckSquare,
+  Square,
 } from "lucide-react";
 import {
   getCartPackages,
   removeFromCart,
-  cartTotalEtb,
   CART_EVENT,
 } from "@/lib/cart";
 import { formatEtb, type AcademyPackage } from "@/data/packages";
 
+const SELECT_KEY = "wt_cart_checkout_ids";
+
 export default function CartPage() {
+  const router = useRouter();
   const [items, setItems] = useState<AcademyPackage[]>([]);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [ready, setReady] = useState(false);
 
   function sync() {
-    setItems(getCartPackages());
+    const pkgs = getCartPackages();
+    setItems(pkgs);
+    setSelected((prev) => {
+      const next = new Set<string>();
+      for (const p of pkgs) {
+        // Keep previous selection if still in cart; otherwise select new items by default
+        if (prev.size === 0 || prev.has(p.id)) next.add(p.id);
+      }
+      // If cart grew with new ids while some were selected, select new ones too
+      if (prev.size > 0) {
+        for (const p of pkgs) {
+          if (!prev.has(p.id) && !Array.from(prev).every((id) => pkgs.some((x) => x.id === id))) {
+            // new item: select it
+            next.add(p.id);
+          }
+        }
+      }
+      if (next.size === 0 && pkgs.length > 0) {
+        pkgs.forEach((p) => next.add(p.id));
+      }
+      return next;
+    });
     setReady(true);
   }
 
@@ -35,7 +62,41 @@ export default function CartPage() {
     };
   }, []);
 
-  const total = cartTotalEtb();
+  const selectedPackages = useMemo(
+    () => items.filter((p) => selected.has(p.id)),
+    [items, selected]
+  );
+  const total = selectedPackages.reduce((sum, p) => sum + p.priceEtb, 0);
+  const allSelected = items.length > 0 && selected.size === items.length;
+
+  function toggle(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    if (allSelected) setSelected(new Set());
+    else setSelected(new Set(items.map((p) => p.id)));
+  }
+
+  function proceed() {
+    if (selectedPackages.length === 0) return;
+    const ids = selectedPackages.map((p) => p.id);
+    try {
+      sessionStorage.setItem(SELECT_KEY, JSON.stringify(ids));
+    } catch {
+      /* ignore */
+    }
+    if (ids.length === 1) {
+      router.push(`/checkout/${ids[0]}`);
+      return;
+    }
+    router.push(`/checkout/multi?ids=${encodeURIComponent(ids.join(","))}`);
+  }
 
   return (
     <div className="relative min-h-[70vh]">
@@ -70,7 +131,7 @@ export default function CartPage() {
             <ShoppingBag className="w-12 h-12 text-white/20 mx-auto mb-4" />
             <p className="font-semibold text-white mb-2">Cart is empty</p>
             <p className="text-sm text-wisdom-muted mb-6">
-              Add a package from Academy — each is {formatEtb(500)}.
+              Add packages from Academy. Prices start from {formatEtb(250)}.
             </p>
             <Link
               href="/packages"
@@ -81,67 +142,90 @@ export default function CartPage() {
           </div>
         ) : (
           <>
+            <div className="flex items-center justify-between mb-3">
+              <button
+                type="button"
+                onClick={toggleAll}
+                className="inline-flex items-center gap-2 text-xs font-semibold text-cyan-300 hover:text-cyan-200"
+              >
+                {allSelected ? (
+                  <CheckSquare className="w-4 h-4" />
+                ) : (
+                  <Square className="w-4 h-4" />
+                )}
+                {allSelected ? "Deselect all" : "Select all"}
+              </button>
+              <p className="text-xs text-wisdom-muted">
+                {selected.size} of {items.length} selected
+              </p>
+            </div>
+
             <ul className="space-y-3 mb-6">
-              {items.map((pkg) => (
-                <li
-                  key={pkg.id}
-                  className="flex gap-3 rounded-2xl border border-white/12 bg-wisdom-card p-3 sm:p-4"
-                >
-                  <div
-                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-cover bg-center shrink-0 border border-white/10"
-                    style={{ backgroundImage: `url(${pkg.image})` }}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-white truncate">{pkg.name}</p>
-                    <p className="text-xs text-wisdom-muted truncate">{pkg.shortName}</p>
-                    <p className="text-sm font-bold text-amber-300 mt-1">
-                      {formatEtb(pkg.priceEtb)}
-                    </p>
-                  </div>
-                  <div className="flex flex-col items-end justify-between">
+              {items.map((pkg) => {
+                const on = selected.has(pkg.id);
+                return (
+                  <li
+                    key={pkg.id}
+                    className={`flex gap-3 rounded-2xl border p-3 sm:p-4 transition-colors ${
+                      on
+                        ? "border-amber-400/35 bg-wisdom-card"
+                        : "border-white/10 bg-wisdom-card/70 opacity-80"
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => toggle(pkg.id)}
+                      className="shrink-0 mt-1 text-amber-300"
+                      aria-label={on ? `Deselect ${pkg.name}` : `Select ${pkg.name}`}
+                    >
+                      {on ? (
+                        <CheckSquare className="w-5 h-5" />
+                      ) : (
+                        <Square className="w-5 h-5 text-wisdom-muted" />
+                      )}
+                    </button>
+                    <div
+                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-cover bg-center shrink-0 border border-white/10"
+                      style={{ backgroundImage: `url(${pkg.image})` }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-white truncate">{pkg.name}</p>
+                      <p className="text-xs text-wisdom-muted truncate">{pkg.shortName}</p>
+                      <p className="text-sm font-bold text-amber-300 mt-1">
+                        {formatEtb(pkg.priceEtb)}
+                      </p>
+                    </div>
                     <button
                       type="button"
                       onClick={() => removeFromCart(pkg.id)}
-                      className="p-2 rounded-lg text-wisdom-muted hover:text-rose-400 hover:bg-rose-500/10"
+                      className="p-2 rounded-lg text-wisdom-muted hover:text-rose-400 hover:bg-rose-500/10 self-start"
                       aria-label={`Remove ${pkg.name}`}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
-                    <Link
-                      href={`/checkout/${pkg.id}`}
-                      className="text-xs font-bold text-cyan-300 hover:text-cyan-200 inline-flex items-center gap-1"
-                    >
-                      Pay
-                      <ArrowRight className="w-3 h-3" />
-                    </Link>
-                  </div>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
 
             <div className="rounded-2xl border border-white/12 bg-wisdom-card p-5">
-              <div className="flex justify-between text-sm mb-4">
-                <span className="text-wisdom-muted">Total</span>
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-wisdom-muted">Selected total</span>
                 <span className="font-black text-amber-300 text-lg">{formatEtb(total)}</span>
               </div>
               <p className="text-xs text-wisdom-muted mb-4 leading-relaxed">
-                Pay one package at a time (Telebirr / CBE / bank). After verification, it appears in
-                My Learning.
+                Tick only the packages you want to pay for now. One transfer covers the selected
+                total.
               </p>
-              {items.length === 1 ? (
-                <Link
-                  href={`/checkout/${items[0].id}`}
-                  className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-amber-500 text-wisdom-dark text-sm font-bold hover:bg-amber-400"
-                >
-                  Checkout · {formatEtb(items[0].priceEtb)}
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              ) : (
-                <p className="text-xs text-center text-wisdom-muted">
-                  Use <strong className="text-white/80">Pay</strong> on each row to checkout that
-                  package.
-                </p>
-              )}
+              <button
+                type="button"
+                disabled={selectedPackages.length === 0}
+                onClick={proceed}
+                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-amber-500 text-wisdom-dark text-sm font-bold hover:bg-amber-400 disabled:opacity-40 disabled:pointer-events-none"
+              >
+                Proceed to payment · {formatEtb(total)}
+                <ArrowRight className="w-4 h-4" />
+              </button>
             </div>
           </>
         )}

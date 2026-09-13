@@ -2,7 +2,6 @@ import Link from "next/link";
 import { grades } from "@/data/academy";
 import { BadgeCheck, ChevronRight } from "lucide-react";
 import CategoryBackButton from "@/components/CategoryBackButton";
-import BranchLeaderboard from "@/components/BranchLeaderboard";
 
 export default function GradesPage() {
   return (
@@ -10,7 +9,7 @@ export default function GradesPage() {
       <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
         <CategoryBackButton fallback="/academy" />
 
-        <div className="mb-8 animate-fade-up text-center sm:text-left">
+        <div className="mb-10 animate-fade-up text-center sm:text-left">
           <p className="text-sm font-semibold tracking-[0.2em] uppercase text-sky-400/90 mb-3">
             Secondary path
           </p>
@@ -18,15 +17,10 @@ export default function GradesPage() {
             Grade <span className="text-sky-400">9–12</span>
           </h1>
           <p className="text-wisdom-muted text-lg max-w-xl leading-relaxed mx-auto sm:mx-0">
-            Choose your grade. Each level opens the same resource hubs.
+            Choose your grade. Each level has its own hubs and its own leaderboard.
           </p>
         </div>
 
-        <div className="max-w-2xl mx-auto mb-8">
-          <BranchLeaderboard branchName="Grade 9–12" accent="text-sky-400" />
-        </div>
-
-        {/* 4 grade cards — 16:9, no gradient, no subtitle */}
         <div className="perspective-scene grid grid-cols-1 sm:grid-cols-2 gap-5 md:gap-6 stagger-children">
           {grades.map((grade) => (
             <Link
@@ -59,7 +53,7 @@ export default function GradesPage() {
         </div>
 
         <p className="mt-10 text-center text-sm text-wisdom-muted">
-          Same structure in every grade — only the content depth changes.
+          Leaderboards live on each grade page, not on this overview.
         </p>
       </div>
     </div>

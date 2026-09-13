@@ -7,6 +7,7 @@ import AcademicResultSaver from "@/components/AcademicResultSaver";
 import PackageOfferBanner from "@/components/PackageOfferBanner";
 import SubjectHeroImage from "@/components/SubjectHeroImage";
 import ResourceHubGrid from "@/components/ResourceHubGrid";
+import BranchLeaderboard from "@/components/BranchLeaderboard";
 import { BadgeCheck } from "lucide-react";
 
 export function generateStaticParams() {
@@ -24,6 +25,7 @@ export default async function GradeDetailPage({
   if (!grade) notFound();
 
   const packageId = packageIdForGrade(grade.id);
+  const scopeId = `grade-${grade.id}`;
 
   return (
     <div className="relative min-h-[80vh]">
@@ -51,9 +53,17 @@ export default async function GradeDetailPage({
           <PackageOfferBanner packageId={packageId} />
         </div>
 
+        <div className="max-w-2xl mx-auto mb-8">
+          <BranchLeaderboard
+            branchName={grade.label}
+            scopeId={scopeId}
+            accent={grade.accent}
+          />
+        </div>
+
         <div className="max-w-2xl mx-auto mb-12">
           <AcademicResultSaver
-            scopeId={`grade-${grade.id}`}
+            scopeId={scopeId}
             scopeLabel={grade.label}
             accent={grade.accent}
           />
