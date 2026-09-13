@@ -9,10 +9,10 @@ import {
   type FreeResourceItem,
   type FreeResourcePage,
 } from "@/lib/free-resources";
+import { simpleMarkdownToHtml } from "@/lib/format-content";
 import CategoryBackButton from "@/components/CategoryBackButton";
 import {
   GraduationCap,
-  ExternalLink,
   Calendar,
   Star,
   Loader2,
@@ -38,7 +38,26 @@ function isDeadlineSoon(raw: string | null | undefined): boolean {
   if (Number.isNaN(d.getTime())) return false;
   const now = new Date();
   const diff = d.getTime() - now.getTime();
-  return diff > 0 && diff < 1000 * 60 * 60 * 24 * 45; // within 45 days
+  return diff > 0 && diff < 1000 * 60 * 60 * 24 * 45;
+}
+
+function MarkdownBody({
+  source,
+  className = "",
+  clamped,
+}: {
+  source: string;
+  className?: string;
+  clamped?: boolean;
+}) {
+  const html = simpleMarkdownToHtml(source);
+  if (!html) return null;
+  return (
+    <div
+      className={`formatted-body ${clamped ? "line-clamp-4" : ""} ${className}`}
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
 }
 
 function ScholarshipCard({
@@ -71,7 +90,6 @@ function ScholarshipCard({
         }`}
       style={{ animationDelay: `${Math.min(index, 8) * 70}ms` }}
     >
-      {/* Cover / header */}
       <div className="relative w-full aspect-[16/9] sm:aspect-[2.2/1] bg-wisdom-dark overflow-hidden">
         {img ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -112,7 +130,6 @@ function ScholarshipCard({
         </div>
       </div>
 
-      {/* Meta chips + body */}
       <div className="p-5 sm:p-6 space-y-4">
         <div className="flex flex-wrap gap-2">
           {deadlineLabel && (
@@ -155,12 +172,7 @@ function ScholarshipCard({
 
         {body && (
           <div className="border-t border-white/8 pt-4">
-            <div
-              className={`text-[15px] text-wisdom-muted leading-relaxed whitespace-pre-wrap transition-all duration-500
-                ${!open && longBody ? "line-clamp-4" : ""}`}
-            >
-              {body}
-            </div>
+            <MarkdownBody source={body} clamped={!open && longBody} />
             {longBody && (
               <button
                 type="button"
@@ -261,8 +273,8 @@ export default function ScholarshipsPage() {
             <p className="text-wisdom-muted text-lg max-w-2xl leading-relaxed">{subtitle}</p>
           )}
           {intro && (
-            <div className="mt-4 text-wisdom-muted text-[15px] leading-relaxed whitespace-pre-wrap max-w-2xl">
-              {intro}
+            <div className="mt-6 max-w-2xl rounded-2xl border border-white/10 bg-wisdom-card/60 p-5 sm:p-6">
+              <MarkdownBody source={intro} />
             </div>
           )}
           {!loading && items.length > 0 && (
@@ -319,7 +331,8 @@ export default function ScholarshipsPage() {
               <BadgeCheck className="w-5 h-5" />
             </div>
             <p className="text-sm text-wisdom-muted leading-relaxed max-w-md mx-auto">
-              Always verify deadlines and requirements on the official page. Requirements change — treat this as a starting guide.
+              Always verify deadlines and requirements on the official page. Requirements change.
+              Treat this as a starting guide.
             </p>
           </div>
         )}
