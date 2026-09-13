@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, ExternalLink, Gift, LogIn } from "lucide-react";
+import { ArrowRight, ExternalLink, Gift, GraduationCap, LogIn } from "lucide-react";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { useInView } from "@/hooks/useInView";
 import InfinityCard from "@/components/home/InfinityCard";
 import { DIGITAL_URL } from "@/lib/digital-url";
+import { supabase, recoverSession } from "@/lib/supabase";
 
 const stats = [
   { value: 30, suffix: "K+", label: "Users", image: "/images/home/stat-users.jpg" },
@@ -150,6 +152,44 @@ export default function LandingPage() {
   const crossSection = useInView();
   const ctaSection = useInView();
 
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const apply = (u: SupabaseUser | null) => {
+      if (!cancelled) {
+        setUser(u);
+        setAuthReady(true);
+      }
+    };
+
+    (async () => {
+      const session = await recoverSession();
+      apply(session?.user ?? null);
+    })();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      apply(session?.user ?? null);
+    });
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const displayName =
+    user?.user_metadata?.full_name ||
+    user?.user_metadata?.name ||
+    user?.email?.split("@")[0] ||
+    "Student";
+
+  const isSignedIn = Boolean(user);
+
   return (
     <div className="relative">
       {/* Hero */}
@@ -182,7 +222,8 @@ export default function LandingPage() {
               Structured pathways for secondary and university learners.
             </p>
 
-            <div className="flex flex-wrap gap-3 items-center">
+            {/* Primary actions — auth-aware; hold layout until session resolves */}
+            <div className="flex flex-wrap gap-3 items-center min-h-[3.25rem]">
               <Link
                 href="/academy"
                 className="landing-cta-primary group inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-cyan-400 text-wisdom-dark font-bold shadow-lg shadow-cyan-500/30 hover:bg-cyan-300 hover:shadow-cyan-400/40 transition-all duration-300 hover:-translate-y-0.5"
@@ -191,26 +232,62 @@ export default function LandingPage() {
                 <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
               </Link>
 
-              <Link
-                href="/login"
-                className="landing-cta-signin group relative inline-flex items-center gap-2 px-6 py-3.5 rounded-xl font-bold text-white overflow-hidden
-                  border-2 border-amber-400/70 bg-amber-500/15
-                  shadow-[0_0_24px_-4px_rgba(251,191,36,0.45)]
-                  hover:bg-amber-500 hover:text-wisdom-dark hover:border-amber-300
-                  hover:shadow-[0_0_36px_-2px_rgba(251,191,36,0.65)]
-                  transition-all duration-300 hover:-translate-y-0.5"
-              >
-                <span className="landing-cta-signin-shine" aria-hidden />
-                <LogIn className="w-4 h-4 relative z-10" />
-                <span className="relative z-10">Sign in</span>
-              </Link>
+              {authReady && isSignedIn ? (
+                <Link
+                  href="/learning"
+                  className="group relative inline-flex items-center gap-2 px-6 py-3.5 rounded-xl font-bold text-white overflow-hidden
+                    border-2 border-cyan-400/50 bg-cyan-500/10
+                    shadow-[0_0_20px_-6px_rgba(34,211,238,0.35)]
+                    hover:bg-cyan-400 hover:text-wisdom-dark hover:border-cyan-300
+                    hover:shadow-[0_0_28px_-4px_rgba(34,211,238,0.5)]
+                    transition-all duration-300 hover:-translate-y-0.5"
+                >
+                  <GraduationCap className="w-4 h-4 relative z-10" />
+                  <span className="relative z-10">My Learning</span>
+                </Link>
+              ) : authReady ? (
+                <Link
+                  href="/login"
+                  className="landing-cta-signin group relative inline-flex items-center gap-2 px-6 py-3.5 rounded-xl font-bold text-white overflow-hidden
+                    border-2 border-amber-400/70 bg-amber-500/15
+                    shadow-[0_0_24px_-4px_rgba(251,191,36,0.45)]
+                    hover:bg-amber-500 hover:text-wisdom-dark hover:border-amber-300
+                    hover:shadow-[0_0_36px_-2px_rgba(251,191,36,0.65)]
+                    transition-all duration-300 hover:-translate-y-0.5"
+                >
+                  <span className="landing-cta-signin-shine" aria-hidden />
+                  <LogIn className="w-4 h-4 relative z-10" />
+                  <span className="relative z-10">Sign in</span>
+                </Link>
+              ) : (
+                /* Placeholder keeps height stable while auth resolves */
+                <span
+                  className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl border-2 border-transparent opacity-0 pointer-events-none select-none"
+                  aria-hidden
+                >
+                  <LogIn className="w-4 h-4" />
+                  Sign in
+                </span>
+              )}
             </div>
 
-            <p className="mt-4 text-xs text-wisdom-muted/80">
-              New here?{" "}
-              <Link href="/signup" className="text-cyan-300 underline-offset-2 hover:underline font-semibold">
-                Create a free account
-              </Link>
+            <p className="mt-4 text-xs text-wisdom-muted/80 min-h-[1.25rem]">
+              {authReady && isSignedIn ? (
+                <>
+                  Welcome back, <span className="text-cyan-300 font-semibold">{displayName}</span>
+                  {" · "}
+                  <Link href="/learning" className="text-cyan-300/90 underline-offset-2 hover:underline font-medium">
+                    Continue where you left off
+                  </Link>
+                </>
+              ) : authReady ? (
+                <>
+                  New here?{" "}
+                  <Link href="/signup" className="text-cyan-300 underline-offset-2 hover:underline font-semibold">
+                    Create a free account
+                  </Link>
+                </>
+              ) : null}
             </p>
           </div>
         </div>
@@ -378,28 +455,57 @@ export default function LandingPage() {
               ctaSection.inView ? "is-visible" : ""
             }`}
           >
-            <h2 className="font-display text-2xl md:text-3xl font-bold text-white mb-3">
-              Ready when you are
-            </h2>
-            <p className="text-wisdom-muted mb-6 max-w-md mx-auto">
-              Create a free account and start with the pathways that are open today.
-            </p>
-            <div className="flex flex-wrap justify-center gap-3">
-              <Link
-                href="/signup"
-                className="landing-cta-primary group inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-cyan-400 text-wisdom-dark font-bold shadow-lg shadow-cyan-500/30 hover:bg-cyan-300 transition-all duration-300 hover:-translate-y-0.5"
-              >
-                Get started
-                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-              </Link>
-              <Link
-                href="/login"
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl border border-white/20 text-white font-semibold hover:border-amber-400/50 hover:bg-amber-500/10 transition-all"
-              >
-                <LogIn className="w-4 h-4" />
-                Sign in
-              </Link>
-            </div>
+            {authReady && isSignedIn ? (
+              <>
+                <h2 className="font-display text-2xl md:text-3xl font-bold text-white mb-3">
+                  Pick up where you left off
+                </h2>
+                <p className="text-wisdom-muted mb-6 max-w-md mx-auto">
+                  Your pathways and free previews are ready. Jump back into Academy or My Learning.
+                </p>
+                <div className="flex flex-wrap justify-center gap-3">
+                  <Link
+                    href="/academy"
+                    className="landing-cta-primary group inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-cyan-400 text-wisdom-dark font-bold shadow-lg shadow-cyan-500/30 hover:bg-cyan-300 transition-all duration-300 hover:-translate-y-0.5"
+                  >
+                    Enter Academy
+                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                  </Link>
+                  <Link
+                    href="/learning"
+                    className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl border border-cyan-400/40 text-cyan-200 font-semibold hover:border-cyan-300 hover:bg-cyan-500/10 transition-all"
+                  >
+                    <GraduationCap className="w-4 h-4" />
+                    My Learning
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 className="font-display text-2xl md:text-3xl font-bold text-white mb-3">
+                  Ready when you are
+                </h2>
+                <p className="text-wisdom-muted mb-6 max-w-md mx-auto">
+                  Create a free account and start with the pathways that are open today.
+                </p>
+                <div className="flex flex-wrap justify-center gap-3">
+                  <Link
+                    href="/signup"
+                    className="landing-cta-primary group inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-cyan-400 text-wisdom-dark font-bold shadow-lg shadow-cyan-500/30 hover:bg-cyan-300 transition-all duration-300 hover:-translate-y-0.5"
+                  >
+                    Get started
+                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                  </Link>
+                  <Link
+                    href="/login"
+                    className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl border border-white/20 text-white font-semibold hover:border-amber-400/50 hover:bg-amber-500/10 transition-all"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    Sign in
+                  </Link>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </section>
