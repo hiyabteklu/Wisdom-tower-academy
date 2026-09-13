@@ -1,0 +1,35 @@
+{
+  "id": "aru",
+  "name": "Arsi University",
+  "abbr": "ARU",
+  "region": "Oromia",
+  "location": "Asella",
+  "website": "https://www.arsiun.edu.et",
+  "founded": "2014",
+  "distanceFromAddisKm": 175,
+  "distanceNote": "A relatively accessible southeastern trip, roughly two to three hours from Addis.",
+  "elevationM": 2400,
+  "campuses": "One main campus in Asella.",
+  "knownFor": [
+    "Sitting in a major Arsi highland town with a real, established local community around it",
+    "A shorter distance from Addis than most regional universities, making it a genuinely practical option",
+    "Growing health science and agriculture programs"
+  ],
+  "whatToExpect": [
+    "Because Arsi University is relatively new, having only reached full university status in 2014, some programs are still building out their full reputation and facilities, ask current students in your specific department for an honest, current picture.",
+    "The cool Arsi highland climate means jackets are a regular part of daily wear, especially in the mornings and evenings.",
+    "The relatively short distance from Addis means many students from central Ethiopia find family visits genuinely manageable, this is a real, practical advantage over more remote placements.",
+    "Health science students should ask specifically about clinical attachment sites, as this is one of the newer and still developing parts of the university's program offerings."
+  ],
+  "tips": [
+    "If you are in health sciences, ask directly and early about where clinical attachments actually happen, this varies and is still being built out.",
+    "Pack warm clothes for the cool Arsi highland climate, especially for morning classes."
+  ],
+  "studentFit": "Arsi University suits students who want a highland Oromia university experience without traveling extremely far from Addis, and who are comfortable with a still growing, relatively young institution. It fits people who value practical proximity to family alongside genuine highland town life. Students seeking a long established, fully mature program in a specific specialized field may find some departments here still in active development.",
+  "detailed": true,
+  "strengths": [
+    "Sitting in a major Arsi highland town with a real, established local community around it",
+    "A shorter distance from Addis than most regional universities, making it a genuinely practical option",
+    "Growing health science and agriculture programs"
+  ]
+}
