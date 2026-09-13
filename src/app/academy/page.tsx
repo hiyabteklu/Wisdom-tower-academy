@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import VoiceMessageCard from "@/components/VoiceMessageCard";
 import TestimonialMarquee from "@/components/TestimonialMarquee";
-import WelcomeVideoCard from "@/components/WelcomeVideoCard";
+// import WelcomeVideoCard from "@/components/WelcomeVideoCard"; // intro video paused for now
 import PartnershipPath from "@/components/PartnershipPath";
 import SafeCoverImage from "@/components/SafeCoverImage";
 import { packageImages } from "@/data/packages";
@@ -196,6 +196,7 @@ export default function AcademyPage() {
             </p>
           </div>
 
+          {/* Intro video paused — re-enable WelcomeVideoCard when ready
           <div className="mb-14 md:mb-16">
             <WelcomeVideoCard
               variant="academy"
@@ -203,6 +204,7 @@ export default function AcademyPage() {
               subtitle="A short look at how Academy is organized: pathways, practice, and support for real study goals."
             />
           </div>
+          */}
 
           <div className="perspective-scene grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
             {programs.map((program) => (

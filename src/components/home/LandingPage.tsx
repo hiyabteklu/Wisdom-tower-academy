@@ -2,12 +2,28 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, ExternalLink, Gift, GraduationCap, LogIn } from "lucide-react";
+import {
+  ArrowRight,
+  ExternalLink,
+  GraduationCap,
+  LogIn,
+  Trophy,
+  Lightbulb,
+  Building2,
+  Library,
+  GraduationCap as GradCap,
+  Trees,
+  BadgeCheck,
+} from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { useInView } from "@/hooks/useInView";
 import InfinityCard from "@/components/home/InfinityCard";
+import PartnershipPath from "@/components/PartnershipPath";
+import SafeCoverImage from "@/components/SafeCoverImage";
 import { DIGITAL_URL } from "@/lib/digital-url";
 import { supabase, recoverSession } from "@/lib/supabase";
+import { packageImages } from "@/data/packages";
+import { SPECIAL_PACKAGES_HUB_IMAGE } from "@/data/special-packages";
 
 const stats = [
   { value: 30, suffix: "K+", label: "Users", image: "/images/home/stat-users.jpg" },
@@ -17,37 +33,136 @@ const stats = [
 
 const ACADEMY_IMAGE = "/images/home/academy.jpg";
 const HERO_BG = "/images/home/hero-bg.jpg";
-const FRESHMAN_IMAGE = "/images/packages/freshman_00241b.jpeg";
-const ECE_SEM1_IMAGE = "/images/special-packages/ece-sem-1.jpg";
 
-const previewCards = [
+type ProgramCard = {
+  id: string;
+  href: string;
+  name: string;
+  image: string;
+  accent: string;
+  border: string;
+  cta: string;
+};
+
+const programs: ProgramCard[] = [
   {
-    href: "/academy/special-packages/electrical-computer-engineering/sem-1",
-    image: ECE_SEM1_IMAGE,
-    badge: "Special package",
-    title: "ECE · Semester 1",
-    blurb: "Year 3 Electrical and Computer Engineering. Free for registered students.",
-    cta: "Open Semester 1",
-    accent: "text-violet-300",
-    borderHover: "hover:border-violet-400/45",
-    badgeClass: "border-violet-400/35 bg-violet-500/15 text-violet-200",
-    ctaClass: "bg-violet-500 text-white shadow-violet-500/30 group-hover:shadow-violet-400/40",
-    locked: false,
+    id: "grade-9-12",
+    href: "/academy/grades",
+    name: "Grade 9–12",
+    image: packageImages["grade-9-12"],
+    accent: "text-sky-400",
+    border: "hover:border-sky-400/40",
+    cta: "Open",
   },
   {
+    id: "freshman",
     href: "/academy/freshman",
-    image: FRESHMAN_IMAGE,
-    badge: "Pathway",
-    title: "Freshman courses",
-    blurb: "All first-year subjects and learning hubs. Free for registered students.",
-    cta: "Open Freshman",
-    accent: "text-purple-300",
-    borderHover: "hover:border-purple-400/45",
-    badgeClass: "border-purple-400/35 bg-purple-500/15 text-purple-200",
-    ctaClass: "bg-purple-500 text-white shadow-purple-500/30 group-hover:shadow-purple-400/40",
-    locked: false,
+    name: "Freshman",
+    image: packageImages.freshman,
+    accent: "text-purple-400",
+    border: "hover:border-purple-400/40",
+    cta: "Open",
   },
-] as const;
+  {
+    id: "uat",
+    href: "/academy/uat",
+    name: "UAT",
+    image: packageImages.uat,
+    accent: "text-emerald-400",
+    border: "hover:border-emerald-400/40",
+    cta: "Open",
+  },
+  {
+    id: "gat",
+    href: "/academy/gat",
+    name: "GAT",
+    image: packageImages.gat,
+    accent: "text-rose-400",
+    border: "hover:border-rose-400/40",
+    cta: "Open",
+  },
+  {
+    id: "coc",
+    href: "/academy/coc",
+    name: "COC",
+    image: packageImages.coc,
+    accent: "text-indigo-400",
+    border: "hover:border-indigo-400/40",
+    cta: "Open",
+  },
+  {
+    id: "exit-exam",
+    href: "/academy/exit-exam",
+    name: "Exit Exam",
+    image: packageImages["exit-exam"],
+    accent: "text-fuchsia-400",
+    border: "hover:border-fuchsia-400/40",
+    cta: "Open",
+  },
+];
+
+const freeResources = [
+  {
+    href: "/academy/success-stories",
+    name: "Success Stories",
+    blurb: "Ethiopian top scorers — scores, journeys, and what stood out",
+    icon: Trophy,
+    accent: "text-amber-300",
+    border: "border-white/12 hover:border-amber-400/40",
+    iconBg: "border-amber-400/30 bg-amber-500/15 text-amber-300",
+    glow: "group-hover:shadow-[0_12px_40px_-16px_rgba(251,191,36,0.35)]",
+  },
+  {
+    href: "/academy/study-techniques",
+    name: "Study Techniques",
+    blurb: "Methods to learn faster and retain under pressure",
+    icon: Lightbulb,
+    accent: "text-cyan-300",
+    border: "border-white/12 hover:border-cyan-400/40",
+    iconBg: "border-cyan-400/30 bg-cyan-500/15 text-cyan-300",
+    glow: "group-hover:shadow-[0_12px_40px_-16px_rgba(34,211,238,0.3)]",
+  },
+  {
+    href: "/academy/campus-life",
+    name: "Campus Life",
+    blurb: "Friends, focus, burnout, lectures, facilities and group work",
+    icon: Trees,
+    accent: "text-sky-300",
+    border: "border-white/12 hover:border-sky-400/40",
+    iconBg: "border-sky-400/30 bg-sky-500/15 text-sky-300",
+    glow: "group-hover:shadow-[0_12px_40px_-16px_rgba(56,189,248,0.3)]",
+  },
+  {
+    href: "/academy/universities",
+    name: "Universities Info",
+    blurb: "Explore institutions, programs, and pathways",
+    icon: Building2,
+    accent: "text-violet-300",
+    border: "border-white/12 hover:border-violet-400/40",
+    iconBg: "border-violet-400/30 bg-violet-500/15 text-violet-300",
+    glow: "group-hover:shadow-[0_12px_40px_-16px_rgba(167,139,250,0.3)]",
+  },
+  {
+    href: "/academy/departments",
+    name: "Department Info",
+    blurb: "What each field of study actually involves",
+    icon: Library,
+    accent: "text-orange-300",
+    border: "border-white/12 hover:border-orange-400/40",
+    iconBg: "border-orange-400/30 bg-orange-500/15 text-orange-300",
+    glow: "group-hover:shadow-[0_12px_40px_-16px_rgba(251,146,60,0.3)]",
+  },
+  {
+    href: "/academy/scholarships",
+    name: "Scholarship Info",
+    blurb: "Funding options and how to prepare applications",
+    icon: GradCap,
+    accent: "text-rose-300",
+    border: "border-white/12 hover:border-rose-400/40",
+    iconBg: "border-rose-400/30 bg-rose-500/15 text-rose-300",
+    glow: "group-hover:shadow-[0_12px_40px_-16px_rgba(244,63,94,0.3)]",
+  },
+];
 
 function usePrefersReducedMotion() {
   const [reduced, setReduced] = useState(false);
@@ -124,11 +239,7 @@ function StatsSlider({ visible, reduced }: { visible: boolean; reduced: boolean 
             }`}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={stat.image}
-              alt=""
-              className="absolute inset-0 h-full w-full object-cover"
-            />
+            <img src={stat.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
             <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/70 to-transparent pointer-events-none" />
             <div className="relative z-10 flex h-full flex-col justify-end p-5 sm:p-6">
               <p className="font-display text-3xl sm:text-4xl font-black text-white tabular-nums drop-shadow-md">
@@ -146,8 +257,8 @@ function StatsSlider({ visible, reduced }: { visible: boolean; reduced: boolean 
 export default function LandingPage() {
   const reduced = usePrefersReducedMotion();
   const heroSection = useInView();
-  const academySection = useInView();
-  const previewSection = useInView();
+  const welcomeSection = useInView();
+  const pathwaysSection = useInView();
   const statsSection = useInView();
   const crossSection = useInView();
   const ctaSection = useInView();
@@ -205,11 +316,7 @@ export default function LandingPage() {
         </div>
 
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div
-            className={`max-w-3xl reveal-item ${
-              heroSection.inView ? "is-visible" : ""
-            }`}
-          >
+          <div className={`max-w-3xl reveal-item ${heroSection.inView ? "is-visible" : ""}`}>
             <p className="text-sm font-semibold tracking-[0.2em] uppercase text-cyan-300/95 mb-4">
               Wisdom Tower Academy
             </p>
@@ -222,7 +329,6 @@ export default function LandingPage() {
               Structured pathways for secondary and university learners.
             </p>
 
-            {/* Primary actions — auth-aware; hold layout until session resolves */}
             <div className="flex flex-wrap gap-3 items-center min-h-[3.25rem]">
               <Link
                 href="/academy"
@@ -260,7 +366,6 @@ export default function LandingPage() {
                   <span className="relative z-10">Sign in</span>
                 </Link>
               ) : (
-                /* Placeholder keeps height stable while auth resolves */
                 <span
                   className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl border-2 border-transparent opacity-0 pointer-events-none select-none"
                   aria-hidden
@@ -276,14 +381,20 @@ export default function LandingPage() {
                 <>
                   Welcome back, <span className="text-cyan-300 font-semibold">{displayName}</span>
                   {" · "}
-                  <Link href="/learning" className="text-cyan-300/90 underline-offset-2 hover:underline font-medium">
+                  <Link
+                    href="/learning"
+                    className="text-cyan-300/90 underline-offset-2 hover:underline font-medium"
+                  >
                     Continue where you left off
                   </Link>
                 </>
               ) : authReady ? (
                 <>
                   New here?{" "}
-                  <Link href="/signup" className="text-cyan-300 underline-offset-2 hover:underline font-semibold">
+                  <Link
+                    href="/signup"
+                    className="text-cyan-300 underline-offset-2 hover:underline font-semibold"
+                  >
                     Create a free account
                   </Link>
                 </>
@@ -293,120 +404,174 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="pb-12 md:pb-16 relative" ref={academySection.ref}>
+      {/* Welcome image only — not a link */}
+      <section className="pb-12 md:pb-16 relative" ref={welcomeSection.ref}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <Link
-            href="/academy"
-            className={`card-3d group relative block overflow-hidden rounded-2xl sm:rounded-3xl border border-white/14 bg-wisdom-navy hover:border-cyan-400/40 transition-all duration-300 reveal-item ${
-              academySection.inView ? "is-visible" : ""
+          <div
+            className={`relative overflow-hidden rounded-2xl sm:rounded-3xl border border-white/14 bg-wisdom-navy reveal-item ${
+              welcomeSection.inView ? "is-visible" : ""
             }`}
           >
             <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={ACADEMY_IMAGE}
-                alt="Wisdom Tower Academy"
-                className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                alt="Welcome to Wisdom Tower Academy"
+                className="absolute inset-0 h-full w-full object-cover"
               />
               <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/55 to-transparent pointer-events-none" />
-              <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 flex items-end justify-between gap-3">
+              <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-300/90 mb-1">
+                  Welcome
+                </p>
                 <span className="font-display text-base sm:text-lg font-semibold text-white/95 drop-shadow-md">
                   Wisdom Tower Academy
                 </span>
-                <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-400 text-wisdom-dark text-sm font-bold shadow-lg">
-                  Explore
-                  <ArrowRight className="w-4 h-4" />
-                </span>
               </div>
             </div>
-          </Link>
+          </div>
         </div>
       </section>
 
-      <section className="pb-16 md:pb-20 relative" ref={previewSection.ref}>
-        <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[36rem] h-[18rem] rounded-full bg-amber-500/10 blur-3xl preview-glow" />
-          <div className="absolute top-1/3 right-[15%] w-40 h-40 rounded-full bg-violet-500/15 blur-2xl preview-glow-delayed" />
-        </div>
-
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      {/* Pathways + free resources + partnership (content that lived under Academy / below video) */}
+      <section className="pb-16 md:pb-20 relative" ref={pathwaysSection.ref}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div
-            className={`text-center mb-8 md:mb-10 reveal-item ${
-              previewSection.inView ? "is-visible" : ""
+            className={`text-center mb-10 md:mb-12 reveal-item ${
+              pathwaysSection.inView ? "is-visible" : ""
             }`}
           >
-            <div className="inline-flex items-center justify-center gap-2 mb-3">
-              <span className="preview-badge-pulse inline-flex h-2 w-2 rounded-full bg-amber-400" />
-              <p className="text-[11px] sm:text-xs font-black uppercase tracking-[0.28em] text-amber-300/95">
-                Limited time
-              </p>
-              <span
-                className="preview-badge-pulse inline-flex h-2 w-2 rounded-full bg-amber-400"
-                style={{ animationDelay: "0.6s" }}
-              />
-            </div>
-            <h2 className="preview-title font-display text-3xl sm:text-4xl md:text-5xl font-black tracking-tight">
-              <span className="preview-title-gradient">Limited time preview</span>
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-white">
+              Choose your pathway
             </h2>
-            <p className="mt-3 text-sm md:text-base text-wisdom-muted max-w-lg mx-auto leading-relaxed">
-              ECE Semester 1 and Freshman are open for registered students — free with a signed-in
-              account.
+            <p className="mt-4 text-wisdom-muted max-w-2xl mx-auto text-base md:text-lg leading-relaxed">
+              Six structured branches, each with its own path when you open it.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6 perspective-scene">
-            {previewCards.map((card, idx) => {
-              const inner = (
-                <>
-                  <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={card.image}
-                      alt={card.title}
-                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+          <div className="perspective-scene grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
+            {programs.map((program) => (
+              <Link
+                key={program.id}
+                href={program.href}
+                className={`card-3d group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card ${program.border}`}
+              >
+                <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={program.image}
+                    alt={program.name}
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                  />
+                </div>
+                <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8">
+                  <h3
+                    className={`flex items-center gap-1.5 font-display text-base sm:text-lg font-bold ${program.accent}`}
+                  >
+                    <BadgeCheck
+                      className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-sky-400"
+                      aria-label="Verified"
                     />
-                    <span
-                      className={`absolute top-3 left-3 inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm ${card.badgeClass}`}
-                    >
-                      <Gift className="w-3 h-3" />
-                      {card.badge}
-                    </span>
+                    {program.name}
+                  </h3>
+                  <div
+                    className={`mt-2.5 flex items-center gap-1 text-xs sm:text-sm font-semibold ${program.accent}`}
+                  >
+                    {program.cta}
+                    <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
                   </div>
-                  <div className="p-5 sm:p-6 border-t border-white/8 bg-wisdom-card">
-                    <h3
-                      className={`font-display text-xl sm:text-2xl font-bold mb-1.5 text-white ${card.accent}`}
-                    >
-                      {card.title}
-                    </h3>
-                    <p className="text-sm text-wisdom-muted mb-4 leading-relaxed">{card.blurb}</p>
-                    <span
-                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold shadow-lg transition-all duration-300 group-hover:scale-[1.03] ${card.ctaClass}`}
-                    >
-                      {card.cta}
-                      <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-                    </span>
-                  </div>
-                </>
-              );
-
-              const shellClass = `card-3d group relative block overflow-hidden rounded-2xl sm:rounded-3xl border border-white/14 bg-wisdom-navy ${card.borderHover} transition-all duration-300 reveal-item ${
-                previewSection.inView ? "is-visible" : ""
-              }`;
-
-              const style = {
-                transitionDelay: previewSection.inView ? `${120 + idx * 100}ms` : undefined,
-              };
-
-              return (
-                <Link key={card.href} href={card.href} className={shellClass} style={style}>
-                  {inner}
-                </Link>
-              );
-            })}
+                </div>
+              </Link>
+            ))}
           </div>
+
+          <section className="mt-20 md:mt-24" id="special-packages">
+            <div className="text-center mb-8">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-300/90 mb-3">
+                Beyond the six branches
+              </p>
+              <h2 className="font-display text-3xl md:text-4xl font-bold text-white mb-2">
+                Special packages
+              </h2>
+              <p className="text-wisdom-muted max-w-lg mx-auto text-sm leading-relaxed">
+                Department tracks by year and semester. Buy each semester separately.
+              </p>
+            </div>
+
+            <Link
+              href="/academy/special-packages"
+              className="group block max-w-xl mx-auto overflow-hidden rounded-2xl sm:rounded-3xl border border-violet-400/30 bg-wisdom-card hover:border-violet-300/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_48px_-16px_rgba(167,139,250,0.35)]"
+            >
+              <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
+                <SafeCoverImage src={SPECIAL_PACKAGES_HUB_IMAGE} alt="" />
+              </div>
+              <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8 text-left">
+                <h3 className="flex items-center gap-1.5 font-display text-base sm:text-lg font-bold text-white group-hover:text-violet-200 transition-colors">
+                  <BadgeCheck className="w-4 h-4 shrink-0 text-sky-400" aria-hidden />
+                  Browse special packages
+                </h3>
+                <span className="mt-2.5 inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-violet-400/90">
+                  Open
+                  <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                </span>
+              </div>
+            </Link>
+          </section>
+
+          <section className="mt-24 md:mt-28">
+            <div className="text-center mb-10">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-400/90 mb-3">
+                Open library · no enrollment required
+              </p>
+              <h2 className="font-display text-3xl md:text-4xl font-bold text-white mb-3">
+                Free resources
+              </h2>
+              <p className="text-wisdom-muted max-w-lg mx-auto text-base leading-relaxed">
+                Guidance beyond the six academic branches: stories, techniques, campus life,
+                universities, departments, and scholarships.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {freeResources.map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`group relative rounded-2xl border bg-wisdom-card/95 p-6 transition-all duration-400 ease-out hover:-translate-y-1.5 hover:bg-white/[0.04] ${item.border} ${item.glow}`}
+                    style={{ animationDelay: `${index * 60}ms` }}
+                  >
+                    <div
+                      className={`mb-4 inline-flex p-3 rounded-xl border ${item.iconBg} transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[-3deg]`}
+                    >
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <h3
+                      className={`font-display text-xl mb-2 font-semibold transition-colors ${item.accent}`}
+                    >
+                      {item.name}
+                    </h3>
+                    <p className="text-sm text-wisdom-muted leading-relaxed">{item.blurb}</p>
+                    <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-wisdom-muted group-hover:text-white/90 transition-colors">
+                      Explore
+                      <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1.5" />
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className="mt-24 md:mt-28" id="partnership">
+            <div className="max-w-3xl mx-auto">
+              <PartnershipPath />
+            </div>
+          </section>
         </div>
       </section>
 
+      {/* Stats + infinity */}
       <section className="pb-20 md:pb-28 relative" ref={statsSection.ref}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6 items-stretch">
@@ -450,18 +615,14 @@ export default function LandingPage() {
 
       <section className="pb-28 relative" ref={ctaSection.ref}>
         <div className="max-w-3xl mx-auto px-4 relative z-10 text-center">
-          <div
-            className={`reveal-item ${
-              ctaSection.inView ? "is-visible" : ""
-            }`}
-          >
+          <div className={`reveal-item ${ctaSection.inView ? "is-visible" : ""}`}>
             {authReady && isSignedIn ? (
               <>
                 <h2 className="font-display text-2xl md:text-3xl font-bold text-white mb-3">
                   Pick up where you left off
                 </h2>
                 <p className="text-wisdom-muted mb-6 max-w-md mx-auto">
-                  Your pathways and free previews are ready. Jump back into Academy or My Learning.
+                  Your pathways are ready. Jump back into Academy or My Learning.
                 </p>
                 <div className="flex flex-wrap justify-center gap-3">
                   <Link
@@ -486,7 +647,7 @@ export default function LandingPage() {
                   Ready when you are
                 </h2>
                 <p className="text-wisdom-muted mb-6 max-w-md mx-auto">
-                  Create a free account and start with the pathways that are open today.
+                  Create a free account and start with the pathway that fits you.
                 </p>
                 <div className="flex flex-wrap justify-center gap-3">
                   <Link
