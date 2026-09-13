@@ -21,7 +21,7 @@
   --wt-muted-rgb: 170 182 200;
   --font-display: 'Outfit', system-ui, sans-serif;
   --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
-  --font-reading: 'Source Serif 4', 'Georgia', 'Times New Roman', serif;
+  --font-reading: 'Times New Roman', Times, Georgia, 'Source Serif 4', serif;
 }
 
 .theme-light {
@@ -39,7 +39,13 @@
   --wt-muted-rgb: 61 90 115;
 }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5.5rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
 
 body {
   color: var(--foreground);
@@ -88,22 +94,38 @@ h1, h2, h3, h4, .font-display {
   letter-spacing: -0.02em;
 }
 
-.perspective-scene { perspective: 1400px; perspective-origin: 50% 40%; }
+/* Flat scene — no perspective (avoids diagonal skew on cards) */
+.perspective-scene {
+  perspective: none;
+}
 
+/* Soft lift only — no rotateX/rotateY (those warped cards on click/hover) */
 .card-3d {
-  transform-style: preserve-3d;
-  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.35s ease;
+  transform: none;
+  transform-style: flat;
+  transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.3s ease;
+  will-change: transform, box-shadow;
 }
 .card-3d:hover {
-  transform: translateY(-14px) rotateX(5deg) rotateY(-3deg) scale(1.02);
+  transform: translateY(-8px);
   box-shadow:
-    0 1px 0 0 rgba(255, 255, 255, 0.14) inset,
-    0 8px 16px -4px rgba(0, 0, 0, 0.35),
-    0 28px 56px -16px rgba(0, 0, 0, 0.6),
-    0 48px 90px -20px rgba(34, 224, 255, 0.22),
-    0 0 0 1px rgba(34, 224, 255, 0.32);
+    0 1px 0 0 rgba(255, 255, 255, 0.12) inset,
+    0 12px 28px -10px rgba(0, 0, 0, 0.45),
+    0 28px 56px -18px rgba(34, 224, 255, 0.18),
+    0 0 0 1px rgba(34, 224, 255, 0.28);
 }
-.card-3d:active { transform: translateY(-4px) scale(0.99); transition-duration: 0.15s; }
+.card-3d:active {
+  transform: translateY(-2px);
+  transition-duration: 0.12s;
+}
+/* Expanded / focused cards stay square — never skew */
+.card-3d.is-expanded,
+.card-3d[data-expanded="true"] {
+  transform: none !important;
+}
 
 .field-input {
   width: 100%; min-height: 3rem; padding: 0.9rem 1.1rem; border-radius: 0.875rem;
@@ -128,8 +150,23 @@ h1, h2, h3, h4, .font-display {
 .formatted-body .md-li { margin: 0.35rem 0; line-height: 1.65; }
 .formatted-body .md-mark { background: rgba(34, 224, 255, 0.12); color: #a5f3fc; padding: 0.05em 0.35em; border-radius: 0.35rem; font-weight: 600; }
 .formatted-body strong { color: rgba(255, 255, 255, 0.92); font-weight: 650; }
-.uni-list-block { white-space: pre-wrap; line-height: 1.7; }
+.uni-list-block { white-space: pre-wrap; line-height: 1.75; font-family: var(--font-reading); }
+.font-reading {
+  font-family: var(--font-reading);
+  line-height: 1.75;
+  letter-spacing: 0.01em;
+}
+.uni-card-body {
+  font-family: var(--font-reading);
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: rgba(170, 182, 200, 0.95);
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .card-3d, .animate-fade-up { animation: none !important; transform: none !important; }
+  .card-3d, .card-3d:hover, .card-3d:active, .animate-fade-up {
+    animation: none !important;
+    transform: none !important;
+    transition: none !important;
+  }
 }
