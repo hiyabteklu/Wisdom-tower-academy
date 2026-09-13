@@ -19,6 +19,14 @@ import _jgu from "./uni-jgu.json";
 import _mwu from "./uni-mwu.json";
 import _mtu from "./uni-mtu.json";
 import _su from "./uni-su.json";
+import _kmu from "./uni-kmu.json";
+import _agu from "./uni-agu.json";
+import _asu from "./uni-asu.json";
+import _bhu from "./uni-bhu.json";
+import _dbtu from "./uni-dbtu.json";
+import _meu from "./uni-meu.json";
+import _wcu from "./uni-wcu.json";
+import _wku from "./uni-wku.json";
 import part8 from "./universities-part-8.json";
 
 export type Region =
@@ -81,7 +89,7 @@ export const universitiesIntro = {
     "Read the one for your university, or the one you are hoping to be placed at. Then read it again in your first month there and see how much of it turns out to be true.",
 };
 
-/** 22 authentic full guides live; remaining files continue to land in follow-up commits. */
+/** 30 authentic full guides live; remaining files continue to land in follow-up commits. */
 export const universities: University[] = [
   _aau as University,
   _aastu as University,
@@ -104,6 +112,14 @@ export const universities: University[] = [
   _mwu as University,
   _mtu as University,
   _su as University,
+  _kmu as University,
+  _agu as University,
+  _asu as University,
+  _bhu as University,
+  _dbtu as University,
+  _meu as University,
+  _wcu as University,
+  _wku as University,
   ...(part8 as University[]),
 ];
 
