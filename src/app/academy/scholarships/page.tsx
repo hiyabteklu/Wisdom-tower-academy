@@ -9,7 +9,7 @@ import {
   type FreeResourceItem,
   type FreeResourcePage,
 } from "@/lib/free-resources";
-import { simpleMarkdownToHtml } from "@/lib/format-content";
+import FormattedBody from "@/components/FormattedBody";
 import CategoryBackButton from "@/components/CategoryBackButton";
 import {
   GraduationCap,
@@ -39,25 +39,6 @@ function isDeadlineSoon(raw: string | null | undefined): boolean {
   const now = new Date();
   const diff = d.getTime() - now.getTime();
   return diff > 0 && diff < 1000 * 60 * 60 * 24 * 45;
-}
-
-function MarkdownBody({
-  source,
-  className = "",
-  clamped,
-}: {
-  source: string;
-  className?: string;
-  clamped?: boolean;
-}) {
-  const html = simpleMarkdownToHtml(source);
-  if (!html) return null;
-  return (
-    <div
-      className={`formatted-body ${clamped ? "line-clamp-4" : ""} ${className}`}
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
-  );
 }
 
 function ScholarshipCard({
@@ -172,7 +153,7 @@ function ScholarshipCard({
 
         {body && (
           <div className="border-t border-white/8 pt-4">
-            <MarkdownBody source={body} clamped={!open && longBody} />
+            <FormattedBody text={body} clamped={!open && longBody} />
             {longBody && (
               <button
                 type="button"
@@ -274,7 +255,7 @@ export default function ScholarshipsPage() {
           )}
           {intro && (
             <div className="mt-6 max-w-2xl rounded-2xl border border-white/10 bg-wisdom-card/60 p-5 sm:p-6">
-              <MarkdownBody source={intro} />
+              <FormattedBody text={intro} />
             </div>
           )}
           {!loading && items.length > 0 && (
