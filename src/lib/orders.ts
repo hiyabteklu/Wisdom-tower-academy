@@ -31,6 +31,24 @@ export type ManualOrder = {
   verifiedBy?: string | null;
 };
 
+/** Parse multi-package ids from order note (`packages:id1,id2`). */
+export function packageIdsFromOrderNote(note?: string | null, fallbackId?: string): string[] {
+  const ids: string[] = [];
+  if (note) {
+    const m = note.match(/packages:([a-z0-9_,-]+)/i);
+    if (m) {
+      for (const id of m[1].split(",")) {
+        const t = id.trim();
+        if (t && !ids.includes(t)) ids.push(t);
+      }
+    }
+  }
+  if (fallbackId && !ids.includes(fallbackId) && fallbackId !== "multi") {
+    ids.unshift(fallbackId);
+  }
+  return ids;
+}
+
 const STORAGE_KEY = "wt_manual_orders_v1";
 
 function readLocal(): ManualOrder[] {
@@ -244,7 +262,7 @@ export async function listMyOrders(): Promise<ManualOrder[]> {
   }
 }
 
-/** Approve order + create enrollment */
+/** Approve order + create enrollment(s) for single or multi-package cart */
 export async function verifyOrder(
   orderId: string,
   adminEmail: string
@@ -271,21 +289,25 @@ export async function verifyOrder(
 
     if (updErr) return { ok: false, error: updErr.message };
 
-    const enrollPayload: Record<string, unknown> = {
-      order_id: orderId,
-      package_id: order.package_id,
-      package_name: order.package_name,
-      email: order.email || null,
-      user_id: order.user_id || null,
-    };
-
-    const { error: enrErr } = await supabase.from("enrollments").upsert(enrollPayload, {
-      onConflict: order.user_id ? "user_id,package_id" : undefined,
-      ignoreDuplicates: true,
-    });
-
-    if (enrErr) {
-      console.warn("[orders] enrollment:", enrErr.message);
+    const pkgIds = packageIdsFromOrderNote(
+      order.note ? String(order.note) : null,
+      String(order.package_id)
+    );
+    for (const pid of pkgIds) {
+      const enrollPayload: Record<string, unknown> = {
+        order_id: orderId,
+        package_id: pid,
+        package_name: String(order.package_name),
+        email: order.email || null,
+        user_id: order.user_id || null,
+      };
+      const { error: enrErr } = await supabase.from("enrollments").upsert(enrollPayload, {
+        onConflict: order.user_id ? "user_id,package_id" : undefined,
+        ignoreDuplicates: true,
+      });
+      if (enrErr) {
+        console.warn("[orders] enrollment:", enrErr.message);
+      }
     }
 
     return { ok: true };
