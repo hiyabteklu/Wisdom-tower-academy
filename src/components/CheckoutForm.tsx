@@ -32,7 +32,10 @@ import { supabase } from "@/lib/supabase";
 
 type ConfirmMode = "receipt" | "details";
 
-type Props = { packageId: string };
+type Props = {
+  packageId?: string;
+  packageIds?: string[];
+};
 
 function BankLogo({
   src,
@@ -64,16 +67,31 @@ function BankLogo({
 
 const AUTO_VERIFY_METHODS: PaymentMethodId[] = ["telebirr", "cbe", "abyssinia"];
 
-export default function CheckoutForm({ packageId }: Props) {
-  const pkg = useMemo(
-    () => getPackageResolved(packageId) || getPackage(packageId),
-    [packageId]
-  );
+export default function CheckoutForm({ packageId, packageIds }: Props) {
+  const pkgs = useMemo(() => {
+    const ids =
+      packageIds && packageIds.length > 0
+        ? packageIds
+        : packageId
+          ? [packageId]
+          : [];
+    return ids
+      .map((id) => getPackageResolved(id) || getPackage(id))
+      .filter((p): p is NonNullable<typeof p> => Boolean(p));
+  }, [packageId, packageIds]);
+
+  const pkg = pkgs[0];
+  const totalEtb = pkgs.reduce((s, p) => s + p.priceEtb, 0);
+  const displayName =
+    pkgs.length <= 1
+      ? pkg?.name || ""
+      : pkgs.map((p) => p.shortName || p.name).join(" + ");
+  const allPackageIds = pkgs.map((p) => p.id);
+  const multiNote = pkgs.length > 1 ? `packages:${allPackageIds.join(",")}` : "";
 
   const [authLoading, setAuthLoading] = useState(true);
   const [signedIn, setSignedIn] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
-
   const [method, setMethod] = useState<PaymentMethodId>("telebirr");
   const [orderRef] = useState(() => generateOrderRef());
   const [confirmMode, setConfirmMode] = useState<ConfirmMode>("details");
@@ -143,13 +161,17 @@ export default function CheckoutForm({ packageId }: Props) {
       setCopied(label);
       setTimeout(() => setCopied(""), 2000);
     } catch {
-      setError("Could not copy — long-press to copy manually.");
+      setError("Could not copy. Long-press to copy manually.");
     }
+  }
+
+  function clearSelectedFromCart() {
+    allPackageIds.forEach((id) => removeFromCart(id));
   }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!pkg || !signedIn) return;
+    if (!pkg || pkgs.length === 0 || !signedIn) return;
     setError("");
     setInfo("");
     setSubmitting(true);
@@ -160,7 +182,19 @@ export default function CheckoutForm({ packageId }: Props) {
       return;
     }
 
-    // Path A: TX reference → Verify.ET auto-check
+    const orderBase = {
+      id: orderRef,
+      packageId: pkg.id,
+      packageName: displayName,
+      amountEtb: totalEtb,
+      paymentMethod: method,
+      studentName: name.trim(),
+      phone: phone.trim(),
+      email: email.trim() || undefined,
+      userId,
+      createdAt: new Date().toISOString(),
+    };
+
     if (confirmMode === "details" && canAutoVerify) {
       if (!txRef.trim()) {
         setError("Enter the transaction reference from your SMS or receipt.");
@@ -175,95 +209,64 @@ export default function CheckoutForm({ packageId }: Props) {
           body: JSON.stringify({
             orderId: orderRef,
             packageId: pkg.id,
-            packageName: pkg.name,
-            amountEtb: pkg.priceEtb,
+            packageName: displayName,
+            packageIds: allPackageIds,
+            amountEtb: totalEtb,
             paymentMethod: method,
             transactionRef: txRef.trim(),
             studentName: name.trim(),
             phone: phone.trim(),
             email: email.trim() || undefined,
-            note: note.trim() || undefined,
+            note: [note.trim(), multiNote].filter(Boolean).join(" | ") || undefined,
             userId,
           }),
         });
         const data = (await res.json()) as {
           ok?: boolean;
           verified?: boolean;
-          pending?: boolean;
           error?: string;
           message?: string;
           code?: string;
         };
 
         if (data.code === "NOT_CONFIGURED" || res.status === 503) {
-          // Fall back to manual order so checkout still works
-          const order: ManualOrder = {
-            id: orderRef,
-            packageId: pkg.id,
-            packageName: pkg.name,
-            amountEtb: pkg.priceEtb,
+          await saveOrder({
+            ...orderBase,
             status: "pending_verification",
-            paymentMethod: method,
-            studentName: name.trim(),
-            phone: phone.trim(),
-            email: email.trim() || undefined,
             transactionRef: txRef.trim(),
-            note: note.trim() || undefined,
-            createdAt: new Date().toISOString(),
-            userId,
-          };
-          await saveOrder(order);
-          removeFromCart(pkg.id);
+            note: [note.trim(), multiNote].filter(Boolean).join(" | ") || undefined,
+          });
+          clearSelectedFromCart();
           setDone(true);
           setSubmitting(false);
           return;
         }
 
         if (data.verified) {
-          // Also mirror locally for My Orders UX
           await saveOrder({
-            id: orderRef,
-            packageId: pkg.id,
-            packageName: pkg.name,
-            amountEtb: pkg.priceEtb,
+            ...orderBase,
             status: "verified",
-            paymentMethod: method,
-            studentName: name.trim(),
-            phone: phone.trim(),
-            email: email.trim() || undefined,
             transactionRef: txRef.trim(),
-            note: note.trim() || undefined,
-            createdAt: new Date().toISOString(),
-            userId,
+            note: [note.trim(), multiNote].filter(Boolean).join(" | ") || undefined,
             verifiedAt: new Date().toISOString(),
             verifiedBy: "verify.et",
           });
-          removeFromCart(pkg.id);
+          clearSelectedFromCart();
           setAutoVerified(true);
           setDone(true);
           setSubmitting(false);
           return;
         }
 
-        // Not verified: still saved as pending by API (or save locally)
         await saveOrder({
-          id: orderRef,
-          packageId: pkg.id,
-          packageName: pkg.name,
-          amountEtb: pkg.priceEtb,
+          ...orderBase,
           status: "pending_verification",
-          paymentMethod: method,
-          studentName: name.trim(),
-          phone: phone.trim(),
-          email: email.trim() || undefined,
           transactionRef: txRef.trim(),
-          note: [note.trim(), data.error || data.message]
-            .filter(Boolean)
-            .join(" | ") || undefined,
-          createdAt: new Date().toISOString(),
-          userId,
+          note:
+            [note.trim(), multiNote, data.error || data.message].filter(Boolean).join(" | ") ||
+            undefined,
         });
-        removeFromCart(pkg.id);
+        clearSelectedFromCart();
         setInfo(
           data.error ||
             data.message ||
@@ -279,7 +282,6 @@ export default function CheckoutForm({ packageId }: Props) {
       }
     }
 
-    // Path B: receipt upload or non-auto method → manual queue
     let receiptUrl: string | undefined;
     if (confirmMode === "receipt") {
       if (!receiptFile) {
@@ -294,32 +296,19 @@ export default function CheckoutForm({ packageId }: Props) {
         return;
       }
       receiptUrl = up.url;
-    } else {
-      if (!txRef.trim()) {
-        setError("Enter the transaction reference.");
-        setSubmitting(false);
-        return;
-      }
+    } else if (!txRef.trim()) {
+      setError("Enter the transaction reference.");
+      setSubmitting(false);
+      return;
     }
 
     const order: ManualOrder = {
-      id: orderRef,
-      packageId: pkg.id,
-      packageName: pkg.name,
-      amountEtb: pkg.priceEtb,
+      ...orderBase,
       status: "pending_verification",
-      paymentMethod: method,
-      studentName: name.trim(),
-      phone: phone.trim(),
-      email: email.trim() || undefined,
       transactionRef:
-        confirmMode === "details"
-          ? txRef.trim()
-          : `receipt:${receiptFile?.name || "file"}`,
-      note: note.trim() || undefined,
+        confirmMode === "details" ? txRef.trim() : `receipt:${receiptFile?.name || "file"}`,
+      note: [note.trim(), multiNote].filter(Boolean).join(" | ") || undefined,
       receiptUrl,
-      createdAt: new Date().toISOString(),
-      userId,
     };
 
     const res = await saveOrder(order);
@@ -328,11 +317,11 @@ export default function CheckoutForm({ packageId }: Props) {
       setError(res.error);
       return;
     }
-    removeFromCart(pkg.id);
+    clearSelectedFromCart();
     setDone(true);
   }
 
-  if (!pkg) {
+  if (!pkg || pkgs.length === 0) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 px-4">
         <p className="text-wisdom-muted">Package not found.</p>
@@ -352,15 +341,19 @@ export default function CheckoutForm({ packageId }: Props) {
   }
 
   if (!signedIn) {
+    const next =
+      pkgs.length > 1
+        ? `/checkout/multi?ids=${allPackageIds.join(",")}`
+        : `/checkout/${pkg.id}`;
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center">
         <LogIn className="w-10 h-10 text-amber-400 mx-auto mb-3" />
         <h1 className="text-xl font-bold text-white mb-2">Sign in to checkout</h1>
         <p className="text-sm text-wisdom-muted mb-6">
-          You need an account so we can unlock {pkg.name} after payment verification.
+          You need an account so we can unlock {displayName} after payment verification.
         </p>
         <Link
-          href={`/login?next=${encodeURIComponent(`/checkout/${packageId}`)}`}
+          href={`/login?next=${encodeURIComponent(next)}`}
           className="inline-flex rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-bold text-wisdom-dark"
         >
           Sign in
@@ -382,12 +375,12 @@ export default function CheckoutForm({ packageId }: Props) {
           </p>
           {autoVerified ? (
             <p className="text-sm text-wisdom-muted mb-6">
-              {pkg.name} is unlocked in My Learning. You can start studying now.
+              {displayName} is unlocked in My Learning. You can start studying now.
             </p>
           ) : (
             <p className="text-sm text-wisdom-muted mb-6">
               {info ||
-                `We will unlock ${pkg.name} in My Learning after confirming your payment.`}
+                `We will unlock ${displayName} in My Learning after confirming your payment.`}
             </p>
           )}
           <div className="flex flex-col sm:flex-row gap-2 justify-center">
@@ -412,16 +405,17 @@ export default function CheckoutForm({ packageId }: Props) {
   return (
     <div className="max-w-lg mx-auto px-4 py-10 md:py-14">
       <Link
-        href="/packages"
+        href="/cart"
         className="inline-flex items-center gap-1 text-sm text-wisdom-muted hover:text-white mb-6"
       >
         <ArrowLeft className="w-4 h-4" />
-        Packages
+        Cart
       </Link>
 
       <h1 className="font-display text-2xl font-bold text-white mb-1">Checkout</h1>
       <p className="text-wisdom-muted text-sm mb-6">
-        {pkg.name} · <span className="text-amber-300 font-semibold">{formatEtb(pkg.priceEtb)}</span>
+        {displayName} ·{" "}
+        <span className="text-amber-300 font-semibold">{formatEtb(totalEtb)}</span>
       </p>
 
       <div className="rounded-2xl border border-white/12 bg-wisdom-card p-4 mb-6">
@@ -476,6 +470,9 @@ export default function CheckoutForm({ packageId }: Props) {
           </button>
         </div>
         <p className="text-xs text-wisdom-muted">Name: {pay.accountName}</p>
+        <p className="text-xs text-amber-200/90 pt-1">
+          Transfer the full amount: <strong>{formatEtb(totalEtb)}</strong>
+        </p>
         <ul className="text-xs text-wisdom-muted list-disc pl-4 space-y-1 pt-2">
           {pay.instructions.map((line) => (
             <li key={line}>{line}</li>
@@ -548,12 +545,6 @@ export default function CheckoutForm({ packageId }: Props) {
               className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2.5 text-sm text-white"
               placeholder="From SMS or bank receipt"
             />
-            {canAutoVerify && (
-              <p className="mt-1.5 text-[11px] text-emerald-300/90 flex items-center gap-1">
-                <Zap className="w-3 h-3" />
-                We verify Telebirr, CBE, and Abyssinia transfers automatically when possible.
-              </p>
-            )}
           </label>
         )}
 
@@ -605,29 +596,18 @@ export default function CheckoutForm({ packageId }: Props) {
           className="w-full py-3 rounded-xl bg-amber-500 text-wisdom-dark text-sm font-bold hover:bg-amber-400 disabled:opacity-50"
         >
           {submitting
-            ? confirmMode === "details" && canAutoVerify
-              ? "Verifying payment…"
-              : "Submitting…"
+            ? "Working…"
             : confirmMode === "details" && canAutoVerify
-              ? "Verify & unlock"
-              : "Submit for verification"}
+              ? `Verify & unlock · ${formatEtb(totalEtb)}`
+              : `Submit · ${formatEtb(totalEtb)}`}
         </button>
 
         <p className="flex items-start gap-2 text-[11px] text-wisdom-muted">
           <Shield className="w-3.5 h-3.5 shrink-0 mt-0.5 text-cyan-400" />
-          {canAutoVerify && confirmMode === "details"
-            ? "Automatic check via Verify.ET when the reference matches. Otherwise your order stays pending for admin review."
-            : "Manual verification — access unlocks in My Learning after we confirm payment."}
+          Pay the selected total in one transfer. After verification, each selected package unlocks in
+          My Learning.
         </p>
       </form>
-
-      <p className="mt-8 text-center text-xs text-wisdom-muted">
-        Need help?{" "}
-        <Link href="/contact" className="text-amber-400 hover:underline">
-          Contact us
-        </Link>{" "}
-        with your order reference.
-      </p>
     </div>
   );
 }
