@@ -1,5 +1,13 @@
-import data1 from "./universities-data-1.json";
-import data2 from "./universities-data-2.json";
+import _aau from "./uni-aau.json";
+import _aastu from "./uni-aastu.json";
+import _ju from "./uni-ju.json";
+import _mu from "./uni-mu.json";
+import _hru from "./uni-hru.json";
+import _bdu from "./uni-bdu.json";
+import _uog from "./uni-uog.json";
+import _hwu from "./uni-hwu.json";
+import _amu from "./uni-amu.json";
+import _axu from "./uni-axu.json";
 
 export type Region =
   | "Addis Ababa"
@@ -62,8 +70,16 @@ export const universitiesIntro = {
 };
 
 export const universities: University[] = [
-  ...(data1 as University[]),
-  ...(data2 as University[]),
+  _aau as University,
+  _aastu as University,
+  _ju as University,
+  _mu as University,
+  _hru as University,
+  _bdu as University,
+  _uog as University,
+  _hwu as University,
+  _amu as University,
+  _axu as University,
 ];
 
 export function getUniversity(id: string) {
