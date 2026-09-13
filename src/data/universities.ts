@@ -1,4 +1,5 @@
-import data from "./universities-data.json";
+import data1 from "./universities-data-1.json";
+import data2 from "./universities-data-2.json";
 
 export type Region =
   | "Addis Ababa"
@@ -60,7 +61,10 @@ export const universitiesIntro = {
     "Read the one for your university, or the one you are hoping to be placed at. Then read it again in your first month there and see how much of it turns out to be true.",
 };
 
-export const universities: University[] = data as University[];
+export const universities: University[] = [
+  ...(data1 as University[]),
+  ...(data2 as University[]),
+];
 
 export function getUniversity(id: string) {
   return universities.find((u) => u.id === id);
