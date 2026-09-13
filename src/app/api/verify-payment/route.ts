@@ -22,6 +22,7 @@ function adminClient() {
 type Body = {
   orderId?: string;
   packageId?: string;
+  packageIds?: string[];
   packageName?: string;
   amountEtb?: number;
   paymentMethod?: PaymentMethodId;
@@ -31,7 +32,6 @@ type Body = {
   email?: string;
   note?: string;
   userId?: string | null;
-  /** If true, only check Verify.ET without writing an order (preview). */
   dryRun?: boolean;
 };
 
@@ -98,7 +98,6 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // Persist order when we have enough data
   if (orderId && body.packageId && body.packageName && Number.isFinite(amountEtb)) {
     const db = adminClient();
     const status = result.verified ? "verified" : "pending_verification";
@@ -140,17 +139,25 @@ export async function POST(req: NextRequest) {
       }
 
       if (result.verified) {
-        const enroll: Record<string, unknown> = {
-          order_id: orderId,
-          package_id: body.packageId,
-          package_name: body.packageName,
-          email: body.email || null,
-          user_id: body.userId || null,
-        };
-        const { error: enrErr } = await db.from("enrollments").upsert(enroll, {
-          ignoreDuplicates: true,
-        });
-        if (enrErr) console.warn("[verify-payment] enrollment", enrErr.message);
+        const ids =
+          Array.isArray(body.packageIds) && body.packageIds.length > 0
+            ? body.packageIds
+            : body.packageId
+              ? [body.packageId]
+              : [];
+        for (const pid of ids) {
+          const enroll: Record<string, unknown> = {
+            order_id: orderId,
+            package_id: pid,
+            package_name: body.packageName,
+            email: body.email || null,
+            user_id: body.userId || null,
+          };
+          const { error: enrErr } = await db.from("enrollments").upsert(enroll, {
+            ignoreDuplicates: true,
+          });
+          if (enrErr) console.warn("[verify-payment] enrollment", enrErr.message);
+        }
       }
     }
   }
