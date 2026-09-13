@@ -1,1 +1,1 @@
-PLACEHOLDER_STUDY
+export { default } from "@/components/academy/StudyTechniquesPage";

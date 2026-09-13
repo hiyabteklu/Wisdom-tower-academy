@@ -1,1 +1,1 @@
-PLACEHOLDER_CAMPUS
+export { default } from "@/components/academy/CampusLifePage";
