@@ -1,6 +1,4 @@
-import { entries as detailedA } from "./universities-detailed-a";
-import { entries as detailedB } from "./universities-detailed-b";
-import { entries as detailedC } from "./universities-detailed-c";
+import data from "./universities-data.json";
 
 export type Region =
   | "Addis Ababa"
@@ -58,15 +56,11 @@ export const universitiesIntro = {
     "Rankings and Wikipedia facts will not tell you what you actually need to know. They will not tell you how strict the department is about attendance, whether the cafeteria food is something you can survive on for four years, how quickly the registrar fixes a mistake on your transcript, or how many of your classmates disappear after first semester because the GPA cutoff caught them. Those are the things that decide whether you finish strong or limp through.",
     "So this is not a comparison of prestige. It is written the way someone who has actually been there, or who has listened closely to people who have, would tell a younger sibling before they leave home. Some of it is uncomfortable. All of it is honest.",
   ],
-  closing: "Read the one for your university, or the one you are hoping to be placed at. Then read it again in your first month there and see how much of it turns out to be true.",
+  closing:
+    "Read the one for your university, or the one you are hoping to be placed at. Then read it again in your first month there and see how much of it turns out to be true.",
 };
 
-/** Authentic full guides — AAU through Aksum. */
-export const universities: University[] = [
-  ...detailedA,
-  ...detailedB,
-  ...detailedC,
-];
+export const universities: University[] = data as University[];
 
 export function getUniversity(id: string) {
   return universities.find((u) => u.id === id);
