@@ -1,24 +1,19 @@
-import Link from "next/link";
 import {
-  ArrowRight,
   Users,
-  Heart,
   Brain,
-  Flame,
-  Shield,
-  Coffee,
   BookOpen,
-  MapPin,
-  UsersRound,
-  MessageSquare,
-  Library,
   Building2,
-  AlertTriangle,
-  ListChecks,
-  CheckCircle2,
 } from "lucide-react";
 import CategoryBackButton from "@/components/CategoryBackButton";
 import PageNotes from "@/components/academy/PageNotes";
+import {
+  CampusFriends,
+  CampusMind,
+  CampusLectures,
+  CampusPlaces,
+  CampusChecklist,
+  CampusFooter,
+} from "@/components/academy/CampusLifeSections";
 
 const navSections = [
   {
@@ -113,22 +108,14 @@ export default function CampusLifePage() {
           })}
         </nav>
 
-        <CampusLifeSections />
+        <CampusFriends />
+        <CampusMind />
+        <CampusLectures />
+        <CampusPlaces />
+        <CampusChecklist />
+        <CampusFooter />
         <PageNotes pageSlug="campus-life" />
       </div>
     </div>
-  );
-}
-
-function CampusLifeSections() {
-  return (
-    <>
-      <CampusFriends />
-      <CampusMind />
-      <CampusLectures />
-      <CampusPlaces />
-      <CampusChecklist />
-      <CampusFooter />
-    </>
   );
 }
