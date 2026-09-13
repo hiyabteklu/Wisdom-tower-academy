@@ -1,0 +1,35 @@
+{
+  "id": "ddu",
+  "name": "Dire Dawa University",
+  "abbr": "DDU",
+  "region": "Dire Dawa",
+  "location": "Dire Dawa, about 450 to 460 km east of Addis",
+  "website": "https://www.ddu.edu.et",
+  "founded": "2006",
+  "distanceFromAddisKm": 455,
+  "distanceNote": "A long eastern trip along the road or rail corridor toward Dire Dawa.",
+  "elevationM": 1200,
+  "campuses": "One main urban campus, with technology institute activity linked to the university.",
+  "knownFor": [
+    "Sitting inside one of Ethiopia's genuinely major commercial cities, with a real urban economy around it, not just a university town",
+    "Serious heat, this is lowland eastern Ethiopia and the climate is a real daily adjustment for most students",
+    "A more diverse, mixed student body than many regional universities, reflecting the city's long history as a trading and rail hub"
+  ],
+  "whatToExpect": [
+    "The heat here is the single biggest daily adjustment most students face, highs can be genuinely harsh, and students coming from highland regions describe real physical adjustment in their first month or two.",
+    "Because Dire Dawa is a real commercial city, not just a university town, students have access to more shops, transport, and general urban services than at most other regional universities of similar size.",
+    "The city's mixed population, historically shaped by trade and rail connections, gives campus life a different social texture than more homogenous regional university towns, some students find this refreshing.",
+    "Studying during the coolest parts of the day becomes a real, practical strategy for a lot of students here, the heat during peak afternoon hours can make sustained focus genuinely difficult."
+  ],
+  "tips": [
+    "Prioritize hydration and breathable clothing from day one, do not assume you will simply adjust quickly, give yourself real time.",
+    "If you struggle with heat, try to arrange your personal study schedule around the cooler morning and evening hours rather than fighting the hottest part of the day."
+  ],
+  "studentFit": "Dire Dawa suits students who can genuinely handle serious heat and who want the benefits of a real commercial city around their university experience, more shops, more transport, more diversity. It fits people drawn to eastern Ethiopia specifically. Students who struggle physically with hot climates, or who want a quieter, purely academic small town feel, will find the heat and the city bustle here a real and constant factor to weigh.",
+  "detailed": true,
+  "strengths": [
+    "Sitting inside one of Ethiopia's genuinely major commercial cities, with a real urban economy around it, not just a university town",
+    "Serious heat, this is lowland eastern Ethiopia and the climate is a real daily adjustment for most students",
+    "A more diverse, mixed student body than many regional universities, reflecting the city's long history as a trading and rail hub"
+  ]
+}
