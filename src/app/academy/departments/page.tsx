@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Briefcase,
   BookOpen,
@@ -12,6 +12,9 @@ import {
   ThumbsDown,
   ThumbsUp,
   Layers,
+  Eye,
+  EyeOff,
+  StickyNote,
 } from "lucide-react";
 import CategoryBackButton from "@/components/CategoryBackButton";
 import {
@@ -21,19 +24,49 @@ import {
   type DepartmentCategory,
   type DepartmentCategoryId,
 } from "@/data/departments";
+import {
+  listFreeResourceItems,
+  type FreeResourceItem,
+} from "@/lib/free-resources";
+import { simpleMarkdownToHtml } from "@/lib/format-content";
 
 function categoryMeta(id: DepartmentCategoryId): DepartmentCategory {
   return departmentCategories.find((c) => c.id === id)!;
+}
+
+function AdminNotesBlock({ notes }: { notes: FreeResourceItem[] }) {
+  if (!notes.length) return null;
+  return (
+    <div className="rounded-xl border border-amber-400/30 bg-amber-500/5 p-4 space-y-3">
+      <p className="text-xs font-semibold uppercase tracking-wider text-amber-200/90 flex items-center gap-2">
+        <StickyNote className="w-3.5 h-3.5" />
+        Extra notes
+      </p>
+      {notes.map((n) => (
+        <div key={n.id} className="space-y-1">
+          {n.title && <p className="text-sm font-semibold text-white/90">{n.title}</p>}
+          {n.bodyMd && (
+            <div
+              className="formatted-body text-sm text-wisdom-muted leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: simpleMarkdownToHtml(n.bodyMd) }}
+            />
+          )}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function DepartmentCard({
   dept,
   expanded,
   onToggle,
+  notes,
 }: {
   dept: Department;
   expanded: boolean;
   onToggle: () => void;
+  notes: FreeResourceItem[];
 }) {
   const cat = categoryMeta(dept.category);
 
@@ -53,43 +86,64 @@ function DepartmentCard({
         aria-hidden
       />
 
-      <button
-        type="button"
-        onClick={onToggle}
-        className="relative w-full text-left p-5 sm:p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/40 rounded-2xl"
-        aria-expanded={expanded}
-      >
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2 mb-2.5">
-              <span
-                className={`inline-flex items-center rounded-lg border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${cat.badge}`}
-              >
-                {cat.label}
-              </span>
-              <span className="text-[11px] font-medium text-wisdom-muted">
-                {dept.durationYears}
-              </span>
+      <div className="relative p-5 sm:p-6">
+        <button
+          type="button"
+          onClick={onToggle}
+          className="w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/40 rounded-xl"
+          aria-expanded={expanded}
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2 mb-2.5">
+                <span
+                  className={`inline-flex items-center rounded-lg border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${cat.badge}`}
+                >
+                  {cat.label}
+                </span>
+                <span className="text-[11px] font-medium text-wisdom-muted">{dept.durationYears}</span>
+              </div>
+              <h3 className={`font-display text-lg sm:text-xl font-bold text-white leading-snug transition-colors ${cat.accent}`}>
+                {dept.name}
+              </h3>
+              {!expanded && (
+                <p className="mt-2 text-sm text-wisdom-muted leading-relaxed line-clamp-2">{dept.about}</p>
+              )}
             </div>
-            <h3
-              className={`font-display text-lg sm:text-xl font-bold text-white leading-snug transition-colors ${cat.accent}`}
+            <div
+              className={`shrink-0 p-2 rounded-xl border border-white/10 bg-wisdom-dark/50 text-wisdom-muted transition-all duration-300
+                ${expanded ? "rotate-180 text-cyan-300 border-cyan-400/30" : "group-hover:text-white"}`}
             >
-              {dept.name}
-            </h3>
-            {!expanded && (
-              <p className="mt-2 text-sm text-wisdom-muted leading-relaxed line-clamp-2">
-                {dept.about}
-              </p>
-            )}
+              <ChevronDown className="w-5 h-5" />
+            </div>
           </div>
-          <div
-            className={`shrink-0 p-2 rounded-xl border border-white/10 bg-wisdom-dark/50 text-wisdom-muted transition-all duration-300
-              ${expanded ? "rotate-180 text-cyan-300 border-cyan-400/30" : "group-hover:text-white"}`}
+        </button>
+
+        <div className="mt-4">
+          <button
+            type="button"
+            onClick={onToggle}
+            className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold transition-all duration-300
+              ${
+                expanded
+                  ? "border border-white/15 bg-wisdom-dark/60 text-white hover:border-white/25"
+                  : "bg-cyan-500 text-wisdom-dark shadow-[0_0_24px_-6px_rgba(34,211,238,0.45)] hover:brightness-110"
+              }`}
           >
-            <ChevronDown className="w-5 h-5" />
-          </div>
+            {expanded ? (
+              <>
+                <EyeOff className="w-4 h-4" />
+                Show less
+              </>
+            ) : (
+              <>
+                <Eye className="w-4 h-4" />
+                View more
+              </>
+            )}
+          </button>
         </div>
-      </button>
+      </div>
 
       <div
         className={`grid transition-[grid-template-rows] duration-500 ease-out ${
@@ -144,7 +198,7 @@ function DepartmentCard({
             <section>
               <h4 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-wisdom-muted mb-2">
                 <Globe2 className="w-3.5 h-3.5 text-violet-300" />
-                Opportunities & market
+                Opportunities and market
               </h4>
               <p className="text-sm sm:text-[15px] text-white/80 leading-relaxed">{dept.market}</p>
             </section>
@@ -179,6 +233,8 @@ function DepartmentCard({
                 </ul>
               </div>
             </div>
+
+            <AdminNotesBlock notes={notes} />
           </div>
         </div>
       </div>
@@ -190,6 +246,36 @@ export default function DepartmentsPage() {
   const [query, setQuery] = useState("");
   const [activeCat, setActiveCat] = useState<DepartmentCategoryId | "all">("all");
   const [openId, setOpenId] = useState<string | null>(null);
+  const [allNotes, setAllNotes] = useState<FreeResourceItem[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { items } = await listFreeResourceItems({
+        pageSlug: "departments",
+        publishedOnly: true,
+      });
+      if (!cancelled) setAllNotes(items);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const notesByDept = useMemo(() => {
+    const map: Record<string, FreeResourceItem[]> = {};
+    for (const n of allNotes) {
+      const id = String(n.meta?.departmentId ?? "");
+      if (!id) {
+        if (!map["_page"]) map["_page"] = [];
+        map["_page"].push(n);
+        continue;
+      }
+      if (!map[id]) map[id] = [];
+      map[id].push(n);
+    }
+    return map;
+  }, [allNotes]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -224,12 +310,12 @@ export default function DepartmentsPage() {
             <span className="text-teal-300">Department</span> info
           </h1>
           <p className="text-wisdom-muted text-lg max-w-2xl leading-relaxed">
-            What competitive undergraduate fields actually demand — coursework, jobs, market
+            What competitive undergraduate fields actually demand: coursework, jobs, market
             reality, and the trade-offs nobody puts on the brochure.
           </p>
           <p className="mt-3 text-sm text-teal-300/90 font-medium inline-flex items-center gap-2">
             <Scale className="w-4 h-4" />
-            {departments.length} fields · expand any card for the full guide
+            {departments.length} fields · use View more on any card for the full guide
           </p>
         </header>
 
@@ -295,6 +381,7 @@ export default function DepartmentsPage() {
                 dept={dept}
                 expanded={openId === dept.id}
                 onToggle={() => setOpenId((id) => (id === dept.id ? null : dept.id))}
+                notes={[...(notesByDept[dept.id] || []), ...(notesByDept["_page"] || [])]}
               />
             ))}
           </div>
@@ -302,7 +389,7 @@ export default function DepartmentsPage() {
 
         <p className="mt-12 text-center text-xs text-wisdom-muted/80 max-w-lg mx-auto leading-relaxed">
           Guides describe typical undergraduate patterns. Exact curricula, duration, and licensing
-          rules differ by institution and country — always verify with the program you apply to.
+          rules differ by institution and country. Always verify with the program you apply to.
         </p>
       </div>
     </div>
