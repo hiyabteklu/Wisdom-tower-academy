@@ -9,39 +9,15 @@ import _hwu from "./uni-hwu.json";
 import _amu from "./uni-amu.json";
 import _axu from "./uni-axu.json";
 import _au from "./uni-au.json";
-import _dbu from "./uni-dbu.json";
-import _dmu from "./uni-dmu.json";
-import _du from "./uni-du.json";
-import _ddu from "./uni-ddu.json";
-import _wou from "./uni-wou.json";
-import _wsu from "./uni-wsu.json";
-import _wu from "./uni-wu.json";
-import _jgu from "./uni-jgu.json";
-import _mwu from "./uni-mwu.json";
-import _mtu from "./uni-mtu.json";
-import _su from "./uni-su.json";
-import _kmu from "./uni-kmu.json";
-import _agu from "./uni-agu.json";
-import _asu from "./uni-asu.json";
-import _bhu from "./uni-bhu.json";
-import _dbtu from "./uni-dbtu.json";
-import _meu from "./uni-meu.json";
-import _wcu from "./uni-wcu.json";
-import _wku from "./uni-wku.json";
-import _wdu from "./uni-wdu.json";
-import _aru from "./uni-aru.json";
-import _gmu from "./uni-gmu.json";
-import _obu from "./uni-obu.json";
-import _slu from "./uni-slu.json";
-import _dedu from "./uni-dedu.json";
-import _dku from "./uni-dku.json";
-import _bu from "./uni-bu.json";
-import _wru from "./uni-wru.json";
-import _jnu from "./uni-jnu.json";
-import _kdu from "./uni-kdu.json";
-import _iu from "./uni-iu.json";
-import _ru from "./uni-ru.json";
-import _mkau from "./uni-mkau.json";
+import part0 from "./universities-part-0.json";
+import part1 from "./universities-part-1.json";
+import part2 from "./universities-part-2.json";
+import part3 from "./universities-part-3.json";
+import part4 from "./universities-part-4.json";
+import part5 from "./universities-part-5.json";
+import part6 from "./universities-part-6.json";
+import part7 from "./universities-part-7.json";
+import part8 from "./universities-part-8.json";
 
 export type Region =
   | "Addis Ababa"
@@ -115,39 +91,15 @@ export const universities: University[] = [
   _amu as University,
   _axu as University,
   _au as University,
-  _dbu as University,
-  _dmu as University,
-  _du as University,
-  _ddu as University,
-  _wou as University,
-  _wsu as University,
-  _wu as University,
-  _jgu as University,
-  _mwu as University,
-  _mtu as University,
-  _su as University,
-  _kmu as University,
-  _agu as University,
-  _asu as University,
-  _bhu as University,
-  _dbtu as University,
-  _meu as University,
-  _wcu as University,
-  _wku as University,
-  _wdu as University,
-  _aru as University,
-  _gmu as University,
-  _obu as University,
-  _slu as University,
-  _dedu as University,
-  _dku as University,
-  _bu as University,
-  _wru as University,
-  _jnu as University,
-  _kdu as University,
-  _iu as University,
-  _ru as University,
-  _mkau as University,
+  ...(part0 as University[]),
+  ...(part1 as University[]),
+  ...(part2 as University[]),
+  ...(part3 as University[]),
+  ...(part4 as University[]),
+  ...(part5 as University[]),
+  ...(part6 as University[]),
+  ...(part7 as University[]),
+  ...(part8 as University[]),
 ];
 
 export function getUniversity(id: string) {
