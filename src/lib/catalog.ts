@@ -1,6 +1,6 @@
 /**
  * Admin catalog — Supabase catalog_items + static fallback from packages.ts
- * Static priceEtb / includes always win for known package ids (avoids stale DB prices).
+ * Static priceEtb / includes / description always win for known package ids.
  */
 import { supabase } from "@/lib/supabase";
 import {
@@ -51,7 +51,7 @@ export function getRuntimeCatalog(): AcademyPackage[] | null {
   return runtimeCatalog;
 }
 
-/** Prefer static price and includes for packages defined in packages.ts */
+/** Prefer static price, includes, and description for packages defined in packages.ts */
 function applyStaticPrice(pkg: AcademyPackage): AcademyPackage {
   const staticPkg = getStaticPackage(pkg.id);
   if (!staticPkg) return pkg;
@@ -59,8 +59,7 @@ function applyStaticPrice(pkg: AcademyPackage): AcademyPackage {
     ...pkg,
     priceEtb: staticPkg.priceEtb,
     includes: staticPkg.includes.length ? staticPkg.includes : pkg.includes,
-    // Keep admin description if present and non-empty
-    description: pkg.description?.trim() ? pkg.description : staticPkg.description,
+    description: staticPkg.description?.trim() ? staticPkg.description : pkg.description,
   };
 }
 
