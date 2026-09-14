@@ -111,6 +111,17 @@ export function getSpecialPackage(slug: string): SpecialPackage | undefined {
   return specialPackages.find((p) => p.slug === slug);
 }
 
+export function getSemester(
+  packageSlug: string,
+  semesterId: string
+): { pkg: SpecialPackage; sem: SpecialSemester } | null {
+  const pkg = getSpecialPackage(packageSlug);
+  if (!pkg) return null;
+  const sem = pkg.semesters.find((s) => s.id === semesterId);
+  if (!sem) return null;
+  return { pkg, sem };
+}
+
 export function getCourse(
   packageSlug: string,
   semesterId: string,

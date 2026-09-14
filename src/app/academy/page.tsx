@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import VoiceMessageCard from "@/components/VoiceMessageCard";
 import TestimonialMarquee from "@/components/TestimonialMarquee";
-// import WelcomeVideoCard from "@/components/WelcomeVideoCard"; // intro video paused for now
 import PartnershipPath from "@/components/PartnershipPath";
 import SafeCoverImage from "@/components/SafeCoverImage";
 import { packageImages } from "@/data/packages";
@@ -151,10 +150,10 @@ const freeResources = [
 ];
 
 const voiceStudents = [
-  { name: "Hiwot", role: "Grade 12", accent: "amber" as const },
-  { name: "Yonas", role: "Freshman", accent: "sky" as const },
-  { name: "Meron", role: "UAT", accent: "violet" as const },
-  { name: "Abel", role: "COC", accent: "emerald" as const },
+  { name: "Hiwot", program: "Grade 12", duration: "0:42", accent: "text-amber-400" },
+  { name: "Yonas", program: "Freshman", duration: "0:38", accent: "text-sky-400" },
+  { name: "Meron", program: "UAT", duration: "0:51", accent: "text-violet-400" },
+  { name: "Abel", program: "COC", duration: "0:35", accent: "text-emerald-400" },
 ];
 
 export default function AcademyPage() {
@@ -288,7 +287,8 @@ export default function AcademyPage() {
                   <VoiceMessageCard
                     key={s.name}
                     name={s.name}
-                    role={s.role}
+                    program={s.program}
+                    duration={s.duration}
                     accent={s.accent}
                   />
                 ))}
