@@ -12,6 +12,7 @@ import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { useInView } from "@/hooks/useInView";
 import InfinityCard from "@/components/home/InfinityCard";
 import LandingPathways from "@/components/home/LandingPathways";
+import LandingQuoteCard from "@/components/home/LandingQuoteCard";
 import { DIGITAL_URL } from "@/lib/digital-url";
 import { supabase, recoverSession } from "@/lib/supabase";
 
@@ -297,6 +298,8 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      <LandingQuoteCard />
 
       <LandingPathways />
 
