@@ -1,7 +1,6 @@
 import CategoryBackButton from "@/components/CategoryBackButton";
 import PackageOfferBanner from "@/components/PackageOfferBanner";
 import { Users, Clock } from "lucide-react";
-import { COMING_SOON_BODY, COMING_SOON_TITLE } from "@/data/content-availability";
 
 export default function GatPage() {
   return (
@@ -19,12 +18,8 @@ export default function GatPage() {
             </p>
           </div>
           <h1 className="font-display text-4xl md:text-5xl font-extrabold tracking-tight mb-3">
-            <span className="text-rose-400">GAT</span> pathway
+            <span className="text-rose-400">GAT</span>
           </h1>
-          <p className="text-wisdom-muted text-base leading-relaxed max-w-xl">
-            Graduate Admission Test resources will be organized by field and department — not a
-            single shared hub grid.
-          </p>
         </div>
 
         <div className="mb-8">
@@ -35,13 +30,9 @@ export default function GatPage() {
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-rose-400/30 bg-rose-500/10 text-rose-300">
             <Clock className="w-7 h-7" />
           </div>
-          <h2 className="font-display text-xl font-bold text-white mb-2">{COMING_SOON_TITLE}</h2>
+          <h2 className="font-display text-xl font-bold text-white mb-2">Coming soon</h2>
           <p className="text-sm text-wisdom-muted leading-relaxed max-w-md mx-auto">
-            {COMING_SOON_BODY}
-          </p>
-          <p className="mt-4 text-xs text-wisdom-muted">
-            Leaderboard, progress tracker, books, and practice hubs are intentionally hidden until
-            department tracks are ready.
+            Materials for this section are not available yet.
           </p>
         </div>
       </div>

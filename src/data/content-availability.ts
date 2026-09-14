@@ -1,8 +1,5 @@
 /**
  * Live vs uploading + purchase gates.
- *
- * Sellable: G9–12, UAT, COC, Freshman, ECE Sem 1.
- * Coming soon (no hubs): GAT, Exit Exam, ECE Sem 2.
  */
 
 export const PURCHASABLE_PACKAGE_IDS = new Set([
@@ -16,7 +13,6 @@ export const PURCHASABLE_PACKAGE_IDS = new Set([
   "ece-y3-sem-1",
 ]);
 
-/** Pathways that intentionally have no resource hubs yet */
 export const COMING_SOON_PACKAGE_IDS = new Set(["gat", "exit-exam", "ece-y3-sem-2"]);
 
 export type HubLockMode = "open" | "require_purchase" | "coming_soon";
@@ -34,9 +30,7 @@ export function isFreshmanSubjectReady(_subjectId: string): boolean {
 }
 
 export function unlockPackageIdsForPath(basePath: string): string[] {
-  if (basePath.includes("/academy/freshman")) {
-    return ["freshman"];
-  }
+  if (basePath.includes("/academy/freshman")) return ["freshman"];
   if (basePath.includes("/academy/grades/9")) return ["grade-9"];
   if (basePath.includes("/academy/grades/10")) return ["grade-10"];
   if (basePath.includes("/academy/grades/11")) return ["grade-11"];
@@ -54,8 +48,8 @@ export function getHubLockMode(basePath: string): HubLockMode {
   if (basePath.includes("/academy/gat") || basePath.includes("/academy/exit-exam")) {
     return "coming_soon";
   }
+  if (basePath.includes("/academy/grades/")) return "coming_soon";
   if (basePath.includes("/academy/freshman")) return "require_purchase";
-  if (basePath.includes("/academy/grades/")) return "require_purchase";
   if (basePath.includes("/academy/uat") || basePath.includes("/academy/coc")) {
     return "require_purchase";
   }
@@ -75,8 +69,8 @@ export function areHubsReady(basePath: string): boolean {
 
 export const COMING_SOON_TITLE = "Coming soon";
 export const COMING_SOON_BODY =
-  "This pathway will open by department and field. Resource hubs (books, leaderboard, progress, and practice) are not live yet — check back when materials are ready.";
+  "Materials for this section are not available yet. Check back soon.";
 
 export const PURCHASE_TITLE = "Package required";
 export const PURCHASE_BODY_FRESHMAN =
-  "Unlock this pathway with the matching package to access books, short notes, flashcards, question banks, and exams.";
+  "Unlock this pathway with the matching package to access study materials.";

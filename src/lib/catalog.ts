@@ -1,5 +1,6 @@
 /**
  * Admin catalog — Supabase catalog_items + static fallback from packages.ts
+ * Static priceEtb / includes always win for known package ids (avoids stale DB prices).
  */
 import { supabase } from "@/lib/supabase";
 import {
@@ -40,7 +41,6 @@ export type CatalogInput = {
   sortOrder: number;
 };
 
-/** Client-side cache for cart / getPackageResolved */
 let runtimeCatalog: AcademyPackage[] | null = null;
 
 export function setRuntimeCatalog(list: AcademyPackage[]) {
@@ -51,8 +51,21 @@ export function getRuntimeCatalog(): AcademyPackage[] | null {
   return runtimeCatalog;
 }
 
-export function rowToPackage(row: CatalogRow): AcademyPackage {
+/** Prefer static price and includes for packages defined in packages.ts */
+function applyStaticPrice(pkg: AcademyPackage): AcademyPackage {
+  const staticPkg = getStaticPackage(pkg.id);
+  if (!staticPkg) return pkg;
   return {
+    ...pkg,
+    priceEtb: staticPkg.priceEtb,
+    includes: staticPkg.includes.length ? staticPkg.includes : pkg.includes,
+    // Keep admin description if present and non-empty
+    description: pkg.description?.trim() ? pkg.description : staticPkg.description,
+  };
+}
+
+export function rowToPackage(row: CatalogRow): AcademyPackage {
+  const base: AcademyPackage = {
     id: row.id,
     name: row.name,
     shortName: row.short_name || row.name,
@@ -64,6 +77,7 @@ export function rowToPackage(row: CatalogRow): AcademyPackage {
     enrolledLabel: row.enrolled_label || "",
     group: (row.group_key === "custom" ? "branch" : row.group_key) as AcademyPackage["group"],
   };
+  return applyStaticPrice(base);
 }
 
 export function packageToInput(p: AcademyPackage, sortOrder = 100): CatalogInput {
@@ -83,11 +97,10 @@ export function packageToInput(p: AcademyPackage, sortOrder = 100): CatalogInput
   };
 }
 
-/** Resolve package for cart/checkout: runtime catalog → static */
 export function getPackageResolved(id: string): AcademyPackage | undefined {
   if (runtimeCatalog) {
     const found = runtimeCatalog.find((p) => p.id === id);
-    if (found) return found;
+    if (found) return applyStaticPrice(found);
   }
   return getStaticPackage(id);
 }
@@ -111,11 +124,10 @@ export async function listCatalogItems(opts?: {
   }
 }
 
-/** Public list as AcademyPackage[]; falls back to static if table empty/missing */
 export async function listSellablePackages(): Promise<AcademyPackage[]> {
   const { rows, error } = await listCatalogItems({ includeInactive: false });
   if (error || rows.length === 0) {
-    const list = [...academyPackages];
+    const list = academyPackages.map(applyStaticPrice);
     setRuntimeCatalog(list);
     return list;
   }
@@ -166,20 +178,11 @@ export async function deleteCatalogItem(id: string): Promise<{ ok: boolean; erro
   return { ok: true };
 }
 
-/** Insert static academyPackages into catalog if table is empty */
 export async function seedCatalogFromStatic(): Promise<{
   ok: boolean;
   count: number;
   error?: string;
 }> {
-  const { rows, error: listErr } = await listCatalogItems({ includeInactive: true });
-  if (listErr) {
-    return { ok: false, count: 0, error: listErr };
-  }
-  if (rows.length > 0) {
-    return { ok: true, count: 0, error: "Catalog already has items — seed skipped" };
-  }
-
   let n = 0;
   for (let i = 0; i < academyPackages.length; i++) {
     const p = academyPackages[i];

@@ -2,13 +2,12 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getGrade, grades } from "@/data/academy";
 import { packageIdForGrade } from "@/data/packages";
-import { streamsForGrade } from "@/data/grade-subjects";
 import CategoryBackButton from "@/components/CategoryBackButton";
 import AcademicResultSaver from "@/components/AcademicResultSaver";
 import PackageOfferBanner from "@/components/PackageOfferBanner";
 import SubjectHeroImage from "@/components/SubjectHeroImage";
 import BranchLeaderboard from "@/components/BranchLeaderboard";
-import GradeSubjectIcon from "@/components/GradeSubjectIcon";
+import GradeStreamsPanel from "@/components/GradeStreamsPanel";
 import { BadgeCheck } from "lucide-react";
 
 export function generateStaticParams() {
@@ -27,7 +26,6 @@ export default async function GradeDetailPage({
 
   const packageId = packageIdForGrade(grade.id);
   const scopeId = `grade-${grade.id}`;
-  const streams = streamsForGrade(grade.id);
 
   return (
     <div className="relative min-h-[80vh]">
@@ -67,49 +65,11 @@ export default async function GradeDetailPage({
           />
         </div>
 
-        <div className="mb-4 text-center sm:text-left">
-          <p className="text-sm font-semibold tracking-[0.15em] uppercase text-wisdom-muted mb-1">
-            Subjects by stream
-          </p>
-          <p className="text-sm text-wisdom-muted max-w-2xl">
-            Ethiopian secondary structure: natural science and social science focus. Icons mark each
-            subject — no placeholder photos.
-          </p>
-        </div>
+        <p className="text-sm font-semibold tracking-[0.15em] uppercase text-wisdom-muted mb-4 text-center sm:text-left">
+          Subjects
+        </p>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
-          {streams.map((stream) => (
-            <section
-              key={stream.id}
-              className={`rounded-3xl border ${stream.border} bg-wisdom-card/90 overflow-hidden shadow-card-3d`}
-            >
-              <div className="px-5 sm:px-6 py-4 border-b border-white/10">
-                <h2 className={`font-display text-xl font-bold ${stream.accent}`}>{stream.label}</h2>
-                <p className="text-xs text-wisdom-muted mt-1 leading-relaxed">{stream.blurb}</p>
-              </div>
-              <ul className="divide-y divide-white/[0.06]">
-                {stream.subjects.map((sub) => (
-                  <li
-                    key={sub.id}
-                    className="flex items-start gap-3.5 px-5 sm:px-6 py-3.5 hover:bg-white/[0.03] transition-colors"
-                  >
-                    <span
-                      className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-wisdom-dark/50 ${stream.accent}`}
-                    >
-                      <GradeSubjectIcon name={sub.icon} className="w-5 h-5" />
-                    </span>
-                    <div className="min-w-0">
-                      <p className="font-semibold text-white text-sm sm:text-base">{sub.name}</p>
-                      {sub.hint && (
-                        <p className="text-xs text-wisdom-muted mt-0.5 leading-relaxed">{sub.hint}</p>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))}
-        </div>
+        <GradeStreamsPanel gradeId={grade.id} />
 
         <div className="mt-14 pt-10 border-t border-white/10">
           <p className="text-sm text-wisdom-muted mb-4 font-medium text-center sm:text-left">
