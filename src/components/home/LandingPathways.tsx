@@ -12,14 +12,16 @@ import {
   Trees,
   BadgeCheck,
   FileText,
-  X,
   CheckCircle2,
+  ChevronDown,
 } from "lucide-react";
 import { useInView } from "@/hooks/useInView";
 import PartnershipPath from "@/components/PartnershipPath";
-import SafeCoverImage from "@/components/SafeCoverImage";
 import { packageImages, getPackage } from "@/data/packages";
 import { SPECIAL_PACKAGES_HUB_IMAGE } from "@/data/special-packages";
+
+const OPEN_BTN =
+  "inline-flex flex-1 min-w-[7.5rem] items-center justify-center gap-1.5 rounded-xl bg-emerald-500 px-4 py-2.5 text-xs sm:text-sm font-bold text-wisdom-dark shadow-md shadow-emerald-900/20 hover:bg-emerald-400 transition-colors";
 
 type ProgramCard = {
   id: string;
@@ -28,14 +30,13 @@ type ProgramCard = {
   image: string;
   accent: string;
   border: string;
-  btn: string;
   description: string;
   includes: string[];
 };
 
 function fromPackage(
   packageId: string,
-  overrides: Partial<ProgramCard> & Pick<ProgramCard, "id" | "href" | "name" | "image" | "accent" | "border" | "btn">
+  overrides: Partial<ProgramCard> & Pick<ProgramCard, "id" | "href" | "name" | "image" | "accent" | "border">
 ): ProgramCard {
   const pkg = getPackage(packageId);
   return {
@@ -53,7 +54,6 @@ const programs: ProgramCard[] = [
     image: packageImages["grade-9-12"],
     accent: "text-sky-400",
     border: "hover:border-sky-400/40",
-    btn: "bg-sky-500 hover:bg-sky-400 text-wisdom-dark",
     description:
       "Secondary packages built grade by grade. Notes for every subject, chapter question banks, flashcards, and practice exams with solutions. Buy a full grade or focus on individual subjects. AI tutor support inside notes and questions, plus verified scholarship listings.",
     includes: [
@@ -73,7 +73,6 @@ const programs: ProgramCard[] = [
     image: packageImages.freshman,
     accent: "text-purple-400",
     border: "hover:border-purple-400/40",
-    btn: "bg-purple-500 hover:bg-purple-400 text-white",
   }),
   fromPackage("uat", {
     id: "uat",
@@ -82,7 +81,6 @@ const programs: ProgramCard[] = [
     image: packageImages.uat,
     accent: "text-emerald-400",
     border: "hover:border-emerald-400/40",
-    btn: "bg-emerald-500 hover:bg-emerald-400 text-wisdom-dark",
   }),
   fromPackage("gat", {
     id: "gat",
@@ -91,7 +89,6 @@ const programs: ProgramCard[] = [
     image: packageImages.gat,
     accent: "text-rose-400",
     border: "hover:border-rose-400/40",
-    btn: "bg-rose-500 hover:bg-rose-400 text-white",
   }),
   fromPackage("coc", {
     id: "coc",
@@ -100,7 +97,6 @@ const programs: ProgramCard[] = [
     image: packageImages.coc,
     accent: "text-indigo-400",
     border: "hover:border-indigo-400/40",
-    btn: "bg-indigo-500 hover:bg-indigo-400 text-white",
   }),
   fromPackage("exit-exam", {
     id: "exit-exam",
@@ -109,7 +105,6 @@ const programs: ProgramCard[] = [
     image: packageImages["exit-exam"],
     accent: "text-fuchsia-400",
     border: "hover:border-fuchsia-400/40",
-    btn: "bg-fuchsia-500 hover:bg-fuchsia-400 text-white",
   }),
 ];
 
@@ -120,7 +115,6 @@ const specialCard: ProgramCard = {
   image: SPECIAL_PACKAGES_HUB_IMAGE,
   accent: "text-violet-300",
   border: "hover:border-violet-400/40",
-  btn: "bg-violet-500 hover:bg-violet-400 text-white",
   description:
     "Senior engineering and select department tracks. Course material written for your department, not general content. Question banks, flashcards, and practice exams with solutions per chapter. More departments added over time. AI tutor support and scholarship access included.",
   includes: [
@@ -192,95 +186,80 @@ const freeResources = [
 ];
 
 function ProgramCardView({ program }: { program: ProgramCard }) {
-  const [openDesc, setOpenDesc] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   return (
-    <>
-      <div
-        className={`card-3d group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card ${program.border} transition-all duration-300 hover:-translate-y-1`}
-      >
-        <Link href={program.href} className="relative aspect-video w-full overflow-hidden bg-wisdom-navy block">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={program.image}
-            alt={program.name}
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-80" />
-        </Link>
-        <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8 space-y-3">
-          <h3
-            className={`flex items-center gap-1.5 font-display text-base sm:text-lg font-bold ${program.accent}`}
+    <article
+      className={`card-3d group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card ${program.border} transition-all duration-300 hover:-translate-y-0.5`}
+    >
+      <Link href={program.href} className="relative aspect-video w-full overflow-hidden bg-wisdom-navy block">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={program.image}
+          alt={program.name}
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
+      </Link>
+
+      <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8 space-y-3">
+        <h3 className={`flex items-center gap-1.5 font-display text-base sm:text-lg font-bold ${program.accent}`}>
+          <BadgeCheck className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-sky-400" aria-hidden />
+          {program.name}
+        </h3>
+
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            aria-expanded={expanded}
+            className={`inline-flex items-center justify-center gap-1.5 rounded-xl border px-3.5 py-2.5 text-xs sm:text-sm font-semibold transition-colors ${
+              expanded
+                ? "border-cyan-400/40 bg-cyan-500/15 text-cyan-100"
+                : "border-white/15 bg-white/[0.04] text-white/90 hover:border-white/25 hover:bg-white/[0.06]"
+            }`}
           >
-            <BadgeCheck className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-sky-400" aria-hidden />
-            {program.name}
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setOpenDesc(true)}
-              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-white/15 bg-white/[0.04] px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-white/90 hover:border-cyan-400/40 hover:bg-cyan-500/10 hover:text-cyan-100 transition-colors"
-            >
-              <FileText className="w-3.5 h-3.5" />
-              Description
-            </button>
-            <Link
-              href={program.href}
-              className={`inline-flex flex-1 min-w-[7.5rem] items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-bold shadow-md transition-colors ${program.btn}`}
-            >
-              Open
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            <FileText className="w-3.5 h-3.5" />
+            Description
+            <ChevronDown
+              className={`w-3.5 h-3.5 transition-transform duration-300 ${
+                expanded ? "rotate-180" : ""
+              }`}
+            />
+          </button>
+          <Link href={program.href} className={OPEN_BTN}>
+            Open
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        <div
+          className={`grid transition-[grid-template-rows] duration-300 ease-out ${
+            expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+          }`}
+        >
+          <div className="overflow-hidden">
+            <div className="pt-1 pb-1 space-y-3 border-t border-white/8 mt-1">
+              <p className="text-sm text-white/85 leading-relaxed pt-3">{program.description}</p>
+              {program.includes.length > 0 && (
+                <ul className="space-y-1.5">
+                  {program.includes.map((line) => (
+                    <li key={line} className="flex gap-2 text-xs sm:text-sm text-white/90">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                      {line}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <Link href={program.href} className={`${OPEN_BTN} w-full mt-1`}>
+                Open {program.name}
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
           </div>
         </div>
       </div>
-
-      {openDesc && (
-        <div
-          className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
-          role="dialog"
-          aria-modal
-          onClick={() => setOpenDesc(false)}
-        >
-          <div
-            className="relative w-full max-w-md rounded-3xl border border-white/15 bg-wisdom-card p-6 sm:p-7 shadow-card-3d max-h-[85vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              type="button"
-              onClick={() => setOpenDesc(false)}
-              className="absolute right-3 top-3 p-2 rounded-lg text-wisdom-muted hover:text-white"
-              aria-label="Close"
-            >
-              <X className="w-4 h-4" />
-            </button>
-            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-300/90 mb-2">
-              What you get
-            </p>
-            <h3 className={`font-display text-xl font-bold mb-3 ${program.accent}`}>{program.name}</h3>
-            <p className="text-sm text-white/85 leading-relaxed mb-5">{program.description}</p>
-            {program.includes.length > 0 && (
-              <ul className="space-y-2 mb-6">
-                {program.includes.map((line) => (
-                  <li key={line} className="flex gap-2 text-sm text-white/90">
-                    <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                    {line}
-                  </li>
-                ))}
-              </ul>
-            )}
-            <Link
-              href={program.href}
-              className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold ${program.btn}`}
-              onClick={() => setOpenDesc(false)}
-            >
-              Open {program.name}
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      )}
-    </>
+    </article>
   );
 }
 
@@ -352,10 +331,10 @@ export default function LandingPathways() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`group relative rounded-2xl border bg-wisdom-card/95 p-5 sm:p-6 transition-all duration-300 ease-out hover:-translate-y-1.5 hover:bg-white/[0.04] ${item.border}`}
+                    className={`group relative rounded-2xl border bg-wisdom-card/95 p-5 sm:p-6 transition-all duration-300 ease-out hover:-translate-y-1 hover:bg-white/[0.04] ${item.border}`}
                   >
                     <div
-                      className={`mb-4 inline-flex p-3 rounded-xl border ${item.iconBg} transition-transform duration-300 group-hover:scale-110`}
+                      className={`mb-4 inline-flex p-3 rounded-xl border ${item.iconBg} transition-transform duration-300 group-hover:scale-105`}
                     >
                       <Icon className="w-5 h-5" />
                     </div>
@@ -365,9 +344,9 @@ export default function LandingPathways() {
                       {item.name}
                     </h4>
                     <p className="text-sm text-wisdom-muted leading-relaxed">{item.blurb}</p>
-                    <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-wisdom-muted group-hover:text-white/90 transition-colors">
+                    <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400/90 group-hover:text-emerald-300 transition-colors">
                       Explore
-                      <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1.5" />
+                      <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
                     </span>
                   </Link>
                 );
