@@ -11,10 +11,10 @@ import {
 } from "lucide-react";
 import { listMyEnrollments, listMyOrders, type ManualOrder } from "@/lib/orders";
 import { getPackage, formatEtb, type AcademyPackage } from "@/data/packages";
-import { getPackageResolved } from "@/lib/catalog";
-import { listSellablePackages } from "@/lib/catalog";
+import { getPackageResolved, listSellablePackages } from "@/lib/catalog";
 import { supabase } from "@/lib/supabase";
 import StudyPlanner from "@/components/learning/StudyPlanner";
+import PomodoroTimer from "@/components/learning/PomodoroTimer";
 
 type UnlockedRow = {
   id: string;
@@ -129,18 +129,12 @@ export default function LearningPage() {
             <GraduationCap className="w-8 h-8 text-cyan-300" />
             My Learning
           </h1>
-          <p className="mt-2 text-sm text-wisdom-muted">
-            Your unlocked packages, weekly study plan, and next steps.
-          </p>
         </div>
 
         {!loggedIn && !loading ? (
           <div className="rounded-3xl border border-white/12 bg-wisdom-card p-8 text-center mb-10">
             <BookOpen className="w-10 h-10 text-white/20 mx-auto mb-3" />
-            <p className="font-semibold text-white mb-2">Sign in to see your learning</p>
-            <p className="text-sm text-wisdom-muted mb-5">
-              Packages you purchase unlock here after verification.
-            </p>
+            <p className="font-semibold text-white mb-2">Sign in to see your packages</p>
             <Link
               href="/login?next=/learning"
               className="inline-flex rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-bold text-wisdom-dark"
@@ -150,11 +144,11 @@ export default function LearningPage() {
           </div>
         ) : null}
 
-        {/* Study planner — available to everyone browsing this page */}
+        <PomodoroTimer />
         <StudyPlanner />
 
         {loading ? (
-          <p className="text-sm text-wisdom-muted">Loading your packages…</p>
+          <p className="text-sm text-wisdom-muted">Loading…</p>
         ) : (
           <>
             <section className="mb-12">
@@ -164,7 +158,7 @@ export default function LearningPage() {
               </h2>
               {unlocked.length === 0 ? (
                 <p className="text-sm text-wisdom-muted rounded-2xl border border-white/10 bg-wisdom-card/60 px-4 py-6">
-                  No packages unlocked yet. Browse the catalog when you are ready.
+                  No packages unlocked yet.
                 </p>
               ) : (
                 <ul className="space-y-3">
@@ -186,7 +180,7 @@ export default function LearningPage() {
                           <p className="font-semibold text-white truncate">{row.title}</p>
                           <p className="text-xs text-wisdom-muted">{row.subtitle}</p>
                           <span className="text-xs font-semibold text-cyan-300 mt-1 inline-block">
-                            Open pathway →
+                            Open →
                           </span>
                         </div>
                       </Link>
@@ -212,9 +206,9 @@ export default function LearningPage() {
                     return (
                       <li
                         key={p.id}
-                        className="surface-card rounded-xl border border-amber-400/25 px-4 py-3 text-sm text-white/90"
+                        className="rounded-xl border border-amber-400/25 px-4 py-3 text-sm text-white/90"
                       >
-                        {name} · {p.status}
+                        {name}
                       </li>
                     );
                   })}
@@ -225,14 +219,14 @@ export default function LearningPage() {
             <section>
               <h2 className="font-display text-xl font-bold text-white mb-4 flex items-center gap-2">
                 <Lock className="w-5 h-5 text-wisdom-muted" />
-                Available packages
+                More packages
               </h2>
               <ul className="grid sm:grid-cols-2 gap-3">
                 {lockedPackages.slice(0, 6).map((pkg: AcademyPackage) => (
                   <li key={pkg.id}>
                     <Link
                       href="/packages"
-                      className="surface-card block rounded-2xl border border-white/12 p-4 hover:border-wisdom-cyan/35 transition"
+                      className="block rounded-2xl border border-white/12 p-4 hover:border-cyan-400/35 transition bg-wisdom-card"
                     >
                       <p className="font-semibold text-white">{pkg.name}</p>
                       <p className="text-sm text-amber-300 font-bold mt-1">
@@ -243,7 +237,10 @@ export default function LearningPage() {
                 ))}
               </ul>
               <div className="mt-6">
-                <Link href="/packages" className="btn-secondary inline-flex items-center gap-2">
+                <Link
+                  href="/packages"
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-cyan-300 hover:text-cyan-200"
+                >
                   <ShoppingBag className="w-4 h-4" />
                   All packages
                 </Link>

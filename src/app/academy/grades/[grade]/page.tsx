@@ -3,11 +3,11 @@ import Link from "next/link";
 import { getGrade, grades } from "@/data/academy";
 import { packageIdForGrade } from "@/data/packages";
 import CategoryBackButton from "@/components/CategoryBackButton";
-import AcademicResultSaver from "@/components/AcademicResultSaver";
 import PackageOfferBanner from "@/components/PackageOfferBanner";
 import SubjectHeroImage from "@/components/SubjectHeroImage";
 import BranchLeaderboard from "@/components/BranchLeaderboard";
 import GradeStreamsPanel from "@/components/GradeStreamsPanel";
+import CollapsibleProgress from "@/components/CollapsibleProgress";
 import { BadgeCheck } from "lucide-react";
 
 export function generateStaticParams() {
@@ -42,7 +42,10 @@ export default async function GradeDetailPage({
                 Grade pathway
               </p>
               <h1 className="inline-flex items-center justify-center gap-2 font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-                <BadgeCheck className="w-6 h-6 sm:w-7 sm:h-7 shrink-0 text-sky-400" aria-label="Verified" />
+                <BadgeCheck
+                  className="w-6 h-6 sm:w-7 sm:h-7 shrink-0 text-sky-400"
+                  aria-label="Verified"
+                />
                 <span className={grade.accent}>{grade.label}</span>
               </h1>
             </div>
@@ -58,7 +61,7 @@ export default async function GradeDetailPage({
         </div>
 
         <div className="max-w-2xl mx-auto mb-12">
-          <AcademicResultSaver
+          <CollapsibleProgress
             scopeId={scopeId}
             scopeLabel={grade.label}
             accent={grade.accent}

@@ -30,13 +30,15 @@ function PackageGrid({ list }: { list: AcademyPackage[] }) {
             </div>
           </div>
           <div className="p-5 flex flex-col flex-1">
-            <div className="mb-3 rounded-xl border border-white/8 bg-wisdom-dark/30 p-3">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-400/90 mb-1 inline-flex items-center gap-1">
-                <FileText className="w-3 h-3" />
-                About this package
-              </p>
-              <p className="text-sm text-wisdom-muted leading-relaxed">{pkg.description}</p>
-            </div>
+            {pkg.description ? (
+              <div className="mb-3 rounded-xl border border-white/8 bg-wisdom-dark/30 p-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-400/90 mb-1 inline-flex items-center gap-1">
+                  <FileText className="w-3 h-3" />
+                  About
+                </p>
+                <p className="text-sm text-wisdom-muted leading-relaxed">{pkg.description}</p>
+              </div>
+            ) : null}
             <ul className="space-y-1.5 mb-3">
               {pkg.includes.map((line) => (
                 <li key={line} className="flex gap-2 text-xs text-white/85">
@@ -57,7 +59,7 @@ function PackageGrid({ list }: { list: AcademyPackage[] }) {
                 href={pkg.href}
                 className="block text-center text-xs font-semibold text-wisdom-muted hover:text-cyan-300"
               >
-                Preview section
+                Preview
               </Link>
             </div>
           </div>
@@ -92,9 +94,6 @@ export default function PackagesCatalog() {
       {grades.length > 0 && (
         <>
           <h2 className="font-display text-xl font-bold text-white mb-4">Grades 9–12</h2>
-          <p className="text-sm text-wisdom-muted mb-6">
-            Each grade is its own package. Prices: G9–G11 250 ETB · G12 400 ETB.
-          </p>
           <PackageGrid list={grades} />
         </>
       )}
@@ -109,7 +108,6 @@ export default function PackagesCatalog() {
       {specials.length > 0 && (
         <>
           <h2 className="font-display text-xl font-bold text-white mt-14 mb-2">Special packages</h2>
-          <p className="text-sm text-wisdom-muted mb-6">Department tracks and semester options.</p>
           <PackageGrid list={specials} />
         </>
       )}
@@ -124,12 +122,11 @@ export default function PackagesCatalog() {
       <div className="mt-12 rounded-2xl border border-white/10 bg-wisdom-dark/50 p-5 flex gap-3 max-w-2xl mx-auto">
         <Shield className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
         <p className="text-sm text-wisdom-muted leading-relaxed">
-          <span className="text-white font-semibold">Manual verification.</span> After payment,
-          submit your transaction ID. Access appears in{" "}
+          After payment, submit your transaction ID. Access appears in{" "}
           <Link href="/learning" className="text-cyan-400 hover:underline">
             My Learning
           </Link>{" "}
-          once we confirm.
+          once confirmed.
         </p>
       </div>
     </>
