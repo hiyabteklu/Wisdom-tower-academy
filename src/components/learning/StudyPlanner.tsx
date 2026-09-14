@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CalendarDays, Plus, Trash2, Clock } from "lucide-react";
+import CollapsibleSection from "@/components/CollapsibleSection";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
@@ -9,9 +10,9 @@ const STORAGE_KEY = "wt_study_planner_v1";
 
 type Block = {
   id: string;
-  day: number; // 0 = Mon
+  day: number;
   startHour: number;
-  endHour: number; // exclusive
+  endHour: number;
   title: string;
   color: string;
 };
@@ -40,7 +41,6 @@ function saveBlocks(blocks: Block[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(blocks));
 }
 
-/** JS getDay: 0=Sun … 6=Sat → our index 0=Mon … 6=Sun */
 function todayIndex(d = new Date()) {
   return (d.getDay() + 6) % 7;
 }
@@ -94,7 +94,7 @@ export default function StudyPlanner() {
   }, [blocks]);
 
   function addBlock() {
-    const title = draftTitle.trim() || "Study block";
+    const title = draftTitle.trim() || "Study";
     const start = Math.min(draftStart, draftEnd - 1);
     const end = Math.max(draftEnd, start + 1);
     const block: Block = {
@@ -121,29 +121,16 @@ export default function StudyPlanner() {
     setShowForm(true);
   }
 
-  if (!ready) {
-    return (
-      <div className="rounded-2xl border border-white/12 bg-wisdom-card p-8 text-center text-sm text-wisdom-muted">
-        Loading planner…
-      </div>
-    );
-  }
+  if (!ready) return null;
 
   return (
-    <section className="mb-12">
-      <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-400/90 mb-1">
-            Weekly plan
-          </p>
-          <h2 className="font-display text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
-            <CalendarDays className="w-5 h-5 text-cyan-300" />
-            Study planner
-          </h2>
-          <p className="text-xs text-wisdom-muted mt-1">
-            24-hour week view · live time bar moves with the clock
-          </p>
-        </div>
+    <CollapsibleSection
+      title="Study planner"
+      subtitle="Weekly schedule"
+      icon={<CalendarDays className="w-5 h-5 text-cyan-300" />}
+      defaultOpen={false}
+    >
+      <div className="flex justify-end mb-3">
         <button
           type="button"
           onClick={() => setShowForm((v) => !v)}
@@ -161,7 +148,7 @@ export default function StudyPlanner() {
             <input
               value={draftTitle}
               onChange={(e) => setDraftTitle(e.target.value)}
-              placeholder="e.g. Physics review"
+              placeholder="e.g. Physics"
               className="mt-1 w-full rounded-lg border border-white/15 bg-wisdom-dark/50 px-2.5 py-2 text-sm text-white"
             />
           </label>
@@ -202,10 +189,9 @@ export default function StudyPlanner() {
             >
               {HOURS.map((h) => (
                 <option key={h} value={h + 1}>
-                  {formatHour(h + 1 > 23 ? 0 : h + 1)}
-                  {h + 1 > 23 ? " (next)" : ""}
+                  {formatHour((h + 1) % 24)}
                 </option>
-              )).slice(0, 24)}
+              ))}
             </select>
           </label>
           <div className="flex items-end gap-2">
@@ -230,7 +216,6 @@ export default function StudyPlanner() {
       <div className="rounded-2xl border border-white/12 bg-wisdom-card overflow-hidden shadow-card-3d">
         <div className="overflow-x-auto">
           <div className="min-w-[640px]">
-            {/* Header days */}
             <div
               className="grid border-b border-white/10 bg-wisdom-dark/40 sticky top-0 z-20"
               style={{ gridTemplateColumns: "4.5rem repeat(7, minmax(0, 1fr))" }}
@@ -243,9 +228,7 @@ export default function StudyPlanner() {
                 <div
                   key={d}
                   className={`px-1 py-2.5 text-center text-xs font-bold ${
-                    i === currentDay
-                      ? "text-cyan-300 bg-cyan-500/10"
-                      : "text-white/80"
+                    i === currentDay ? "text-cyan-300 bg-cyan-500/10" : "text-white/80"
                   }`}
                 >
                   {d}
@@ -258,14 +241,10 @@ export default function StudyPlanner() {
               ))}
             </div>
 
-            {/* Body */}
             <div className="relative max-h-[28rem] overflow-y-auto">
-              {/* Now line across the week at current hour + minutes */}
               <div
                 className="pointer-events-none absolute left-0 right-0 z-10 flex items-center"
-                style={{
-                  top: `calc(${(currentHour + minuteFrac) * 2.75}rem)`,
-                }}
+                style={{ top: `calc(${(currentHour + minuteFrac) * 2.75}rem)` }}
                 aria-hidden
               >
                 <span className="ml-[0.15rem] shrink-0 rounded-full bg-rose-500 px-1.5 py-0.5 text-[9px] font-bold text-white shadow">
@@ -345,6 +324,6 @@ export default function StudyPlanner() {
           </div>
         )}
       </div>
-    </section>
+    </CollapsibleSection>
   );
 }
