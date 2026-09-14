@@ -91,7 +91,7 @@ const freeResources = [
   {
     href: "/academy/success-stories",
     name: "Success Stories",
-    blurb: "Ethiopian top scorers — scores, journeys, and what stood out",
+    blurb: "How top students prepared and what they learned along the way",
     icon: Trophy,
     accent: "text-amber-300",
     border: "border-white/12 hover:border-amber-400/40",
@@ -101,7 +101,7 @@ const freeResources = [
   {
     href: "/academy/study-techniques",
     name: "Study Techniques",
-    blurb: "Methods to learn faster and retain under pressure",
+    blurb: "Practical ways to learn faster and remember more",
     icon: Lightbulb,
     accent: "text-cyan-300",
     border: "border-white/12 hover:border-cyan-400/40",
@@ -111,7 +111,7 @@ const freeResources = [
   {
     href: "/academy/campus-life",
     name: "Campus Life",
-    blurb: "Friends, focus, burnout, lectures, facilities and group work",
+    blurb: "Friends, focus, lectures, and life between classes",
     icon: Trees,
     accent: "text-sky-300",
     border: "border-white/12 hover:border-sky-400/40",
@@ -120,8 +120,8 @@ const freeResources = [
   },
   {
     href: "/academy/universities",
-    name: "Universities Info",
-    blurb: "Explore institutions, programs, and pathways",
+    name: "Universities",
+    blurb: "Schools, programs, and what each is known for",
     icon: Building2,
     accent: "text-violet-300",
     border: "border-white/12 hover:border-violet-400/40",
@@ -130,8 +130,8 @@ const freeResources = [
   },
   {
     href: "/academy/departments",
-    name: "Department Info",
-    blurb: "What each field of study actually involves",
+    name: "Departments",
+    blurb: "Clear picture of each field before you choose",
     icon: Library,
     accent: "text-orange-300",
     border: "border-white/12 hover:border-orange-400/40",
@@ -140,8 +140,8 @@ const freeResources = [
   },
   {
     href: "/academy/scholarships",
-    name: "Scholarship Info",
-    blurb: "Funding options and how to prepare applications",
+    name: "Scholarships",
+    blurb: "Funding options and how to apply with confidence",
     icon: GradCap,
     accent: "text-rose-300",
     border: "border-white/12 hover:border-rose-400/40",
@@ -151,30 +151,10 @@ const freeResources = [
 ];
 
 const voiceStudents = [
-  {
-    name: "Hana G.",
-    program: "UAT · Voice note",
-    duration: "0:42",
-    accent: "text-emerald-400",
-  },
-  {
-    name: "Yonas D.",
-    program: "Grade 12 · Voice note",
-    duration: "0:38",
-    accent: "text-sky-400",
-  },
-  {
-    name: "Meron K.",
-    program: "Freshman · Voice note",
-    duration: "0:51",
-    accent: "text-purple-400",
-  },
-  {
-    name: "Samuel B.",
-    program: "Exit Exam · Voice note",
-    duration: "0:35",
-    accent: "text-fuchsia-400",
-  },
+  { name: "Hiwot", role: "Grade 12", accent: "amber" as const },
+  { name: "Yonas", role: "Freshman", accent: "sky" as const },
+  { name: "Meron", role: "UAT", accent: "violet" as const },
+  { name: "Abel", role: "COC", accent: "emerald" as const },
 ];
 
 export default function AcademyPage() {
@@ -191,37 +171,25 @@ export default function AcademyPage() {
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white">
               Wisdom Tower Academy
             </h1>
-            <p className="mt-4 text-wisdom-muted max-w-2xl mx-auto text-lg leading-relaxed">
-              Six structured branches, each with its own path when you open it.
-            </p>
           </div>
-
-          {/* Intro video paused — re-enable WelcomeVideoCard when ready
-          <div className="mb-14 md:mb-16">
-            <WelcomeVideoCard
-              variant="academy"
-              title="What you’ll find here"
-              subtitle="A short look at how Academy is organized: pathways, practice, and support for real study goals."
-            />
-          </div>
-          */}
 
           <div className="perspective-scene grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
             {programs.map((program) => (
               <Link
                 key={program.id}
                 href={program.href}
-                className={`card-3d group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card ${program.border}`}
+                className={`card-3d group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card ${program.border} transition-all duration-300 hover:-translate-y-1`}
               >
                 <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={program.image}
                     alt={program.name}
-                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
                 </div>
-                <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8">
+                <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8 flex items-center justify-between gap-2">
                   <h3
                     className={`flex items-center gap-1.5 font-display text-base sm:text-lg font-bold ${program.accent}`}
                   >
@@ -231,12 +199,12 @@ export default function AcademyPage() {
                     />
                     {program.name}
                   </h3>
-                  <div
-                    className={`mt-2.5 flex items-center gap-1 text-xs sm:text-sm font-semibold ${program.accent}`}
+                  <span
+                    className={`inline-flex items-center gap-1 text-xs sm:text-sm font-semibold ${program.accent}`}
                   >
                     {program.cta}
                     <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-                  </div>
+                  </span>
                 </div>
               </Link>
             ))}
@@ -244,15 +212,9 @@ export default function AcademyPage() {
 
           <section className="mt-20 md:mt-24" id="special-packages">
             <div className="text-center mb-8">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-300/90 mb-3">
-                Beyond the six branches
-              </p>
-              <h2 className="font-display text-3xl md:text-4xl font-bold text-white mb-2">
+              <h2 className="font-display text-3xl md:text-4xl font-bold text-white">
                 Special packages
               </h2>
-              <p className="text-wisdom-muted max-w-lg mx-auto text-sm leading-relaxed">
-                Department tracks by year and semester. Buy each semester separately.
-              </p>
             </div>
 
             <Link
@@ -260,14 +222,15 @@ export default function AcademyPage() {
               className="group block max-w-xl mx-auto overflow-hidden rounded-2xl sm:rounded-3xl border border-violet-400/30 bg-wisdom-card hover:border-violet-300/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_48px_-16px_rgba(167,139,250,0.35)]"
             >
               <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
-                <SafeCoverImage src={SPECIAL_PACKAGES_HUB_IMAGE} alt="" />
+                <SafeCoverImage src={SPECIAL_PACKAGES_HUB_IMAGE} alt="Special packages" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
               </div>
-              <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8 text-left">
+              <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8 flex items-center justify-between gap-2">
                 <h3 className="flex items-center gap-1.5 font-display text-base sm:text-lg font-bold text-white group-hover:text-violet-200 transition-colors">
                   <BadgeCheck className="w-4 h-4 shrink-0 text-sky-400" aria-hidden />
-                  Browse special packages
+                  Special packages
                 </h3>
-                <span className="mt-2.5 inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-violet-400/90">
+                <span className="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-violet-300">
                   Open
                   <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
                 </span>
@@ -275,32 +238,24 @@ export default function AcademyPage() {
             </Link>
           </section>
 
-          <section className="mt-24 md:mt-28">
-            <div className="text-center mb-10">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-400/90 mb-3">
-                Open library · no enrollment required
-              </p>
-              <h2 className="font-display text-3xl md:text-4xl font-bold text-white mb-3">
+          <section className="mt-20 md:mt-24">
+            <div className="text-center mb-8 md:mb-10">
+              <h2 className="font-display text-3xl md:text-4xl font-bold text-white">
                 Free resources
               </h2>
-              <p className="text-wisdom-muted max-w-lg mx-auto text-base leading-relaxed">
-                Guidance beyond the six academic branches: stories, techniques, campus life,
-                universities, departments, and scholarships.
-              </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {freeResources.map((item, index) => {
+              {freeResources.map((item) => {
                 const Icon = item.icon;
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`group relative rounded-2xl border bg-wisdom-card/95 p-6 transition-all duration-400 ease-out hover:-translate-y-1.5 hover:bg-white/[0.04] ${item.border} ${item.glow}`}
-                    style={{ animationDelay: `${index * 60}ms` }}
+                    className={`group relative rounded-2xl border bg-wisdom-card/95 p-6 transition-all duration-300 ease-out hover:-translate-y-1.5 hover:bg-white/[0.04] ${item.border} ${item.glow}`}
                   >
                     <div
-                      className={`mb-4 inline-flex p-3 rounded-xl border ${item.iconBg} transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[-3deg]`}
+                      className={`mb-4 inline-flex p-3 rounded-xl border ${item.iconBg} transition-transform duration-300 group-hover:scale-110`}
                     >
                       <Icon className="w-5 h-5" />
                     </div>
@@ -323,15 +278,9 @@ export default function AcademyPage() {
           {SHOW_STUDENT_VOICES && (
             <section className="mt-24 md:mt-28">
               <div className="text-center mb-10">
-                <p className="text-sm font-semibold tracking-[0.2em] uppercase text-amber-400/90 mb-3">
-                  Real voices
-                </p>
                 <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
                   What students say about us
                 </h2>
-                <p className="text-wisdom-muted max-w-xl mx-auto">
-                  Short voice notes and written feedback from learners across our programs.
-                </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
@@ -339,13 +288,11 @@ export default function AcademyPage() {
                   <VoiceMessageCard
                     key={s.name}
                     name={s.name}
-                    program={s.program}
-                    duration={s.duration}
+                    role={s.role}
                     accent={s.accent}
                   />
                 ))}
               </div>
-
               <TestimonialMarquee />
             </section>
           )}
