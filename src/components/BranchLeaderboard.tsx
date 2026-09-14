@@ -11,7 +11,6 @@ export type LeaderEntry = {
   badge?: string;
 };
 
-/** Fallback sample data when DB is empty or offline */
 export function sampleLeaders(branchLabel: string): LeaderEntry[] {
   const seeds = [
     "Amanuel T.",
@@ -35,10 +34,8 @@ export function sampleLeaders(branchLabel: string): LeaderEntry[] {
 
 type Props = {
   branchName: string;
-  /** Matches academic_results.scope_id (e.g. gat, freshman, uat). Defaults to lowercase branchName. */
   scopeId?: string;
   accent?: string;
-  /** Expand ranks 4–10 by default (default false — only top 3 always visible) */
   defaultRestOpen?: boolean;
 };
 
@@ -60,7 +57,6 @@ export default function BranchLeaderboard({
     async function load() {
       setLoading(true);
       try {
-        // Prefer RPC for ranked rows
         const { data: rpcData, error: rpcErr } = await supabase.rpc("get_leaderboard", {
           p_scope_id: resolvedScope,
           p_limit: 10,
@@ -69,11 +65,7 @@ export default function BranchLeaderboard({
         if (!rpcErr && Array.isArray(rpcData) && rpcData.length > 0) {
           if (cancelled) return;
           const mapped: LeaderEntry[] = rpcData.map(
-            (row: {
-              rank: number;
-              name: string;
-              score: number;
-            }) => ({
+            (row: { rank: number; name: string; score: number }) => ({
               rank: Number(row.rank),
               name: String(row.name || "Student"),
               score: Number(row.score || 0),
@@ -92,7 +84,6 @@ export default function BranchLeaderboard({
           return;
         }
 
-        // Fallback: query view directly
         const { data: viewData, error: viewErr } = await supabase
           .from("leaderboard_by_scope")
           .select("display_name, score, best_percent, attempts")
@@ -113,7 +104,6 @@ export default function BranchLeaderboard({
           return;
         }
 
-        // No real data yet — keep sample
         if (!cancelled) {
           setLeaders(sampleLeaders(branchName));
           setFromDb(false);
@@ -146,7 +136,6 @@ export default function BranchLeaderboard({
 
   return (
     <section className="mb-10 md:mb-12 rounded-3xl border border-white/12 bg-wisdom-card/80 overflow-hidden shadow-card-3d">
-      {/* Header — always visible */}
       <div className="w-full px-5 sm:px-7 py-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 border border-amber-400/30">
@@ -157,17 +146,12 @@ export default function BranchLeaderboard({
               {branchName} <span className={accent}>Leaderboard</span>
             </h2>
             <p className="text-xs text-wisdom-muted">
-              {loading
-                ? "Loading…"
-                : fromDb
-                  ? "Live top performers · from your results"
-                  : "Demo ranking · real scores appear after exams"}
+              {loading ? "…" : fromDb ? "Top performers" : "Leaderboard"}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Top 3 podium — ALWAYS visible (never collapsed) */}
       <div className="border-t border-white/10">
         <div className="px-4 sm:px-6 pt-8 pb-4 grid grid-cols-3 gap-2 sm:gap-4 items-end">
           {[top3[1], top3[0], top3[2]].map((entry) => {
@@ -195,7 +179,6 @@ export default function BranchLeaderboard({
           })}
         </div>
 
-        {/* Ranks 4–10 — collapsible */}
         {rest.length > 0 && (
           <div className="px-4 sm:px-6 pb-4">
             <button

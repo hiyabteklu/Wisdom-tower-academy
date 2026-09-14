@@ -3,7 +3,7 @@ import CategoryBackButton from "@/components/CategoryBackButton";
 import SubjectCard from "@/components/SubjectCard";
 import BranchLeaderboard from "@/components/BranchLeaderboard";
 import PackageOfferBanner from "@/components/PackageOfferBanner";
-import GpaCalculator from "@/components/freshman/GpaCalculator";
+import CollapsibleGpa from "@/components/CollapsibleGpa";
 import FreshmanPackageGate from "@/components/FreshmanPackageGate";
 import { GraduationCap } from "lucide-react";
 
@@ -24,18 +24,14 @@ export default function FreshmanPage() {
                 <GraduationCap className="w-5 h-5" />
               </span>
               <p className="text-sm font-semibold tracking-[0.18em] uppercase text-wisdom-muted">
-                First-year pathway · Free when signed in
+                First-year pathway
               </p>
             </div>
             <h1 className="font-display text-4xl md:text-5xl font-extrabold tracking-tight mb-3">
               <span className="text-purple-400">Freshman</span> subjects
             </h1>
             <p className="text-wisdom-muted text-lg max-w-2xl leading-relaxed">
-              Browse every subject and the five learning hubs. Sign in free to open books, short notes,
-              flashcards, question banks, and exams — no payment required for registered students.
-            </p>
-            <p className="mt-3 text-sm text-purple-400/90 font-medium">
-              {freshmanSubjects.length} subjects · Free for registered users
+              {freshmanSubjects.length} subjects with learning hubs for each.
             </p>
           </div>
 
@@ -48,15 +44,12 @@ export default function FreshmanPage() {
           </div>
 
           <div className="max-w-4xl mx-auto mb-14 md:mb-16">
-            <GpaCalculator />
+            <CollapsibleGpa />
           </div>
 
-          <div className="mb-5 flex items-end justify-between gap-4">
+          <div className="mb-5">
             <p className="text-sm font-semibold tracking-[0.15em] uppercase text-wisdom-muted">
-              Subject catalog
-            </p>
-            <p className="text-xs text-wisdom-muted/80 hidden sm:block">
-              Hubs open free after sign-in
+              Subjects
             </p>
           </div>
 
