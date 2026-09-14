@@ -25,7 +25,7 @@ export default function LandingQuoteCard() {
         setQ(quoteForSlot());
         setVisible(true);
       }, 280);
-    }, 60_000); // recheck every minute; swaps when 2h slot changes
+    }, 60_000);
     return () => {
       window.clearTimeout(t);
       window.clearInterval(id);
@@ -38,7 +38,7 @@ export default function LandingQuoteCard() {
     <section className="pb-10 md:pb-14 relative">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div
-          className={`relative overflow-hidden rounded-2xl sm:rounded-3xl border border-cyan-400/25 bg-gradient-to-br from-wisdom-card via-wisdom-navy/80 to-wisdom-card px-6 py-8 sm:px-10 sm:py-10 shadow-card-3d transition-all duration-500 ${
+          className={`relative overflow-hidden rounded-2xl sm:rounded-3xl border border-cyan-400/20 bg-gradient-to-br from-wisdom-card via-wisdom-navy/90 to-wisdom-card px-6 py-8 sm:px-10 sm:py-10 shadow-card-3d transition-all duration-500 ${
             visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
           }`}
         >
@@ -50,14 +50,10 @@ export default function LandingQuoteCard() {
               <Quote className="w-6 h-6" />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-300/90 mb-3">
-                Today&apos;s line
-              </p>
               <blockquote className="font-display text-lg sm:text-xl md:text-2xl font-semibold text-white leading-snug tracking-tight">
                 &ldquo;{q.text}&rdquo;
               </blockquote>
               <p className="mt-4 text-sm font-medium text-amber-200/90">— {q.author}</p>
-              <p className="mt-2 text-[11px] text-wisdom-muted">Refreshes every two hours</p>
             </div>
           </div>
         </div>

@@ -24,7 +24,6 @@ type ProgramCard = {
   image: string;
   accent: string;
   border: string;
-  cta: string;
 };
 
 const programs: ProgramCard[] = [
@@ -35,7 +34,6 @@ const programs: ProgramCard[] = [
     image: packageImages["grade-9-12"],
     accent: "text-sky-400",
     border: "hover:border-sky-400/40",
-    cta: "Open",
   },
   {
     id: "freshman",
@@ -44,7 +42,6 @@ const programs: ProgramCard[] = [
     image: packageImages.freshman,
     accent: "text-purple-400",
     border: "hover:border-purple-400/40",
-    cta: "Open",
   },
   {
     id: "uat",
@@ -53,7 +50,6 @@ const programs: ProgramCard[] = [
     image: packageImages.uat,
     accent: "text-emerald-400",
     border: "hover:border-emerald-400/40",
-    cta: "Open",
   },
   {
     id: "gat",
@@ -62,7 +58,6 @@ const programs: ProgramCard[] = [
     image: packageImages.gat,
     accent: "text-rose-400",
     border: "hover:border-rose-400/40",
-    cta: "Open",
   },
   {
     id: "coc",
@@ -71,7 +66,6 @@ const programs: ProgramCard[] = [
     image: packageImages.coc,
     accent: "text-indigo-400",
     border: "hover:border-indigo-400/40",
-    cta: "Open",
   },
   {
     id: "exit-exam",
@@ -80,7 +74,6 @@ const programs: ProgramCard[] = [
     image: packageImages["exit-exam"],
     accent: "text-fuchsia-400",
     border: "hover:border-fuchsia-400/40",
-    cta: "Open",
   },
 ];
 
@@ -88,96 +81,117 @@ const freeResources = [
   {
     href: "/academy/success-stories",
     name: "Success Stories",
-    blurb: "Ethiopian top scorers — scores, journeys, and what stood out",
+    blurb: "How top students prepared and what they learned along the way",
     icon: Trophy,
     accent: "text-amber-300",
     border: "border-white/12 hover:border-amber-400/40",
     iconBg: "border-amber-400/30 bg-amber-500/15 text-amber-300",
-    glow: "group-hover:shadow-[0_12px_40px_-16px_rgba(251,191,36,0.35)]",
   },
   {
     href: "/academy/study-techniques",
     name: "Study Techniques",
-    blurb: "Methods to learn faster and retain under pressure",
+    blurb: "Practical ways to learn faster and remember more",
     icon: Lightbulb,
     accent: "text-cyan-300",
     border: "border-white/12 hover:border-cyan-400/40",
     iconBg: "border-cyan-400/30 bg-cyan-500/15 text-cyan-300",
-    glow: "group-hover:shadow-[0_12px_40px_-16px_rgba(34,211,238,0.3)]",
   },
   {
     href: "/academy/campus-life",
     name: "Campus Life",
-    blurb: "Friends, focus, burnout, lectures, facilities and group work",
+    blurb: "Friends, focus, lectures, and life between classes",
     icon: Trees,
     accent: "text-sky-300",
     border: "border-white/12 hover:border-sky-400/40",
     iconBg: "border-sky-400/30 bg-sky-500/15 text-sky-300",
-    glow: "group-hover:shadow-[0_12px_40px_-16px_rgba(56,189,248,0.3)]",
   },
   {
     href: "/academy/universities",
-    name: "Universities Info",
-    blurb: "Explore institutions, programs, and pathways",
+    name: "Universities",
+    blurb: "Schools, programs, and what each is known for",
     icon: Building2,
     accent: "text-violet-300",
     border: "border-white/12 hover:border-violet-400/40",
     iconBg: "border-violet-400/30 bg-violet-500/15 text-violet-300",
-    glow: "group-hover:shadow-[0_12px_40px_-16px_rgba(167,139,250,0.3)]",
   },
   {
     href: "/academy/departments",
-    name: "Department Info",
-    blurb: "What each field of study actually involves",
+    name: "Departments",
+    blurb: "Clear picture of each field before you choose",
     icon: Library,
     accent: "text-orange-300",
     border: "border-white/12 hover:border-orange-400/40",
     iconBg: "border-orange-400/30 bg-orange-500/15 text-orange-300",
-    glow: "group-hover:shadow-[0_12px_40px_-16px_rgba(251,146,60,0.3)]",
   },
   {
     href: "/academy/scholarships",
-    name: "Scholarship Info",
-    blurb: "Funding options and how to prepare applications",
+    name: "Scholarships",
+    blurb: "Funding options and how to apply with confidence",
     icon: GradCap,
     accent: "text-rose-300",
     border: "border-white/12 hover:border-rose-400/40",
     iconBg: "border-rose-400/30 bg-rose-500/15 text-rose-300",
-    glow: "group-hover:shadow-[0_12px_40px_-16px_rgba(244,63,94,0.3)]",
   },
 ];
 
+function ProgramLink({ program }: { program: ProgramCard }) {
+  return (
+    <Link
+      href={program.href}
+      className={`card-3d group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card ${program.border} transition-all duration-300 hover:-translate-y-1`}
+    >
+      <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={program.image}
+          alt={program.name}
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-80" />
+      </div>
+      <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8 flex items-center justify-between gap-2">
+        <h3
+          className={`flex items-center gap-1.5 font-display text-base sm:text-lg font-bold ${program.accent}`}
+        >
+          <BadgeCheck className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-sky-400" aria-hidden />
+          {program.name}
+        </h3>
+        <span
+          className={`inline-flex items-center gap-1 text-xs sm:text-sm font-semibold ${program.accent} opacity-90`}
+        >
+          Open
+          <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+        </span>
+      </div>
+    </Link>
+  );
+}
+
 export default function LandingPathways() {
   const pathwaysSection = useInView();
+  const branchPrograms = programs.filter((p) => p.id !== "freshman");
+  const freshman = programs.find((p) => p.id === "freshman");
 
   return (
     <>
       <section className="pb-16 md:pb-20 relative" ref={pathwaysSection.ref}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div
-            className={`text-center mb-10 md:mb-12 reveal-item ${
+            className={`text-center mb-12 md:mb-14 reveal-item ${
               pathwaysSection.inView ? "is-visible" : ""
             }`}
           >
             <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-white">
               Choose your pathway
             </h2>
-            <p className="mt-4 text-wisdom-muted max-w-2xl mx-auto text-base md:text-lg leading-relaxed">
-              Special packages first, then Freshman, then the academic branches.
-            </p>
           </div>
 
-          <section className="mb-16 md:mb-20" id="special-packages">
-            <div className="text-center mb-8">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-300/90 mb-3">
-                Beyond the six branches
-              </p>
-              <h2 className="font-display text-3xl md:text-4xl font-bold text-white mb-2">
+          {/* Special packages */}
+          <section className="mb-14 md:mb-16">
+            <div className="text-center mb-6">
+              <h3 className="font-display text-2xl md:text-3xl font-bold text-white">
                 Special packages
-              </h2>
-              <p className="text-wisdom-muted max-w-lg mx-auto text-sm leading-relaxed">
-                Department tracks by year and semester. Buy each semester separately.
-              </p>
+              </h3>
             </div>
 
             <Link
@@ -185,14 +199,15 @@ export default function LandingPathways() {
               className="group block max-w-xl mx-auto overflow-hidden rounded-2xl sm:rounded-3xl border border-violet-400/30 bg-wisdom-card hover:border-violet-300/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_48px_-16px_rgba(167,139,250,0.35)]"
             >
               <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
-                <SafeCoverImage src={SPECIAL_PACKAGES_HUB_IMAGE} alt="" />
+                <SafeCoverImage src={SPECIAL_PACKAGES_HUB_IMAGE} alt="Special packages" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
               </div>
-              <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8 text-left">
-                <h3 className="flex items-center gap-1.5 font-display text-base sm:text-lg font-bold text-white group-hover:text-violet-200 transition-colors">
+              <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8 flex items-center justify-between gap-2">
+                <h4 className="flex items-center gap-1.5 font-display text-base sm:text-lg font-bold text-white group-hover:text-violet-200 transition-colors">
                   <BadgeCheck className="w-4 h-4 shrink-0 text-sky-400" aria-hidden />
-                  Browse special packages
-                </h3>
-                <span className="mt-2.5 inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-violet-400/90">
+                  Special packages
+                </h4>
+                <span className="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-violet-300">
                   Open
                   <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
                 </span>
@@ -200,132 +215,59 @@ export default function LandingPathways() {
             </Link>
           </section>
 
-          <section className="mb-12 md:mb-16">
+          {/* Freshman */}
+          {freshman && (
+            <section className="mb-14 md:mb-16">
+              <div className="text-center mb-6">
+                <h3 className="font-display text-2xl md:text-3xl font-bold text-white">Freshman</h3>
+              </div>
+              <div className="max-w-xl mx-auto">
+                <ProgramLink program={freshman} />
+              </div>
+            </section>
+          )}
+
+          {/* Academic branches */}
+          <section className="mb-16 md:mb-20">
             <div className="text-center mb-6">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-purple-300/90 mb-2">
-                First-year path
-              </p>
-              <h2 className="font-display text-2xl md:text-3xl font-bold text-white">Freshman</h2>
+              <h3 className="font-display text-2xl md:text-3xl font-bold text-white">
+                Academic branches
+              </h3>
             </div>
-            <div className="max-w-xl mx-auto">
-              {programs
-                .filter((p) => p.id === "freshman")
-                .map((program) => (
-                  <Link
-                    key={program.id}
-                    href={program.href}
-                    className={`card-3d group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card ${program.border}`}
-                  >
-                    <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={program.image}
-                        alt={program.name}
-                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-                      />
-                    </div>
-                    <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8">
-                      <h3
-                        className={`flex items-center gap-1.5 font-display text-base sm:text-lg font-bold ${program.accent}`}
-                      >
-                        <BadgeCheck
-                          className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-sky-400"
-                          aria-label="Verified"
-                        />
-                        {program.name}
-                      </h3>
-                      <div
-                        className={`mt-2.5 flex items-center gap-1 text-xs sm:text-sm font-semibold ${program.accent}`}
-                      >
-                        {program.cta}
-                        <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-                      </div>
-                    </div>
-                  </Link>
-                ))}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+              {branchPrograms.map((program) => (
+                <ProgramLink key={program.id} program={program} />
+              ))}
             </div>
           </section>
 
-          <div className="text-center mb-6">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-wisdom-muted mb-2">
-              Academic branches
-            </p>
-            <h2 className="font-display text-2xl md:text-3xl font-bold text-white">
-              Grades and exam pathways
-            </h2>
-          </div>
-          <div className="perspective-scene grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
-            {programs
-              .filter((p) => p.id !== "freshman")
-              .map((program) => (
-                <Link
-                  key={program.id}
-                  href={program.href}
-                  className={`card-3d group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card ${program.border}`}
-                >
-                  <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={program.image}
-                      alt={program.name}
-                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-                    />
-                  </div>
-                  <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8">
-                    <h3
-                      className={`flex items-center gap-1.5 font-display text-base sm:text-lg font-bold ${program.accent}`}
-                    >
-                      <BadgeCheck
-                        className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-sky-400"
-                        aria-label="Verified"
-                      />
-                      {program.name}
-                    </h3>
-                    <div
-                      className={`mt-2.5 flex items-center gap-1 text-xs sm:text-sm font-semibold ${program.accent}`}
-                    >
-                      {program.cta}
-                      <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-                    </div>
-                  </div>
-                </Link>
-              ))}
-          </div>
-
-          <section className="mt-24 md:mt-28">
-            <div className="text-center mb-10">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-400/90 mb-3">
-                Open library · no enrollment required
-              </p>
-              <h2 className="font-display text-3xl md:text-4xl font-bold text-white mb-3">
+          {/* Free resources */}
+          <section className="mb-8">
+            <div className="text-center mb-8 md:mb-10">
+              <h3 className="font-display text-2xl md:text-3xl font-bold text-white mb-2">
                 Free resources
-              </h2>
-              <p className="text-wisdom-muted max-w-lg mx-auto text-base leading-relaxed">
-                Guidance beyond the academic branches: stories, techniques, campus life,
-                universities, departments, and scholarships.
-              </p>
+              </h3>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {freeResources.map((item, index) => {
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+              {freeResources.map((item) => {
                 const Icon = item.icon;
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`group relative rounded-2xl border bg-wisdom-card/95 p-6 transition-all duration-400 ease-out hover:-translate-y-1.5 hover:bg-white/[0.04] ${item.border} ${item.glow}`}
-                    style={{ animationDelay: `${index * 60}ms` }}
+                    className={`group relative rounded-2xl border bg-wisdom-card/95 p-5 sm:p-6 transition-all duration-300 ease-out hover:-translate-y-1.5 hover:bg-white/[0.04] ${item.border}`}
                   >
                     <div
-                      className={`mb-4 inline-flex p-3 rounded-xl border ${item.iconBg} transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[-3deg]`}
+                      className={`mb-4 inline-flex p-3 rounded-xl border ${item.iconBg} transition-transform duration-300 group-hover:scale-110`}
                     >
                       <Icon className="w-5 h-5" />
                     </div>
-                    <h3
-                      className={`font-display text-xl mb-2 font-semibold transition-colors ${item.accent}`}
+                    <h4
+                      className={`font-display text-lg sm:text-xl mb-2 font-semibold transition-colors ${item.accent}`}
                     >
                       {item.name}
-                    </h3>
+                    </h4>
                     <p className="text-sm text-wisdom-muted leading-relaxed">{item.blurb}</p>
                     <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-wisdom-muted group-hover:text-white/90 transition-colors">
                       Explore
@@ -337,7 +279,7 @@ export default function LandingPathways() {
             </div>
           </section>
 
-          <section className="mt-24 md:mt-28" id="partnership">
+          <section className="mt-20 md:mt-24" id="partnership">
             <div className="max-w-3xl mx-auto">
               <PartnershipPath />
             </div>
