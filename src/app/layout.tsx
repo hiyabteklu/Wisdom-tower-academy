@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import ScrollZoom from "@/components/ScrollZoom";
 import AuthProvider from "@/components/AuthProvider";
+import GlobalFocusBar from "@/components/GlobalFocusBar";
 
 export const metadata: Metadata = {
   title: "Wisdom Tower Academy | Grades 9–12, Freshman, UAT, GAT, COC & Exit Exam",
@@ -58,6 +59,7 @@ export default function RootLayout({
             <main className="flex-1 pt-16 relative z-10">{children}</main>
             <Footer />
             <ScrollZoom />
+            <GlobalFocusBar />
           </AuthProvider>
         </ThemeProvider>
       </body>
