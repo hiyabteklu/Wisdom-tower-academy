@@ -77,15 +77,16 @@ export const specialPackages: SpecialPackage[] = [
     id: "ece-y3",
     slug: "electrical-computer-engineering",
     name: "Electrical & Computer Engineering",
-    blurb: "Year 3 — buy each semester separately (300 ETB). Semester 1 is live; Semester 2 coming soon.",
-    image: "/images/special-packages/ece.jpg",
-    yearLabel: "3rd Year",
+    blurb:
+      "Senior-year course packs written for your department. Notes, chapter questions, flashcards, and solved practice exams for each course. Semester 1 is open now. More departments are added over time.",
+    image: SPECIAL_PACKAGES_HUB_IMAGE,
+    yearLabel: "Year 3",
     semesterPriceEtb: ECE_SEMESTER_PRICE_ETB,
     semesters: [
       {
         id: "sem-1",
-        label: "First Semester",
-        shortLabel: "Semester 1",
+        label: "Semester 1",
+        shortLabel: "S1",
         image: "/images/special-packages/ece-sem-1.jpg",
         packageId: "ece-y3-sem-1",
         priceEtb: ECE_SEMESTER_PRICE_ETB,
@@ -94,8 +95,8 @@ export const specialPackages: SpecialPackage[] = [
       },
       {
         id: "sem-2",
-        label: "Second Semester",
-        shortLabel: "Semester 2",
+        label: "Semester 2",
+        shortLabel: "S2",
         image: "/images/special-packages/ece-sem-2.jpg",
         packageId: "ece-y3-sem-2",
         priceEtb: ECE_SEMESTER_PRICE_ETB,
@@ -106,22 +107,20 @@ export const specialPackages: SpecialPackage[] = [
   },
 ];
 
-export function getSpecialPackage(slug: string) {
+export function getSpecialPackage(slug: string): SpecialPackage | undefined {
   return specialPackages.find((p) => p.slug === slug);
 }
 
-export function getSemester(pkgSlug: string, semId: string) {
-  const pkg = getSpecialPackage(pkgSlug);
+export function getCourse(
+  packageSlug: string,
+  semesterId: string,
+  courseSlug: string
+): { pkg: SpecialPackage; semester: SpecialSemester; course: SpecialCourse } | null {
+  const pkg = getSpecialPackage(packageSlug);
   if (!pkg) return null;
-  const sem = pkg.semesters.find((s) => s.id === semId);
-  if (!sem) return null;
-  return { pkg, sem };
-}
-
-export function getCourse(pkgSlug: string, semId: string, courseSlug: string) {
-  const found = getSemester(pkgSlug, semId);
-  if (!found) return null;
-  const courseItem = found.sem.courses.find((c) => c.slug === courseSlug);
-  if (!courseItem) return null;
-  return { ...found, course: courseItem };
+  const semester = pkg.semesters.find((s) => s.id === semesterId);
+  if (!semester) return null;
+  const c = semester.courses.find((x) => x.slug === courseSlug);
+  if (!c) return null;
+  return { pkg, semester, course: c };
 }
