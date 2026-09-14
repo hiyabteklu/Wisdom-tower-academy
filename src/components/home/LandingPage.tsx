@@ -116,14 +116,14 @@ function StatsSlider({ visible, reduced }: { visible: boolean; reduced: boolean 
 
 export default function LandingPage() {
   const reduced = usePrefersReducedMotion();
-  const heroSection = useInView();
-  const welcomeSection = useInView();
+  const heroSection = useInView({ eager: true });
   const statsSection = useInView();
   const crossSection = useInView();
   const ctaSection = useInView();
 
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [authReady, setAuthReady] = useState(false);
+  const [imgOk, setImgOk] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -174,7 +174,7 @@ export default function LandingPage() {
         </div>
 
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className={`max-w-3xl reveal-item ${heroSection.inView ? "is-visible" : ""}`}>
+          <div className="max-w-3xl is-visible">
             <p className="text-sm font-semibold tracking-[0.2em] uppercase text-cyan-300/95 mb-4">
               Wisdom Tower Academy
             </p>
@@ -262,20 +262,28 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="pb-12 md:pb-16 relative" ref={welcomeSection.ref}>
+      {/* Welcome image — always visible (no reveal-item opacity trap) */}
+      <section className="pb-12 md:pb-16 relative">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div
-            className={`relative overflow-hidden rounded-2xl sm:rounded-3xl border border-white/14 bg-wisdom-navy reveal-item ${
-              welcomeSection.inView ? "is-visible" : ""
-            }`}
-          >
-            <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={ACADEMY_IMAGE}
-                alt="Welcome to Wisdom Tower Academy"
-                className="absolute inset-0 h-full w-full object-cover"
-              />
+          <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-white/14 bg-wisdom-navy">
+            <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy min-h-[12rem]">
+              {imgOk ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={ACADEMY_IMAGE}
+                  alt="Welcome to Wisdom Tower Academy"
+                  className="absolute inset-0 h-full w-full object-cover"
+                  loading="eager"
+                  decoding="async"
+                  onError={() => setImgOk(false)}
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-wisdom-navy via-cyan-950/40 to-wisdom-dark">
+                  <p className="font-display text-xl sm:text-2xl font-bold text-white/90">
+                    Wisdom Tower Academy
+                  </p>
+                </div>
+              )}
               <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/55 to-transparent pointer-events-none" />
               <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-300/90 mb-1">
@@ -295,10 +303,10 @@ export default function LandingPage() {
       <section className="pb-20 md:pb-28 relative" ref={statsSection.ref}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6 items-stretch">
-            <StatsSlider visible={statsSection.inView} reduced={reduced} />
+            <StatsSlider visible={statsSection.inView || reduced} reduced={reduced} />
             <div className="lg:col-span-1 flex">
               <div className="w-full min-h-[12.5rem] md:min-h-[14rem] flex">
-                <InfinityCard visible={statsSection.inView} delay={270} />
+                <InfinityCard visible={statsSection.inView || reduced} delay={270} />
               </div>
             </div>
           </div>
