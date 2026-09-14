@@ -126,12 +126,12 @@ export function getCourse(
   packageSlug: string,
   semesterId: string,
   courseSlug: string
-): { pkg: SpecialPackage; semester: SpecialSemester; course: SpecialCourse } | null {
+): { pkg: SpecialPackage; sem: SpecialSemester; course: SpecialCourse } | null {
   const pkg = getSpecialPackage(packageSlug);
   if (!pkg) return null;
-  const semester = pkg.semesters.find((s) => s.id === semesterId);
-  if (!semester) return null;
-  const c = semester.courses.find((x) => x.slug === courseSlug);
+  const sem = pkg.semesters.find((s) => s.id === semesterId);
+  if (!sem) return null;
+  const c = sem.courses.find((x) => x.slug === courseSlug);
   if (!c) return null;
-  return { pkg, semester, course: c };
+  return { pkg, sem, course: c };
 }
