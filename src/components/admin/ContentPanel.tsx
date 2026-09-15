@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   ADMIN_CONTENT_TREE,
   HUB_CONTENT_DEFAULTS,
+  scopeUsesAppwrite,
   type AdminNavNode,
 } from "@/data/admin-nav";
 import {
@@ -26,6 +27,7 @@ import {
   Upload,
   BookOpen,
   RefreshCw,
+  Cloud,
 } from "lucide-react";
 
 type Crumb = { id: string; label: string; node: AdminNavNode };
@@ -49,6 +51,7 @@ export default function ContentPanel() {
   const current = crumbs[crumbs.length - 1]?.node;
   const scopePath = current?.scopePath;
   const packageId = current?.packageId || "freshman";
+  const onAppwrite = scopeUsesAppwrite(scopePath);
 
   const hubIds = [
     "books",
@@ -173,7 +176,7 @@ export default function ContentPanel() {
     if (file) {
       const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
       const path = `${scopePath}/${hub}/${Date.now()}-${safe}`;
-      const up = await uploadLearningFile(path, file);
+      const up = await uploadLearningFile(path, file, { scopePath });
       if (up.error) {
         setToast(up.error);
         setSaving(false);
@@ -209,7 +212,15 @@ export default function ContentPanel() {
       setToast(res.error || "Save failed — run learning-content-setup.sql?");
       return;
     }
-    setToast(published ? "Saved & published" : "Saved (draft)");
+    setToast(
+      published
+        ? onAppwrite
+          ? "Saved & published (Appwrite)"
+          : "Saved & published"
+        : onAppwrite
+          ? "Saved draft (Appwrite)"
+          : "Saved (draft)"
+    );
     setEditing(null);
     loadItems();
   }
@@ -242,7 +253,7 @@ export default function ContentPanel() {
             Content library
           </h2>
           <p className="text-sm text-wisdom-muted mt-0.5">
-            Step through the same structure as the website · upload books, notes, questions, exams
+            Grades 9–12 files → Appwrite · Freshman & special packages → Supabase
           </p>
         </div>
         {isOnHub && (
@@ -293,6 +304,13 @@ export default function ContentPanel() {
         ))}
       </nav>
 
+      {isOnHub && onAppwrite && (
+        <div className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/30 bg-cyan-500/10 px-2.5 py-1 text-xs text-cyan-200">
+          <Cloud className="w-3.5 h-3.5" />
+          Files upload to Appwrite
+        </div>
+      )}
+
       {!isOnHub && (
         <ul className="grid sm:grid-cols-2 gap-2">
           {listNodes.map((node) => (
@@ -304,6 +322,11 @@ export default function ContentPanel() {
               >
                 <FolderOpen className="w-5 h-5 text-amber-400 shrink-0" />
                 <span className="flex-1 font-semibold text-white">{node.label}</span>
+                {node.useAppwrite && (
+                  <span className="text-[10px] uppercase tracking-wide text-cyan-300/80">
+                    Appwrite
+                  </span>
+                )}
                 <ChevronRight className="w-4 h-4 text-wisdom-muted" />
               </button>
             </li>
@@ -347,6 +370,9 @@ export default function ContentPanel() {
               {(hub === "books" || hub === "videos") && (
                 <label className="block text-xs text-wisdom-muted">
                   {hub === "books" ? "PDF file" : "Optional file"}
+                  {onAppwrite && (
+                    <span className="ml-1 text-cyan-300">(Appwrite)</span>
+                  )}
                   <div className="mt-1 flex items-center gap-2">
                     <label className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-white/20 cursor-pointer text-sm">
                       <Upload className="w-4 h-4" />
@@ -428,6 +454,7 @@ export default function ContentPanel() {
                     {item.contentType}
                     {item.chapter != null ? ` · ch ${item.chapter}` : ""}
                     {item.published ? " · published" : " · draft"}
+                    {item.storagePath?.startsWith("appwrite:") ? " · Appwrite" : ""}
                   </p>
                 </div>
                 <button
