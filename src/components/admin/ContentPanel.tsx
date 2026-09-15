@@ -12,6 +12,7 @@ import {
   upsertResource,
   deleteResource,
   uploadLearningFile,
+  APPWRITE_PATH_PREFIX,
   type HubId,
   type LearningResource,
   type ContentType,
@@ -46,6 +47,7 @@ export default function ContentPanel() {
   const [metaJson, setMetaJson] = useState("{}");
   const [published, setPublished] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+  const [appwriteFileId, setAppwriteFileId] = useState("");
   const [saving, setSaving] = useState(false);
 
   const current = crumbs[crumbs.length - 1]?.node;
@@ -79,7 +81,7 @@ export default function ContentPanel() {
 
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(() => setToast(""), 4000);
+    const t = setTimeout(() => setToast(""), 8000);
     return () => clearTimeout(t);
   }, [toast]);
 
@@ -156,6 +158,7 @@ export default function ContentPanel() {
     );
     setPublished(false);
     setFile(null);
+    setAppwriteFileId("");
   }
 
   function openEdit(item: LearningResource) {
@@ -167,13 +170,23 @@ export default function ContentPanel() {
     setMetaJson(JSON.stringify(item.meta || {}, null, 2));
     setPublished(item.published);
     setFile(null);
+    const existingId =
+      item.storagePath?.startsWith(APPWRITE_PATH_PREFIX)
+        ? item.storagePath.slice(APPWRITE_PATH_PREFIX.length)
+        : "";
+    setAppwriteFileId(existingId);
   }
 
   async function save() {
     if (!editing || !hub || !scopePath) return;
     setSaving(true);
     let storagePath = editing.storagePath;
-    if (file) {
+
+    // Prefer pasted Appwrite file ID (for large textbooks)
+    const pastedId = appwriteFileId.trim();
+    if (onAppwrite && pastedId) {
+      storagePath = `${APPWRITE_PATH_PREFIX}${pastedId}`;
+    } else if (file) {
       const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
       const path = `${scopePath}/${hub}/${Date.now()}-${safe}`;
       const up = await uploadLearningFile(path, file, { scopePath });
@@ -184,6 +197,7 @@ export default function ContentPanel() {
       }
       storagePath = up.path || path;
     }
+
     let meta: Record<string, unknown> = {};
     try {
       meta = JSON.parse(metaJson || "{}");
@@ -241,7 +255,7 @@ export default function ContentPanel() {
   return (
     <div className="space-y-4">
       {toast && (
-        <div className="rounded-xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+        <div className="rounded-xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200 whitespace-pre-wrap">
           {toast}
         </div>
       )}
@@ -307,7 +321,7 @@ export default function ContentPanel() {
       {isOnHub && onAppwrite && (
         <div className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/30 bg-cyan-500/10 px-2.5 py-1 text-xs text-cyan-200">
           <Cloud className="w-3.5 h-3.5" />
-          Files upload to Appwrite
+          Files upload to Appwrite · large PDFs: paste File ID
         </div>
       )}
 
@@ -368,24 +382,41 @@ export default function ContentPanel() {
                 />
               </label>
               {(hub === "books" || hub === "videos") && (
-                <label className="block text-xs text-wisdom-muted">
-                  {hub === "books" ? "PDF file" : "Optional file"}
+                <>
+                  <label className="block text-xs text-wisdom-muted">
+                    {hub === "books" ? "PDF file" : "Optional file"}
+                    {onAppwrite && (
+                      <span className="ml-1 text-cyan-300">(Appwrite · max ~4 MB via site)</span>
+                    )}
+                    <div className="mt-1 flex items-center gap-2">
+                      <label className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-white/20 cursor-pointer text-sm">
+                        <Upload className="w-4 h-4" />
+                        {file ? file.name : "Choose file"}
+                        <input
+                          type="file"
+                          accept={hub === "books" ? "application/pdf" : "*/*"}
+                          className="hidden"
+                          onChange={(e) => setFile(e.target.files?.[0] || null)}
+                        />
+                      </label>
+                    </div>
+                  </label>
                   {onAppwrite && (
-                    <span className="ml-1 text-cyan-300">(Appwrite)</span>
-                  )}
-                  <div className="mt-1 flex items-center gap-2">
-                    <label className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-white/20 cursor-pointer text-sm">
-                      <Upload className="w-4 h-4" />
-                      {file ? file.name : "Choose file"}
+                    <label className="block text-xs text-wisdom-muted">
+                      Appwrite File ID (for large textbooks)
                       <input
-                        type="file"
-                        accept={hub === "books" ? "application/pdf" : "*/*"}
-                        className="hidden"
-                        onChange={(e) => setFile(e.target.files?.[0] || null)}
+                        value={appwriteFileId}
+                        onChange={(e) => setAppwriteFileId(e.target.value)}
+                        placeholder="Paste file ID from Appwrite Console"
+                        className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2 text-sm text-white font-mono"
                       />
+                      <span className="mt-1 block text-[11px] text-wisdom-muted leading-relaxed">
+                        Upload the PDF in Appwrite → Storage → your bucket → Create file, then copy the
+                        File ID here. Skips the 4 MB site limit.
+                      </span>
                     </label>
-                  </div>
-                </label>
+                  )}
+                </>
               )}
               {(hub === "short-notes" || hub === "videos") && (
                 <label className="block text-xs text-wisdom-muted">
