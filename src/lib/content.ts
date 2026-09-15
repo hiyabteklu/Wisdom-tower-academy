@@ -1,6 +1,7 @@
-/** Learning content CRUD + progress (Supabase). */
+/** Learning content CRUD + progress (Supabase metadata + hybrid storage). */
 
 import { supabase } from "@/lib/supabase";
+import { scopeUsesAppwrite } from "@/data/admin-nav";
 
 export type HubId =
   | "books"
@@ -92,7 +93,6 @@ export type ScopeStats = {
   totalStudySeconds: number;
   totalFocusSeconds: number;
   avgProgressPct: number;
-  /** Human label for average focus across this scope */
   avgFocusLabel: string;
   quizAttempted: number;
   quizCorrect: number;
@@ -106,7 +106,6 @@ export type ScopeStats = {
   streakDays: number;
 };
 
-/** Focus quality from focus-seconds vs total study seconds. */
 export function focusStatusLabel(focusSec: number, totalSec: number): string {
   if (totalSec < 20) return "Getting started";
   const ratio = focusSec / Math.max(1, totalSec);
@@ -215,12 +214,63 @@ export async function deleteResource(
   return { ok: true };
 }
 
+/** Prefix used when a file lives on Appwrite */
+export const APPWRITE_PATH_PREFIX = "appwrite:";
+
+export function isAppwriteStoragePath(path: string | null | undefined): boolean {
+  return Boolean(path && path.startsWith(APPWRITE_PATH_PREFIX));
+}
+
+export function parseAppwriteFileId(path: string): string | null {
+  if (!isAppwriteStoragePath(path)) return null;
+  return path.slice(APPWRITE_PATH_PREFIX.length).split("|")[0] || null;
+}
+
+/**
+ * Upload a learning file.
+ * - Freshman / special packages → Supabase storage
+ * - Grades 9–12 → Appwrite (via API route)
+ */
 export async function uploadLearningFile(
   path: string,
-  file: File
+  file: File,
+  opts?: { scopePath?: string }
 ): Promise<{ path?: string; error?: string }> {
+  if (file.size > 100 * 1024 * 1024) {
+    return { error: "Max file size 100 MB" };
+  }
+
+  const useAppwrite =
+    opts?.scopePath != null
+      ? scopeUsesAppwrite(opts.scopePath)
+      : path.startsWith("grade/");
+
+  if (useAppwrite) {
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("scopePath", opts?.scopePath || path);
+
+      const res = await fetch("/api/storage/upload", {
+        method: "POST",
+        body: form,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return { error: data.error || "Appwrite upload failed" };
+      }
+      // Store as appwrite:fileId so we can resolve URLs later
+      return { path: `${APPWRITE_PATH_PREFIX}${data.fileId}` };
+    } catch (e) {
+      return {
+        error: e instanceof Error ? e.message : "Appwrite upload failed",
+      };
+    }
+  }
+
+  // Default: Supabase storage (freshman, special packages)
   if (file.size > 40 * 1024 * 1024) {
-    return { error: "Max file size 40 MB" };
+    return { error: "Max file size 40 MB on Supabase storage" };
   }
   const { error } = await supabase.storage.from("learning-content").upload(path, file, {
     upsert: true,
@@ -230,10 +280,34 @@ export async function uploadLearningFile(
   return { path };
 }
 
+/**
+ * Resolve a playable / downloadable URL for a storage path.
+ * Supports both Supabase signed URLs and Appwrite public view URLs.
+ */
 export async function getSignedContentUrl(
   storagePath: string,
   expiresSec = 3600
 ): Promise<{ url?: string; error?: string }> {
+  if (isAppwriteStoragePath(storagePath)) {
+    const fileId = parseAppwriteFileId(storagePath);
+    if (!fileId) return { error: "Invalid Appwrite file reference" };
+
+    const endpoint =
+      process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT || "https://fra.cloud.appwrite.io/v1";
+    const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID || "";
+    const bucketId =
+      process.env.APPWRITE_BUCKET_ID ||
+      process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID ||
+      "";
+
+    if (!projectId || !bucketId) {
+      return { error: "Appwrite env vars missing" };
+    }
+
+    const url = `${endpoint}/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
+    return { url };
+  }
+
   const { data, error } = await supabase.storage
     .from("learning-content")
     .createSignedUrl(storagePath, expiresSec);
@@ -549,6 +623,6 @@ export function eceScope(semId: string, courseSlug: string): string {
   return `ece/${semId}/${courseSlug}`;
 }
 
-export function gradeScope(gradeId: string): string {
-  return `grade/${gradeId}`;
+export function gradeScope(gradeId: string, subjectId?: string): string {
+  return subjectId ? `grade/${gradeId}/${subjectId}` : `grade/${gradeId}`;
 }

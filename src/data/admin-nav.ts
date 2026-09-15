@@ -1,18 +1,64 @@
 /** Step-by-step admin navigation mirroring the public Academy structure. */
 
 import { freshmanSubjects } from "@/data/freshman";
-import { resourceHubs } from "@/data/academy";
+import { grades, resourceHubs } from "@/data/academy";
+import { streamsForGrade } from "@/data/grade-subjects";
 import { specialPackages } from "@/data/special-packages";
+import { packageIdForGrade } from "@/data/packages";
 
 export type AdminNavNode = {
   id: string;
   label: string;
   packageId?: string;
   scopePath?: string;
+  /** When true, file uploads for this branch go to Appwrite instead of Supabase storage */
+  useAppwrite?: boolean;
   children?: AdminNavNode[];
 };
 
+const gradeNodes: AdminNavNode[] = grades.map((g) => {
+  const streams = streamsForGrade(g.id);
+  // Flatten subjects from both streams (unique by id)
+  const subjectMap = new Map<string, { id: string; name: string }>();
+  for (const stream of streams) {
+    for (const sub of stream.subjects) {
+      if (!subjectMap.has(sub.id)) {
+        subjectMap.set(sub.id, { id: sub.id, name: sub.name });
+      }
+    }
+  }
+  const subjects = Array.from(subjectMap.values());
+  const packageId = packageIdForGrade(g.id);
+
+  return {
+    id: `grade-${g.id}`,
+    label: g.label,
+    packageId,
+    useAppwrite: true,
+    children: subjects.map((sub) => ({
+      id: sub.id,
+      label: sub.name,
+      packageId,
+      scopePath: `grade/${g.id}/${sub.id}`,
+      useAppwrite: true,
+      children: resourceHubs.map((h) => ({
+        id: h.id,
+        label: h.name,
+        packageId,
+        scopePath: `grade/${g.id}/${sub.id}`,
+        useAppwrite: true,
+      })),
+    })),
+  };
+});
+
 export const ADMIN_CONTENT_TREE: AdminNavNode[] = [
+  {
+    id: "grades",
+    label: "Grades 9–12",
+    useAppwrite: true,
+    children: gradeNodes,
+  },
   {
     id: "freshman",
     label: "Freshman",
@@ -69,7 +115,7 @@ export const HUB_CONTENT_DEFAULTS: Record<
   },
   videos: {
     contentType: "video_url",
-    hint: "Paste a YouTube/Vimeo URL or storage path later.",
+    hint: "Paste a YouTube/Vimeo URL or upload a video file (grades use Appwrite).",
   },
   flashcards: {
     contentType: "flashcard_deck",
@@ -84,3 +130,9 @@ export const HUB_CONTENT_DEFAULTS: Record<
     hint: "JSON in meta: { durationMin, questions: [...] }.",
   },
 };
+
+/** Whether this scope should store files on Appwrite */
+export function scopeUsesAppwrite(scopePath?: string | null): boolean {
+  if (!scopePath) return false;
+  return scopePath.startsWith("grade/");
+}
