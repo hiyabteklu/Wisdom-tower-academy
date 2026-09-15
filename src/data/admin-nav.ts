@@ -2,7 +2,7 @@
 
 import { freshmanSubjects } from "@/data/freshman";
 import { grades, resourceHubs } from "@/data/academy";
-import { streamsForGrade } from "@/data/grade-subjects";
+import { subjectsForGrade } from "@/data/grade-subjects";
 import { specialPackages } from "@/data/special-packages";
 import { packageIdForGrade } from "@/data/packages";
 
@@ -17,17 +17,7 @@ export type AdminNavNode = {
 };
 
 const gradeNodes: AdminNavNode[] = grades.map((g) => {
-  const streams = streamsForGrade(g.id);
-  // Flatten subjects from both streams (unique by id)
-  const subjectMap = new Map<string, { id: string; name: string }>();
-  for (const stream of streams) {
-    for (const sub of stream.subjects) {
-      if (!subjectMap.has(sub.id)) {
-        subjectMap.set(sub.id, { id: sub.id, name: sub.name });
-      }
-    }
-  }
-  const subjects = Array.from(subjectMap.values());
+  const subjects = subjectsForGrade(g.id);
   const packageId = packageIdForGrade(g.id);
 
   return {

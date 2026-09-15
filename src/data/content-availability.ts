@@ -48,7 +48,8 @@ export function getHubLockMode(basePath: string): HubLockMode {
   if (basePath.includes("/academy/gat") || basePath.includes("/academy/exit-exam")) {
     return "coming_soon";
   }
-  if (basePath.includes("/academy/grades/")) return "coming_soon";
+  // Grades 9–12: unlocked for package owners (registered users who purchased)
+  if (basePath.includes("/academy/grades/")) return "require_purchase";
   if (basePath.includes("/academy/freshman")) return "require_purchase";
   if (basePath.includes("/academy/uat") || basePath.includes("/academy/coc")) {
     return "require_purchase";

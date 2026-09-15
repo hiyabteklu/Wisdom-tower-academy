@@ -12,6 +12,8 @@ import {
   Languages,
   Ruler,
   Briefcase,
+  HeartPulse,
+  Sprout,
   type LucideIcon,
 } from "lucide-react";
 
@@ -29,6 +31,8 @@ const MAP: Record<string, LucideIcon> = {
   languages: Languages,
   ruler: Ruler,
   briefcase: Briefcase,
+  heart: HeartPulse,
+  sprout: Sprout,
 };
 
 export default function GradeSubjectIcon({
