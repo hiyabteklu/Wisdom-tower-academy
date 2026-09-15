@@ -217,6 +217,9 @@ export async function deleteResource(
 /** Prefix used when a file lives on Appwrite */
 export const APPWRITE_PATH_PREFIX = "appwrite:";
 
+/** Vercel serverless request body limit is ~4.5 MB */
+const APPWRITE_PROXY_MAX_BYTES = 4 * 1024 * 1024;
+
 export function isAppwriteStoragePath(path: string | null | undefined): boolean {
   return Boolean(path && path.startsWith(APPWRITE_PATH_PREFIX));
 }
@@ -230,6 +233,9 @@ export function parseAppwriteFileId(path: string): string | null {
  * Upload a learning file.
  * - Freshman / special packages → Supabase storage
  * - Grades 9–12 → Appwrite (via API route)
+ *
+ * Note: Vercel limits request body to ~4.5MB. Larger PDFs should be uploaded
+ * in the Appwrite console, then linked with storagePath = appwrite:FILE_ID
  */
 export async function uploadLearningFile(
   path: string,
@@ -246,6 +252,13 @@ export async function uploadLearningFile(
       : path.startsWith("grade/");
 
   if (useAppwrite) {
+    if (file.size > APPWRITE_PROXY_MAX_BYTES) {
+      return {
+        error:
+          "File is larger than 4 MB (Vercel limit). Upload it in Appwrite Console → Storage → your bucket, copy the File ID, and paste it in the \"Appwrite File ID\" field below.",
+      };
+    }
+
     try {
       const form = new FormData();
       form.append("file", file);
@@ -255,11 +268,29 @@ export async function uploadLearningFile(
         method: "POST",
         body: form,
       });
-      const data = await res.json();
+
+      const text = await res.text();
+      let data: { error?: string; fileId?: string } = {};
+      try {
+        data = JSON.parse(text);
+      } catch {
+        if (text.includes("Request Entity Too Large") || res.status === 413) {
+          return {
+            error:
+              "File too large for server upload (max ~4 MB). Upload in Appwrite Console and paste the File ID instead.",
+          };
+        }
+        return {
+          error: `Upload failed (${res.status}). ${text.slice(0, 120)}`,
+        };
+      }
+
       if (!res.ok) {
         return { error: data.error || "Appwrite upload failed" };
       }
-      // Store as appwrite:fileId so we can resolve URLs later
+      if (!data.fileId) {
+        return { error: "Upload succeeded but no file ID returned" };
+      }
       return { path: `${APPWRITE_PATH_PREFIX}${data.fileId}` };
     } catch (e) {
       return {
