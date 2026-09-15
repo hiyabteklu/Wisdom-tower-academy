@@ -39,6 +39,13 @@ function inferPackageAndScope(basePath: string): {
     scopePath = `freshman/${fresh[1]}`;
   }
 
+  // /academy/grades/{9|10|11|12}/{subject}
+  const grade = basePath.match(/\/academy\/grades\/(9|10|11|12)\/([^/]+)/);
+  if (grade) {
+    packageId = packageId || `grade-${grade[1]}`;
+    scopePath = `grade/${grade[1]}/${grade[2]}`;
+  }
+
   // /academy/special-packages/.../sem-1/{course}
   const ece = basePath.match(
     /\/special-packages\/electrical-computer-engineering\/(sem-[12])\/([^/]+)/
