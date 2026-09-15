@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import {
+  APPWRITE_PATH_PREFIX,
+  isAppwriteStoragePath,
+  parseAppwriteFileId,
+} from "@/lib/content";
 
 /**
- * Proxy a private learning-content PDF through our origin so the
- * in-app reader can use a same-origin blob (mobile-friendly).
+ * Proxy a learning-content PDF through our origin so the in-app reader
+ * can use a same-origin blob (mobile-friendly).
  * Query: ?path=<storage_path>
+ *
+ * Supports:
+ * - Supabase paths (freshman / special packages)
+ * - appwrite:FILE_ID (grades 9–12)
  */
 export async function GET(req: NextRequest) {
   const path = req.nextUrl.searchParams.get("path");
@@ -12,6 +21,72 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Missing path" }, { status: 400 });
   }
 
+  // --- Appwrite (grades 9–12) ---
+  if (isAppwriteStoragePath(path) || path.startsWith(APPWRITE_PATH_PREFIX)) {
+    const fileId = parseAppwriteFileId(path) || path.replace(/^appwrite:/i, "").trim();
+    if (!fileId) {
+      return NextResponse.json({ error: "Invalid Appwrite file id" }, { status: 400 });
+    }
+
+    const endpoint =
+      process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT || "https://fra.cloud.appwrite.io/v1";
+    const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID || "";
+    const bucketId =
+      process.env.APPWRITE_BUCKET_ID ||
+      process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID ||
+      "";
+
+    if (!projectId || !bucketId) {
+      return NextResponse.json(
+        {
+          error:
+            "Appwrite env missing. Set NEXT_PUBLIC_APPWRITE_PROJECT_ID and APPWRITE_BUCKET_ID on the host.",
+        },
+        { status: 500 }
+      );
+    }
+
+    const viewUrl = `${endpoint}/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
+
+    try {
+      const upstream = await fetch(viewUrl, {
+        // Public bucket READ (role "Any") — no user JWT required
+        headers: { Accept: "application/pdf,*/*" },
+        cache: "no-store",
+      });
+
+      if (!upstream.ok) {
+        const detail = await upstream.text().catch(() => "");
+        return NextResponse.json(
+          {
+            error: `Appwrite file not readable (${upstream.status}). Check bucket id, file id, and that role "Any" has READ.`,
+            detail: detail.slice(0, 200),
+          },
+          { status: upstream.status === 404 ? 404 : 502 }
+        );
+      }
+
+      const buf = await upstream.arrayBuffer();
+      return new NextResponse(buf, {
+        status: 200,
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": 'inline; filename="document.pdf"',
+          "Cache-Control": "private, max-age=300",
+          "X-Content-Type-Options": "nosniff",
+        },
+      });
+    } catch (e) {
+      return NextResponse.json(
+        {
+          error: e instanceof Error ? e.message : "Failed to fetch Appwrite file",
+        },
+        { status: 502 }
+      );
+    }
+  }
+
+  // --- Supabase (freshman / special packages) ---
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
@@ -38,7 +113,7 @@ export async function GET(req: NextRequest) {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": "inline; filename=\"document.pdf\"",
+      "Content-Disposition": 'inline; filename="document.pdf"',
       "Cache-Control": "private, max-age=300",
       "X-Content-Type-Options": "nosniff",
     },
