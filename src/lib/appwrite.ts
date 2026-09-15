@@ -1,33 +1,19 @@
 import { Client, Storage, ID, Account } from "appwrite";
 
-const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT || "https://fra.cloud.appwrite.io/v1";
+const endpoint =
+  process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT || "https://fra.cloud.appwrite.io/v1";
 const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID || "";
-const bucketId = process.env.APPWRITE_BUCKET_ID || process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID || "";
+const bucketId =
+  process.env.APPWRITE_BUCKET_ID ||
+  process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID ||
+  "";
 
 /**
  * Browser / client-side Appwrite client
- * (Do NOT set the API key here)
+ * Do NOT set API key here (client SDK has no setKey)
  */
 export function createAppwriteClient() {
-  const client = new Client().setEndpoint(endpoint).setProject(projectId);
-  return client;
-}
-
-/**
- * Server-side Appwrite client (uses API key)
- * Only use this in API routes / server actions
- */
-export function createAppwriteServerClient() {
-  const client = new Client()
-    .setEndpoint(endpoint)
-    .setProject(projectId);
-
-  const apiKey = process.env.APPWRITE_API_KEY;
-  if (apiKey) {
-    client.setKey(apiKey);
-  }
-
-  return client;
+  return new Client().setEndpoint(endpoint).setProject(projectId);
 }
 
 export const storage = new Storage(createAppwriteClient());
