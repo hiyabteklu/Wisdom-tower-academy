@@ -20,6 +20,7 @@
     "lucide-react": "^0.460.0",
     "class-variance-authority": "^0.7.0",
     "@supabase/supabase-js": "^2.47.10",
+    "appwrite": "^16.0.0",
     "ai": "^5.0.0",
     "katex": "^0.16.11",
     "pdfjs-dist": "^4.10.38"
