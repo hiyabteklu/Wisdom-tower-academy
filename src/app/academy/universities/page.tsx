@@ -332,6 +332,7 @@ function UniversityCard({
 
 export default function UniversitiesPage() {
   const [query, setQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
   const [region, setRegion] = useState<Region | "all">("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
@@ -423,60 +424,70 @@ export default function UniversitiesPage() {
           </div>
         </header>
 
-        <div
-          className="sticky top-0 z-20 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 py-4 mb-8
-          bg-wisdom-dark/85 backdrop-blur-xl border-b border-white/5"
-        >
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-wisdom-muted" />
+        <div className="mb-6 space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={region}
+              onChange={(e) => setRegion(e.target.value as Region | "all")}
+              className="field-input py-2.5 text-sm min-w-[120px] flex-1 sm:flex-none"
+            >
+              <option value="all">All regions</option>
+              {regions.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => setShowFeaturedOnly((v) => !v)}
+              className={`inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-semibold border transition-colors ${
+                showFeaturedOnly
+                  ? "bg-amber-500/20 border-amber-500/40 text-amber-200"
+                  : "bg-wisdom-card border-white/12 text-wisdom-muted hover:border-white/20"
+              }`}
+            >
+              <Star className="w-3.5 h-3.5" />
+              Featured
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowDetailedOnly((v) => !v)}
+              className={`inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-semibold border transition-colors ${
+                showDetailedOnly
+                  ? "bg-violet-500/20 border-violet-500/40 text-violet-200"
+                  : "bg-wisdom-card border-white/12 text-wisdom-muted hover:border-white/20"
+              }`}
+            >
+              <Filter className="w-3.5 h-3.5" />
+              Guides
+            </button>
+            <button
+              type="button"
+              onClick={() => setSearchOpen((o) => !o)}
+              className={`inline-flex h-10 w-10 items-center justify-center rounded-xl border transition-colors ${
+                searchOpen || query
+                  ? "border-cyan-400/40 bg-cyan-500/15 text-cyan-300"
+                  : "border-white/12 bg-wisdom-card text-wisdom-muted hover:border-white/25"
+              }`}
+              aria-label="Search"
+            >
+              <Search className="w-4 h-4" />
+            </button>
+          </div>
+          {searchOpen && (
+            <div className="relative">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-wisdom-muted pointer-events-none" />
               <input
                 type="search"
-                placeholder="Search by name, city, department…"
+                placeholder="Search by name, city…"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="field-input pl-10 py-3 text-sm"
+                autoFocus
+                className="field-input pl-10 py-2.5 text-sm w-full"
               />
             </div>
-            <div className="flex gap-2 flex-wrap">
-              <select
-                value={region}
-                onChange={(e) => setRegion(e.target.value as Region | "all")}
-                className="field-input py-3 text-sm min-w-[140px]"
-              >
-                <option value="all">All regions</option>
-                {regions.map((r) => (
-                  <option key={r} value={r}>
-                    {r}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => setShowFeaturedOnly((v) => !v)}
-                className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium border transition-colors ${
-                  showFeaturedOnly
-                    ? "bg-amber-500/20 border-amber-500/40 text-amber-200"
-                    : "bg-wisdom-card border-white/12 text-wisdom-muted hover:border-white/20"
-                }`}
-              >
-                <Star className="w-3.5 h-3.5" />
-                Featured
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowDetailedOnly((v) => !v)}
-                className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium border transition-colors ${
-                  showDetailedOnly
-                    ? "bg-violet-500/20 border-violet-500/40 text-violet-200"
-                    : "bg-wisdom-card border-white/12 text-wisdom-muted hover:border-white/20"
-                }`}
-              >
-                <Filter className="w-3.5 h-3.5" />
-                Full guides
-              </button>
-            </div>
-          </div>
+          )}
         </div>
 
         {filtered.length === 0 ? (
@@ -502,24 +513,19 @@ export default function UniversitiesPage() {
                 key={uni.id}
                 uni={uni}
                 expanded={expandedId === uni.id}
-                onToggle={() => setExpandedId((id) => (id === uni.id ? null : uni.id))}
+                onToggle={() =>
+                  setExpandedId((id) => (id === uni.id ? null : uni.id))
+                }
                 notes={notesByUni[uni.id] || []}
               />
             ))}
           </div>
         )}
 
-        <div className="mt-14 md:mt-20 rounded-3xl border border-white/10 bg-gradient-to-br from-cyan-500/10 via-wisdom-card to-wisdom-card p-8 md:p-10 text-center">
-          <h2 className="font-display text-xl md:text-2xl font-bold mb-3">
-            Choosing where you will study
-          </h2>
-          <p className="text-wisdom-muted max-w-lg mx-auto mb-6 leading-relaxed font-reading">
-            Placement is decided centrally from your exam results and preferences, but knowing
-            climate, distance, and campus culture helps you rank preferences with clearer eyes.
-          </p>
+        <div className="mt-14 text-center">
           <Link
             href="/academy"
-            className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-wisdom-cyan text-wisdom-dark font-bold text-sm"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-wisdom-cyan hover:underline"
           >
             Back to Academy
             <ArrowRight className="w-4 h-4" />
