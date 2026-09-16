@@ -26,7 +26,7 @@ function authEmailFromIdentifier(identifier: string): string {
   if (phone.length < 9) {
     throw new Error("Enter a valid email or phone number.");
   }
-  return `p${phone}@phone.wta.local`;
+  return `p${phone}@phone.wisdomtower.app`;
 }
 
 function LoginForm() {
@@ -95,11 +95,14 @@ function LoginForm() {
     });
 
     if (signErr) {
-      setError(
-        signErr.message === "Invalid login credentials"
-          ? "Wrong email/phone or password. Try again or create an account."
-          : signErr.message
-      );
+      const msg = signErr.message || "";
+      if (msg === "Invalid login credentials") {
+        setError(
+          "Wrong email/phone or password. If you signed up with Google before, use Forgot password (wait if rate-limited) to set a password, or create a new email account."
+        );
+      } else {
+        setError(msg);
+      }
       setLoading(false);
       return;
     }
@@ -120,8 +123,8 @@ function LoginForm() {
 
   if (checking) {
     return (
-      <div className="min-h-[80vh] flex items-center justify-center text-wisdom-muted">
-        Checking session…
+      <div className="min-h-[80vh] flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-2 border-cyan-400/25 border-t-cyan-400 animate-spin" />
       </div>
     );
   }
@@ -131,7 +134,7 @@ function LoginForm() {
   const labelClass = "block text-sm font-medium mb-2 text-white/90";
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 py-16">
+    <div className="min-h-[80vh] flex items-start sm:items-center justify-center px-4 py-10 sm:py-16 pb-32 sm:pb-16 overflow-y-auto">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-400 to-sky-500 text-wisdom-dark mb-4">
@@ -232,7 +235,9 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-[80vh] flex items-center justify-center text-wisdom-muted">Loading…</div>
+        <div className="min-h-[80vh] flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full border-2 border-cyan-400/25 border-t-cyan-400 animate-spin" />
+        </div>
       }
     >
       <LoginForm />
