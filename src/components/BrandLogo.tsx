@@ -1,8 +1,7 @@
 import Image from "next/image";
 
-// Official Wisdom Tower logo (embedded so brand is consistent everywhere)
-const LOGO_SRC =
-  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0eNT6AABdN0lEQVR42u3dd3wUdf4/8NfM7iaQCoRQpHcQCR2kqCggqJwgCKcg4ilg986zoJ5nwYIN9eSHoli+gBS";
+/** Official brand mark — keep public/images/brand/logo.png up to date. */
+const LOGO_SRC = "/images/brand/logo.png";
 
 export default function BrandLogo({
   className = "",
@@ -28,4 +27,4 @@ export default function BrandLogo({
   );
 }
 
-export const brandLogoDataUri = LOGO_SRC;
+export const brandLogoSrc = LOGO_SRC;
