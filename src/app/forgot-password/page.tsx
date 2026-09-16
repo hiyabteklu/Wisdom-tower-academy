@@ -16,9 +16,6 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     setError("");
 
-    // Always use the public website origin so the email link lands on the web app.
-    // If the user started reset inside the native app WebView, PKCE verifier stays
-    // in the WebView — opening the link in Chrome will fail. Prefer browser flow.
     const origin =
       typeof window !== "undefined" && window.location.hostname.includes("wisdom-tower")
         ? window.location.origin
@@ -28,7 +25,14 @@ export default function ForgotPasswordPage() {
     });
 
     if (error) {
-      setError(error.message);
+      const m = (error.message || "").toLowerCase();
+      if (m.includes("rate limit") || m.includes("email rate")) {
+        setError(
+          "Too many reset emails sent. Please wait about 1 hour (or check spam), then try again. Google-only accounts need this link once to set a password."
+        );
+      } else {
+        setError(error.message);
+      }
       setLoading(false);
       return;
     }
@@ -39,7 +43,7 @@ export default function ForgotPasswordPage() {
 
   if (success) {
     return (
-      <div className="min-h-[80vh] flex items-center justify-center px-4 py-16">
+      <div className="min-h-[80vh] flex items-start sm:items-center justify-center px-4 py-10 sm:py-16 pb-32 overflow-y-auto">
         <div className="w-full max-w-md text-center">
           <div className="bg-wisdom-card border border-white/5 rounded-2xl p-8">
             <div className="w-16 h-16 rounded-full bg-wisdom-cyan/10 flex items-center justify-center mx-auto mb-4">
@@ -48,12 +52,10 @@ export default function ForgotPasswordPage() {
             <h2 className="text-2xl font-bold mb-2">Check your email</h2>
             <p className="text-wisdom-muted mb-6">
               We sent a password reset link to <strong className="text-white">{email}</strong>.
-              Open the email and the link in the <strong className="text-white">same browser</strong> (Chrome/Safari) — not only inside the app — so the link works.
+              Open the link in the <strong className="text-white">same browser</strong> (Chrome/Safari),
+              not only inside the app.
             </p>
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-2 text-wisdom-cyan hover:underline"
-            >
+            <Link href="/login" className="inline-flex items-center gap-2 text-wisdom-cyan hover:underline">
               <ArrowLeft className="w-4 h-4" />
               Back to Sign In
             </Link>
@@ -64,14 +66,14 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 py-16">
+    <div className="min-h-[80vh] flex items-start sm:items-center justify-center px-4 py-10 sm:py-16 pb-32 sm:pb-16 overflow-y-auto">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-wisdom-cyan to-wisdom-cyan-dark text-wisdom-dark font-bold text-xl mb-4">
             WT
           </div>
           <h1 className="text-3xl font-bold mb-2">Reset password</h1>
-          <p className="text-wisdom-muted">Enter your email and we&apos;ll send you a reset link</p>
+          <p className="text-wisdom-muted">Enter your email and we'll send you a reset link</p>
         </div>
 
         <div className="bg-wisdom-card border border-white/5 rounded-2xl p-8 shadow-xl">
