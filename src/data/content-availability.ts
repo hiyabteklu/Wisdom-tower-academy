@@ -1,5 +1,6 @@
 /**
  * Live vs uploading + purchase gates.
+ * Grades 9–12 and Freshman unlock for any signed-in user via FREE_FOR_REGISTERED_PACKAGE_IDS.
  */
 
 export const PURCHASABLE_PACKAGE_IDS = new Set([
@@ -48,7 +49,7 @@ export function getHubLockMode(basePath: string): HubLockMode {
   if (basePath.includes("/academy/gat") || basePath.includes("/academy/exit-exam")) {
     return "coming_soon";
   }
-  // Grades 9–12: unlocked for package owners (registered users who purchased)
+  // Grades 9–12: free for every registered user (ownership grants grade-* automatically)
   if (basePath.includes("/academy/grades/")) return "require_purchase";
   if (basePath.includes("/academy/freshman")) return "require_purchase";
   if (basePath.includes("/academy/uat") || basePath.includes("/academy/coc")) {

@@ -1,7 +1,6 @@
 /**
- * Ethiopian secondary curriculum subjects.
- * Grades 9–10 share one subject set.
- * Grades 11–12 share one subject set.
+ * Ethiopian secondary curriculum subjects (flat lists — no natural/social split).
+ * Each grade has its own subject set.
  */
 
 export type GradeSubject = {
@@ -10,67 +9,57 @@ export type GradeSubject = {
   /** Lucide icon name key used by GradeSubjectIcon */
   icon: string;
   hint?: string;
-  /** Optional cover image under public/images */
   image?: string;
 };
 
-const G9_G10_SUBJECTS: GradeSubject[] = [
-  { id: "physics", name: "Physics", icon: "atom", hint: "Motion, forces, energy" },
-  { id: "mathematics", name: "Mathematics", icon: "calculator", hint: "Algebra, geometry, number work" },
-  { id: "information-technology", name: "Information Technology", icon: "monitor", hint: "Digital skills and tools" },
-  { id: "history", name: "History", icon: "scroll", hint: "Past societies and change" },
-  {
-    id: "health-physical-education",
-    name: "Health and Physical Education",
-    icon: "heart",
-    hint: "Health, fitness, and wellness",
-  },
-  { id: "geography", name: "Geography", icon: "globe", hint: "Earth systems and places" },
-  { id: "economics", name: "Economics", icon: "coins", hint: "Resources, markets, choices" },
-  {
-    id: "english-for-ethiopia",
-    name: "English for Ethiopia",
-    icon: "book",
-    hint: "Reading, writing, communication",
-  },
-  {
-    id: "citizenship-education",
-    name: "Citizenship Education",
-    icon: "scale",
-    hint: "Rights, ethics, civic life",
-  },
+const G9_SUBJECTS: GradeSubject[] = [
   { id: "chemistry", name: "Chemistry", icon: "flask", hint: "Matter, atoms, reactions" },
+  { id: "mathematics", name: "Math", icon: "calculator", hint: "Algebra, geometry, number work" },
+  { id: "physics", name: "Physics", icon: "atom", hint: "Motion, forces, energy" },
   { id: "biology", name: "Biology", icon: "leaf", hint: "Cells, organisms, life processes" },
-  { id: "amharic", name: "Amharic", icon: "languages", hint: "Language and culture" },
+  { id: "geography", name: "Geography", icon: "globe", hint: "Earth systems and places" },
+  { id: "history", name: "History", icon: "scroll", hint: "Past societies and change" },
+  { id: "economics", name: "Economics", icon: "coins", hint: "Resources, markets, choices" },
 ];
 
-const G11_G12_SUBJECTS: GradeSubject[] = [
-  { id: "physics", name: "Physics", icon: "atom", hint: "Mechanics, energy, fields" },
-  { id: "mathematics", name: "Mathematics", icon: "calculator", hint: "Advanced algebra and exam math" },
-  {
-    id: "information-technology",
-    name: "Information Technology",
-    icon: "monitor",
-    hint: "Computing and digital skills",
-  },
-  { id: "history", name: "History", icon: "scroll", hint: "Ethiopia and global history" },
-  { id: "geography", name: "Geography", icon: "globe", hint: "Population, development, systems" },
-  {
-    id: "english-for-ethiopia",
-    name: "English for Ethiopia",
-    icon: "book",
-    hint: "Academic English",
-  },
-  { id: "economics", name: "Economics", icon: "coins", hint: "Markets, macro, development" },
-  { id: "chemistry", name: "Chemistry", icon: "flask", hint: "Structure, reactions, equilibrium" },
+const G10_SUBJECTS: GradeSubject[] = [
+  { id: "mathematics", name: "Math", icon: "calculator", hint: "Functions, geometry, statistics" },
+  { id: "biology", name: "Biology", icon: "leaf", hint: "Systems, ecology, health" },
+  { id: "chemistry", name: "Chemistry", icon: "flask", hint: "Bonding, stoichiometry" },
+  { id: "physics", name: "Physics", icon: "atom", hint: "Waves, electricity foundations" },
+  { id: "geography", name: "Geography", icon: "globe", hint: "Human and physical geography" },
+  { id: "history", name: "History", icon: "scroll", hint: "Regional and world contexts" },
+  { id: "economics", name: "Economics", icon: "coins", hint: "Production and national economy" },
+];
+
+const G11_SUBJECTS: GradeSubject[] = [
+  { id: "mathematics", name: "Math", icon: "calculator", hint: "Advanced algebra and exam path" },
   { id: "biology", name: "Biology", icon: "leaf", hint: "Genetics, physiology, ecology" },
-  { id: "amharic", name: "Amharic", icon: "languages", hint: "Language and culture" },
-  { id: "agriculture", name: "Agriculture", icon: "sprout", hint: "Crops, soil, and production" },
+  { id: "physics", name: "Physics", icon: "atom", hint: "Mechanics, energy, fields" },
+  { id: "chemistry", name: "Chemistry", icon: "flask", hint: "Structure, reactions, equilibrium" },
+  { id: "economics", name: "Economics", icon: "coins", hint: "Markets, macro, development" },
+  { id: "geography", name: "Geography", icon: "globe", hint: "Population, development, Ethiopia" },
+  { id: "history", name: "History", icon: "scroll", hint: "Ethiopia and global history" },
+];
+
+const G12_SUBJECTS: GradeSubject[] = [
+  { id: "english", name: "English", icon: "book", hint: "Leaving-exam English" },
+  { id: "chemistry", name: "Chemistry", icon: "flask", hint: "Organic and physical chemistry" },
+  { id: "biology", name: "Biology", icon: "leaf", hint: "Exam depth across life sciences" },
+  { id: "mathematics", name: "Math", icon: "calculator", hint: "Exam-ready pure and applied math" },
+  { id: "physics", name: "Physics", icon: "atom", hint: "Electromagnetism, modern physics" },
+  { id: "geography", name: "Geography", icon: "globe", hint: "Exam depth in geo systems" },
+  { id: "economics", name: "Economics", icon: "coins", hint: "Exam depth in economic theory" },
+  { id: "history", name: "History", icon: "scroll", hint: "Exam depth in historical analysis" },
+  { id: "sat", name: "SAT", icon: "target", hint: "SAT-style practice and strategies" },
+  { id: "exam-tips", name: "Exam tips", icon: "lightbulb", hint: "Study tactics and exam-day guidance" },
 ];
 
 export function subjectsForGrade(gradeId: string): GradeSubject[] {
-  if (gradeId === "9" || gradeId === "10") return G9_G10_SUBJECTS;
-  if (gradeId === "11" || gradeId === "12") return G11_G12_SUBJECTS;
+  if (gradeId === "9") return G9_SUBJECTS;
+  if (gradeId === "10") return G10_SUBJECTS;
+  if (gradeId === "11") return G11_SUBJECTS;
+  if (gradeId === "12") return G12_SUBJECTS;
   return [];
 }
 
@@ -81,7 +70,7 @@ export function getGradeSubject(
   return subjectsForGrade(gradeId).find((s) => s.id === subjectId);
 }
 
-/** @deprecated Streams removed — kept for any leftover imports during transition */
+/** @deprecated Streams removed — kept for leftover imports */
 export type GradeStream = {
   id: "natural" | "social";
   label: string;

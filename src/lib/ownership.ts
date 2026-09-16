@@ -1,7 +1,7 @@
 /**
  * Which packages the signed-in user already owns
  * (enrollments, verified orders, or admin access grants).
- * ECE Year 3 Semester 1 and Freshman are free for any registered user.
+ * ECE Year 3 Semester 1, Freshman, and Grades 9–12 are free for any registered user.
  */
 import { listMyEnrollments, listMyOrders } from "@/lib/orders";
 import {
@@ -14,7 +14,14 @@ import { supabase } from "@/lib/supabase";
 export type OwnershipMap = Set<string>;
 
 /** Packages unlocked automatically for every signed-in user (no payment). */
-export const FREE_FOR_REGISTERED_PACKAGE_IDS = ["ece-y3-sem-1", "freshman"] as const;
+export const FREE_FOR_REGISTERED_PACKAGE_IDS = [
+  "ece-y3-sem-1",
+  "freshman",
+  "grade-9",
+  "grade-10",
+  "grade-11",
+  "grade-12",
+] as const;
 
 /** Soft-lock flag for UI (landing + academy). Content remains closed until this is flipped. */
 export const FRESHMAN_LOCKED_UNTIL_OPENING = false;

@@ -14,6 +14,8 @@ import {
   Briefcase,
   HeartPulse,
   Sprout,
+  Target,
+  Lightbulb,
   type LucideIcon,
 } from "lucide-react";
 
@@ -33,6 +35,8 @@ const MAP: Record<string, LucideIcon> = {
   briefcase: Briefcase,
   heart: HeartPulse,
   sprout: Sprout,
+  target: Target,
+  lightbulb: Lightbulb,
 };
 
 export default function GradeSubjectIcon({
