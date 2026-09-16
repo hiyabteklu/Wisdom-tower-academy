@@ -1,207 +1,28 @@
-# DEPRECATED — Capacitor shell approach
+# Android App — Current Production Architecture
 
-**This document is obsolete.**
+> **Updated September 2026.**  
+> The production Android app is the **WebView shell** in the companion repository.  
+> A pure native Jetpack Compose rewrite remains a future goal (see `NATIVE-ANDROID.md`).
 
-As of September 2026 the official Android direction for Wisdom Tower Academy is a **pure native Jetpack Compose** app.
+## Companion repo (the actual app)
 
-See the current plan here:
+**https://github.com/hiyabteklu/Wisdom-tower-academy-app**
 
-→ **[docs/NATIVE-ANDROID.md](NATIVE-ANDROID.md)**
+Read its **ARCHITECTURE.md** — it is the single source of truth for how the website and the app work together.
 
-The Capacitor WebView shell (loading the live website) is no longer the target architecture. `capacitor.config.ts` is kept only for historical reference and can be deleted later.
+### Quick summary for any AI / developer
 
----
+1. **Website** (this repo) = source of truth for all content, auth, packages, ownership, progress, flashcards, PDFs, questions, results.
+2. **Android app** = native Compose chrome (header + bottom nav) around a WebView that loads `https://wisdom-tower-academy.live`.
+3. Once a user opens material while online inside the app:
+   - Pages, thumbnails, text, animations, flashcards, questions, progress UI are cached by the WebView / Service Worker.
+   - PDFs / books are additionally saved into the app’s private internal storage (`OfflineVault`).
+4. Offline: the user can continue studying anything they already opened and still own. Ownership is never bypassed — the website’s session + RLS still decide access.
+5. Security: private storage + `FLAG_SECURE` (no screenshots of paid content). No service-role keys in the app.
 
-## Original Capacitor content (archived)
+## Old Capacitor notes
 
-<details>
-<summary>Click to expand the old Capacitor instructions (for reference only)</summary>
+The original Capacitor CLI approach was retired.  
+`capacitor.config.ts` in this website repo is kept only for historical reference and can be deleted later.
 
-# Wisdom Tower Academy — Android app (Capacitor)
-
-This turns your **existing website** into a real Android app:
-
-- Same content as https://wisdom-tower-academy.live
-- Light & fast (native shell + your live site)
-- **Screenshot / screen-record protection** (FLAG_SECURE)
-- Ready later for offline downloads
-
-You do **not** rebuild the whole product. The app is a secure window around the site.
-
----
-
-## What you need on your computer (once)
-
-1. **Node.js** (LTS) — https://nodejs.org
-2. **Android Studio** — https://developer.android.com/studio
-3. During Android Studio setup, install:
-   - Android SDK
-   - Android SDK Platform 34+
-   - Android Emulator (optional)
-4. A GitHub copy of this project on your PC
-
-Phone for testing: enable **Developer options** → **USB debugging**.
-
----
-
-## Phase 1 — Create the Android project (do this once)
-
-Open a terminal in the project folder:
-
-```bash
-cd Wisdom-tower-academy
-
-npm install
-
-npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/splash-screen @capacitor/status-bar @capacitor/app
-
-npx cap add android
-
-npx cap sync android
-```
-
-If `webDir "out"` warns that the folder is missing, create an empty one:
-
-```bash
-mkdir out
-echo "<!DOCTYPE html><html><body></body></html>" > out/index.html
-npx cap sync android
-```
-
-(The live site URL in `capacitor.config.ts` is what actually loads; `out` is only a placeholder Capacitor requires.)
-
----
-
-## Phase 2 — Screenshot protection (security)
-
-1. Open Android Studio:
-
-```bash
-npx cap open android
-```
-
-2. In the left file tree open:
-
-`android/app/src/main/java/com/wisdomtower/academy/MainActivity.java`
-
-(or `.kt` if Kotlin)
-
-3. Make it look like this (Java example):
-
-```java
-package com.wisdomtower.academy;
-
-import android.os.Bundle;
-import android.view.WindowManager;
-import com.getcapacitor.BridgeActivity;
-
-public class MainActivity extends BridgeActivity {
-  @Override
-  protected void onCreate(Bundle savedInstanceState) {
-    // Block screenshots and screen recording inside the app
-    getWindow().setFlags(
-      WindowManager.LayoutParams.FLAG_SECURE,
-      WindowManager.LayoutParams.FLAG_SECURE
-    );
-    super.onCreate(savedInstanceState);
-  }
-}
-```
-
-4. Save.
-
-This is the standard bank-level screen protection on Android.
-
----
-
-## Phase 3 — Run on your phone
-
-1. Plug in the phone (USB debugging on)
-2. In Android Studio click the green **Run** button
-3. Choose your device
-
-The app opens your live Academy site inside a native shell with screenshot protection.
-
----
-
-## Phase 4 — App icon & name
-
-- **Name:** already `Wisdom Tower Academy` in `capacitor.config.ts`
-- **Icon:** replace files under
-  `android/app/src/main/res/mipmap-*/`
-  (or use Android Studio → Image Asset)
-
-Use your WISDOM TOWER logo (square 1024×1024 PNG is ideal as source).
-
----
-
-## Phase 5 — Offline downloads (next build)
-
-After the shell works, we add:
-
-1. **Download for offline** on PDFs / notes (only if the user owns the package)
-2. Files stored in **private app storage** (not public Downloads)
-3. Open inside the app (so screenshot block still applies)
-4. Optional encryption + wipe on logout
-
-That is Phase 2 of the product — we do it after you can install the basic app.
-
----
-
-## Daily workflow (after first setup)
-
-When the **website** changes, the app already shows new content (it loads the live URL).
-
-When you change **native** settings (icon, screenshot flag, plugins):
-
-```bash
-npx cap sync android
-npx cap open android
-```
-
-Then Run again from Android Studio.
-
----
-
-## Play Store (later)
-
-1. Create a Google Play Console developer account
-2. Build a signed **release** AAB in Android Studio
-3. Upload to Internal testing track first
-4. Privacy policy: https://wisdom-tower-academy.live/privacy
-
----
-
-## Security summary (what this app already aims for)
-
-| Feature | Status |
-|--------|--------|
-| Same content as website | Yes (live URL) |
-| HTTPS only | Yes |
-| Screenshot / record block | Yes (FLAG_SECURE) |
-| Supabase keys only public anon key | Same as website |
-| Offline downloads | Next phase |
-| Play Integrity / root checks | Optional later |
-
----
-
-## Troubleshooting
-
-| Problem | Fix |
-|--------|-----|
-| Blank screen | Phone needs internet; check site opens in Chrome |
-| `cap` not found | Use `npx cap` |
-| SDK errors | Open Android Studio → SDK Manager → install Platform 34 |
-| Login / Google issues | Same as website; fix on web first |
-| Screenshot still works | Confirm FLAG_SECURE is in MainActivity and you rebuilt the app |
-
----
-
-## Who does what
-
-- **You:** install Node + Android Studio, run the commands, click Run
-- **Helper (me):** native code snippets, offline design, Play Store checklist, fixes when something fails
-
-Start with **Phase 1** on your PC, then tell me what you see after `npx cap add android`.
-
-</details>
+The current app achieves the same goal (secure shell around the live site + offline PDFs) with a cleaner Compose + WebView implementation.
