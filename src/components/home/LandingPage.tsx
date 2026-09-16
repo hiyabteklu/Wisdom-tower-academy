@@ -89,7 +89,7 @@ function StatsSlider({ visible, reduced }: { visible: boolean; reduced: boolean 
   }, [reduced, visible]);
 
   return (
-    <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-5">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-5">
       {stats.map((stat, i) => {
         const active = reduced ? visible : visible && i === index;
         return (
@@ -266,10 +266,12 @@ export default function LandingPage() {
       <LandingQuoteCard />
       <LandingPathways />
 
-      <section className="pb-20 md:pb-28 relative hide-on-app" ref={statsSection.ref}>
+      <section className="pb-20 md:pb-28 relative" ref={statsSection.ref}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6 items-stretch">
-            <StatsSlider visible={statsSection.inView || reduced} reduced={reduced} />
+            <div className="hide-on-app lg:col-span-3">
+              <StatsSlider visible={statsSection.inView || reduced} reduced={reduced} />
+            </div>
             <div className="lg:col-span-1 flex">
               <div className="w-full min-h-[12.5rem] md:min-h-[14rem] flex">
                 <InfinityCard visible={statsSection.inView || reduced} delay={270} />
@@ -279,7 +281,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="pb-16 relative" ref={crossSection.ref}>
+      <section className="pb-16 relative hide-on-app" ref={crossSection.ref}>
         <div className="max-w-3xl mx-auto px-4 relative z-10">
           <div className={`rounded-2xl border border-white/10 bg-wisdom-card/70 backdrop-blur-sm px-6 py-8 md:px-10 text-center reveal-item ${crossSection.inView ? "is-visible" : ""}`}>
             <h2 className="font-display text-xl md:text-2xl font-bold text-white mb-3">Want digital services instead?</h2>
