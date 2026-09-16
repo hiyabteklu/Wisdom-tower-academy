@@ -5,7 +5,7 @@ import {
   Lightbulb, Trophy, Target, BadgeCheck, Clock, Flag, FlagOff,
 } from "lucide-react";
 import RichContent from "@/components/learning/RichContent";
-import { saveProgress, saveExamAttempt } from "@/lib/content";
+import { saveProgress, saveExamAttempt } from "@/lib/contentWithOffline";
 
 type Q = { prompt: string; choices?: string[]; correct?: number; solution?: string };
 type Props = {
@@ -108,7 +108,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
       });
       const data = await res.json();
       setAi(data.explanation || data.error || "—");
-    } catch { setAi("AI unavailable"); }
+    } catch { setAi("AI unavailable offline"); }
     setAiLoading(false);
   }
 
@@ -128,7 +128,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
       });
       const data = await res.json();
       setReviewAi((m) => ({ ...m, [qi]: data.explanation || data.error || "—" }));
-    } catch { setReviewAi((m) => ({ ...m, [qi]: "AI unavailable" })); }
+    } catch { setReviewAi((m) => ({ ...m, [qi]: "AI unavailable offline" })); }
     setReviewAiLoading((m) => ({ ...m, [qi]: false }));
   }
 
@@ -209,7 +209,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
         })}
       </div>
 
-      {!submitted && (
+      {!submitted && q && (
         <div className="rounded-2xl border border-white/12 bg-wisdom-card p-5">
           <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
             <p className="text-xs text-wisdom-muted">
@@ -303,7 +303,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
               Answered <span className="text-cyan-200 font-semibold">{attempted}</span> ·{" "}
               Skipped <span className="text-amber-200 font-semibold">{skipped}</span>
               {flaggedCount > 0 && <> · Flagged <span className="text-orange-200 font-semibold">{flaggedCount}</span></>}
-              {isExam && <span className="block mt-2 text-white/70">You won't be able to change answers after submitting.</span>}
+              {isExam && <span className="block mt-2 text-white/70">You can still retake offline; results sync when you are online.</span>}
             </p>
             <div className="flex gap-2 justify-end">
               <button type="button" onClick={() => setConfirmOpen(false)}
@@ -325,6 +325,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
               </span>
             </p>
             <p className="text-sm text-wisdom-muted mt-1">Correct · Wrong {wrong} · Skipped {skipped}</p>
+            <p className="text-xs text-cyan-300/80 mt-2">Saved on this device. Syncs when online.</p>
           </div>
           <div className="flex flex-wrap gap-2 justify-center">
             <button type="button" onClick={() => setReviewFilter("all")}
@@ -335,69 +336,14 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
               className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${reviewFilter === "missed" ? "border-rose-400/50 bg-rose-500/15 text-rose-100" : "border-white/12 text-wisdom-muted"}`}>
               Missed
             </button>
-          </div>
-          <div className="space-y-3">
-            {reviewQuestions.map(({ qq, i }) => {
-              const ans = answers[i];
-              const correct = ans != null && ans === qq.correct;
-              const missed = ans == null || ans !== qq.correct;
-              return (
-                <div key={i} className={`rounded-xl border p-4 ${correct ? "border-emerald-400/25 bg-emerald-500/5" : "border-rose-400/25 bg-rose-500/5"}`}>
-                  <p className="text-sm text-white font-medium mb-2 study-prose">
-                    <span className="text-wisdom-muted mr-1">Q{i + 1}.</span>
-                    <RichContent body={qq.prompt} />
-                  </p>
-                  <div className="space-y-1 text-xs mb-2">
-                    <p className={correct ? "text-emerald-300" : "text-rose-300"}>
-                      Your answer:{" "}
-                      {ans != null ? (
-                        <span className="study-prose inline">
-                          {String.fromCharCode(65 + ans)}. <RichContent body={String(qq.choices?.[ans] ?? ans)} />
-                        </span>
-                      ) : "Skipped"}
-                    </p>
-                    {missed && (
-                      <p className="text-emerald-200">
-                        Correct:{" "}
-                        {qq.correct != null ? (
-                          <span className="study-prose inline">
-                            {String.fromCharCode(65 + qq.correct)}. <RichContent body={String(qq.choices?.[qq.correct] ?? qq.correct)} />
-                          </span>
-                        ) : "—"}
-                      </p>
-                    )}
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {qq.solution && (
-                      <button type="button"
-                        onClick={() => setReviewSolOpen((m) => ({ ...m, [i]: !m[i] }))}
-                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-emerald-400/50 bg-emerald-500/20 text-emerald-50 text-sm font-bold shadow-md">
-                        <BadgeCheck className="w-5 h-5" />
-                        {reviewSolOpen[i] ? "Hide solution" : "View official solution"}
-                      </button>
-                    )}
-                    <button type="button" onClick={() => void explainReview(i)} disabled={Boolean(reviewAiLoading[i])}
-                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-violet-400/50 bg-violet-500/20 text-violet-50 text-sm font-bold shadow-md disabled:opacity-60">
-                      <Lightbulb className="w-5 h-5" />
-                      {reviewAiLoading[i] ? "Generating…" : "Explain with AI"}
-                    </button>
-                  </div>
-                  {qq.solution && reviewSolOpen[i] && (
-                    <div className="mt-2 rounded-xl border border-emerald-400/25 bg-emerald-500/10 p-3 study-prose text-emerald-50">
-                      <RichContent body={qq.solution} />
-                    </div>
-                  )}
-                  {reviewAi[i] && (
-                    <div className="mt-2 rounded-xl border border-violet-400/25 bg-violet-500/10 p-3 study-prose text-white/90">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-violet-300 mb-1 inline-flex items-center gap-1">
-                        <Lightbulb className="w-3.5 h-3.5" /> AI explanation
-                      </p>
-                      <RichContent body={reviewAi[i]} />
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+            <button type="button" onClick={() => {
+              setSubmitted(false); setSaved(false); setAnswers({}); setFlagged({});
+              setIdx(0); setShowSol(false); setLockedBySolution({});
+              setLeft(durationMin > 0 ? durationMin * 60 : 0);
+            }}
+              className="px-3 py-1.5 rounded-lg text-xs font-bold border border-amber-400/40 text-amber-100 bg-amber-500/10">
+              Retake
+            </button>
           </div>
         </div>
       )}
