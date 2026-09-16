@@ -1,6 +1,6 @@
 /**
  * Academy packages — prices updated Sep 2026.
- * G9–11 250 · G12 400 · COC 250 · UAT 300 · Freshman 350 · ECE S1 300.
+ * G9–11 250 · G12 400 · COC 250 · UAT 300 · Freshman 350 · ECE S1 300 · Remedial 250.
  * GAT & Exit Exam pathways are not sold yet (coming soon hubs).
  */
 
@@ -31,6 +31,7 @@ export const packageImages = {
   gat: "/images/packages/gat_46ddb1.jpeg",
   coc: "/images/packages/coc_e44a09.jpeg",
   "exit-exam": "/images/packages/exit-exam_c32a43.jpeg",
+  remedial: "/images/packages/remedial.jpg",
 } as const;
 
 const SHARED_EDGE = [
@@ -215,6 +216,26 @@ export const academyPackages: AcademyPackage[] = [
       ...SHARED_EDGE,
     ],
     enrolledLabel: "Coming soon",
+    group: "branch",
+  },
+  {
+    id: "remedial",
+    name: "Remedial Package",
+    shortName: "Remedial",
+    description:
+      "Catch-up pathway for core subjects. Strengthen foundations in English, Maths, Physics, Chemistry, Biology, History and Geography with the same learning hubs used across the Academy — notes, flashcards, question banks and practice exams.",
+    priceEtb: 250,
+    href: "/academy/remedial",
+    image: packageImages.remedial,
+    includes: [
+      "Seven core subjects",
+      "Notes for every subject",
+      "Question bank per chapter",
+      "Flashcards per chapter",
+      "Practice exams with solutions",
+      ...SHARED_EDGE,
+    ],
+    enrolledLabel: "New pathway",
     group: "branch",
   },
   {

@@ -20,8 +20,9 @@ import PartnershipPath from "@/components/PartnershipPath";
 import { packageImages, getPackage } from "@/data/packages";
 import { SPECIAL_PACKAGES_HUB_IMAGE } from "@/data/special-packages";
 
+/** Polished Open CTA — replaced the awkward bright emerald */
 const OPEN_BTN =
-  "inline-flex flex-1 min-w-[7.5rem] items-center justify-center gap-1.5 rounded-xl bg-emerald-500 px-4 py-2.5 text-xs sm:text-sm font-bold text-wisdom-dark shadow-md shadow-emerald-900/20 hover:bg-emerald-400 transition-colors";
+  "inline-flex flex-1 min-w-[7.5rem] items-center justify-center gap-1.5 rounded-xl bg-sky-500 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-sky-900/25 hover:bg-sky-400 transition-colors";
 
 type ProgramCard = {
   id: string;
@@ -105,6 +106,14 @@ const programs: ProgramCard[] = [
     image: packageImages["exit-exam"],
     accent: "text-fuchsia-400",
     border: "hover:border-fuchsia-400/40",
+  }),
+  fromPackage("remedial", {
+    id: "remedial",
+    href: "/academy/remedial",
+    name: "Remedial",
+    image: packageImages.remedial,
+    accent: "text-amber-400",
+    border: "hover:border-amber-400/40",
   }),
 ];
 
@@ -245,7 +254,7 @@ function ProgramCardView({ program }: { program: ProgramCard }) {
                 <ul className="space-y-1.5">
                   {program.includes.map((line) => (
                     <li key={line} className="flex gap-2 text-xs sm:text-sm text-white/90">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                      <CheckCircle2 className="w-3.5 h-3.5 text-sky-400 shrink-0 mt-0.5" />
                       {line}
                     </li>
                   ))}
@@ -344,7 +353,7 @@ export default function LandingPathways() {
                       {item.name}
                     </h4>
                     <p className="text-sm text-wisdom-muted leading-relaxed">{item.blurb}</p>
-                    <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400/90 group-hover:text-emerald-300 transition-colors">
+                    <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-sky-400/90 group-hover:text-sky-300 transition-colors">
                       Explore
                       <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
                     </span>
