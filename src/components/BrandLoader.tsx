@@ -3,19 +3,16 @@
 type Size = "sm" | "md" | "lg" | "xl";
 
 const SIZE_MAP: Record<Size, string> = {
-  sm: "w-16 h-16",
-  md: "w-24 h-24",
-  lg: "w-32 h-32",
-  xl: "w-40 h-40",
+  sm: "w-6 h-6 border-2",
+  md: "w-8 h-8 border-2",
+  lg: "w-10 h-10 border-[3px]",
+  xl: "w-12 h-12 border-[3px]",
 };
 
-/**
- * Official Wisdom Tower loading mark — logo with pulsing cyan accent.
- * Use as full-screen overlay or inline spinner.
- */
+/** Simple cyan circular spinner for all waiting states */
 export default function BrandLoader({
   size = "lg",
-  label = "Loading…",
+  label,
   fullScreen = false,
   className = "",
 }: {
@@ -26,33 +23,23 @@ export default function BrandLoader({
 }) {
   const body = (
     <div
-      className={`brand-loader flex flex-col items-center justify-center gap-4 ${className}`}
+      className={`flex flex-col items-center justify-center gap-3 ${className}`}
       role="status"
       aria-live="polite"
-      aria-label={label}
+      aria-label={label || "Loading"}
     >
-      <div className={`brand-loader-mark relative ${SIZE_MAP[size]}`}>
-        <div className="brand-loader-glow" aria-hidden />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/images/brand/logo.png"
-          alt=""
-          className="relative z-10 w-full h-full object-contain select-none pointer-events-none"
-          draggable={false}
-        />
-        <span className="brand-loader-cyan-dot" aria-hidden />
-      </div>
+      <div
+        className={`${SIZE_MAP[size]} rounded-full border-cyan-400/25 border-t-cyan-400 animate-spin`}
+      />
       {label ? (
-        <p className="text-sm text-cyan-300/80 font-medium tracking-wide animate-pulse">
-          {label}
-        </p>
+        <p className="text-sm text-wisdom-muted font-medium tracking-wide">{label}</p>
       ) : null}
     </div>
   );
 
   if (fullScreen) {
     return (
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#0B1220]/92 backdrop-blur-sm">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#0B1220]/90">
         {body}
       </div>
     );
