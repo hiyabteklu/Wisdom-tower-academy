@@ -16,8 +16,15 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     setError("");
 
+    // Always use the public website origin so the email link lands on the web app.
+    // If the user started reset inside the native app WebView, PKCE verifier stays
+    // in the WebView — opening the link in Chrome will fail. Prefer browser flow.
+    const origin =
+      typeof window !== "undefined" && window.location.hostname.includes("wisdom-tower")
+        ? window.location.origin
+        : "https://wisdom-tower-academy.live";
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${origin}/reset-password`,
     });
 
     if (error) {
@@ -41,6 +48,7 @@ export default function ForgotPasswordPage() {
             <h2 className="text-2xl font-bold mb-2">Check your email</h2>
             <p className="text-wisdom-muted mb-6">
               We sent a password reset link to <strong className="text-white">{email}</strong>.
+              Open the email and the link in the <strong className="text-white">same browser</strong> (Chrome/Safari) — not only inside the app — so the link works.
             </p>
             <Link
               href="/login"
