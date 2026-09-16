@@ -1,5 +1,6 @@
 "use client";
 
+import BrandLogo from "@/components/BrandLogo";
 import { useState, Suspense, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -18,7 +19,6 @@ function normalizePhone(raw: string): string {
   return d;
 }
 
-/** Resolve login identifier to the same auth email used at signup. */
 function authEmailFromIdentifier(identifier: string): string {
   const trimmed = identifier.trim();
   if (looksLikeEmail(trimmed)) return trimmed.toLowerCase();
@@ -137,8 +137,8 @@ function LoginForm() {
     <div className="min-h-[80vh] flex items-start sm:items-center justify-center px-4 py-10 sm:py-16 pb-32 sm:pb-16 overflow-y-auto">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-400 to-sky-500 text-wisdom-dark mb-4">
-            <GraduationCap className="w-7 h-7" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-black ring-1 ring-white/10 mb-4 overflow-hidden">
+            <BrandLogo size={56} className="object-contain" priority />
           </div>
           <h1 className="text-3xl font-bold mb-2">Student sign in</h1>
           <p className="text-wisdom-muted">Email or phone + password</p>
