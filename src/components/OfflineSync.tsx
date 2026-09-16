@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { flushOfflineQueue } from "@/lib/content";
+import { flushOfflineQueue } from "@/lib/contentWithOffline";
 
 /** Flushes queued exam/progress saves whenever the device comes back online. */
 export default function OfflineSync() {
