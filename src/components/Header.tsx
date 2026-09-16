@@ -1,5 +1,6 @@
 "use client";
 
+import BrandLogo from "@/components/BrandLogo";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
@@ -41,7 +42,6 @@ export default function Header() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const [logoOk, setLogoOk] = useState(true);
   const menuRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
 
@@ -127,21 +127,9 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2.5 group min-w-0">
-            {logoOk ? (
-              <span className="relative w-9 h-9 shrink-0 rounded-lg overflow-hidden ring-1 ring-white/10 bg-wisdom-navy">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/images/brand/logo.png"
-                  alt="Wisdom Tower Academy"
-                  className="w-full h-full object-contain p-0.5"
-                  onError={() => setLogoOk(false)}
-                />
-              </span>
-            ) : (
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-[10px] shrink-0 bg-gradient-to-br from-amber-400 to-orange-500 text-wisdom-dark">
-                WTA
-              </div>
-            )}
+            <span className="relative w-9 h-9 shrink-0 rounded-lg overflow-hidden ring-1 ring-white/10 bg-black">
+              <BrandLogo size={36} className="w-full h-full object-contain p-0.5" priority />
+            </span>
             <span className="font-semibold text-lg tracking-tight group-hover:text-amber-300 transition-colors truncate">
               Wisdom Tower Academy
             </span>
