@@ -200,13 +200,13 @@ export default function AccountPage() {
             </button>
 
             <Link
-              href="/digital"
+              href="/packages"
               className="rounded-2xl border border-white/10 bg-wisdom-card p-5 hover:border-wisdom-cyan/40 transition"
             >
               <LayoutDashboard className="w-8 h-8 text-wisdom-cyan mb-3" />
-              <h2 className="font-semibold">Browse Services</h2>
-              <p className="mt-1 text-sm text-wisdom-muted">Explore Digital & Academy offerings</p>
-              <p className="mt-3 text-sm font-medium text-wisdom-cyan">Go to services →</p>
+              <h2 className="font-semibold">Packages</h2>
+              <p className="mt-1 text-sm text-wisdom-muted">Unlock pathways and learning access</p>
+              <p className="mt-3 text-sm font-medium text-wisdom-cyan">View packages →</p>
             </Link>
 
             <Link
@@ -233,13 +233,13 @@ export default function AccountPage() {
                 <Inbox className="w-12 h-12 text-wisdom-muted mx-auto mb-4 opacity-40" />
                 <h2 className="text-xl font-semibold mb-2">No requests yet</h2>
                 <p className="text-sm text-wisdom-muted mb-6 max-w-md mx-auto">
-                  Request a service or use the contact form. Use the same email as this account to see them here.
+                  Use the contact form with the same email as this account to see them here.
                 </p>
                 <Link
-                  href="/digital"
+                  href="/packages"
                   className="inline-flex px-6 py-3 rounded-full bg-wisdom-cyan text-wisdom-dark font-semibold hover:bg-wisdom-cyan-dark"
                 >
-                  Browse services
+                  Browse packages
                 </Link>
               </div>
             ) : (
