@@ -8,6 +8,7 @@ import ScrollZoom from "@/components/ScrollZoom";
 import AuthProvider from "@/components/AuthProvider";
 import GlobalFocusBar from "@/components/GlobalFocusBar";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import OfflineSync from "@/components/OfflineSync";
 
 export const metadata: Metadata = {
   title: "Wisdom Tower Academy | Grades 9–12, Freshman, UAT, GAT, COC & Exit Exam",
@@ -76,6 +77,7 @@ export default function RootLayout({
             <ScrollZoom />
             <GlobalFocusBar />
             <ServiceWorkerRegister />
+            <OfflineSync />
           </AuthProvider>
         </ThemeProvider>
       </body>

@@ -10,7 +10,7 @@ import {
   type LearningResource,
   type HubId,
   type ProgressMeta,
-} from "@/lib/content";
+} from "@/lib/contentWithOffline";
 import { getSeenResourceIds, markResourceSeen } from "@/lib/seenItems";
 import { isFreeForRegistered, isPackageOwned } from "@/lib/ownership";
 import {
@@ -171,7 +171,6 @@ export default function HubContentView({
   }, [active, owned, progressPct, progMeta.video?.watchSeconds]);
 
   async function openItem(item: LearningResource) {
-    // First open clears the New badge permanently on this device
     markResourceSeen(item.id);
     setSeenIds(getSeenResourceIds());
 
