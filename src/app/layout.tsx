@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./scroll-zoom.css";
 import Header from "@/components/Header";
@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import ScrollZoom from "@/components/ScrollZoom";
 import AuthProvider from "@/components/AuthProvider";
 import GlobalFocusBar from "@/components/GlobalFocusBar";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 export const metadata: Metadata = {
   title: "Wisdom Tower Academy | Grades 9–12, Freshman, UAT, GAT, COC & Exit Exam",
@@ -22,6 +23,19 @@ export const metadata: Metadata = {
     "COC",
     "online learning",
   ],
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Wisdom Tower Academy",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0f172a",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({
@@ -43,6 +57,7 @@ export default function RootLayout({
             __html: `(function(){try{localStorage.setItem('wt-theme','dark');var d=document.documentElement;d.classList.remove('theme-light','light');d.classList.add('theme-dark','dark');d.style.colorScheme='dark';d.setAttribute('data-theme','dark');}catch(e){}})();`,
           }}
         />
+        <link rel="manifest" href="/manifest.webmanifest" />
       </head>
       <body className="min-h-screen flex flex-col antialiased font-sans site-bg text-foreground">
         <ThemeProvider>
@@ -60,6 +75,7 @@ export default function RootLayout({
             <Footer />
             <ScrollZoom />
             <GlobalFocusBar />
+            <ServiceWorkerRegister />
           </AuthProvider>
         </ThemeProvider>
       </body>
