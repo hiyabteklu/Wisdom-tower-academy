@@ -4,6 +4,10 @@ import { useState, Suspense } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import {
+  looksLikeEmail,
+  authEmailFromIdentifier,
+} from "@/lib/authIdentity";
+import {
   Mail,
   Lock,
   User,
@@ -28,37 +32,6 @@ const EDUCATION_LEVELS = [
 
 type EducationLevel = (typeof EDUCATION_LEVELS)[number];
 
-function looksLikeEmail(value: string) {
-  return value.includes("@") && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
-}
-
-function normalizePhone(raw: string): string {
-  let d = raw.replace(/\D/g, "");
-  if (d.startsWith("0") && d.length === 10) d = "251" + d.slice(1);
-  if (d.startsWith("9") && d.length === 9) d = "251" + d;
-  return d;
-}
-
-function authEmailFromIdentifier(identifier: string): {
-  email: string;
-  phone: string | null;
-  displayContact: string;
-} {
-  const trimmed = identifier.trim();
-  if (looksLikeEmail(trimmed)) {
-    return { email: trimmed.toLowerCase(), phone: null, displayContact: trimmed.toLowerCase() };
-  }
-  const phone = normalizePhone(trimmed);
-  if (phone.length < 9) {
-    throw new Error("Enter a valid email or phone number (e.g. 09xxxxxxxx).");
-  }
-  return {
-    email: `p${phone}@phone.wta.local`,
-    phone,
-    displayContact: trimmed,
-  };
-}
-
 function SignupForm() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -68,6 +41,7 @@ function SignupForm() {
   const [educationLevel, setEducationLevel] = useState<EducationLevel | "">("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [levelOpen, setLevelOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -127,8 +101,7 @@ function SignupForm() {
           education_level: educationLevel,
           contact_display: displayContact,
         },
-        emailRedirectTo:
-          phone || !origin ? undefined : `${origin}/auth/callback`,
+        emailRedirectTo: phone || !origin ? undefined : `${origin}/auth/callback`,
       },
     });
 
@@ -166,7 +139,7 @@ function SignupForm() {
   if (success) {
     const isPhone = !looksLikeEmail(successContact);
     return (
-      <div className="min-h-[80vh] flex items-center justify-center px-4 py-16">
+      <div className="min-h-[80vh] flex items-start sm:items-center justify-center px-4 py-10 sm:py-16 pb-32 overflow-y-auto">
         <div className="w-full max-w-md text-center">
           <div className="bg-wisdom-card border border-white/5 rounded-2xl p-8">
             <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-4">
@@ -180,15 +153,13 @@ function SignupForm() {
             <p className="text-wisdom-muted mb-6">
               {isPhone ? (
                 <>
-                  Your Academy account for{" "}
-                  <strong className="text-white">{successContact}</strong> is ready.
-                  You can sign in with your phone number and password.
+                  Your Academy account for <strong className="text-white">{successContact}</strong> is
+                  ready. Sign in with your phone number and password.
                 </>
               ) : (
                 <>
                   We sent a confirmation link to{" "}
-                  <strong className="text-white">{successContact}</strong>.
-                  Confirm your email, then sign in.
+                  <strong className="text-white">{successContact}</strong>. Confirm, then sign in.
                 </>
               )}
             </p>
@@ -210,7 +181,7 @@ function SignupForm() {
   const labelClass = "block text-sm font-medium mb-2 text-white/90";
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 py-12 sm:py-16">
+    <div className="min-h-[80vh] flex items-start sm:items-center justify-center px-4 py-10 sm:py-16 pb-32 sm:pb-16 overflow-y-auto">
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-400 to-sky-500 text-wisdom-dark mb-4">
@@ -339,23 +310,50 @@ function SignupForm() {
             <div>
               <label className={labelClass}>Educational level</label>
               <div className="relative">
-                <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-wisdom-muted pointer-events-none" />
-                <select
-                  required
-                  value={educationLevel}
-                  onChange={(e) => setEducationLevel(e.target.value as EducationLevel | "")}
-                  className={`${inputClass} appearance-none pr-10 cursor-pointer`}
+                <button
+                  type="button"
+                  onClick={() => setLevelOpen((o) => !o)}
+                  className={`${inputClass} flex items-center gap-2 text-left cursor-pointer`}
+                  aria-haspopup="listbox"
+                  aria-expanded={levelOpen}
                 >
-                  <option value="" disabled>
-                    Select level…
-                  </option>
-                  {EDUCATION_LEVELS.map((level) => (
-                    <option key={level} value={level} className="bg-wisdom-dark text-white">
-                      {level}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-wisdom-muted pointer-events-none" />
+                  <GraduationCap className="w-5 h-5 text-wisdom-muted shrink-0" />
+                  <span className={educationLevel ? "text-white" : "text-white/35"}>
+                    {educationLevel || "Select level…"}
+                  </span>
+                  <ChevronDown
+                    className={`ml-auto w-4 h-4 text-wisdom-muted transition ${
+                      levelOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+                {levelOpen && (
+                  <ul
+                    role="listbox"
+                    className="absolute z-30 mt-2 w-full max-h-56 overflow-y-auto rounded-xl border border-white/12 bg-[#121c2e] shadow-2xl py-1"
+                  >
+                    {EDUCATION_LEVELS.map((level) => (
+                      <li key={level}>
+                        <button
+                          type="button"
+                          role="option"
+                          aria-selected={educationLevel === level}
+                          onClick={() => {
+                            setEducationLevel(level);
+                            setLevelOpen(false);
+                          }}
+                          className={`w-full text-left px-4 py-3 text-sm transition ${
+                            educationLevel === level
+                              ? "bg-cyan-500/15 text-cyan-300"
+                              : "text-white/90 hover:bg-white/5"
+                          }`}
+                        >
+                          {level}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </div>
 
@@ -397,7 +395,9 @@ export default function SignupPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-[80vh] flex items-center justify-center text-wisdom-muted">Loading…</div>
+        <div className="min-h-[80vh] flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full border-2 border-cyan-400/25 border-t-cyan-400 animate-spin" />
+        </div>
       }
     >
       <SignupForm />
