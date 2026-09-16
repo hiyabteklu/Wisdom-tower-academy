@@ -12,9 +12,9 @@ import {
   LayoutDashboard,
   Inbox,
   Shield,
-  RefreshCw,
-  ArrowLeft,
   Mail,
+  Settings2,
+  LogOut,
 } from "lucide-react";
 
 interface Inquiry {
@@ -78,6 +78,12 @@ export default function AccountPage() {
     if (user) load();
   }, [user, load]);
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.replace("/login");
+    router.refresh();
+  };
+
   if (loading || !user) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
@@ -126,13 +132,20 @@ export default function AccountPage() {
               <p className="mt-1 text-xs text-wisdom-muted">Member since {memberSince}</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <button
-                onClick={load}
-                disabled={dataLoading}
-                className="inline-flex items-center gap-2 min-h-[44px] px-4 py-2 rounded-full border border-white/15 bg-white/5 text-sm font-medium hover:bg-white/10 disabled:opacity-50"
+              <Link
+                href="/settings"
+                className="inline-flex items-center gap-2 min-h-[44px] px-4 py-2 rounded-full border border-cyan-400/30 bg-cyan-500/10 text-sm font-medium text-cyan-300 hover:bg-cyan-500/20"
               >
-                <RefreshCw className={`w-4 h-4 ${dataLoading ? "animate-spin" : ""}`} />
-                Refresh
+                <Settings2 className="w-4 h-4" />
+                Settings
+              </Link>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="inline-flex items-center gap-2 min-h-[44px] px-4 py-2 rounded-full border border-red-500/30 bg-red-500/10 text-sm font-medium text-red-400 hover:bg-red-500/20"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign out
               </button>
               {isAdmin && (
                 <Link
@@ -144,11 +157,10 @@ export default function AccountPage() {
                 </Link>
               )}
               <Link
-                href="/"
+                href="/learning"
                 className="inline-flex items-center gap-2 min-h-[44px] px-4 py-2 rounded-full border border-white/15 bg-white/5 text-sm font-medium hover:bg-white/10"
               >
-                <ArrowLeft className="w-4 h-4" />
-                Home
+                My Learning
               </Link>
             </div>
           </div>
