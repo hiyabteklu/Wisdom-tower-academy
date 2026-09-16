@@ -10,7 +10,8 @@ Live Academy: https://wisdom-tower-academy.live
 - Next.js 15 + TypeScript + Tailwind (website)
 - Supabase (use a **new** project — do not reuse Digital keys)
 - Vercel (new project)
-- **Android app:** Pure native Jetpack Compose (Kotlin) — see [docs/NATIVE-ANDROID.md](docs/NATIVE-ANDROID.md)
+- **Android app (production):** WebView shell — [Wisdom-tower-academy-app](https://github.com/hiyabteklu/Wisdom-tower-academy-app)  
+  (Long-term pure Compose vision: [docs/NATIVE-ANDROID.md](docs/NATIVE-ANDROID.md))
 
 ## Setup (website)
 ```bash
@@ -19,9 +20,24 @@ cp .env.example .env.local   # fill NEW Supabase keys + NEXT_PUBLIC_DIGITAL_URL
 npm run dev
 ```
 
-## Android app (Native)
-Full plan, architecture, and status:
+## For agents / other developers
 
-→ **[docs/NATIVE-ANDROID.md](docs/NATIVE-ANDROID.md)**
+**Start here so UI and app chrome stay consistent:**
 
-> **Note:** The old Capacitor shell approach has been retired in favor of a full native Compose app that talks directly to the same Supabase project as the website. `capacitor.config.ts` is kept only for historical reference and can be removed later.
+→ **[docs/AGENT-NOTES.md](docs/AGENT-NOTES.md)**  
+→ App architecture: [ARCHITECTURE.md in the app repo](https://github.com/hiyabteklu/Wisdom-tower-academy-app/blob/main/ARCHITECTURE.md)
+
+### Critical areas that have regressed before
+
+| Area | Location | Required behaviour |
+|------|----------|--------------------|
+| Flashcards | `src/components/learning/FlashcardViewer.tsx` + `.fc-*` CSS | 3D flip, distinct back colour, swipe next/prev animation |
+| App header | App repo `MainActivity.kt` | Fixed bar, clean status-bar insets, menu + branding + notifications |
+
+## Android app
+
+Production client is the WebView shell:
+
+→ https://github.com/hiyabteklu/Wisdom-tower-academy-app
+
+Website content changes appear in the app automatically. Only native chrome / offline vault changes need a new APK.
