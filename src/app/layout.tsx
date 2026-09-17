@@ -5,7 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ScrollZoom from "@/components/ScrollZoom";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { AuthProvider } from "@/components/AuthProvider";
+import AuthProvider from "@/components/AuthProvider";
 import AuthHashHandler from "@/components/AuthHashHandler";
 import GlobalFocusBar from "@/components/GlobalFocusBar";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
