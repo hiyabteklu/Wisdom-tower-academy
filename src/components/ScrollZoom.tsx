@@ -5,6 +5,7 @@ import { useEffect } from "react";
 /**
  * Site-wide scroll zoom — works scrolling down and up.
  * GPU-friendly: transform + opacity only (no blur).
+ * Disabled entirely inside the native app WebView (wta-native-app).
  */
 const SELECTOR = [
   "[data-scroll-zoom]",
@@ -18,7 +19,6 @@ const SELECTOR = [
 
 function shouldSkip(el: Element): boolean {
   if (el.closest("[data-scroll-zoom-skip]")) return true;
-  // Never zoom/scale study notes or learning readers (causes skewed layout)
   if (
     el.closest(
       ".notes-reading-surface, .study-prose, [data-learning-content], .formatted-body"
@@ -48,6 +48,14 @@ function markAndObserve(root: ParentNode, observer: IntersectionObserver) {
 export default function ScrollZoom() {
   useEffect(() => {
     if (typeof window === "undefined") return;
+
+    // Native app: never attach opacity traps
+    if (
+      document.documentElement.classList.contains("wta-native-app") ||
+      document.body.classList.contains("wta-native-app")
+    ) {
+      return;
+    }
 
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       document.querySelectorAll(SELECTOR).forEach((el) => {

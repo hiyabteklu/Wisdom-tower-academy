@@ -1,24 +1,46 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { clearOwnershipCache } from "@/lib/ownership";
+
+function isAuthPath(path: string | null): boolean {
+  if (!path) return false;
+  return (
+    path.startsWith("/auth") ||
+    path.includes("/login") ||
+    path.includes("/signup") ||
+    path.includes("/register") ||
+    path.includes("/forgot") ||
+    path.includes("/reset-password")
+  );
+}
+
+function hasFocusedFormField(): boolean {
+  if (typeof document === "undefined") return false;
+  const el = document.activeElement as HTMLElement | null;
+  if (!el) return false;
+  const tag = el.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return true;
+  if (el.isContentEditable) return true;
+  return Boolean(el.closest("form"));
+}
 
 /**
  * Keeps package ownership, progress, and list UIs fresh without a full app restart.
- * - On tab/app focus & visibility
- * - When network returns
- * - Every 45s while the page is visible
- * - Listens for app-shell CustomEvent `wta-refresh`
+ * Never runs on auth pages or while a form field is focused (protects autofill login).
  */
 export default function LiveRefresh() {
   const router = useRouter();
+  const pathname = usePathname();
   const lastAt = useRef(0);
 
   useEffect(() => {
     const run = (source: string, hard = false) => {
+      if (isAuthPath(pathname)) return;
+      if (hasFocusedFormField()) return;
+
       const now = Date.now();
-      // Debounce bursts (focus + visibility often fire together)
       if (now - lastAt.current < 2500 && !hard) return;
       lastAt.current = now;
 
@@ -36,7 +58,6 @@ export default function LiveRefresh() {
         /* ignore */
       }
 
-      // Refresh Next.js server/client payloads for the active route
       try {
         router.refresh();
       } catch {
@@ -70,7 +91,7 @@ export default function LiveRefresh() {
       window.removeEventListener("wta-refresh", onApp as EventListener);
       window.clearInterval(interval);
     };
-  }, [router]);
+  }, [router, pathname]);
 
   return null;
 }

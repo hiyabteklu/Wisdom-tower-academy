@@ -77,3 +77,22 @@ main section.sz-item:not(.sz-in) {
     transform: translate3d(0, -8px, 0) scale(1.01);
   }
 }
+
+/*
+ * Android WebView: IntersectionObserver + opacity:0.001 often never receives sz-in,
+ * leaving intros/headers/cards blank. Force fully visible in the native shell.
+ */
+html.wta-native-app .sz-item,
+body.wta-native-app .sz-item,
+html.wta-native-app .sz-item:not(.sz-in),
+body.wta-native-app .sz-item:not(.sz-in),
+html.wta-native-app .animate-fade-up,
+body.wta-native-app .animate-fade-up,
+html.wta-native-app .reveal-item,
+body.wta-native-app .reveal-item {
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
+  animation: none !important;
+  filter: none !important;
+}
