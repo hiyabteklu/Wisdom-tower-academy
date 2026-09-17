@@ -94,6 +94,7 @@ export default function NotificationsPage() {
     setNotices(list);
     const ids = readReadIds();
     setReadIds(ids);
+    // Mark all visible as read when opening the page
     const next = new Set(ids);
     list.forEach((n) => next.add(n.id));
     setReadIds(next);
@@ -108,11 +109,11 @@ export default function NotificationsPage() {
   return (
     <div className="min-h-[70vh] max-w-lg mx-auto px-4 py-8 sm:py-12" data-scroll-zoom-skip>
       <Link
-        href="/account"
+        href="/"
         className="inline-flex items-center gap-1.5 text-sm text-wisdom-muted hover:text-cyan-300 mb-6"
       >
         <ArrowLeft className="w-4 h-4" />
-        Account
+        Home
       </Link>
 
       <div className="flex items-center gap-3 mb-2">
