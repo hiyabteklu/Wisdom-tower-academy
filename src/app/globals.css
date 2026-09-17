@@ -138,11 +138,24 @@ h1, h2, h3, h4, .font-display {
   outline: none; border-color: #22e0ff; box-shadow: 0 0 0 3px rgba(34, 224, 255, 0.25);
 }
 
+/*
+ * Fade-up: progressive enhancement only.
+ * Base state is always fully visible. Never use fill-mode "both" with from{opacity:0}
+ * — Android WebView often cancels the animation and leaves content invisible.
+ */
 @keyframes fade-up {
-  from { opacity: 0; transform: translateY(28px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-.animate-fade-up { animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.animate-fade-up {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .animate-fade-up {
+    animation: fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+}
 
 .formatted-body .md-h2 { font-family: var(--font-display), system-ui, sans-serif; font-size: 1.25rem; font-weight: 700; color: #fff; margin: 1.25rem 0 0.5rem; }
 .formatted-body .md-h3 { font-family: var(--font-display), system-ui, sans-serif; font-size: 1.05rem; font-weight: 700; color: rgba(255,255,255,0.92); margin: 1rem 0 0.4rem; }
@@ -171,4 +184,12 @@ h1, h2, h3, h4, .font-display {
     transition: none !important;
     opacity: 1 !important;
   }
+}
+
+/* Native app WebView: never hide animated content */
+html.wta-native-app .animate-fade-up,
+body.wta-native-app .animate-fade-up {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
 }
