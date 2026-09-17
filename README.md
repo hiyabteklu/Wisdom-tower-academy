@@ -20,6 +20,17 @@ cp .env.example .env.local   # fill NEW Supabase keys + NEXT_PUBLIC_DIGITAL_URL
 npm run dev
 ```
 
+## Free resources (public)
+
+| Path | Content |
+|------|---------|
+| `/academy/success-stories` | Admin / DB listings |
+| `/academy/scholarships` | Admin / DB scholarship cards + intro |
+| `/academy/universities` | Hard-coded guides + optional admin notes |
+| `/academy/departments` | Hard-coded + notes |
+| `/academy/campus-life` | Hard-coded guide + PageNotes |
+| `/academy/study-techniques` | Hard-coded guide + PageNotes |
+
 ## For agents / other developers
 
 **Start here so UI and app chrome stay consistent:**
@@ -31,13 +42,17 @@ npm run dev
 
 | Area | Location | Required behaviour |
 |------|----------|--------------------|
-| Flashcards | `src/components/learning/FlashcardViewer.tsx` + `.fc-*` CSS | 3D flip, distinct back colour, swipe next/prev animation |
-| App header | App repo `MainActivity.kt` | Fixed bar, clean status-bar insets, menu + branding + notifications |
+| Scholarships / free resources | `src/app/academy/scholarships`, `src/lib/free-resources.ts` | Wire to Supabase; no permanent Coming soon when content is published |
+| Campus Life / Study Techniques | `src/components/academy/*Page.tsx` | Full guides — never leave as PLACEHOLDER |
+| Flashcards | `src/components/learning/FlashcardViewer.tsx` + `.fc-*` CSS | 3D flip, distinct back colour, swipe next/prev |
+| App header | App repo `MainActivity.kt` | Fixed bar; notifications → `/notifications` only |
 
 ## Android app
 
 Production client is the WebView shell:
 
 → https://github.com/hiyabteklu/Wisdom-tower-academy-app
+
+**Download debug APK:** GitHub Actions → [Build Debug APK](https://github.com/hiyabteklu/Wisdom-tower-academy-app/actions/workflows/build-apk.yml) → latest green run → artifact **Wisdom-Tower-Academy-debug**.
 
 Website content changes appear in the app automatically. Only native chrome / offline vault changes need a new APK.
