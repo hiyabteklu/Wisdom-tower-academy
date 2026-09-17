@@ -76,6 +76,19 @@
   overflow: auto;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.fc-face .study-prose {
+  width: 100%;
+  max-width: 36rem;
+  text-align: center;
+  font-size: 1.15rem;
+  line-height: 1.75;
+}
+.fc-face .study-prose .study-p {
+  text-align: center;
 }
 
 .fc-front {
