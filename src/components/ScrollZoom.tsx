@@ -18,7 +18,16 @@ const SELECTOR = [
 
 function shouldSkip(el: Element): boolean {
   if (el.closest("[data-scroll-zoom-skip]")) return true;
+  // Never zoom/scale study notes or learning readers (causes skewed layout)
+  if (
+    el.closest(
+      ".notes-reading-surface, .study-prose, [data-learning-content], .formatted-body"
+    )
+  ) {
+    return true;
+  }
   if (el.closest("header, footer, nav")) return true;
+  if (el.closest('main [class*="learning"], main article.study-prose')) return true;
   const tag = el.tagName.toLowerCase();
   return tag === "script" || tag === "style" || tag === "link";
 }
@@ -55,7 +64,6 @@ export default function ScrollZoom() {
           const el = entry.target as HTMLElement;
 
           if (entry.isIntersecting) {
-            // Light stagger from sibling index (no array filter each time if possible)
             const parent = el.parentElement;
             if (parent && parent.classList.contains("stagger-children")) {
               const kids = parent.children;
@@ -70,7 +78,6 @@ export default function ScrollZoom() {
             }
             el.classList.add("sz-in");
           } else {
-            // Leave viewport → reset so next enter (up or down) zooms again
             el.style.transitionDelay = "0ms";
             el.classList.remove("sz-in");
           }
@@ -78,7 +85,6 @@ export default function ScrollZoom() {
       },
       {
         threshold: [0, 0.08, 0.15],
-        // Symmetric margins so enter/leave feel equal scrolling either way
         rootMargin: "-6% 0px -6% 0px",
       }
     );
