@@ -385,11 +385,12 @@ export default function UniversitiesPage() {
   const detailedCount = universities.filter((u) => u.detailed).length;
 
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-screen" data-scroll-zoom-skip>
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">
         <CategoryBackButton fallback="/academy" />
 
-        <header className="mb-10 md:mb-14 animate-fade-up">
+        {/* No animate-fade-up — must always be visible in Android WebView */}
+        <header className="mb-10 md:mb-14">
           <p className="text-sm font-semibold tracking-[0.2em] uppercase text-amber-400/90 mb-3">
             Free resource
           </p>
@@ -462,72 +463,61 @@ export default function UniversitiesPage() {
               <Filter className="w-3.5 h-3.5" />
               Guides
             </button>
-            <button
-              type="button"
-              onClick={() => setSearchOpen((o) => !o)}
-              className={`inline-flex h-10 w-10 items-center justify-center rounded-xl border transition-colors ${
-                searchOpen || query
-                  ? "border-cyan-400/40 bg-cyan-500/15 text-cyan-300"
-                  : "border-white/12 bg-wisdom-card text-wisdom-muted hover:border-white/25"
-              }`}
-              aria-label="Search"
-            >
-              <Search className="w-4 h-4" />
-            </button>
           </div>
+
           {searchOpen && (
             <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-wisdom-muted pointer-events-none" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-wisdom-muted" />
               <input
                 type="search"
-                placeholder="Search by name, city…"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                autoFocus
-                className="field-input pl-10 py-2.5 text-sm w-full"
+                placeholder="Search university, city, strength…"
+                className="field-input pl-10 py-2.5 text-sm"
               />
             </div>
           )}
+
+          <button
+            type="button"
+            onClick={() => setSearchOpen((v) => !v)}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-wisdom-cyan"
+          >
+            <Search className="w-3.5 h-3.5" />
+            {searchOpen ? "Hide search" : "Search"}
+          </button>
         </div>
 
-        {filtered.length === 0 ? (
-          <div className="text-center py-20 rounded-3xl border border-white/10 bg-wisdom-card/50">
-            <p className="text-wisdom-muted mb-2">No universities match your filters.</p>
-            <button
-              type="button"
-              onClick={() => {
-                setQuery("");
-                setRegion("all");
-                setShowFeaturedOnly(false);
-                setShowDetailedOnly(false);
-              }}
-              className="text-wisdom-cyan text-sm font-medium hover:underline"
-            >
-              Clear filters
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
-            {filtered.map((uni) => (
-              <UniversityCard
-                key={uni.id}
-                uni={uni}
-                expanded={expandedId === uni.id}
-                onToggle={() =>
-                  setExpandedId((id) => (id === uni.id ? null : uni.id))
-                }
-                notes={notesByUni[uni.id] || []}
-              />
-            ))}
-          </div>
+        <div className="grid gap-4 sm:gap-5 md:grid-cols-2">
+          {filtered.map((uni) => (
+            <UniversityCard
+              key={uni.id}
+              uni={uni}
+              expanded={expandedId === uni.id}
+              onToggle={() =>
+                setExpandedId((cur) => (cur === uni.id ? null : uni.id))
+              }
+              notes={notesByUni[uni.id] ?? []}
+            />
+          ))}
+        </div>
+
+        {filtered.length === 0 && (
+          <p className="text-center text-wisdom-muted py-16 text-sm">
+            No universities match these filters.
+          </p>
         )}
 
-        <div className="mt-14 text-center">
+        <div className="mt-14 rounded-2xl border border-white/10 bg-wisdom-card/80 p-6 text-center">
+          <p className="text-sm text-wisdom-muted leading-relaxed max-w-lg mx-auto">
+            Placement and campus life change. Treat this as orientation, not a
+            contract. When in doubt, talk to current students.
+          </p>
           <Link
-            href="/academy"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-wisdom-cyan hover:underline"
+            href="/contact"
+            className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-wisdom-cyan hover:text-white"
           >
-            Back to Academy
+            Share a campus tip
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
