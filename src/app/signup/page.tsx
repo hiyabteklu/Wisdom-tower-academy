@@ -139,7 +139,7 @@ function SignupForm() {
   if (success) {
     const isPhone = !looksLikeEmail(successContact);
     return (
-      <div className="min-h-[80vh] flex items-start sm:items-center justify-center px-4 py-10 sm:py-16 pb-32 overflow-y-auto">
+      <div className="min-h-[100dvh] flex items-start sm:items-center justify-center px-4 py-10 sm:py-16 pb-44 overflow-y-auto">
         <div className="w-full max-w-md text-center">
           <div className="bg-wisdom-card border border-white/5 rounded-2xl p-8">
             <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-4">
@@ -181,7 +181,7 @@ function SignupForm() {
   const labelClass = "block text-sm font-medium mb-2 text-white/90";
 
   return (
-    <div className="min-h-[80vh] flex items-start sm:items-center justify-center px-4 py-10 sm:py-16 pb-32 sm:pb-16 overflow-y-auto">
+    <div className="min-h-[100dvh] flex items-start sm:items-center justify-center px-4 py-10 sm:py-16 pb-44 sm:pb-16 overflow-y-auto">
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-400 to-sky-500 text-wisdom-dark mb-4">
@@ -395,7 +395,7 @@ export default function SignupPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-[80vh] flex items-center justify-center">
+        <div className="min-h-[100dvh] flex items-start sm:items-center justify-center px-4 py-10 pb-44 overflow-y-auto">
           <div className="w-8 h-8 rounded-full border-2 border-cyan-400/25 border-t-cyan-400 animate-spin" />
         </div>
       }
