@@ -228,11 +228,10 @@ export default function ScholarshipsPage() {
   const subtitle =
     page?.subtitle?.trim() ||
     "Funding options and how to prepare strong applications.";
-  // Always show CMS body when present; otherwise the full default guide.
   const intro = ((page?.bodyMd || "").trim() || DEFAULT_INTRO);
 
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-screen" data-scroll-zoom-skip>
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
         <div className="absolute top-0 left-1/4 w-[28rem] h-[28rem] bg-rose-500/12 rounded-full blur-3xl" />
         <div className="absolute top-40 right-0 w-96 h-96 bg-fuchsia-500/8 rounded-full blur-3xl" />
@@ -242,7 +241,7 @@ export default function ScholarshipsPage() {
       <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">
         <CategoryBackButton fallback="/academy" />
 
-        <header className="mb-10 md:mb-14 animate-fade-up">
+        <header className="mb-10 md:mb-14">
           <div className="flex items-center gap-2 mb-3">
             <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-rose-400/30 bg-rose-500/10 text-rose-300">
               <GraduationCap className="w-4.5 h-4.5" />
@@ -279,7 +278,7 @@ export default function ScholarshipsPage() {
         </header>
 
         {loading && (
-          <div className="flex items-center justify-center gap-2 py-24 text-wisdom-muted animate-fade-up">
+          <div className="flex items-center justify-center gap-2 py-24 text-wisdom-muted">
             <Loader2 className="w-5 h-5 animate-spin text-rose-400" />
             Loading scholarships…
           </div>
@@ -292,7 +291,7 @@ export default function ScholarshipsPage() {
         )}
 
         {!loading && !error && items.length === 0 && (
-          <div className="rounded-3xl border border-white/12 bg-wisdom-card/90 p-8 sm:p-10 text-center animate-fade-up">
+          <div className="rounded-3xl border border-white/12 bg-wisdom-card/90 p-8 sm:p-10 text-center">
             <p className="text-sm text-wisdom-muted leading-relaxed max-w-md mx-auto mb-5">
               Individual scholarship cards will appear here as we publish them. Use the guide above
               while preparing applications.
@@ -309,7 +308,7 @@ export default function ScholarshipsPage() {
         {!loading && items.length > 0 && (
           <ul className="space-y-7 md:space-y-8">
             {items.map((item, i) => (
-              <li key={item.id} className="animate-fade-up">
+              <li key={item.id}>
                 <ScholarshipCard item={item} index={i} />
               </li>
             ))}
