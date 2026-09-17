@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import ScrollZoom from "@/components/ScrollZoom";
 import AuthProvider from "@/components/AuthProvider";
+import AuthHashHandler from "@/components/AuthHashHandler";
 import GlobalFocusBar from "@/components/GlobalFocusBar";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import OfflineSync from "@/components/OfflineSync";
@@ -74,6 +75,7 @@ export default function RootLayout({
             <Header />
             <main className="flex-1 pt-16 relative z-10">{children}</main>
             <Footer />
+            <AuthHashHandler />
             <ScrollZoom />
             <GlobalFocusBar />
             <ServiceWorkerRegister />

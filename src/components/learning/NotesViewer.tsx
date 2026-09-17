@@ -64,9 +64,13 @@ export default function NotesViewer({ body, resourceId, onProgress }: Props) {
   }
 
   return (
-    <div className="relative space-y-4 w-full max-w-full">
-      {/* Full-page notes content — no floating scrub UI */}
-      <div className="notes-reading-surface w-full max-w-full rounded-2xl border border-white/10 p-5 sm:p-8 shadow-card-3d">
+    <div className="relative space-y-4 w-full max-w-full" data-scroll-zoom-skip data-learning-content>
+      {/* Full-page notes content — no floating scrub UI / no scroll-zoom scale */}
+      <div
+        className="notes-reading-surface w-full max-w-full rounded-2xl border border-white/10 p-5 sm:p-8 shadow-card-3d"
+        data-scroll-zoom-skip
+        data-learning-content
+      >
         <RichContent body={body} />
       </div>
 
