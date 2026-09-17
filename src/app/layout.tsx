@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import "./scroll-zoom.css";
+import "./ui-polish.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { ThemeProvider } from "@/components/ThemeProvider";
 import ScrollZoom from "@/components/ScrollZoom";
-import AuthProvider from "@/components/AuthProvider";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { AuthProvider } from "@/components/AuthProvider";
 import AuthHashHandler from "@/components/AuthHashHandler";
 import GlobalFocusBar from "@/components/GlobalFocusBar";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
