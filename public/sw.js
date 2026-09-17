@@ -3,13 +3,13 @@
  * Strategy: network-first for navigations/API (update when online),
  *           cache-first for static/_next and images.
  */
-const CACHE_VERSION = "wta-offline-v1";
+const CACHE_VERSION = "wta-offline-v2";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const PAGE_CACHE = `${CACHE_VERSION}-pages`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
 const IMAGE_CACHE = `${CACHE_VERSION}-images`;
 
-const PRECACHE_URLS = ["/", "/learning", "/packages", "/account", "/offline"];
+const PRECACHE_URLS = ["/", "/learning", "/packages", "/account", "/academy", "/academy/scholarships", "/offline"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -83,7 +83,6 @@ async function networkFirst(request, cacheName) {
   } catch {
     const cached = await cache.match(request);
     if (cached) return cached;
-    // Fallback offline page for navigations
     if (isNavigationRequest(request)) {
       const offline = await cache.match("/offline") || await caches.match("/offline");
       if (offline) return offline;
@@ -132,7 +131,6 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Same-origin navigations & pages
   if (url.origin === self.location.origin) {
     if (isNavigationRequest(request)) {
       event.respondWith(networkFirst(request, PAGE_CACHE));
@@ -150,24 +148,20 @@ self.addEventListener("fetch", (event) => {
       event.respondWith(staleWhileRevalidate(request, DATA_CACHE));
       return;
     }
-    // Other same-origin GETs
     event.respondWith(staleWhileRevalidate(request, DATA_CACHE));
     return;
   }
 
-  // Cross-origin images (e.g. CDN) — cache when possible
   if (isImage(url) || request.destination === "image") {
     event.respondWith(cacheFirst(request, IMAGE_CACHE));
     return;
   }
 
-  // Supabase / Appwrite JSON — cache successful GETs for offline replay
   if (isApiOrData(url)) {
     event.respondWith(staleWhileRevalidate(request, DATA_CACHE));
   }
 });
 
-// Allow the app to ask the SW to precache a list of URLs (e.g. after viewing a hub)
 self.addEventListener("message", (event) => {
   const data = event.data;
   if (!data || data.type !== "PRECACHE_URLS" || !Array.isArray(data.urls)) return;
