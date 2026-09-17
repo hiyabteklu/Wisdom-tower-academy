@@ -263,3 +263,202 @@ body.wta-native-app .wta-app-hero {
     animation: none !important;
   }
 }
+
+/* —— Study notes renderer (full-width, tables scroll only, no page skew) —— */
+.notes-reading-surface {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: visible;
+  background:
+    linear-gradient(165deg, rgba(18, 26, 42, 0.98) 0%, rgba(14, 20, 34, 0.99) 55%, rgba(12, 18, 30, 1) 100%);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
+    0 12px 40px -16px rgba(0, 0, 0, 0.55);
+}
+
+.theme-light .notes-reading-surface {
+  background: linear-gradient(165deg, #f7fafc 0%, #eef4fa 100%);
+  border-color: rgba(12, 60, 100, 0.12);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.9) inset,
+    0 12px 36px -12px rgba(12, 50, 90, 0.12);
+}
+
+.study-prose {
+  font-family: var(--font-reading), Georgia, serif;
+  font-size: 1.125rem;
+  line-height: 1.8;
+  color: rgba(236, 242, 250, 0.94);
+  letter-spacing: 0.005em;
+  width: 100%;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+.theme-light .study-prose { color: rgba(12, 26, 46, 0.92); }
+
+.study-h1 {
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #fff;
+  margin: 0 0 1.1rem;
+  line-height: 1.2;
+}
+.theme-light .study-h1 { color: #0c1a2e; }
+
+.study-h2 {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #fde68a;
+  margin: 1.85rem 0 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  line-height: 1.3;
+}
+.theme-light .study-h2 { color: #b45309; }
+
+.study-h2-bar {
+  display: inline-block;
+  width: 4px;
+  height: 1.15em;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #fbbf24, #22e0ff);
+  flex-shrink: 0;
+}
+
+.study-h3 {
+  font-family: var(--font-display);
+  font-size: 1.12rem;
+  font-weight: 650;
+  color: #a5f3fc;
+  margin: 1.35rem 0 0.55rem;
+  letter-spacing: -0.015em;
+}
+.theme-light .study-h3 { color: #0369a1; }
+
+.study-p { margin: 0 0 1.05rem; }
+.study-list { margin: 0.45rem 0 1.1rem; padding-left: 1.25rem; list-style: none; }
+.study-list li { position: relative; margin-bottom: 0.5rem; padding-left: 0.4rem; }
+.study-list li::before {
+  content: "";
+  position: absolute;
+  left: -0.95rem;
+  top: 0.6em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #22e0ff, #a78bfa);
+}
+
+.study-callout {
+  margin: 1.1rem 0;
+  padding: 0.95rem 1.15rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(34, 224, 255, 0.28);
+  background: linear-gradient(135deg, rgba(34, 224, 255, 0.1), rgba(139, 92, 246, 0.08));
+  color: #e0f7ff;
+  font-size: 1rem;
+  font-family: var(--font-body);
+}
+.theme-light .study-callout {
+  color: #0c4a6e;
+  border-color: rgba(2, 132, 199, 0.3);
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.12), rgba(99, 102, 241, 0.06));
+}
+
+.study-hr {
+  border: none;
+  height: 1px;
+  margin: 1.6rem 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18), transparent);
+}
+.theme-light .study-hr {
+  background: linear-gradient(90deg, transparent, rgba(12, 60, 100, 0.2), transparent);
+}
+
+mark.key-term {
+  background: linear-gradient(120deg, rgba(251, 191, 36, 0.35), rgba(245, 158, 11, 0.2));
+  color: #fef3c7;
+  padding: 0.08em 0.35em;
+  border-radius: 0.35em;
+  font-weight: 600;
+  font-family: var(--font-body);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  border-bottom: 1px solid rgba(251, 191, 36, 0.45);
+}
+.theme-light mark.key-term {
+  color: #78350f;
+  background: linear-gradient(120deg, rgba(251, 191, 36, 0.4), rgba(245, 158, 11, 0.25));
+}
+
+mark.hl-term {
+  background: rgba(34, 224, 255, 0.18);
+  color: #e0faff;
+  padding: 0.05em 0.3em;
+  border-radius: 0.3em;
+  font-weight: 550;
+  font-family: var(--font-body);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+.theme-light mark.hl-term {
+  color: #0c4a6e;
+  background: rgba(14, 165, 233, 0.18);
+}
+
+.study-prose strong { color: #fff; font-weight: 650; }
+.theme-light .study-prose strong { color: #0c1a2e; }
+
+.study-prose .katex { font-size: 1.05em; }
+.study-prose .katex-display {
+  margin: 0.9rem 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* Tables: only the table area scrolls horizontally — never skew the page */
+.study-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 1rem 0;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.study-table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+.study-table th,
+.study-table td {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.55rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+  white-space: nowrap;
+}
+.study-table th {
+  background: rgba(34, 211, 238, 0.1);
+  color: #fff;
+  font-weight: 700;
+}
+.study-table tr:nth-child(even) td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Never apply scroll-zoom transform to learning content */
+.notes-reading-surface .sz-item,
+[data-learning-content] .sz-item,
+.study-prose .sz-item {
+  transform: none !important;
+  opacity: 1 !important;
+}
