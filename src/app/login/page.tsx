@@ -123,7 +123,7 @@ function LoginForm() {
 
   if (checking) {
     return (
-      <div className="min-h-[80vh] flex items-center justify-center">
+      <div className="min-h-[100dvh] flex items-start sm:items-center justify-center px-4 py-10 pb-44 overflow-y-auto">
         <div className="w-8 h-8 rounded-full border-2 border-cyan-400/25 border-t-cyan-400 animate-spin" />
       </div>
     );
@@ -134,7 +134,7 @@ function LoginForm() {
   const labelClass = "block text-sm font-medium mb-2 text-white/90";
 
   return (
-    <div className="min-h-[80vh] flex items-start sm:items-center justify-center px-4 py-10 sm:py-16 pb-32 sm:pb-16 overflow-y-auto">
+    <div className="min-h-[100dvh] flex items-start sm:items-center justify-center px-4 py-10 sm:py-16 pb-44 sm:pb-16 overflow-y-auto">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-black ring-1 ring-white/10 mb-4 overflow-hidden">
@@ -235,7 +235,7 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-[80vh] flex items-center justify-center">
+        <div className="min-h-[100dvh] flex items-start sm:items-center justify-center px-4 py-10 pb-44 overflow-y-auto">
           <div className="w-8 h-8 rounded-full border-2 border-cyan-400/25 border-t-cyan-400 animate-spin" />
         </div>
       }
