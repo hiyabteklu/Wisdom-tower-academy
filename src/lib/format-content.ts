@@ -4,7 +4,6 @@
 export function unescapeText(input: string): string {
   if (!input) return "";
   let s = String(input);
-  // Repeatedly flatten escaped sequences (paste sometimes double-escapes)
   for (let i = 0; i < 3; i++) {
     const next = s
       .replace(/\\n/g, "\n")
@@ -44,12 +43,14 @@ function inlineMarkdown(s: string): string {
   t = t.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
   t = t.replace(/__(.+?)__/g, "<strong>$1</strong>");
   t = t.replace(/(?<![\w*])\*(.+?)\*(?![\w*])/g, "<em>$1</em>");
-  t = t.replace(/==(.+?)==/g, '<mark class="md-mark">$1</mark>');
+  t = t.replace(/==([^=\n]+)==/g, '<mark class="md-mark">$1</mark>');
+  // Strip leftover unpaired ==
+  t = t.replace(/==/g, "");
   t = t.replace(/`([^`]+)`/g, '<code class="md-code">$1</code>');
   return t;
 }
 
-/** Light markdown → HTML for CMS body/intro. Supports # ## ###, **bold**, *italic*, ==highlight==, lists, blockquotes. */
+/** Light markdown → HTML for CMS body/intro. */
 export function simpleMarkdownToHtml(src: string): string {
   let t = unescapeText(src).trim();
   if (!t) return "";
@@ -67,7 +68,6 @@ export function simpleMarkdownToHtml(src: string): string {
       continue;
     }
 
-    // Headings
     const h3 = trimmed.match(/^###\s+(.+)$/);
     const h2 = trimmed.match(/^##\s+(.+)$/);
     const h1 = trimmed.match(/^#\s+(.+)$/);
@@ -87,7 +87,6 @@ export function simpleMarkdownToHtml(src: string): string {
       continue;
     }
 
-    // Blockquote (one or more consecutive > lines)
     if (trimmed.startsWith(">")) {
       const quoteLines: string[] = [];
       while (i < lines.length && lines[i].trim().startsWith(">")) {
@@ -99,7 +98,6 @@ export function simpleMarkdownToHtml(src: string): string {
       continue;
     }
 
-    // Unordered list
     if (/^[-•*]\s+/.test(trimmed)) {
       const items: string[] = [];
       while (i < lines.length && /^[-•*]\s+/.test(lines[i].trim())) {
@@ -113,7 +111,6 @@ export function simpleMarkdownToHtml(src: string): string {
       continue;
     }
 
-    // Paragraph: collect until blank or special line
     const para: string[] = [];
     while (i < lines.length) {
       const L = lines[i];
