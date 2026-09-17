@@ -185,6 +185,18 @@ function ScholarshipCard({
   );
 }
 
+const DEFAULT_INTRO = `Scholarships can change what is possible for secondary and university learners — lower fees, cover materials, or open doors to programs abroad.
+
+This page collects opportunities relevant for Ethiopian students and the wider region: local awards, national schemes, and international programs that accept applicants from Africa. Each card is practical: who it is for, what it covers, deadlines when we have them, and a direct link to apply or learn more.
+
+How to use this page
+• Read eligibility notes carefully — many awards are limited by grade, field, gender, or need.
+• Start early. Strong applications need transcripts, recommendations, and a clear personal statement.
+• Keep a simple tracker of deadlines, required documents, and status.
+• Prefer official sites and verified partners.
+
+We add and update listings over time. If you know of a solid scholarship that is missing, use Contact us and send the official link.`;
+
 export default function ScholarshipsPage() {
   const [page, setPage] = useState<FreeResourcePage | null>(null);
   const [items, setItems] = useState<FreeResourceItem[]>([]);
@@ -216,7 +228,8 @@ export default function ScholarshipsPage() {
   const subtitle =
     page?.subtitle?.trim() ||
     "Funding options and how to prepare strong applications.";
-  const intro = page?.published ? (page.bodyMd || "").trim() : "";
+  // Always show CMS body when present; otherwise the full default guide.
+  const intro = ((page?.bodyMd || "").trim() || DEFAULT_INTRO);
 
   return (
     <div className="relative min-h-screen">
