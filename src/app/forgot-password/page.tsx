@@ -16,12 +16,10 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     setError("");
 
-    const origin =
-      typeof window !== "undefined" && window.location.hostname.includes("wisdom-tower")
-        ? window.location.origin
-        : "https://wisdom-tower-academy.live";
+    // Always public site so app WebView -> browser email link works
+    const redirectTo = "https://wisdom-tower-academy.live/reset-password";
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${origin}/reset-password`,
+      redirectTo,
     });
 
     if (error) {
@@ -52,8 +50,8 @@ export default function ForgotPasswordPage() {
             <h2 className="text-2xl font-bold mb-2">Check your email</h2>
             <p className="text-wisdom-muted mb-6">
               We sent a password reset link to <strong className="text-white">{email}</strong>.
-              Open the link in the <strong className="text-white">same browser</strong> (Chrome/Safari),
-              not only inside the app.
+              Open it in Chrome or Safari on your phone or computer. Set the new password on the
+              website, then sign in again in the app.
             </p>
             <Link href="/login" className="inline-flex items-center gap-2 text-wisdom-cyan hover:underline">
               <ArrowLeft className="w-4 h-4" />
