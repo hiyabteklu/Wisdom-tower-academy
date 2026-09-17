@@ -17,6 +17,15 @@ const SELECTOR = [
   "main .stagger-children > *",
 ].join(", ");
 
+function isNativeApp(): boolean {
+  if (typeof document === "undefined") return false;
+  return (
+    document.documentElement.classList.contains("wta-native-app") ||
+    document.body.classList.contains("wta-native-app") ||
+    /WisdomTowerApp/i.test(navigator.userAgent)
+  );
+}
+
 function shouldSkip(el: Element): boolean {
   if (el.closest("[data-scroll-zoom-skip]")) return true;
   if (
@@ -49,11 +58,10 @@ export default function ScrollZoom() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // Native app: never attach opacity traps
-    if (
-      document.documentElement.classList.contains("wta-native-app") ||
-      document.body.classList.contains("wta-native-app")
-    ) {
+    // Native app: never attach opacity traps (UA + class)
+    if (isNativeApp()) {
+      document.documentElement.classList.add("wta-native-app");
+      document.body?.classList.add("wta-native-app");
       return;
     }
 
