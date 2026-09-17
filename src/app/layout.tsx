@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./ui-polish.css";
+import "./scroll-zoom.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ScrollZoom from "@/components/ScrollZoom";
