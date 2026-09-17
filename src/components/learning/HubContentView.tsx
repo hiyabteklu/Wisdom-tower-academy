@@ -243,95 +243,111 @@ export default function HubContentView({
     const isBookLike = hub === "books" || active.contentType === "pdf";
     const isNotes = hub === "short-notes" || active.contentType === "markdown";
     const focusNow = focusStatusLabel(focusSeconds, seconds);
+    const isQuizOrExam =
+      active.contentType === "quiz" || active.contentType === "exam";
 
     return (
-      <div className="space-y-4 w-full max-w-full">
+      <div className={`w-full max-w-full ${isQuizOrExam ? "space-y-2.5" : "space-y-4"}`}>
+        {/*
+          Back control: document flow at top (not mid-screen sticky overlay).
+          Compact on quiz/exam so one question fits better on mobile / app WebView.
+        */}
         <button
           type="button"
           onClick={backToItems}
-          className="sticky top-[4.25rem] z-20 inline-flex items-center gap-2 rounded-xl border border-cyan-400/35 bg-[#0b1220]/95 px-3.5 py-2.5 text-sm font-bold text-cyan-200 shadow-lg backdrop-blur-md hover:bg-cyan-500/15 hover:border-cyan-400/55 transition-colors"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/30 bg-wisdom-dark/80 px-2.5 py-1.5 text-xs font-semibold text-cyan-200 hover:bg-cyan-500/15 hover:border-cyan-400/50 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-3.5 h-3.5" />
           Back to {hubItemsLabel(hub)}
         </button>
 
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <h2 className={`font-display text-xl sm:text-2xl font-bold ${accent}`}>{active.title}</h2>
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <h2
+            className={`font-display font-bold leading-snug ${accent} ${
+              isQuizOrExam ? "text-base sm:text-lg" : "text-xl sm:text-2xl"
+            }`}
+          >
+            {active.title}
+          </h2>
         </div>
 
-        <div className="flex flex-wrap gap-2 text-xs">
-          {(isBookLike || isNotes) && (
-            <>
-              <Chip tone="cyan">
-                <Clock className="w-3 h-3 inline mr-1" />
-                Reading {formatTime(seconds)}
-              </Chip>
-              <Chip tone="amber">
-                <Gauge className="w-3 h-3 inline mr-1" />
-                Focus: {focusNow}
-              </Chip>
-              <Chip>Session: {completionLabel(progressPct)}</Chip>
-              <Chip tone="emerald">
-                <BarChart3 className="w-3 h-3 inline mr-1" />
-                {Math.round(progressPct)}% complete
-              </Chip>
-            </>
-          )}
-
-          {hub === "videos" && (
-            <>
-              <Chip tone="cyan">
-                Watch {formatTime(Number(vid?.watchSeconds || seconds))}
-              </Chip>
-              <Chip tone="amber">{Math.round(progressPct)}%</Chip>
-            </>
-          )}
-
-          {hub === "flashcards" && fc && (
-            <>
-              <Chip>
-                Cards {fc.seen}/{fc.total}
-              </Chip>
-              <Chip tone="emerald">Know {fc.know}</Chip>
-              <Chip tone="amber">Learning {fc.learning}</Chip>
-              <Chip tone="rose">Again {fc.again}</Chip>
-              <Chip tone="cyan">Mastery {fc.accuracy}%</Chip>
-            </>
-          )}
-
-          {(hub === "question-banks" || hub === "exams") && quiz && (
-            <>
-              <Chip>
-                Attempted {quiz.attempted}/{quiz.total}
-              </Chip>
-              <Chip tone="emerald">Correct {quiz.correct}</Chip>
-              {"wrong" in quiz && (
-                <Chip tone="rose">
-                  Wrong {Number((quiz as { wrong?: number }).wrong || 0)}
-                </Chip>
+        {!isQuizOrExam && (
+          <>
+            <div className="flex flex-wrap gap-2 text-xs">
+              {(isBookLike || isNotes) && (
+                <>
+                  <Chip tone="cyan">
+                    <Clock className="w-3 h-3 inline mr-1" />
+                    Reading {formatTime(seconds)}
+                  </Chip>
+                  <Chip tone="amber">
+                    <Gauge className="w-3 h-3 inline mr-1" />
+                    Focus: {focusNow}
+                  </Chip>
+                  <Chip>Session: {completionLabel(progressPct)}</Chip>
+                  <Chip tone="emerald">
+                    <BarChart3 className="w-3 h-3 inline mr-1" />
+                    {Math.round(progressPct)}% complete
+                  </Chip>
+                </>
               )}
-              {"skipped" in quiz && (
-                <Chip>
-                  Skipped {Number((quiz as { skipped?: number }).skipped || 0)}
-                </Chip>
-              )}
-              <Chip tone="amber">Accuracy {quiz.accuracy}%</Chip>
-              {"elapsedSec" in quiz && (
-                <Chip tone="cyan">
-                  Time{" "}
-                  {formatTime(Number((quiz as { elapsedSec?: number }).elapsedSec || 0))}
-                </Chip>
-              )}
-            </>
-          )}
-        </div>
 
-        <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-amber-400 to-cyan-400 transition-all duration-500"
-            style={{ width: `${Math.min(100, progressPct)}%` }}
-          />
-        </div>
+              {hub === "videos" && (
+                <>
+                  <Chip tone="cyan">
+                    Watch {formatTime(Number(vid?.watchSeconds || seconds))}
+                  </Chip>
+                  <Chip tone="amber">{Math.round(progressPct)}%</Chip>
+                </>
+              )}
+
+              {hub === "flashcards" && fc && (
+                <>
+                  <Chip>
+                    Cards {fc.seen}/{fc.total}
+                  </Chip>
+                  <Chip tone="emerald">Know {fc.know}</Chip>
+                  <Chip tone="amber">Learning {fc.learning}</Chip>
+                  <Chip tone="rose">Again {fc.again}</Chip>
+                  <Chip tone="cyan">Mastery {fc.accuracy}%</Chip>
+                </>
+              )}
+
+              {(hub === "question-banks" || hub === "exams") && quiz && (
+                <>
+                  <Chip>
+                    Attempted {quiz.attempted}/{quiz.total}
+                  </Chip>
+                  <Chip tone="emerald">Correct {quiz.correct}</Chip>
+                  {"wrong" in quiz && (
+                    <Chip tone="rose">
+                      Wrong {Number((quiz as { wrong?: number }).wrong || 0)}
+                    </Chip>
+                  )}
+                  {"skipped" in quiz && (
+                    <Chip>
+                      Skipped {Number((quiz as { skipped?: number }).skipped || 0)}
+                    </Chip>
+                  )}
+                  <Chip tone="amber">Accuracy {quiz.accuracy}%</Chip>
+                  {"elapsedSec" in quiz && (
+                    <Chip tone="cyan">
+                      Time{" "}
+                      {formatTime(Number((quiz as { elapsedSec?: number }).elapsedSec || 0))}
+                    </Chip>
+                  )}
+                </>
+              )}
+            </div>
+
+            <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-amber-400 to-cyan-400 transition-all duration-500"
+                style={{ width: `${Math.min(100, progressPct)}%` }}
+              />
+            </div>
+          </>
+        )}
 
         {active.contentType === "pdf" && pdfUrl && (
           <PdfReader

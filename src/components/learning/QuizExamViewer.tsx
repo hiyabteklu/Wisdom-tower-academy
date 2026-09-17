@@ -158,35 +158,35 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
   }, [isExam, submitted, questions, answers, reviewFilter]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-wisdom-dark/40 px-4 py-2.5 text-xs">
+    <div className="space-y-2.5">
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-white/10 bg-wisdom-dark/40 px-3 py-1.5 text-[11px]">
         {!isExam && (
           <>
             <span className="inline-flex items-center gap-1 text-cyan-200">
-              <Target className="w-3.5 h-3.5" /> Attempted {attempted}/{questions.length}
+              <Target className="w-3 h-3" /> {attempted}/{questions.length}
             </span>
             <span className="inline-flex items-center gap-1 text-emerald-200">
-              <Trophy className="w-3.5 h-3.5" /> Correct {score}
+              <Trophy className="w-3 h-3" /> {score}
             </span>
-            <span className="text-amber-200 font-semibold">Accuracy {accuracy}%</span>
+            <span className="text-amber-200 font-semibold">{accuracy}%</span>
           </>
         )}
         {isExam && !submitted && (
           <span className="inline-flex items-center gap-1 text-white/70">
-            Answered {attempted}/{questions.length}
+            {attempted}/{questions.length}
             {skipped > 0 ? ` · ${skipped} left` : ""}
             {flaggedCount > 0 ? ` · ${flaggedCount} flagged` : ""}
           </span>
         )}
         {isExam && durationMin > 0 && (
           <span className={`ml-auto font-mono font-bold inline-flex items-center gap-1 ${left < 60 ? "text-rose-300" : "text-emerald-200"}`}>
-            <Clock className="w-3.5 h-3.5" />
+            <Clock className="w-3 h-3" />
             {Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")}
           </span>
         )}
       </div>
 
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap gap-1">
         {questions.map((qq, i) => {
           const answered = answers[i] != null;
           const isFlagged = Boolean(flagged[i]);
@@ -201,34 +201,34 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
           else if (answered) cls = "border-cyan-400/50 bg-cyan-500/10 text-cyan-200";
           return (
             <button key={i} type="button" onClick={() => goTo(i)}
-              className={`relative w-8 h-8 rounded-lg text-xs font-bold border transition-colors ${cls}`}>
+              className={`relative w-7 h-7 rounded-md text-[11px] font-bold border transition-colors ${cls}`}>
               {i + 1}
-              {isFlagged && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-orange-400 ring-1 ring-[#0b1220]" />}
+              {isFlagged && <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-orange-400 ring-1 ring-[#0b1220]" />}
             </button>
           );
         })}
       </div>
 
       {!submitted && q && (
-        <div className="rounded-2xl border border-white/12 bg-wisdom-card p-5">
-          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-            <p className="text-xs text-wisdom-muted">
-              Question {idx + 1} of {questions.length}
+        <div className="rounded-xl border border-white/12 bg-wisdom-card p-3 sm:p-4">
+          <div className="flex flex-wrap items-center justify-between gap-1.5 mb-1.5">
+            <p className="text-[11px] text-wisdom-muted">
+              Q {idx + 1}/{questions.length}
               {answersLocked && !submitted && (
-                <span className="ml-2 text-amber-300/80">· Answer locked (solution viewed)</span>
+                <span className="ml-1.5 text-amber-300/80">· Locked</span>
               )}
             </p>
             <button type="button" onClick={() => setFlagged((f) => ({ ...f, [idx]: !f[idx] }))}
-              className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-bold ${
+              className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-bold ${
                 flagged[idx] ? "border-orange-400/50 bg-orange-500/15 text-orange-200" : "border-white/12 text-wisdom-muted"
               }`}>
-              {flagged[idx] ? <><Flag className="w-3.5 h-3.5 fill-current" /> Flagged</> : <><FlagOff className="w-3.5 h-3.5" /> Flag</>}
+              {flagged[idx] ? <><Flag className="w-3 h-3 fill-current" /> Flagged</> : <><FlagOff className="w-3 h-3" /> Flag</>}
             </button>
           </div>
-          <div className="text-white font-medium leading-relaxed mb-4 study-prose">
+          <div className="text-white font-medium leading-snug mb-2.5 study-prose text-[0.95rem]">
             <RichContent body={q.prompt} />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {(q.choices || []).map((c, ci) => {
               const selected = answers[idx] === ci;
               const isRight = q.correct === ci;
@@ -236,45 +236,57 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
               return (
                 <button key={ci} type="button" disabled={answersLocked}
                   onClick={() => { if (!answersLocked) setAnswers((a) => ({ ...a, [idx]: ci })); }}
-                  className={`w-full text-left px-3 py-2.5 rounded-xl border text-sm transition-colors ${
-                    selected ? "border-amber-400/50 bg-amber-500/15 text-white" : "border-white/12 text-white/80"
+                  className={`w-full text-left px-2.5 py-2 rounded-lg border text-[13px] leading-snug transition-colors ${
+                    selected ? "border-amber-400/50 bg-amber-500/15 text-white" : "border-white/12 text-white/85"
                   } ${showMark && isRight ? "!border-emerald-400/50 !bg-emerald-500/10" : ""} ${
                     showMark && selected && !isRight ? "!border-rose-400/40 !bg-rose-500/10" : ""
                   } ${answersLocked ? "opacity-90 cursor-not-allowed" : ""}`}>
-                  <span className="font-semibold text-amber-200/90 mr-1.5">{String.fromCharCode(65 + ci)}.</span>
+                  <span className="font-semibold text-amber-200/90 mr-1">{String.fromCharCode(65 + ci)}.</span>
                   <span className="study-prose inline"><RichContent body={c} /></span>
                 </button>
               );
             })}
           </div>
+
           {!isExam && (
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-3 flex flex-wrap gap-2">
               <button type="button" onClick={openOfficialSolution}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-emerald-400/50 bg-emerald-500/20 text-emerald-50 text-sm font-bold shadow-md">
-                <BadgeCheck className="w-5 h-5" />
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-emerald-400/45 bg-emerald-500/15 text-emerald-50 text-xs font-bold">
+                <BadgeCheck className="w-4 h-4" />
                 {showSol ? "Hide official solution" : "Official solution"}
               </button>
-              <button type="button" onClick={() => void explainQ()} disabled={aiLoading}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-violet-400/50 bg-violet-500/20 text-violet-50 text-sm font-bold shadow-md disabled:opacity-60">
-                <Lightbulb className="w-5 h-5" />
-                {aiLoading ? "Generating…" : "Explain with AI"}
-              </button>
             </div>
           )}
+
           {!isExam && showSol && q.solution && (
-            <div className="mt-3 rounded-xl border border-emerald-400/25 bg-emerald-500/10 p-4 text-sm">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 mb-2 inline-flex items-center gap-1">
+            <div className="mt-2.5 rounded-lg border border-emerald-400/25 bg-emerald-500/10 p-3 text-sm">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 mb-1.5 inline-flex items-center gap-1">
                 <BadgeCheck className="w-3.5 h-3.5" /> Official solution
               </p>
-              <div className="study-prose text-emerald-50"><RichContent body={q.solution} /></div>
+              <div className="study-prose text-emerald-50 text-[13px] leading-relaxed">
+                <RichContent body={q.solution} />
+              </div>
             </div>
           )}
-          {!isExam && ai && (
-            <div className="mt-3 rounded-xl border border-violet-400/25 bg-violet-500/10 p-4 text-sm">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-violet-300 mb-2 inline-flex items-center gap-1">
-                <Lightbulb className="w-3.5 h-3.5" /> AI explanation
-              </p>
-              <div className="study-prose text-white/90"><RichContent body={ai} /></div>
+
+          {/* Explain with AI sits under official solution when expanded */}
+          {!isExam && (
+            <div className={`flex flex-col gap-2 ${showSol ? "mt-2.5" : "mt-3"}`}>
+              <button type="button" onClick={() => void explainQ()} disabled={aiLoading}
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-violet-400/45 bg-violet-500/15 text-violet-50 text-xs font-bold disabled:opacity-60 w-full sm:w-auto">
+                <Lightbulb className="w-4 h-4" />
+                {aiLoading ? "Generating…" : "Explain with AI"}
+              </button>
+              {ai && (
+                <div className="rounded-lg border border-violet-400/25 bg-violet-500/10 p-3 text-sm">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-violet-300 mb-1.5 inline-flex items-center gap-1">
+                    <Lightbulb className="w-3.5 h-3.5" /> AI explanation
+                  </p>
+                  <div className="study-prose text-white/90 text-[13px] leading-relaxed">
+                    <RichContent body={ai} />
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -283,11 +295,11 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
       {!submitted && (
         <div className="flex flex-wrap gap-2">
           <button type="button" disabled={idx === 0} onClick={() => goTo(idx - 1)}
-            className="px-4 py-2 rounded-xl border border-white/12 text-sm disabled:opacity-40">Prev</button>
+            className="px-3 py-1.5 rounded-lg border border-white/12 text-xs font-semibold disabled:opacity-40">Prev</button>
           <button type="button" disabled={idx >= questions.length - 1} onClick={() => goTo(idx + 1)}
-            className="px-4 py-2 rounded-xl bg-amber-500 text-wisdom-dark text-sm font-bold disabled:opacity-40">Next</button>
+            className="px-3 py-1.5 rounded-lg bg-amber-500 text-wisdom-dark text-xs font-bold disabled:opacity-40">Next</button>
           <button type="button" onClick={() => setConfirmOpen(true)}
-            className="px-4 py-2 rounded-xl border border-emerald-400/40 text-emerald-200 text-sm font-semibold">
+            className="px-3 py-1.5 rounded-lg border border-emerald-400/40 text-emerald-200 text-xs font-semibold">
             {isExam ? "Submit exam" : "Finish practice"}
           </button>
         </div>
@@ -316,16 +328,16 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
       )}
 
       {submitted && (
-        <div className="rounded-2xl border border-white/12 bg-wisdom-card p-5 space-y-4">
+        <div className="rounded-xl border border-white/12 bg-wisdom-card p-4 space-y-3">
           <div className="text-center">
-            <p className="font-display text-2xl font-bold text-white">
+            <p className="font-display text-xl font-bold text-white">
               {score}/{questions.length}{" "}
-              <span className="text-wisdom-muted text-base font-semibold">
+              <span className="text-wisdom-muted text-sm font-semibold">
                 ({questions.length ? Math.round((score / questions.length) * 100) : 0}%)
               </span>
             </p>
-            <p className="text-sm text-wisdom-muted mt-1">Correct · Wrong {wrong} · Skipped {skipped}</p>
-            <p className="text-xs text-cyan-300/80 mt-2">Saved on this device. Syncs when online.</p>
+            <p className="text-xs text-wisdom-muted mt-1">Correct · Wrong {wrong} · Skipped {skipped}</p>
+            <p className="text-[11px] text-cyan-300/80 mt-1.5">Saved on this device. Syncs when online.</p>
           </div>
           <div className="flex flex-wrap gap-2 justify-center">
             <button type="button" onClick={() => setReviewFilter("all")}
