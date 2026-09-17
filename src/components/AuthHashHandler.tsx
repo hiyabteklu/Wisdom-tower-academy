@@ -19,6 +19,7 @@ export default function AuthHashHandler() {
     const access = params.get("access_token");
     const path = window.location.pathname || "/";
 
+    // Already on reset-password — leave alone
     if (path.startsWith("/reset-password")) return;
 
     if (
@@ -29,6 +30,7 @@ export default function AuthHashHandler() {
       return;
     }
 
+    // Query-style recovery on wrong page
     const search = window.location.search || "";
     if (
       search.includes("type=recovery") ||
