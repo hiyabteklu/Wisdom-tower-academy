@@ -6,13 +6,12 @@ import MathText from "@/components/MathText";
 /**
  * Advanced study-content renderer.
  *
- * Markdown-ish + study features:
  *  # / ## / ###  topics & subtopics
  *  > callouts
  *  - / * lists
  *  **bold**, *italic*, `code`
- *  ==highlight== or [[key term]] → amber key-term pills
- *  **KEY:** patterns for definition emphasis
+ *  ==highlight== or [[key term]] (unpaired == stripped)
+ *  Markdown tables
  *  LaTeX via MathText ($...$, $$...$$)
  */
 
@@ -33,29 +32,52 @@ function slugify(s: string) {
     .slice(0, 64);
 }
 
-/** Inline marks → React nodes (string segments + spans) */
+/** Remove stray == that are not closed pairs (prevents "correct.==" artifacts). */
+function sanitizeHighlightMarkers(text: string): string {
+  const parts: string[] = [];
+  let i = 0;
+  while (i < text.length) {
+    const open = text.indexOf("==", i);
+    if (open === -1) {
+      parts.push(text.slice(i));
+      break;
+    }
+    parts.push(text.slice(i, open));
+    const close = text.indexOf("==", open + 2);
+    if (close === -1) {
+      i = open + 2;
+      continue;
+    }
+    const inner = text.slice(open + 2, close);
+    if (inner.includes("\n") || !inner.trim()) {
+      parts.push(text.slice(open, close + 2).replace(/==/g, ""));
+      i = close + 2;
+      continue;
+    }
+    parts.push(`==${inner}==`);
+    i = close + 2;
+  }
+  return parts.join("");
+}
+
 function renderInline(text: string, keyPrefix: string): React.ReactNode[] {
-  // Order: [[term]] ==hl== **bold** *italic* `code`
+  const cleaned = sanitizeHighlightMarkers(text);
   const pattern =
-    /\[\[([^\]]+)\]\]|==([^=]+)==|\*\*([^*]+)\*\*|\*([^*]+)\*|`([^`]+)`/g;
+    /\[\[([^\]]+)\]\]|==([^=\n]+)==|\*\*([^*]+)\*\*|\*([^*]+)\*|`([^`]+)`/g;
   const nodes: React.ReactNode[] = [];
   let last = 0;
   let m: RegExpExecArray | null;
   let i = 0;
 
-  while ((m = pattern.exec(text)) !== null) {
+  while ((m = pattern.exec(cleaned)) !== null) {
     if (m.index > last) {
       nodes.push(
-        <MathText key={`${keyPrefix}-t-${i++}`} text={text.slice(last, m.index)} />
+        <MathText key={`${keyPrefix}-t-${i++}`} text={cleaned.slice(last, m.index)} />
       );
     }
     if (m[1] != null) {
       nodes.push(
-        <mark
-          key={`${keyPrefix}-k-${i++}`}
-          className="key-term"
-          title="Key term"
-        >
+        <mark key={`${keyPrefix}-k-${i++}`} className="key-term" title="Key term">
           {m[1]}
         </mark>
       );
@@ -89,23 +111,22 @@ function renderInline(text: string, keyPrefix: string): React.ReactNode[] {
     }
     last = m.index + m[0].length;
   }
-  if (last < text.length) {
-    nodes.push(<MathText key={`${keyPrefix}-t-${i++}`} text={text.slice(last)} />);
+  if (last < cleaned.length) {
+    nodes.push(<MathText key={`${keyPrefix}-t-${i++}`} text={cleaned.slice(last)} />);
   }
-  return nodes.length ? nodes : [<MathText key={`${keyPrefix}-empty`} text={text} />];
+  return nodes.length ? nodes : [<MathText key={`${keyPrefix}-empty`} text={cleaned} />];
 }
 
 export default function RichContent({ body, className = "", onToc }: Props) {
   const { blocks, toc } = useMemo(() => parseBlocks(body || ""), [body]);
 
-  // surface TOC once
   useMemo(() => {
     onToc?.(toc);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toc]);
 
   return (
-    <article className={`study-prose ${className}`}>
+    <article className={`study-prose w-full max-w-none ${className}`}>
       {blocks.map((b, idx) => {
         if (b.type === "h1") {
           return (
@@ -145,6 +166,30 @@ export default function RichContent({ body, className = "", onToc }: Props) {
             </ul>
           );
         }
+        if (b.type === "table") {
+          return (
+            <div key={idx} className="study-table-wrap">
+              <table className="study-table">
+                <thead>
+                  <tr>
+                    {b.headers.map((h, j) => (
+                      <th key={j}>{renderInline(h, `th-${idx}-${j}`)}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {b.rows.map((row, r) => (
+                    <tr key={r}>
+                      {row.map((cell, c) => (
+                        <td key={c}>{renderInline(cell, `td-${idx}-${r}-${c}`)}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        }
         if (b.type === "hr") {
           return <hr key={idx} className="study-hr" />;
         }
@@ -162,7 +207,20 @@ type Block =
   | { type: "h1" | "h2" | "h3"; text: string; id: string }
   | { type: "p" | "callout"; text: string }
   | { type: "list"; items: string[] }
+  | { type: "table"; headers: string[]; rows: string[][] }
   | { type: "hr" };
+
+function splitTableRow(line: string): string[] {
+  let s = line.trim();
+  if (s.startsWith("|")) s = s.slice(1);
+  if (s.endsWith("|")) s = s.slice(0, -1);
+  return s.split("|").map((c) => c.trim());
+}
+
+function isSeparatorRow(line: string): boolean {
+  const cells = splitTableRow(line);
+  return cells.length > 0 && cells.every((c) => /^:?-+:?$/.test(c) || c === "");
+}
 
 function parseBlocks(raw: string): { blocks: Block[]; toc: TocItem[] } {
   const lines = raw.replace(/\r\n/g, "\n").split("\n");
@@ -191,6 +249,24 @@ function parseBlocks(raw: string): { blocks: Block[]; toc: TocItem[] } {
       flushPara();
       blocks.push({ type: "hr" });
       i++;
+      continue;
+    }
+
+    // Markdown table
+    if (
+      trimmed.includes("|") &&
+      i + 1 < lines.length &&
+      isSeparatorRow(lines[i + 1].trim())
+    ) {
+      flushPara();
+      const headers = splitTableRow(trimmed);
+      i += 2; // skip header + separator
+      const rows: string[][] = [];
+      while (i < lines.length && lines[i].trim().includes("|")) {
+        rows.push(splitTableRow(lines[i].trim()));
+        i++;
+      }
+      blocks.push({ type: "table", headers, rows });
       continue;
     }
 
