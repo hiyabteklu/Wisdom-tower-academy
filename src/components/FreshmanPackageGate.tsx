@@ -11,6 +11,9 @@ import { FRESHMAN_LOCKED_UNTIL_OPENING } from "@/lib/ownership";
 /**
  * Wraps Freshman pages: respects admin content_locks for package:freshman,
  * falling back to the static FRESHMAN_LOCKED_UNTIL_OPENING flag.
+ *
+ * While the lock check runs, children still render so subjects are tappable
+ * immediately (no full-page wait for network / images).
  */
 export default function FreshmanPackageGate({
   children,
@@ -20,7 +23,7 @@ export default function FreshmanPackageGate({
   showBack?: boolean;
 }) {
   const [closed, setClosed] = useState<boolean | null>(
-    FRESHMAN_LOCKED_UNTIL_OPENING ? true : null
+    FRESHMAN_LOCKED_UNTIL_OPENING ? true : false
   );
 
   useEffect(() => {
@@ -34,7 +37,7 @@ export default function FreshmanPackageGate({
       } else if (mode === "open" || mode === "require_purchase") {
         setClosed(false);
       } else {
-        setClosed(FRESHMAN_LOCKED_UNTIL_OPENING);
+        setClosed(Boolean(FRESHMAN_LOCKED_UNTIL_OPENING));
       }
     }
     void check();
@@ -43,15 +46,7 @@ export default function FreshmanPackageGate({
     };
   }, []);
 
-  if (closed === null) {
-    return (
-      <div className="min-h-[40vh] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  if (closed) {
+  if (closed === true) {
     return <FreshmanLockedPanel showBack={showBack} />;
   }
 
