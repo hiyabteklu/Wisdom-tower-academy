@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "prebuild": "node scripts/restore-ui-polish.mjs",
+    "build": "node scripts/restore-ui-polish.mjs && next build",
     "start": "next start",
     "lint": "next lint",
     "cap:sync": "npx cap sync android",
@@ -12,30 +13,30 @@
     "mobile": "npx cap sync android && npx cap open android"
   },
   "dependencies": {
-    "next": "^15.1.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "clsx": "^2.1.1",
-    "tailwind-merge": "^2.5.4",
-    "lucide-react": "^0.460.0",
-    "class-variance-authority": "^0.7.0",
-    "@supabase/supabase-js": "^2.47.10",
-    "appwrite": "^16.0.0",
-    "node-appwrite": "^14.1.0",
-    "ai": "^5.0.0",
-    "katex": "^0.16.11",
-    "pdfjs-dist": "^4.10.38"
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/app": "^7.1.0",
+    "@capacitor/cli": "^7.4.3",
+    "@capacitor/core": "^7.4.3",
+    "@capacitor/haptics": "^7.0.2",
+    "@capacitor/keyboard": "^7.0.3",
+    "@capacitor/status-bar": "^7.0.3",
+    "@supabase/supabase-js": "^2.57.4",
+    "katex": "^0.16.22",
+    "lucide-react": "^0.544.0",
+    "next": "15.5.25",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
   },
   "devDependencies": {
-    "@types/node": "^22.9.0",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
     "@types/katex": "^0.16.7",
-    "typescript": "^5.6.3",
-    "tailwindcss": "^3.4.15",
-    "postcss": "^8.4.49",
-    "autoprefixer": "^10.4.20",
-    "eslint": "^9.14.0",
-    "eslint-config-next": "^15.1.0"
+    "@types/node": "^22.18.1",
+    "@types/react": "^19.1.12",
+    "@types/react-dom": "^19.1.9",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.35.0",
+    "eslint-config-next": "15.5.25",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.9.2"
   }
 }
