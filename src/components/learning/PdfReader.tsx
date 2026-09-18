@@ -36,9 +36,9 @@ function formatBytes(n: number): string {
 }
 
 const LARGE_FILE_BYTES = 20 * 1024 * 1024;
-
-/** Focused reading session length before break prompt (Pomodoro). */
 const POMODORO_SECONDS = 25 * 60;
+const WINDOW = 2;
+const DEFAULT_PAGE_H = 520;
 
 type Props = {
   url: string;
@@ -47,18 +47,6 @@ type Props = {
   onPageChange?: (page: number, total: number) => void;
 };
 
-/** How many pages around the current one stay painted as canvases */
-const WINDOW = 2; // current ± 2
-const DEFAULT_PAGE_H = 520;
-
-/**
- * Memory-safe PDF reader:
- * - Loads the PDF once (cached) with real download progress + size
- * - Download button for offline save
- * - Large-file notice when > 20 MB
- * - Only paints a small window of pages to canvas
- * - Pomodoro break after 25 min focused reading
- */
 export default function PdfReader({ url, title, onOpened, onPageChange }: Props) {
   const [fullscreen, setFullscreen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -75,12 +63,10 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
   const [gotoInput, setGotoInput] = useState("");
   const [scrollWidth, setScrollWidth] = useState(360);
   const [pageHeights, setPageHeights] = useState<Record<number, number>>({});
-
   const [focusSeconds, setFocusSeconds] = useState(0);
   const [breakOpen, setBreakOpen] = useState(false);
   const [breakQuote, setBreakQuote] = useState<MotivationalQuote | null>(null);
   const focusSecondsRef = useRef(0);
-
   const scrollRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const pdfRef = useRef<any>(null);
@@ -151,7 +137,7 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
   function downloadPdf() {
     const data = pdfBytesRef.current;
     if (!data) return;
-    const blob = new Blob([data], { type: "application/pdf" });
+    const blob = new Blob([new Uint8Array(data)], { type: "application/pdf" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = `${title.replace(/[^\w\s-]+/g, "").trim() || "book"}.pdf`;
@@ -237,7 +223,6 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
   useEffect(() => {
     const root = scrollRef.current;
     if (!root || !numPages) return;
-
     let raf = 0;
     const onScroll = () => {
       cancelAnimationFrame(raf);
@@ -263,7 +248,6 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
         });
       });
     };
-
     root.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
     return () => {
@@ -314,14 +298,9 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
     <>
       <div className="flex items-center gap-2 px-2 sm:px-3 py-2 border-b border-white/10 bg-[#0b1220] shrink-0">
         <FileText className="w-4 h-4 shrink-0 text-amber-300" />
-        <p className="text-xs sm:text-sm text-white/80 truncate font-medium flex-1 min-w-0">
-          {title}
-        </p>
+        <p className="text-xs sm:text-sm text-white/80 truncate font-medium flex-1 min-w-0">{title}</p>
         {!loading && !error && (
-          <span
-            className="hidden sm:inline-flex items-center gap-1 rounded-lg border border-amber-400/25 bg-amber-500/10 px-2 py-1 text-[10px] font-semibold tabular-nums text-amber-200/90 shrink-0"
-            title="Focused reading time this session (Pomodoro)"
-          >
+          <span className="hidden sm:inline-flex items-center gap-1 rounded-lg border border-amber-400/25 bg-amber-500/10 px-2 py-1 text-[10px] font-semibold tabular-nums text-amber-200/90 shrink-0">
             <Timer className="w-3 h-3" />
             {Math.floor(focusSeconds / 60)}:{String(focusSeconds % 60).padStart(2, "0")}
           </span>
@@ -339,38 +318,20 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
               <span className="tabular-nums opacity-80">{formatBytes(fileBytes)}</span>
             </button>
           )}
-          <ToolBtn
-            onClick={() => setScale((s) => Math.max(0.55, Math.round((s - 0.15) * 100) / 100))}
-            label="Zoom out"
-          >
+          <ToolBtn onClick={() => setScale((s) => Math.max(0.55, Math.round((s - 0.15) * 100) / 100))} label="Zoom out">
             <ZoomOut className="w-4 h-4" />
           </ToolBtn>
-          <span className="text-[11px] tabular-nums text-white/50 w-10 text-center hidden sm:inline">
-            {Math.round(scale * 100)}%
-          </span>
-          <ToolBtn
-            onClick={() => setScale((s) => Math.min(2.2, Math.round((s + 0.15) * 100) / 100))}
-            label="Zoom in"
-          >
+          <span className="text-[11px] tabular-nums text-white/50 w-10 text-center hidden sm:inline">{Math.round(scale * 100)}%</span>
+          <ToolBtn onClick={() => setScale((s) => Math.min(2.2, Math.round((s + 0.15) * 100) / 100))} label="Zoom in">
             <ZoomIn className="w-4 h-4" />
           </ToolBtn>
           {!fullscreen ? (
-            <button
-              type="button"
-              onClick={() => setFullscreen(true)}
-              className="ml-1 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/90 text-wisdom-dark text-[11px] font-bold"
-            >
-              <Maximize2 className="w-3.5 h-3.5" />
-              Full screen
+            <button type="button" onClick={() => setFullscreen(true)} className="ml-1 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/90 text-wisdom-dark text-[11px] font-bold">
+              <Maximize2 className="w-3.5 h-3.5" /> Full screen
             </button>
           ) : (
-            <button
-              type="button"
-              onClick={() => setFullscreen(false)}
-              className="ml-1 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500 text-white text-[11px] font-bold"
-            >
-              <X className="w-4 h-4" />
-              Exit
+            <button type="button" onClick={() => setFullscreen(false)} className="ml-1 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500 text-white text-[11px] font-bold">
+              <X className="w-4 h-4" /> Exit
             </button>
           )}
         </div>
@@ -378,62 +339,27 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
 
       {numPages > 0 && (
         <div className="flex flex-wrap items-center justify-center gap-2 px-2 py-2 border-b border-white/8 bg-[#0d1526] shrink-0">
-          <button
-            type="button"
-            disabled={currentPage <= 1}
-            onClick={() => scrollToPage(currentPage - 1)}
-            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-white/12 text-xs font-semibold text-white/85 disabled:opacity-30"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            Prev
+          <button type="button" disabled={currentPage <= 1} onClick={() => scrollToPage(currentPage - 1)} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-white/12 text-xs font-semibold text-white/85 disabled:opacity-30">
+            <ChevronLeft className="w-4 h-4" /> Prev
           </button>
           <form onSubmit={onGotoSubmit} className="flex items-center gap-1.5">
-            <input
-              type="number"
-              min={1}
-              max={numPages}
-              value={gotoInput}
-              placeholder={String(currentPage)}
-              onChange={(e) => setGotoInput(e.target.value)}
-              className="w-14 rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 text-xs text-center tabular-nums text-white focus:outline-none focus:border-amber-400/50"
-            />
+            <input type="number" min={1} max={numPages} value={gotoInput} placeholder={String(currentPage)} onChange={(e) => setGotoInput(e.target.value)} className="w-14 rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 text-xs text-center tabular-nums text-white focus:outline-none focus:border-amber-400/50" />
             <span className="text-[11px] text-white/45 tabular-nums">/ {numPages}</span>
-            <button
-              type="submit"
-              className="px-2 py-1.5 rounded-lg border border-amber-400/30 text-[11px] font-semibold text-amber-200"
-            >
-              Go
-            </button>
+            <button type="submit" className="px-2 py-1.5 rounded-lg border border-amber-400/30 text-[11px] font-semibold text-amber-200">Go</button>
           </form>
-          <button
-            type="button"
-            disabled={currentPage >= numPages}
-            onClick={() => scrollToPage(currentPage + 1)}
-            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-white/12 text-xs font-semibold text-white/85 disabled:opacity-30"
-          >
-            Next
-            <ChevronRight className="w-4 h-4" />
+          <button type="button" disabled={currentPage >= numPages} onClick={() => scrollToPage(currentPage + 1)} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-white/12 text-xs font-semibold text-white/85 disabled:opacity-30">
+            Next <ChevronRight className="w-4 h-4" />
           </button>
-          <button
-            type="button"
-            onClick={() => scrollToPage(1)}
-            className="p-1.5 rounded-lg border border-white/10 text-white/50"
-            title="Top"
-          >
+          <button type="button" onClick={() => scrollToPage(1)} className="p-1.5 rounded-lg border border-white/10 text-white/50" title="Top">
             <ChevronsUp className="w-4 h-4" />
           </button>
         </div>
       )}
 
-      <div
-        ref={scrollRef}
-        className="overflow-y-auto overflow-x-hidden flex-1 min-h-0 bg-[#121212]"
-      >
+      <div ref={scrollRef} className="overflow-y-auto overflow-x-hidden flex-1 min-h-0 bg-[#121212]">
         {loading && (
           <div className="flex flex-col items-center justify-center w-full py-24 px-6 gap-4">
-            <p className="text-sm text-white/50">
-              {loadPhase === "parse" ? "Opening book…" : "Downloading book…"}
-            </p>
+            <p className="text-sm text-white/50">{loadPhase === "parse" ? "Opening book…" : "Downloading book…"}</p>
             {fileBytes != null && fileBytes >= LARGE_FILE_BYTES && (
               <p className="text-xs text-amber-200/90 text-center max-w-sm rounded-xl border border-amber-400/30 bg-amber-500/10 px-3 py-2">
                 Large file ({formatBytes(fileBytes)}). Please wait — this may take a moment on mobile data.
@@ -441,16 +367,7 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
             )}
             <div className="w-full max-w-sm">
               <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-amber-400 transition-[width] duration-200 ease-out"
-                  style={{
-                    width: `${Math.max(4, loadProgress)}%`,
-                  }}
-                  role="progressbar"
-                  aria-valuenow={loadProgress}
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                />
+                <div className="h-full rounded-full bg-amber-400 transition-[width] duration-200 ease-out" style={{ width: `${Math.max(4, loadProgress)}%` }} role="progressbar" aria-valuenow={loadProgress} aria-valuemin={0} aria-valuemax={100} />
               </div>
               <p className="mt-2 text-center text-[11px] tabular-nums text-white/40">
                 {loadProgress}%
@@ -476,25 +393,11 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
               const active = visiblePages.has(pageNumber);
               const h = pageHeights[pageNumber] ?? DEFAULT_PAGE_H;
               return (
-                <div
-                  key={pageNumber}
-                  data-page={pageNumber}
-                  className="relative w-full flex justify-center"
-                  style={{ minHeight: active ? undefined : h }}
-                >
+                <div key={pageNumber} data-page={pageNumber} className="relative w-full flex justify-center" style={{ minHeight: active ? undefined : h }}>
                   {active ? (
-                    <PdfPage
-                      pdf={pdfRef.current}
-                      pageNumber={pageNumber}
-                      scale={scale}
-                      containerWidth={scrollWidth}
-                      onMeasured={onPageMeasured}
-                    />
+                    <PdfPage pdf={pdfRef.current} pageNumber={pageNumber} scale={scale} containerWidth={scrollWidth} onMeasured={onPageMeasured} />
                   ) : (
-                    <div
-                      className="w-full max-w-full rounded-sm bg-neutral-800/80 border border-white/5 flex items-center justify-center text-white/25 text-xs"
-                      style={{ height: h }}
-                    >
+                    <div className="w-full max-w-full rounded-sm bg-neutral-800/80 border border-white/5 flex items-center justify-center text-white/25 text-xs" style={{ height: h }}>
                       {pageNumber}
                     </div>
                   )}
@@ -509,29 +412,12 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
 
   if (mounted && fullscreen) {
     return createPortal(
-      <div
-        className="fixed inset-0 z-[9999] flex flex-col bg-[#0a0a0a]"
-        style={{ height: "100dvh", width: "100vw" }}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-      >
+      <div className="fixed inset-0 z-[9999] flex flex-col bg-[#0a0a0a]" style={{ height: "100dvh", width: "100vw" }} role="dialog" aria-modal="true" aria-label={title}>
         {readerChrome}
-        <button
-          type="button"
-          onClick={() => setFullscreen(false)}
-          className="absolute top-[max(0.75rem,env(safe-area-inset-top))] right-3 z-[10000] inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-rose-500 text-white text-sm font-bold shadow-xl"
-        >
-          <X className="w-5 h-5" />
-          Exit
+        <button type="button" onClick={() => setFullscreen(false)} className="absolute top-[max(0.75rem,env(safe-area-inset-top))] right-3 z-[10000] inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-rose-500 text-white text-sm font-bold shadow-xl">
+          <X className="w-5 h-5" /> Exit
         </button>
-        <PomodoroBreak
-          open={breakOpen}
-          quote={breakQuote}
-          sessionMinutes={Math.max(1, Math.round(focusSeconds / 60))}
-          onContinue={resetPomodoro}
-          onTakeBreak={resetPomodoro}
-        />
+        <PomodoroBreak open={breakOpen} quote={breakQuote} sessionMinutes={Math.max(1, Math.round(focusSeconds / 60))} onContinue={resetPomodoro} onTakeBreak={resetPomodoro} />
       </div>,
       document.body
     );
@@ -540,33 +426,14 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
   return (
     <div className="relative flex flex-col rounded-2xl border border-white/12 bg-neutral-950 overflow-hidden h-[min(72vh,680px)]">
       {readerChrome}
-      <PomodoroBreak
-        open={breakOpen}
-        quote={breakQuote}
-        sessionMinutes={Math.max(1, Math.round(focusSeconds / 60))}
-        onContinue={resetPomodoro}
-        onTakeBreak={resetPomodoro}
-      />
+      <PomodoroBreak open={breakOpen} quote={breakQuote} sessionMinutes={Math.max(1, Math.round(focusSeconds / 60))} onContinue={resetPomodoro} onTakeBreak={resetPomodoro} />
     </div>
   );
 }
 
-function ToolBtn({
-  children,
-  onClick,
-  label,
-}: {
-  children: React.ReactNode;
-  onClick: () => void;
-  label: string;
-}) {
+function ToolBtn({ children, onClick, label }: { children: React.ReactNode; onClick: () => void; label: string }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      className="p-1.5 rounded-lg border border-white/12 text-white/75 hover:bg-white/5"
-    >
+    <button type="button" onClick={onClick} aria-label={label} className="p-1.5 rounded-lg border border-white/12 text-white/75 hover:bg-white/5">
       {children}
     </button>
   );
@@ -602,26 +469,19 @@ function PdfPage({
         setBusy(true);
         const pageObj = await pdf.getPage(pageNumber);
         if (cancelled || gen !== renderGen.current) return;
-
         const base = pageObj.getViewport({ scale: 1 });
-        const fit =
-          containerWidth > 48
-            ? ((containerWidth - 24) / base.width) * scale
-            : scale;
+        const fit = containerWidth > 48 ? ((containerWidth - 24) / base.width) * scale : scale;
         const viewport = pageObj.getViewport({ scale: fit });
-
         const canvas = canvasRef.current;
         if (!canvas) return;
         const ctx = canvas.getContext("2d", { alpha: false });
         if (!ctx) return;
-
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
         canvas.width = Math.floor(viewport.width * dpr);
         canvas.height = Math.floor(viewport.height * dpr);
         canvas.style.width = `${viewport.width}px`;
         canvas.style.height = `${viewport.height}px`;
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
         task = pageObj.render({ canvasContext: ctx, viewport });
         await task.promise;
         if (cancelled || gen !== renderGen.current) return;
@@ -648,9 +508,7 @@ function PdfPage({
   return (
     <div className="relative shadow-lg">
       {busy && (
-        <div className="absolute inset-0 flex items-center justify-center bg-neutral-900/40 text-white/30 text-xs z-10">
-          …
-        </div>
+        <div className="absolute inset-0 flex items-center justify-center bg-neutral-900/40 text-white/30 text-xs z-10">…</div>
       )}
       <canvas ref={canvasRef} className="max-w-full h-auto block mx-auto bg-white" />
     </div>
