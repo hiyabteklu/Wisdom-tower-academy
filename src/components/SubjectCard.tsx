@@ -19,6 +19,7 @@ export default function SubjectCard({ href, name, image, ready = false }: Props)
   return (
     <Link
       href={href}
+      prefetch={true}
       className={`card-3d group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border bg-wisdom-card shadow-lg shadow-black/20 transition-all duration-300 hover:-translate-y-0.5 ${
         ready
           ? "border-emerald-400/40 hover:border-emerald-400/60 hover:shadow-emerald-500/15"
@@ -31,6 +32,9 @@ export default function SubjectCard({ href, name, image, ready = false }: Props)
           <img
             src={image}
             alt={name}
+            loading="lazy"
+            decoding="async"
+            fetchPriority="low"
             className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
             onError={() => setImgFailed(true)}
           />
