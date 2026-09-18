@@ -1,43 +1,43 @@
 /*
- * Wide tables / KaTeX: horizontal scroll without trapping vertical page scroll.
+ * Wide tables / KaTeX horizontal scroll — must NOT trap vertical page scroll.
  *
- * NEVER use touch-action: pan-x alone — that blocks up/down scrolling when the
- * finger starts on the equation/table (feels "stuck").
+ * Rules:
+ * - Do not set touch-action: pan-x (blocks up/down when finger starts on math)
+ * - Do not set touch-action on parent notes surface (would steal horizontal either)
+ * - overflow-y: visible so the page owns vertical scrolling
+ * - overscroll-behavior-x: contain only so horizontal edge bounce stays local
  */
 
-.study-table-wrap,
-.study-prose .katex-display {
+.study-table-wrap {
+  width: 100%;
   max-width: 100%;
   overflow-x: auto;
   overflow-y: visible;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
-  overscroll-behavior-y: auto;
   scroll-snap-type: none;
-  /* Allow both axes — browser decides from gesture direction */
-  touch-action: manipulation;
+  margin: 1rem 0;
 }
 
-/* Prefer native momentum; avoid nested scroll traps on the reading surface */
-.notes-reading-surface {
-  overflow-x: visible;
-  touch-action: pan-y pinch-zoom;
+.study-prose .katex-display {
+  margin: 0.9rem 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: none;
+  text-align: center;
 }
 
-.study-prose {
-  overflow-x: visible;
-  touch-action: pan-y pinch-zoom;
-}
-
-/* Table cells: wrap text when possible so fewer need horizontal drag */
+/* Prefer wrapping in table cells so fewer need sideways drag */
 .study-table th,
 .study-table td {
   white-space: normal;
-  max-width: min(70vw, 18rem);
+  max-width: min(72vw, 16rem);
   word-break: break-word;
 }
 
-/* Display math: keep one line when short; scroll only when truly wider than viewport */
 .study-prose .katex-display > .katex {
   display: inline-block;
   max-width: none;
