@@ -66,28 +66,32 @@ function SignupForm() {
     }
     setLoading(true);
 
-    const id = identifier.trim();
-    const email = looksLikeEmail(id) ? id : authEmailFromIdentifier(id);
-    const phone = looksLikeEmail(id) ? undefined : id.replace(/\s+/g, "");
+    try {
+      const identity = authEmailFromIdentifier(identifier);
+      const { email, phone } = identity;
 
-    const { data, error: signError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName.trim(),
-          education_level: educationLevel,
-          phone: phone || null,
+      const { error: signError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName.trim(),
+            education_level: educationLevel,
+            phone: phone || null,
+          },
         },
-      },
-    });
+      });
 
-    setLoading(false);
-    if (signError) {
-      setError(signError.message || "Could not create account.");
-      return;
+      setLoading(false);
+      if (signError) {
+        setError(signError.message || "Could not create account.");
+        return;
+      }
+      setDone(true);
+    } catch (err) {
+      setLoading(false);
+      setError(err instanceof Error ? err.message : "Could not create account.");
     }
-    setDone(true);
   }
 
   const inputClass =
