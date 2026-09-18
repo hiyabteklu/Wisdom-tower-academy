@@ -482,8 +482,9 @@ function PdfPage({
         canvas.style.width = `${viewport.width}px`;
         canvas.style.height = `${viewport.height}px`;
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        task = pageObj.render({ canvasContext: ctx, viewport });
-        await task.promise;
+        const renderTask = pageObj.render({ canvasContext: ctx, viewport });
+        task = renderTask;
+        await renderTask.promise;
         if (cancelled || gen !== renderGen.current) return;
         onMeasured(pageNumber, viewport.height);
         setBusy(false);
