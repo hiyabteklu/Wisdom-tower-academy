@@ -1,66 +1,16 @@
 /*
- * Notes scroll policy (pairs with NotesScrollFix.tsx):
- * - Display math: NO overflow-x scroll containers (JS scales to fit)
- * - Tables: overflow-x only; touch direction lock is handled in JS
- * - Never use touch-action: pan-x (blocks vertical page scroll)
+ * Minimal wide-content scroll (no touch-action, no JS gesture lock, no transform).
+ * Native nested overflow-x: auto is enough in modern mobile browsers.
  */
 
-.study-prose .katex-display {
-  margin: 0.9rem 0;
-  max-width: 100%;
-  overflow: visible !important;
-  text-align: center;
-}
-
-.study-prose .katex-display > .katex {
-  display: inline-block;
-  max-width: none;
-}
-
 .study-table-wrap {
-  width: 100%;
   max-width: 100%;
-  margin: 1rem 0;
-  border-radius: 0.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  /* JS sets overflow-x; keep y visible so the page owns vertical scroll */
   overflow-x: auto;
-  overflow-y: visible;
-  -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
-  scroll-snap-type: none;
 }
 
-.study-table {
-  width: max-content;
-  min-width: 100%;
-  border-collapse: collapse;
-  font-size: 0.92rem;
-}
-
-.study-table th,
-.study-table td {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 0.55rem 0.75rem;
-  text-align: left;
-  vertical-align: top;
-  white-space: normal;
-  max-width: min(72vw, 16rem);
-  word-break: break-word;
-}
-
-.study-table th {
-  background: rgba(34, 211, 238, 0.1);
-  color: #fff;
-  font-weight: 700;
-}
-
-.study-table tr:nth-child(even) td {
-  background: rgba(255, 255, 255, 0.03);
-}
-
-/* Reading surface must not create a second vertical scroller */
-.notes-reading-surface {
-  overflow-x: visible;
-  overflow-y: visible;
+.study-prose .katex-display {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
 }
