@@ -1,9 +1,47 @@
 # Agent / Developer notes — Wisdom Tower Academy
 
-> **Read this before changing UI, flashcards, free resources, or the Android shell.**  
+> **Read this before changing UI, flashcards, free resources, storage, or the Android shell.**  
 > Prevents the same regressions across different agents.
 
-**Last updated:** 2026-09-17
+**Last updated:** 2026-09-18
+
+---
+
+## Where we left off (2026-09-18)
+
+### Storage strategy (this year, free tiers)
+
+- **Supabase free:** auth, payments, package grants, `learning_resources` metadata, progress. **Not** for PDF bytes.
+- **Appwrite (Student Education):** **all package PDFs/files** (grades + freshman + special/ECE).
+- **Vercel Hobby:** hosts the Next.js site until owner pays next year.
+- Owner is **not** paying for Supabase/Vercel this year; protect **5 GB Supabase egress** by keeping heavy files on Appwrite.
+
+Full detail: **`docs/STORAGE-MIGRATION.md`**
+
+### Owner action in progress
+
+1. Upload ~30 freshman + special package PDFs in **Appwrite Console** (same as Grade 9 trial books).
+2. In admin → Books → paste **File ID** → Save/Publish.
+3. After links work, delete old files from **Supabase Storage** `learning-content`.
+
+### Code already rewired
+
+- `scopeUsesAppwrite()` returns true for `grade/`, `freshman/`, `ece/` (`src/data/admin-nav.ts`).
+- Admin Content panel shows Appwrite File ID field for those scopes.
+- `storage_path` format: `appwrite:FILE_ID` (`src/lib/content.ts`).
+
+### Android app
+
+- Repo: `hiyabteklu/Wisdom-tower-academy-app`
+- Native Compose chrome + WebView of live site.
+- Recent work: brand GIF loader, offline notice, onboarding, exit dialogs, one-step back per tab, production APK name `Wisdom-tower-academy.apk`.
+- See app `ARCHITECTURE.md`.
+
+### Website product fixes still relevant
+
+- Payment “Go to my learning” must use `/learning` (not `/my-learning`).
+- Login/signup: Terms checkbox (must be **deployed** on Vercel to show live).
+- No sparkle emojis in onboarding/marketing copy preferences.
 
 ---
 
@@ -11,7 +49,7 @@
 
 | Repo | Role |
 |------|------|
-| `hiyabteklu/Wisdom-tower-academy` | Website (Next.js 15). **Source of truth** for content, auth, packages, flashcards, quizzes, PDFs, free resources. |
+| `hiyabteklu/Wisdom-tower-academy` | Website (Next.js 15). **Source of truth** for content, auth, packages, flashcards, quizzes, PDFs metadata, free resources. |
 | `hiyabteklu/Wisdom-tower-academy-app` | Android production app = native Compose chrome + full-screen WebView of the live site. |
 
 Full architecture (must read):  
@@ -74,6 +112,9 @@ Lib: `src/lib/free-resources.ts`
 5. **Top-right notification icon** → opens **`/notifications` only** (not Settings).
 6. Bottom nav: Home / Learning / Packages / Account only; `/notifications` must not reset the selected tab.
 7. Website header/footer remain hidden via the injected `wta-app-chrome` style.
+8. **Back:** one step within current section; tab switches clear WebView history so Back does not cycle Home→Learning→Packages.
+9. **Offline:** same `offline.html` message (connection required / data or WiFi) — not generic “cached pages” copy.
+10. Custom brand **GIF** loader (splash + in-app), not Material spinners.
 
 ### Why builds must stay reliable
 
@@ -89,6 +130,7 @@ Lib: `src/lib/free-resources.ts`
 2. Never overwrite a full page with `PLACEHOLDER` or a stub "Coming soon" if content already exists in git history or Supabase.
 3. After UI changes, check reduced-motion and mobile width.
 4. Stale Copilot branches (`copilot/*`) should be deleted after the PR is closed; do not re-merge obsolete WIP PRs onto main.
+5. Storage: files → Appwrite; SQL/auth → Supabase (see `docs/STORAGE-MIGRATION.md`).
 
 ---
 
@@ -100,6 +142,8 @@ Lib: `src/lib/free-resources.ts`
 - [ ] Campus Life / Study Techniques show full guides
 - [ ] Flashcards: 3D flip + swipe
 - [ ] `/notifications` exists for package status
+- [ ] Admin Books on freshman/special shows Appwrite File ID field
+- [ ] Published book with `appwrite:FILE_ID` opens for entitled users
 
 **Android app**
 
@@ -107,11 +151,13 @@ Lib: `src/lib/free-resources.ts`
 - [ ] Scrolling does **not** hide the native top bar
 - [ ] Bell opens `/notifications` only
 - [ ] Title reads "Wisdom Tower Academy"
+- [ ] Back does not hop across bottom tabs
 
 ---
 
 ## Related docs
 
+- `docs/STORAGE-MIGRATION.md` — **PDF → Appwrite handoff (read first for storage)**
 - `docs/NATIVE-ANDROID.md` — long-term pure-Compose vision (not current production)
 - `docs/MOBILE-APP.md` — **deprecated** Capacitor notes
 - App repo `ARCHITECTURE.md` — living production architecture
