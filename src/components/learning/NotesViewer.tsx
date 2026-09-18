@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Lightbulb } from "lucide-react";
 import RichContent from "@/components/learning/RichContent";
-import NotesScrollFix from "@/components/learning/NotesScrollFix";
 
 type Props = {
   body: string;
@@ -71,9 +70,7 @@ export default function NotesViewer({ body, resourceId, onProgress }: Props) {
         data-scroll-zoom-skip
         data-learning-content
       >
-        <NotesScrollFix>
-          <RichContent body={body} />
-        </NotesScrollFix>
+        <RichContent body={body} />
       </div>
 
       <div className="pt-2 border-t border-white/8">
@@ -91,9 +88,7 @@ export default function NotesViewer({ body, resourceId, onProgress }: Props) {
             <p className="text-[10px] font-bold uppercase tracking-wider text-violet-300 mb-2 inline-flex items-center gap-1">
               <Lightbulb className="w-3.5 h-3.5" /> AI summary
             </p>
-            <NotesScrollFix>
-              <RichContent body={ai} />
-            </NotesScrollFix>
+            <RichContent body={ai} />
           </div>
         )}
       </div>
