@@ -12,8 +12,8 @@ import {
  * Query: ?path=<storage_path>
  *
  * Supports:
- * - Supabase paths (freshman / special packages)
- * - appwrite:FILE_ID (grades 9–12)
+ * - appwrite:FILE_ID (all packages)
+ * - legacy Supabase storage paths (if any remain)
  */
 export async function GET(req: NextRequest) {
   const path = req.nextUrl.searchParams.get("path");
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Missing path" }, { status: 400 });
   }
 
-  // --- Appwrite (grades 9–12) ---
+  // --- Appwrite ---
   if (isAppwriteStoragePath(path) || path.startsWith(APPWRITE_PATH_PREFIX)) {
     const fileId = parseAppwriteFileId(path) || path.replace(/^appwrite:/i, "").trim();
     if (!fileId) {
@@ -50,7 +50,6 @@ export async function GET(req: NextRequest) {
 
     try {
       const upstream = await fetch(viewUrl, {
-        // Public bucket READ (role "Any") — no user JWT required
         headers: { Accept: "application/pdf,*/*" },
         cache: "no-store",
       });
@@ -71,6 +70,7 @@ export async function GET(req: NextRequest) {
         status: 200,
         headers: {
           "Content-Type": "application/pdf",
+          "Content-Length": String(buf.byteLength),
           "Content-Disposition": 'inline; filename="document.pdf"',
           "Cache-Control": "private, max-age=300",
           "X-Content-Type-Options": "nosniff",
@@ -86,7 +86,7 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // --- Supabase (freshman / special packages) ---
+  // --- Legacy Supabase path (if any files remain) ---
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
@@ -113,6 +113,7 @@ export async function GET(req: NextRequest) {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",
+      "Content-Length": String(buf.byteLength),
       "Content-Disposition": 'inline; filename="document.pdf"',
       "Cache-Control": "private, max-age=300",
       "X-Content-Type-Options": "nosniff",
