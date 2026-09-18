@@ -11,8 +11,11 @@ import MathText from "@/components/MathText";
  *  - / * lists
  *  **bold**, *italic*, `code`
  *  ==highlight== or [[key term]] (unpaired == stripped)
- *  Markdown tables
- *  LaTeX via MathText ($...$, $$...$$)
+ *  Markdown tables (only outside math)
+ *  LaTeX via MathText ($...$, $$...$$, \(...\), \[...\])
+ *
+ * Critical: math spans are masked with placeholders before any table / markdown
+ * pipe logic runs, so absolute-value bars |x-3| never become table cells.
  */
 
 export type TocItem = { id: string; level: number; text: string };
@@ -30,6 +33,35 @@ function slugify(s: string) {
     .trim()
     .replace(/\s+/g, "-")
     .slice(0, 64);
+}
+
+/** Tokens must not contain | * _ ` $ so no markdown rule can split them. */
+const MATH_PLACEHOLDER = (i: number) => `@@WTMATH${i}@@`;
+const MATH_PLACEHOLDER_RE = /@@WTMATH(\d+)@@/g;
+
+/**
+ * Extract every math span, replace with placeholder, return map for restore.
+ * Order: $$ $$ → \[ \] → $ $ → \( \)
+ */
+function protectMath(raw: string): { text: string; math: string[] } {
+  const math: string[] = [];
+  const pattern =
+    /\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]|\$([^$\n]+?)\$|\\\(([\s\S]+?)\\\)/g;
+
+  const text = raw.replace(pattern, (full) => {
+    const idx = math.length;
+    math.push(full);
+    return MATH_PLACEHOLDER(idx);
+  });
+
+  return { text, math };
+}
+
+function restoreMath(text: string, math: string[]): string {
+  return text.replace(MATH_PLACEHOLDER_RE, (_, n) => {
+    const i = Number(n);
+    return math[i] != null ? math[i] : "";
+  });
 }
 
 /** Remove stray == that are not closed pairs (prevents "correct.==" artifacts). */
@@ -222,16 +254,30 @@ function isSeparatorRow(line: string): boolean {
   return cells.length > 0 && cells.every((c) => /^:?-+:?$/.test(c) || c === "");
 }
 
+/**
+ * True markdown table header: at least 2 cells after split, and next line is separator.
+ * Math is already masked, so remaining | are real table pipes.
+ */
+function looksLikeTableHeader(line: string): boolean {
+  if (!line.includes("|")) return false;
+  const cells = splitTableRow(line);
+  return cells.length >= 2;
+}
+
 function parseBlocks(raw: string): { blocks: Block[]; toc: TocItem[] } {
-  const lines = raw.replace(/\r\n/g, "\n").split("\n");
+  // 1) Mask all math so | inside $...$ never becomes table cells
+  const { text: protectedRaw, math } = protectMath(raw);
+  const lines = protectedRaw.replace(/\r\n/g, "\n").split("\n");
   const blocks: Block[] = [];
   const toc: TocItem[] = [];
   let i = 0;
   let para: string[] = [];
 
+  const restore = (s: string) => restoreMath(s, math);
+
   const flushPara = () => {
     const t = para.join(" ").trim();
-    if (t) blocks.push({ type: "p", text: t });
+    if (t) blocks.push({ type: "p", text: restore(t) });
     para = [];
   };
 
@@ -252,18 +298,18 @@ function parseBlocks(raw: string): { blocks: Block[]; toc: TocItem[] } {
       continue;
     }
 
-    // Markdown table
+    // Markdown table — only after math is masked; requires real separator row
     if (
-      trimmed.includes("|") &&
+      looksLikeTableHeader(trimmed) &&
       i + 1 < lines.length &&
       isSeparatorRow(lines[i + 1].trim())
     ) {
       flushPara();
-      const headers = splitTableRow(trimmed);
+      const headers = splitTableRow(trimmed).map(restore);
       i += 2; // skip header + separator
       const rows: string[][] = [];
       while (i < lines.length && lines[i].trim().includes("|")) {
-        rows.push(splitTableRow(lines[i].trim()));
+        rows.push(splitTableRow(lines[i].trim()).map(restore));
         i++;
       }
       blocks.push({ type: "table", headers, rows });
@@ -275,7 +321,7 @@ function parseBlocks(raw: string): { blocks: Block[]; toc: TocItem[] } {
     const h3 = trimmed.match(/^###\s+(.+)/);
     if (h1 || h2 || h3) {
       flushPara();
-      const text = (h1?.[1] || h2?.[1] || h3?.[1] || "").trim();
+      const text = restore((h1?.[1] || h2?.[1] || h3?.[1] || "").trim());
       const level = h1 ? 1 : h2 ? 2 : 3;
       const id = slugify(text) || `sec-${toc.length}`;
       const type = level === 1 ? "h1" : level === 2 ? "h2" : "h3";
@@ -292,7 +338,7 @@ function parseBlocks(raw: string): { blocks: Block[]; toc: TocItem[] } {
         parts.push(lines[i].replace(/^>\s?/, ""));
         i++;
       }
-      blocks.push({ type: "callout", text: parts.join(" ").trim() });
+      blocks.push({ type: "callout", text: restore(parts.join(" ").trim()) });
       continue;
     }
 
@@ -300,7 +346,7 @@ function parseBlocks(raw: string): { blocks: Block[]; toc: TocItem[] } {
       flushPara();
       const items: string[] = [];
       while (i < lines.length && /^[-*]\s+/.test(lines[i].trim())) {
-        items.push(lines[i].trim().replace(/^[-*]\s+/, ""));
+        items.push(restore(lines[i].trim().replace(/^[-*]\s+/, "")));
         i++;
       }
       blocks.push({ type: "list", items });
