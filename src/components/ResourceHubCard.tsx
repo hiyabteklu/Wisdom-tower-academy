@@ -37,6 +37,9 @@ export default function ResourceHubCard({
         <img
           src={hub.image}
           alt={hub.name}
+          loading="lazy"
+          decoding="async"
+          fetchPriority="low"
           className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
         />
         {blocked && (
@@ -93,6 +96,7 @@ export default function ResourceHubCard({
   return (
     <Link
       href={href}
+      prefetch={true}
       className={`card-3d group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card hover:border-white/25 shadow-lg ${hub.glow}`}
     >
       {body}
