@@ -1,16 +1,45 @@
-/* Horizontal scroll: no snap-back on wide tables and KaTeX */
+/*
+ * Wide tables / KaTeX: horizontal scroll without trapping vertical page scroll.
+ *
+ * NEVER use touch-action: pan-x alone — that blocks up/down scrolling when the
+ * finger starts on the equation/table (feels "stuck").
+ */
+
+.study-table-wrap,
 .study-prose .katex-display {
-  overscroll-behavior-x: contain;
-  touch-action: pan-x pinch-zoom;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: auto;
   scroll-snap-type: none;
+  /* Allow both axes — browser decides from gesture direction */
+  touch-action: manipulation;
 }
 
-.study-table-wrap {
-  overflow-x: auto;
-  overflow-y: hidden;
-  overscroll-behavior-x: contain;
-  touch-action: pan-x pinch-zoom;
-  scroll-snap-type: none;
-  -webkit-overflow-scrolling: touch;
+/* Prefer native momentum; avoid nested scroll traps on the reading surface */
+.notes-reading-surface {
+  overflow-x: visible;
+  touch-action: pan-y pinch-zoom;
+}
+
+.study-prose {
+  overflow-x: visible;
+  touch-action: pan-y pinch-zoom;
+}
+
+/* Table cells: wrap text when possible so fewer need horizontal drag */
+.study-table th,
+.study-table td {
+  white-space: normal;
+  max-width: min(70vw, 18rem);
+  word-break: break-word;
+}
+
+/* Display math: keep one line when short; scroll only when truly wider than viewport */
+.study-prose .katex-display > .katex {
+  display: inline-block;
+  max-width: none;
+  text-align: left;
 }
