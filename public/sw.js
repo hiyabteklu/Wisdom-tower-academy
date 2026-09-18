@@ -1,25 +1,21 @@
 /* Wisdom Tower Academy — Offline Service Worker
- * Caches pages, static assets, images, and API JSON the user has opened.
- * Strategy: network-first for navigations/API (update when online),
- *           cache-first for static/_next and images.
+ * Caches pages, static assets, images the user has opened.
+ * Does NOT cache large PDF book downloads (Appwrite /api/content/pdf).
+ * Strategy: network-first for navigations, cache-first for static/images.
  */
-const CACHE_VERSION = "wta-offline-v2";
+const CACHE_VERSION = "wta-offline-v3";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const PAGE_CACHE = `${CACHE_VERSION}-pages`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
 const IMAGE_CACHE = `${CACHE_VERSION}-images`;
 
-const PRECACHE_URLS = ["/", "/learning", "/packages", "/account", "/academy", "/academy/scholarships", "/offline"];
+const PRECACHE_URLS = ["/", "/learning", "/packages", "/account", "/academy", "/academy/freshman", "/academy/scholarships", "/offline"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
       const cache = await caches.open(PAGE_CACHE);
-      await Promise.allSettled(
-        PRECACHE_URLS.map((u) =>
-          cache.add(u).catch(() => null)
-        )
-      );
+      await Promise.allSettled(PRECACHE_URLS.map((u) => cache.add(u).catch(() => null)));
       self.skipWaiting();
     })()
   );
@@ -40,9 +36,10 @@ self.addEventListener("activate", (event) => {
 });
 
 function isNavigationRequest(request) {
-  return request.mode === "navigate" ||
-    (request.method === "GET" &&
-      request.headers.get("accept")?.includes("text/html"));
+  return (
+    request.mode === "navigate" ||
+    (request.method === "GET" && request.headers.get("accept")?.includes("text/html"))
+  );
 }
 
 function isStaticAsset(url) {
@@ -61,6 +58,10 @@ function isImage(url) {
     url.pathname.startsWith("/images/") ||
     /\.(png|jpg|jpeg|webp|gif|svg|ico)$/i.test(url.pathname)
   );
+}
+
+function isLargeBookPdf(url) {
+  return url.pathname.startsWith("/api/content/pdf");
 }
 
 function isApiOrData(url) {
@@ -84,7 +85,7 @@ async function networkFirst(request, cacheName) {
     const cached = await cache.match(request);
     if (cached) return cached;
     if (isNavigationRequest(request)) {
-      const offline = await cache.match("/offline") || await caches.match("/offline");
+      const offline = (await cache.match("/offline")) || (await caches.match("/offline"));
       if (offline) return offline;
     }
     throw new Error("offline-and-uncached");
@@ -131,6 +132,11 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Never cache full textbook PDFs in the SW (too large; use in-reader download instead)
+  if (isLargeBookPdf(url)) {
+    return;
+  }
+
   if (url.origin === self.location.origin) {
     if (isNavigationRequest(request)) {
       event.respondWith(networkFirst(request, PAGE_CACHE));
@@ -141,7 +147,7 @@ self.addEventListener("fetch", (event) => {
       return;
     }
     if (isImage(url)) {
-      event.respondWith(cacheFirst(request, IMAGE_CACHE));
+      event.respondWith(staleWhileRevalidate(request, IMAGE_CACHE));
       return;
     }
     if (url.pathname.startsWith("/api/")) {
@@ -153,7 +159,7 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (isImage(url) || request.destination === "image") {
-    event.respondWith(cacheFirst(request, IMAGE_CACHE));
+    event.respondWith(staleWhileRevalidate(request, IMAGE_CACHE));
     return;
   }
 
@@ -167,9 +173,18 @@ self.addEventListener("message", (event) => {
   if (!data || data.type !== "PRECACHE_URLS" || !Array.isArray(data.urls)) return;
   event.waitUntil(
     (async () => {
-      const cache = await caches.open(PAGE_CACHE);
+      const pageCache = await caches.open(PAGE_CACHE);
+      const imageCache = await caches.open(IMAGE_CACHE);
       await Promise.allSettled(
-        data.urls.map((u) => cache.add(u).catch(() => null))
+        data.urls.map((u) => {
+          try {
+            const parsed = new URL(u, self.location.origin);
+            if (isImage(parsed)) return imageCache.add(u).catch(() => null);
+            return pageCache.add(u).catch(() => null);
+          } catch {
+            return null;
+          }
+        })
       );
     })()
   );
