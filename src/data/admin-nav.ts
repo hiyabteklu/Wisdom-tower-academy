@@ -53,37 +53,44 @@ export const ADMIN_CONTENT_TREE: AdminNavNode[] = [
     id: "freshman",
     label: "Freshman",
     packageId: "freshman",
+    useAppwrite: true,
     children: freshmanSubjects.map((s) => ({
       id: s.id,
       label: s.name,
       packageId: "freshman",
       scopePath: `freshman/${s.id}`,
+      useAppwrite: true,
       children: resourceHubs.map((h) => ({
         id: h.id,
         label: h.name,
         packageId: "freshman",
         scopePath: `freshman/${s.id}`,
+        useAppwrite: true,
       })),
     })),
   },
   {
     id: "special",
     label: "Special packages",
+    useAppwrite: true,
     children: specialPackages.flatMap((pkg) =>
       pkg.semesters.map((sem) => ({
         id: `${pkg.slug}-${sem.id}`,
         label: `${pkg.name} · ${sem.shortLabel}`,
         packageId: sem.packageId,
+        useAppwrite: true,
         children: sem.courses.map((c) => ({
           id: c.slug,
           label: `${c.code} · ${c.title}`,
           packageId: sem.packageId,
           scopePath: `ece/${sem.id}/${c.slug}`,
+          useAppwrite: true,
           children: resourceHubs.map((h) => ({
             id: h.id,
             label: h.name,
             packageId: sem.packageId,
             scopePath: `ece/${sem.id}/${c.slug}`,
+            useAppwrite: true,
           })),
         })),
       }))
@@ -97,7 +104,7 @@ export const HUB_CONTENT_DEFAULTS: Record<
 > = {
   books: {
     contentType: "pdf",
-    hint: "Upload a PDF. Students open it in the in-app reader.",
+    hint: "Upload a PDF (Appwrite). Large files: paste File ID from Appwrite Console.",
   },
   "short-notes": {
     contentType: "markdown",
@@ -105,7 +112,7 @@ export const HUB_CONTENT_DEFAULTS: Record<
   },
   videos: {
     contentType: "video_url",
-    hint: "Paste a YouTube/Vimeo URL or upload a video file (grades use Appwrite).",
+    hint: "Paste a YouTube/Vimeo URL or upload a video file (Appwrite for file uploads).",
   },
   flashcards: {
     contentType: "flashcard_deck",
@@ -121,8 +128,16 @@ export const HUB_CONTENT_DEFAULTS: Record<
   },
 };
 
-/** Whether this scope should store files on Appwrite */
+/**
+ * Whether this scope should store files on Appwrite.
+ * All learning package scopes (grades, freshman, ECE/special) use Appwrite for PDFs/files.
+ * Catalog metadata + auth stay on Supabase.
+ */
 export function scopeUsesAppwrite(scopePath?: string | null): boolean {
   if (!scopePath) return false;
-  return scopePath.startsWith("grade/");
+  return (
+    scopePath.startsWith("grade/") ||
+    scopePath.startsWith("freshman/") ||
+    scopePath.startsWith("ece/")
+  );
 }
