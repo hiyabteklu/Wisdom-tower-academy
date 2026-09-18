@@ -108,36 +108,32 @@ export const HUB_CONTENT_DEFAULTS: Record<
   },
   "short-notes": {
     contentType: "markdown",
-    hint: "Short notes in Markdown. Supports headings, lists, [[terms]], ==highlights==.",
+    hint: "Markdown notes in the text box (Amharic OK). Images: paste image URLs in markdown. No file upload required.",
   },
   videos: {
     contentType: "video_url",
-    hint: "Paste a YouTube/Vimeo URL or upload a video file (Appwrite for file uploads).",
+    hint: "Paste a YouTube/Vimeo URL. Optional file upload goes to Appwrite.",
   },
   flashcards: {
     contentType: "flashcard_deck",
-    hint: "JSON in meta: { cards: [{front, back}] }.",
+    hint: "JSON in meta only (stored in Supabase DB, not Appwrite). Example: { cards: [{front, back}] }.",
   },
   "question-banks": {
     contentType: "quiz",
-    hint: "JSON in meta: { questions: [{prompt, choices, correct, solution}] }.",
+    hint: "JSON in meta only (Supabase DB). Example: { questions: [{prompt, choices, correct, solution}] }.",
   },
   exams: {
     contentType: "exam",
-    hint: "JSON in meta: { durationMin, questions: [...] }.",
+    hint: "JSON in meta only (Supabase DB). For rich solutions with images, put markdown image URLs in solution text.",
   },
 };
 
 /**
- * Whether this scope should store files on Appwrite.
- * All learning package scopes (grades, freshman, ECE/special) use Appwrite for PDFs/files.
- * Catalog metadata + auth stay on Supabase.
+ * Learning file uploads always go to Appwrite.
+ * Any new scope path (new subject, package, or hub) is covered automatically.
+ * Metadata (titles, JSON quizzes, markdown notes) stays in Supabase tables.
  */
 export function scopeUsesAppwrite(scopePath?: string | null): boolean {
-  if (!scopePath) return false;
-  return (
-    scopePath.startsWith("grade/") ||
-    scopePath.startsWith("freshman/") ||
-    scopePath.startsWith("ece/")
-  );
+  // Default ON for every learning scope so future packages need no rewire.
+  return Boolean(scopePath && scopePath.trim().length > 0);
 }
