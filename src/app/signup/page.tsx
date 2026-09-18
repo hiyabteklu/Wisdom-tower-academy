@@ -236,20 +236,26 @@ function SignupForm() {
               </div>
             </div>
 
-            <label className="flex items-start gap-2.5 cursor-pointer select-none">
+            <label
+              className={`flex items-start gap-3 cursor-pointer select-none rounded-xl border px-3 py-3 transition ${
+                agreedToTerms
+                  ? "border-cyan-400/40 bg-cyan-500/10"
+                  : "border-white/15 bg-white/5"
+              }`}
+            >
               <input
                 type="checkbox"
                 checked={agreedToTerms}
                 onChange={(e) => setAgreedToTerms(e.target.checked)}
-                className="mt-1 h-4 w-4 rounded border-white/30 bg-wisdom-dark accent-cyan-400"
+                className="mt-0.5 h-5 w-5 shrink-0 rounded border-white/40 bg-wisdom-dark accent-cyan-400"
               />
-              <span className="text-xs text-wisdom-muted leading-relaxed">
+              <span className="text-sm text-white/85 leading-relaxed">
                 I agree to the{" "}
-                <Link href="/terms" className="text-cyan-300 hover:underline">
+                <Link href="/terms" className="text-cyan-300 hover:underline font-medium">
                   Terms of Service
                 </Link>{" "}
                 and{" "}
-                <Link href="/privacy" className="text-cyan-300 hover:underline">
+                <Link href="/privacy" className="text-cyan-300 hover:underline font-medium">
                   Privacy Policy
                 </Link>
               </span>
