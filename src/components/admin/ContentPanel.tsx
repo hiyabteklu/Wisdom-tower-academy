@@ -267,7 +267,7 @@ export default function ContentPanel() {
             Content library
           </h2>
           <p className="text-sm text-wisdom-muted mt-0.5">
-            Grades 9–12 files → Appwrite · Freshman & special packages → Supabase
+            All package PDFs/files → Appwrite · catalog & auth stay on Supabase
           </p>
         </div>
         {isOnHub && (
