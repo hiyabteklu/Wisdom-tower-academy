@@ -14,7 +14,95 @@ import {
  * Supports:
  * - appwrite:FILE_ID (all packages)
  * - legacy Supabase storage paths (if any remain)
+ *
+ * HEAD: returns Content-Length when possible (size probe before download).
  */
+
+function appwriteConfig() {
+  const endpoint =
+    process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT || "https://fra.cloud.appwrite.io/v1";
+  const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID || "";
+  const bucketId =
+    process.env.APPWRITE_BUCKET_ID ||
+    process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID ||
+    "";
+  return { endpoint, projectId, bucketId };
+}
+
+function appwriteViewUrl(fileId: string) {
+  const { endpoint, projectId, bucketId } = appwriteConfig();
+  return `${endpoint}/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
+}
+
+/** HEAD — size probe only; do not download body when possible. */
+export async function HEAD(req: NextRequest) {
+  const path = req.nextUrl.searchParams.get("path");
+  if (!path || path.includes("..")) {
+    return new NextResponse(null, { status: 400 });
+  }
+
+  if (isAppwriteStoragePath(path) || path.startsWith(APPWRITE_PATH_PREFIX)) {
+    const fileId =
+      parseAppwriteFileId(path) || path.replace(/^appwrite:/i, "").trim();
+    if (!fileId) return new NextResponse(null, { status: 400 });
+
+    const { projectId, bucketId } = appwriteConfig();
+    if (!projectId || !bucketId) return new NextResponse(null, { status: 500 });
+
+    const viewUrl = appwriteViewUrl(fileId);
+    try {
+      // Prefer upstream HEAD
+      let upstream = await fetch(viewUrl, {
+        method: "HEAD",
+        headers: { Accept: "application/pdf,*/*" },
+        cache: "no-store",
+      });
+      let len = upstream.headers.get("Content-Length");
+
+      // Some Appwrite setups ignore HEAD — try Range
+      if ((!len || !upstream.ok) && upstream.status !== 404) {
+        upstream = await fetch(viewUrl, {
+          method: "GET",
+          headers: { Accept: "application/pdf,*/*", Range: "bytes=0-0" },
+          cache: "no-store",
+        });
+        const cr = upstream.headers.get("Content-Range");
+        const m = cr?.match(/\/(\d+)\s*$/);
+        if (m) len = m[1];
+        else len = upstream.headers.get("Content-Length");
+        // Drain tiny body so connection can close
+        await upstream.arrayBuffer().catch(() => null);
+      }
+
+      if (!upstream.ok && upstream.status !== 206) {
+        return new NextResponse(null, {
+          status: upstream.status === 404 ? 404 : 502,
+        });
+      }
+
+      const headers = new Headers({
+        "Content-Type": "application/pdf",
+        "Accept-Ranges": "bytes",
+        "Cache-Control": "private, max-age=300",
+        "X-Content-Type-Options": "nosniff",
+      });
+      if (len) headers.set("Content-Length", len);
+      return new NextResponse(null, { status: 200, headers });
+    } catch {
+      return new NextResponse(null, { status: 502 });
+    }
+  }
+
+  // Legacy Supabase — no cheap HEAD; return 200 without length
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      "Content-Type": "application/pdf",
+      "Cache-Control": "private, max-age=60",
+    },
+  });
+}
+
 export async function GET(req: NextRequest) {
   const path = req.nextUrl.searchParams.get("path");
   if (!path || path.includes("..")) {
@@ -23,18 +111,13 @@ export async function GET(req: NextRequest) {
 
   // --- Appwrite ---
   if (isAppwriteStoragePath(path) || path.startsWith(APPWRITE_PATH_PREFIX)) {
-    const fileId = parseAppwriteFileId(path) || path.replace(/^appwrite:/i, "").trim();
+    const fileId =
+      parseAppwriteFileId(path) || path.replace(/^appwrite:/i, "").trim();
     if (!fileId) {
       return NextResponse.json({ error: "Invalid Appwrite file id" }, { status: 400 });
     }
 
-    const endpoint =
-      process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT || "https://fra.cloud.appwrite.io/v1";
-    const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID || "";
-    const bucketId =
-      process.env.APPWRITE_BUCKET_ID ||
-      process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID ||
-      "";
+    const { projectId, bucketId } = appwriteConfig();
 
     if (!projectId || !bucketId) {
       return NextResponse.json(
@@ -46,7 +129,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const viewUrl = `${endpoint}/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
+    const viewUrl = appwriteViewUrl(fileId);
 
     try {
       const upstream = await fetch(viewUrl, {
@@ -74,6 +157,7 @@ export async function GET(req: NextRequest) {
           "Content-Disposition": 'inline; filename="document.pdf"',
           "Cache-Control": "private, max-age=300",
           "X-Content-Type-Options": "nosniff",
+          "Accept-Ranges": "bytes",
         },
       });
     } catch (e) {
