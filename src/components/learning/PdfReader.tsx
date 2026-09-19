@@ -244,7 +244,8 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
     (async () => {
       try {
         const pdfjs = await import("pdfjs-dist");
-        pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
+        // Same-origin worker so offline + Android WebView never depend on CDN
+        pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
         const data = await fetchPdfCached(url, (loaded, total) => {
           if (cancelled) return;
@@ -284,7 +285,13 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
       } catch (e) {
         if (!cancelled) {
           console.error(e);
-          setError(e instanceof Error ? e.message : "Failed to load PDF");
+          const msg = e instanceof Error ? e.message : "Failed to load PDF";
+          // Hide noisy pdf.js worker CDN errors from users
+          if (/fake worker|dynamically imported module|pdf\.worker/i.test(msg)) {
+            setError("Could not open this book. Check your connection and try again.");
+          } else {
+            setError(msg);
+          }
           setLoading(false);
         }
       }
@@ -550,79 +557,61 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
         {loading && (
           <div className="flex flex-col items-center justify-center w-full py-24 px-6 gap-4">
             <p className="text-sm text-white/50">
-              {loadPhase === "parse" ? "Opening book…" : "Downloading book…"}
+              {loadPhase === "parse" ? "Opening book…" : "Downloading…"}
             </p>
-            {fileBytes != null && fileBytes >= LARGE_FILE_BYTES && (
-              <p className="text-xs text-amber-200/90 text-center max-w-sm rounded-xl border border-amber-400/30 bg-amber-500/10 px-3 py-2">
-                Large file ({formatBytes(fileBytes)}). Please wait.
+            <div className="w-full max-w-xs h-1.5 rounded-full bg-white/10 overflow-hidden">
+              <div
+                className="h-full bg-cyan-400 transition-all duration-300"
+                style={{ width: `${loadProgress}%` }}
+              />
+            </div>
+            {fileBytes != null && loadPhase === "download" && (
+              <p className="text-[11px] text-white/40 tabular-nums">
+                {formatBytes(loadedBytes)} / {formatBytes(fileBytes)}
               </p>
             )}
-            <div className="w-full max-w-sm">
-              <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-amber-400 transition-[width] duration-200 ease-out"
-                  style={{ width: `${Math.max(4, loadProgress)}%` }}
-                  role="progressbar"
-                  aria-valuenow={loadProgress}
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                />
-              </div>
-              <p className="mt-2 text-center text-[11px] tabular-nums text-white/40">
-                {loadProgress}%
-                {fileBytes != null
-                  ? ` · ${formatBytes(Math.min(loadedBytes, fileBytes))} / ${formatBytes(fileBytes)}`
-                  : loadedBytes > 0
-                    ? ` · ${formatBytes(loadedBytes)}`
-                    : ""}
-              </p>
-            </div>
           </div>
         )}
+
         {error && (
-          <div className="flex flex-col items-center justify-center gap-2 px-4 py-28 w-full">
-            <AlertCircle className="w-8 h-8 text-rose-400/80" />
-            <p className="text-sm text-rose-200/90 text-center">{error}</p>
+          <div className="flex flex-col items-center justify-center gap-3 py-20 px-6 text-center">
+            <AlertCircle className="w-10 h-10 text-rose-400" />
+            <p className="text-sm text-rose-200/90 max-w-sm">{error}</p>
             <button
               type="button"
               onClick={() => {
-                setStarted(false);
                 setError("");
+                setStarted(false);
               }}
-              className="mt-2 text-xs font-semibold text-cyan-300 underline"
+              className="text-cyan-300 text-sm font-semibold underline"
             >
               Back
             </button>
           </div>
         )}
+
         {!loading && !error && numPages > 0 && (
-          <div className="flex flex-col items-center gap-3 py-3 px-2 sm:px-4 pb-20">
-            {Array.from({ length: numPages }, (_, i) => {
-              const pageNumber = i + 1;
-              const active = visiblePages.has(pageNumber);
+          <div className="flex flex-col items-center gap-3 py-3 px-1">
+            {Array.from({ length: numPages }, (_, i) => i + 1).map((pageNumber) => {
+              const visible = visiblePages.has(pageNumber);
               const h = pageHeights[pageNumber] ?? DEFAULT_PAGE_H;
               return (
                 <div
                   key={pageNumber}
                   data-page={pageNumber}
-                  className="relative w-full flex justify-center"
-                  style={{ minHeight: active ? undefined : h }}
+                  style={{ minHeight: h }}
+                  className="w-full flex justify-center"
                 >
-                  {active ? (
+                  {visible ? (
                     <PdfPage
                       pdf={pdfRef.current}
                       pageNumber={pageNumber}
                       scale={scale}
-                      containerWidth={scrollWidth}
+                      maxWidth={scrollWidth - 16}
                       onMeasured={onPageMeasured}
                     />
                   ) : (
-                    <div
-                      className="w-full max-w-full rounded-sm bg-neutral-800/80 border border-white/5 flex items-center justify-center text-white/25 text-xs"
-                      style={{ height: h }}
-                    >
-                      {pageNumber}
-                    </div>
+                    <div style={{ height: h }} className="w-full max-w-full" />
                   )}
                 </div>
               );
@@ -630,50 +619,31 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
           </div>
         )}
       </div>
+
+      {breakOpen && breakQuote && (
+        <PomodoroBreak
+          quote={breakQuote}
+          onContinue={resetPomodoro}
+        />
+      )}
     </>
   );
 
-  if (mounted && fullscreen) {
-    return createPortal(
-      <div
-        className="fixed inset-0 z-[9999] flex flex-col bg-[#0a0a0a]"
-        style={{ height: "100dvh", width: "100vw" }}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-      >
-        {readerChrome}
-        <button
-          type="button"
-          onClick={() => setFullscreen(false)}
-          className="absolute top-[max(0.75rem,env(safe-area-inset-top))] right-3 z-[10000] inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-rose-500 text-white text-sm font-bold shadow-xl"
-        >
-          <X className="w-5 h-5" /> Exit
-        </button>
-        <PomodoroBreak
-          open={breakOpen}
-          quote={breakQuote}
-          sessionMinutes={Math.max(1, Math.round(focusSeconds / 60))}
-          onContinue={resetPomodoro}
-          onTakeBreak={resetPomodoro}
-        />
-      </div>,
-      document.body
-    );
-  }
-
-  return (
-    <div className="relative flex flex-col rounded-2xl border border-white/12 bg-neutral-950 overflow-hidden h-[min(72vh,680px)]">
+  const shell = (
+    <div
+      className={`relative flex flex-col rounded-2xl border border-white/12 bg-neutral-950 overflow-hidden ${
+        fullscreen ? "fixed inset-0 z-[100] rounded-none border-0" : "min-h-[420px]"
+      }`}
+      style={fullscreen ? undefined : { height: "min(70vh, 640px)" }}
+    >
       {readerChrome}
-      <PomodoroBreak
-        open={breakOpen}
-        quote={breakQuote}
-        sessionMinutes={Math.max(1, Math.round(focusSeconds / 60))}
-        onContinue={resetPomodoro}
-        onTakeBreak={resetPomodoro}
-      />
     </div>
   );
+
+  if (fullscreen && mounted) {
+    return createPortal(shell, document.body);
+  }
+  return shell;
 }
 
 function ToolBtn({
@@ -690,7 +660,7 @@ function ToolBtn({
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="p-1.5 rounded-lg border border-white/12 text-white/75 hover:bg-white/5"
+      className="p-1.5 rounded-lg border border-white/12 text-white/70 hover:bg-white/5"
     >
       {children}
     </button>
@@ -701,88 +671,66 @@ function PdfPage({
   pdf,
   pageNumber,
   scale,
-  containerWidth,
+  maxWidth,
   onMeasured,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   pdf: any;
   pageNumber: number;
   scale: number;
-  containerWidth: number;
-  onMeasured: (page: number, height: number) => void;
+  maxWidth: number;
+  onMeasured: (pageNumber: number, height: number) => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [busy, setBusy] = useState(true);
-  const renderGen = useRef(0);
+  const [err, setErr] = useState("");
 
   useEffect(() => {
     if (!pdf || !canvasRef.current) return;
     let cancelled = false;
-    const gen = ++renderGen.current;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let task: { cancel: () => void; promise: Promise<void> } | null = null;
-
     (async () => {
       try {
-        setBusy(true);
-        const pageObj = await pdf.getPage(pageNumber);
-        if (cancelled || gen !== renderGen.current) return;
-        const base = pageObj.getViewport({ scale: 1 });
-        const fit =
-          containerWidth > 48
-            ? ((containerWidth - 24) / base.width) * scale
-            : scale;
-        const viewport = pageObj.getViewport({ scale: fit });
-        const canvas = canvasRef.current;
-        if (!canvas) return;
+        const page = await pdf.getPage(pageNumber);
+        if (cancelled) return;
+        const base = page.getViewport({ scale: 1 });
+        const fitScale = maxWidth > 0 ? Math.min(scale, maxWidth / base.width) : scale;
+        const outputScale = Math.min(window.devicePixelRatio || 1, 3);
+        const viewport = page.getViewport({ scale: fitScale * 1.15 });
+        const canvas = canvasRef.current!;
         const ctx = canvas.getContext("2d", { alpha: false });
         if (!ctx) return;
-        const dpr = Math.min(Math.max(window.devicePixelRatio || 1, 1), 3);
-        canvas.width = Math.floor(viewport.width * dpr);
-        canvas.height = Math.floor(viewport.height * dpr);
+        canvas.width = Math.floor(viewport.width * outputScale);
+        canvas.height = Math.floor(viewport.height * outputScale);
         canvas.style.width = `${Math.floor(viewport.width)}px`;
         canvas.style.height = `${Math.floor(viewport.height)}px`;
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        ctx.imageSmoothingEnabled = false;
-        const renderTask = pageObj.render({
+        const transform =
+          outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : undefined;
+        await page.render({
           canvasContext: ctx,
           viewport,
+          transform,
           intent: "display",
-        });
-        task = renderTask;
-        await renderTask.promise;
-        if (cancelled || gen !== renderGen.current) return;
-        onMeasured(pageNumber, viewport.height);
-        setBusy(false);
-      } catch (e) {
+        }).promise;
         if (!cancelled) {
-          console.error("page render", pageNumber, e);
-          setBusy(false);
+          onMeasured(pageNumber, Math.floor(viewport.height) + 4);
         }
+      } catch (e) {
+        if (!cancelled) setErr(e instanceof Error ? e.message : "Page error");
       }
     })();
-
     return () => {
       cancelled = true;
-      try {
-        task?.cancel?.();
-      } catch {
-        /* ignore */
-      }
     };
-  }, [pdf, pageNumber, scale, containerWidth, onMeasured]);
+  }, [pdf, pageNumber, scale, maxWidth, onMeasured]);
 
+  if (err) {
+    return (
+      <p className="text-xs text-rose-300 py-8">Page {pageNumber}: {err}</p>
+    );
+  }
   return (
-    <div className="relative shadow-lg">
-      {busy && (
-        <div className="absolute inset-0 flex items-center justify-center bg-neutral-900/40 text-white/30 text-xs z-10">
-          …
-        </div>
-      )}
-      <canvas
-        ref={canvasRef}
-        className="max-w-full h-auto block mx-auto bg-white"
-      />
-    </div>
+    <canvas
+      ref={canvasRef}
+      className="max-w-full shadow-lg rounded-sm bg-white"
+    />
   );
 }
