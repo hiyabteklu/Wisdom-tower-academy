@@ -1,15 +1,35 @@
 /* Wisdom Tower Academy — Offline Service Worker
- * Caches pages, static assets, images the user has opened.
- * Does NOT cache large PDF book downloads (Appwrite /api/content/pdf).
- * Strategy: network-first for navigations, cache-first for static/images.
+ *
+ * RULE: Never delete caches the user already filled.
+ * Opening a page/note/exam/image while online must work offline forever
+ * until the user clears site data themselves.
+ *
+ * - Pages HTML: network-first when online, cache fallback offline
+ * - Static JS/CSS: cache-first
+ * - Images/thumbnails: stale-while-revalidate (kept forever)
+ * - Same-origin /api + supabase/appwrite GETs: cached after first success
+ * - Large book PDFs: NOT in SW (app OfflineVault handles those)
+ *
+ * Cache size can grow (hundreds of MB / GB) — intentional for full offline study.
  */
-const CACHE_VERSION = "wta-offline-v4";
-const STATIC_CACHE = `${CACHE_VERSION}-static`;
-const PAGE_CACHE = `${CACHE_VERSION}-pages`;
-const DATA_CACHE = `${CACHE_VERSION}-data`;
-const IMAGE_CACHE = `${CACHE_VERSION}-images`;
+const PAGE_CACHE = "wta-pages-permanent";
+const STATIC_CACHE = "wta-static-permanent";
+const IMAGE_CACHE = "wta-images-permanent";
+const DATA_CACHE = "wta-data-permanent";
 
-const PRECACHE_URLS = ["/", "/learning", "/packages", "/account", "/academy", "/academy/freshman", "/academy/scholarships", "/offline"];
+/* Legacy names we used to delete — KEEP them so yesterday's data still answers */
+const LEGACY_PREFIXES = ["wta-offline-"];
+
+const PRECACHE_URLS = [
+  "/",
+  "/learning",
+  "/packages",
+  "/account",
+  "/academy",
+  "/academy/freshman",
+  "/academy/scholarships",
+  "/offline",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -22,17 +42,9 @@ self.addEventListener("install", (event) => {
 });
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    (async () => {
-      const keys = await caches.keys();
-      await Promise.all(
-        keys
-          .filter((k) => k.startsWith("wta-offline-") && !k.startsWith(CACHE_VERSION))
-          .map((k) => caches.delete(k))
-      );
-      await self.clients.claim();
-    })()
-  );
+  // DO NOT delete any caches. Ever.
+  // Previous code wiped wta-offline-v1..v4 and destroyed offline notes/pages.
+  event.waitUntil(self.clients.claim());
 });
 
 function isNavigationRequest(request) {
@@ -73,19 +85,48 @@ function isApiOrData(url) {
   );
 }
 
+/** Match request across permanent + any legacy cache names. */
+async function matchAny(request) {
+  const names = await caches.keys();
+  for (const name of names) {
+    const cache = await caches.open(name);
+    const hit = await cache.match(request);
+    if (hit) return hit;
+  }
+  // Also try pathname-only for navigations
+  try {
+    const url = new URL(request.url);
+    for (const name of names) {
+      const cache = await caches.open(name);
+      const hit = await cache.match(url.pathname);
+      if (hit) return hit;
+    }
+  } catch {}
+  return undefined;
+}
+
 async function networkFirst(request, cacheName) {
   const cache = await caches.open(cacheName);
   try {
     const response = await fetch(request);
     if (response && response.ok) {
       cache.put(request, response.clone());
+      try {
+        const u = new URL(request.url);
+        if (u.origin === self.location.origin) {
+          cache.put(u.pathname, response.clone());
+        }
+      } catch {}
     }
     return response;
   } catch {
-    const cached = await cache.match(request);
+    const cached = (await cache.match(request)) || (await matchAny(request));
     if (cached) return cached;
     if (isNavigationRequest(request)) {
-      const offline = (await cache.match("/offline")) || (await caches.match("/offline"));
+      const offline =
+        (await cache.match("/offline")) ||
+        (await caches.match("/offline")) ||
+        (await matchAny(new Request("/offline")));
       if (offline) return offline;
     }
     throw new Error("offline-and-uncached");
@@ -94,7 +135,7 @@ async function networkFirst(request, cacheName) {
 
 async function cacheFirst(request, cacheName) {
   const cache = await caches.open(cacheName);
-  const cached = await cache.match(request);
+  const cached = (await cache.match(request)) || (await matchAny(request));
   if (cached) return cached;
   try {
     const response = await fetch(request);
@@ -109,7 +150,7 @@ async function cacheFirst(request, cacheName) {
 
 async function staleWhileRevalidate(request, cacheName) {
   const cache = await caches.open(cacheName);
-  const cached = await cache.match(request);
+  const cached = (await cache.match(request)) || (await matchAny(request));
   const networkPromise = fetch(request)
     .then((response) => {
       if (response && response.ok) {
@@ -132,7 +173,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Never cache full textbook PDFs in the SW (too large; use in-reader download instead)
+  // Books/PDFs stay in the app Offline vault, not SW
   if (isLargeBookPdf(url)) {
     return;
   }
@@ -163,6 +204,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Supabase / Appwrite GET responses the site already fetched while online
   if (isApiOrData(url)) {
     event.respondWith(staleWhileRevalidate(request, DATA_CACHE));
   }
@@ -175,11 +217,13 @@ self.addEventListener("message", (event) => {
     (async () => {
       const pageCache = await caches.open(PAGE_CACHE);
       const imageCache = await caches.open(IMAGE_CACHE);
+      const dataCache = await caches.open(DATA_CACHE);
       await Promise.allSettled(
         data.urls.map((u) => {
           try {
             const parsed = new URL(u, self.location.origin);
             if (isImage(parsed)) return imageCache.add(u).catch(() => null);
+            if (isApiOrData(parsed)) return dataCache.add(u).catch(() => null);
             return pageCache.add(u).catch(() => null);
           } catch {
             return null;
