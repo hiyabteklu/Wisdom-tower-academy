@@ -75,11 +75,10 @@ export default function OrdersPage() {
 
       {!loggedIn && (
         <p className="mb-4 text-xs text-wisdom-muted rounded-xl border border-white/10 bg-white/5 px-3 py-2">
-          Showing orders saved on this device.{" "}
           <Link href="/login" className="text-cyan-400 hover:underline">
             Sign in
           </Link>{" "}
-          with the same email as checkout to sync from the server.
+          to see your full order history.
         </p>
       )}
 
