@@ -244,7 +244,7 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
     (async () => {
       try {
         const pdfjs = await import("pdfjs-dist");
-        // Bundle worker from node_modules — no CDN, works offline after first load
+        // Bundle worker from node_modules — no CDN (fixes offline/WebView fake-worker errors)
         pdfjs.GlobalWorkerOptions.workerSrc = new URL(
           "pdfjs-dist/build/pdf.worker.min.mjs",
           import.meta.url
@@ -621,28 +621,50 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
           </div>
         )}
       </div>
-
-      {breakOpen && breakQuote && (
-        <PomodoroBreak quote={breakQuote} onContinue={resetPomodoro} />
-      )}
     </>
   );
 
-  const shell = (
-    <div
-      className={`relative flex flex-col rounded-2xl border border-white/12 bg-neutral-950 overflow-hidden ${
-        fullscreen ? "fixed inset-0 z-[100] rounded-none border-0" : "min-h-[420px]"
-      }`}
-      style={fullscreen ? undefined : { height: "min(70vh, 640px)" }}
-    >
+  if (fullscreen && mounted) {
+    return createPortal(
+      <div
+        className="fixed inset-0 z-[9999] flex flex-col bg-neutral-950"
+        style={{ height: "100dvh", width: "100vw" }}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+      >
+        {readerChrome}
+        <button
+          type="button"
+          onClick={() => setFullscreen(false)}
+          className="absolute top-[max(0.75rem,env(safe-area-inset-top))] right-3 z-[10000] inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-rose-500 text-white text-sm font-bold shadow-xl"
+        >
+          <X className="w-5 h-5" /> Exit
+        </button>
+        <PomodoroBreak
+          open={breakOpen}
+          quote={breakQuote}
+          sessionMinutes={Math.max(1, Math.round(focusSeconds / 60))}
+          onContinue={resetPomodoro}
+          onTakeBreak={resetPomodoro}
+        />
+      </div>,
+      document.body
+    );
+  }
+
+  return (
+    <div className="relative flex flex-col rounded-2xl border border-white/12 bg-neutral-950 overflow-hidden h-[min(72vh,680px)]">
       {readerChrome}
+      <PomodoroBreak
+        open={breakOpen}
+        quote={breakQuote}
+        sessionMinutes={Math.max(1, Math.round(focusSeconds / 60))}
+        onContinue={resetPomodoro}
+        onTakeBreak={resetPomodoro}
+      />
     </div>
   );
-
-  if (fullscreen && mounted) {
-    return createPortal(shell, document.body);
-  }
-  return shell;
 }
 
 function ToolBtn({
