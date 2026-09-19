@@ -17,6 +17,14 @@ export default function NotesViewer({ body, resourceId, onProgress }: Props) {
 
   useEffect(() => {
     reported.current = false;
+    // Always start at the top of the note when opening / switching notes
+    try {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    } catch {
+      /* ignore */
+    }
 
     const onScroll = () => {
       const pageH = Math.max(
