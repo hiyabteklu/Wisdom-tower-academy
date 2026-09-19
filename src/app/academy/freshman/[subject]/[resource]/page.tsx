@@ -12,6 +12,7 @@ import AcademicResultSaver from "@/components/AcademicResultSaver";
 import HubContentView from "@/components/learning/HubContentView";
 import type { HubId } from "@/lib/content";
 import Link from "next/link";
+import ResourceHubChips from "@/components/ResourceHubChips";
 
 export function generateStaticParams() {
   const params: { subject: string; resource: string }[] = [];
@@ -23,45 +24,48 @@ export function generateStaticParams() {
   return params;
 }
 
-export default async function FreshmanSubjectResourcePage({
+export default async function FreshmanResourcePage({
   params,
 }: {
   params: Promise<{ subject: string; resource: string }>;
 }) {
-  if (FRESHMAN_LOCKED_UNTIL_OPENING) {
-    return <FreshmanLockedPanel />;
-  }
-
   const { subject: subjectId, resource: resourceId } = await params;
 
   if (FRESHMAN_SUBJECT_ALIASES[subjectId]) {
-    redirect(
-      `/academy/freshman/${FRESHMAN_SUBJECT_ALIASES[subjectId]}/${resourceId}`
-    );
+    redirect(`/academy/freshman/${FRESHMAN_SUBJECT_ALIASES[subjectId]}/${resourceId}`);
   }
 
   const subject = getFreshmanSubject(subjectId);
   const resource = getResource(resourceId);
-
   if (!subject || !resource) notFound();
 
   const hub = resource.id as HubId;
   const scopePath = `freshman/${subject.id}`;
-  const trackerScopeId = `freshman-${subject.id}-${resource.id}`;
+  const trackerScopeId = `freshman-${subject.id}`;
+
+  if (FRESHMAN_LOCKED_UNTIL_OPENING) {
+    return (
+      <div className="relative min-h-[60vh]">
+        <div className="relative max-w-3xl mx-auto px-4 py-12">
+          <CategoryBackButton fallback={`/academy/freshman/${subject.id}`} />
+          <FreshmanLockedPanel subjectName={subject.name} hubName={resource.name} />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="relative min-h-[75vh]">
-      <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
+    <div className="relative min-h-[60vh]">
+      <div className="relative max-w-3xl mx-auto px-4 py-12">
         <CategoryBackButton fallback={`/academy/freshman/${subject.id}`} />
 
         <div className="mb-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-wisdom-muted mb-2">
-            Freshman · {subject.name} · Learning hub
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-wisdom-muted mb-1">
+            Freshman · {subject.name}
           </p>
-          <h1 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight mb-2">
-            <span className={resource.accent}>{resource.name}</span>
+          <h1 className={`font-display text-2xl sm:text-3xl font-extrabold ${resource.accent}`}>
+            {resource.name}
           </h1>
-          <p className="text-wisdom-muted">{resource.description}</p>
         </div>
 
         <div className="mb-8">
@@ -82,21 +86,10 @@ export default async function FreshmanSubjectResourcePage({
           trackerScopeId={trackerScopeId}
         />
 
-        <div className="mt-10 flex flex-wrap justify-center gap-2">
-          {resourceHubs.map((h) => (
-            <Link
-              key={h.id}
-              href={`/academy/freshman/${subject.id}/${h.id}`}
-              className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
-                h.id === resource.id
-                  ? "border-white/25 bg-white/10 text-white"
-                  : "border-white/10 text-wisdom-muted hover:border-white/20 hover:text-white"
-              }`}
-            >
-              {h.name}
-            </Link>
-          ))}
-        </div>
+        <ResourceHubChips
+          basePath={`/academy/freshman/${subject.id}`}
+          activeId={resource.id}
+        />
       </div>
     </div>
   );
