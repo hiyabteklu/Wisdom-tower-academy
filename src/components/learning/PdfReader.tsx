@@ -22,7 +22,7 @@ import {
   Timer,
   Download,
 } from "lucide-react";
-import { fetchPdfCached } from "@/lib/pdfCache";
+import { fetchPdfCached, getCachedPdf } from "@/lib/pdfCache";
 import PomodoroBreak from "@/components/learning/PomodoroBreak";
 import {
   pickRandomQuote,
@@ -48,10 +48,16 @@ type Props = {
 };
 
 export default function PdfReader({ url, title, onOpened, onPageChange }: Props) {
+  /** User must confirm download unless the PDF is already in memory cache. */
+  const [started, setStarted] = useState(() => !!getCachedPdf(url));
+  const [sizeProbe, setSizeProbe] = useState<number | null>(null);
+  const [sizeProbeBusy, setSizeProbeBusy] = useState(false);
+  const [sizeProbeFailed, setSizeProbeFailed] = useState(false);
+
   const [fullscreen, setFullscreen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [loadProgress, setLoadProgress] = useState(0);
   const [loadPhase, setLoadPhase] = useState<"download" | "parse">("download");
   const [fileBytes, setFileBytes] = useState<number | null>(null);
@@ -78,6 +84,85 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
 
   useEffect(() => setMounted(true), []);
 
+  // Reset gate when URL changes (different book)
+  useEffect(() => {
+    const cached = !!getCachedPdf(url);
+    setStarted(cached);
+    setSizeProbe(null);
+    setSizeProbeFailed(false);
+    setError("");
+    setLoading(false);
+    setNumPages(0);
+    setCurrentPage(1);
+    setPageHeights({});
+    setLoadProgress(0);
+    setFileBytes(null);
+    setLoadedBytes(0);
+    pdfBytesRef.current = null;
+    pdfRef.current = null;
+    openedRef.current = false;
+  }, [url]);
+
+  // Probe file size before user starts download (HEAD or Content-Length)
+  useEffect(() => {
+    if (started) return;
+    let cancelled = false;
+    setSizeProbeBusy(true);
+    setSizeProbeFailed(false);
+    (async () => {
+      try {
+        const res = await fetch(url, { method: "HEAD", cache: "no-store" });
+        if (cancelled) return;
+        if (res.ok) {
+          const cl = res.headers.get("Content-Length");
+          if (cl) {
+            const n = parseInt(cl, 10);
+            if (Number.isFinite(n) && n > 0) {
+              setSizeProbe(n);
+              setSizeProbeBusy(false);
+              return;
+            }
+          }
+        }
+        // Fallback: some hosts ignore HEAD — try Range request for first byte
+        const rangeRes = await fetch(url, {
+          method: "GET",
+          headers: { Range: "bytes=0-0" },
+          cache: "no-store",
+        });
+        if (cancelled) return;
+        const cr = rangeRes.headers.get("Content-Range");
+        // Content-Range: bytes 0-0/12345678
+        const m = cr?.match(/\/(\d+)\s*$/);
+        if (m) {
+          const n = parseInt(m[1], 10);
+          if (Number.isFinite(n) && n > 0) {
+            setSizeProbe(n);
+            setSizeProbeBusy(false);
+            return;
+          }
+        }
+        const cl2 = rangeRes.headers.get("Content-Length");
+        if (cl2) {
+          const n = parseInt(cl2, 10);
+          if (Number.isFinite(n) && n > 1) {
+            setSizeProbe(n);
+            setSizeProbeBusy(false);
+            return;
+          }
+        }
+        setSizeProbeFailed(true);
+      } catch {
+        if (!cancelled) setSizeProbeFailed(true);
+      } finally {
+        if (!cancelled) setSizeProbeBusy(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [url, started]);
+
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -89,7 +174,7 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [fullscreen, loading, numPages]);
+  }, [fullscreen, loading, numPages, started]);
 
   useEffect(() => {
     if (!fullscreen) return;
@@ -113,7 +198,7 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
   }, [fullscreen]);
 
   useEffect(() => {
-    if (loading || error || breakOpen) return;
+    if (!started || loading || error || breakOpen) return;
     const id = window.setInterval(() => {
       if (document.visibilityState !== "visible") return;
       focusSecondsRef.current += 1;
@@ -125,7 +210,7 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
       }
     }, 1000);
     return () => window.clearInterval(id);
-  }, [loading, error, breakOpen]);
+  }, [started, loading, error, breakOpen]);
 
   function resetPomodoro() {
     focusSecondsRef.current = 0;
@@ -145,7 +230,9 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
     URL.revokeObjectURL(a.href);
   }
 
+  // Only fetch/parse after explicit user start (or cache hit)
   useEffect(() => {
+    if (!started) return;
     let cancelled = false;
     setLoading(true);
     setError("");
@@ -218,7 +305,7 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
       }
       pdfRef.current = null;
     };
-  }, [url]);
+  }, [url, started]);
 
   useEffect(() => {
     const root = scrollRef.current;
@@ -294,15 +381,80 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
     });
   }, []);
 
+  // Confirm layer: title → size → explicit Download
+  if (!started) {
+    const displaySize =
+      sizeProbe != null
+        ? formatBytes(sizeProbe)
+        : sizeProbeBusy
+          ? "Checking size…"
+          : sizeProbeFailed
+            ? "Size available after download starts"
+            : "—";
+    const isLarge = sizeProbe != null && sizeProbe >= LARGE_FILE_BYTES;
+
+    return (
+      <div className="relative flex flex-col rounded-2xl border border-white/12 bg-neutral-950 overflow-hidden min-h-[280px]">
+        <div className="flex items-center gap-2 px-3 py-2 border-b border-white/10 bg-[#0b1220] shrink-0">
+          <FileText className="w-4 h-4 shrink-0 text-amber-300" />
+          <p className="text-xs sm:text-sm text-white/80 truncate font-medium flex-1 min-w-0">
+            {title}
+          </p>
+        </div>
+        <div className="flex flex-col items-center justify-center gap-5 px-6 py-12 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-amber-400/30 bg-amber-500/10">
+            <FileText className="w-8 h-8 text-amber-300" />
+          </div>
+          <div className="space-y-1.5 max-w-sm">
+            <h3 className="font-display text-lg font-bold text-white leading-snug">
+              {title}
+            </h3>
+            <p className="text-sm text-white/55">
+              PDF book ·{" "}
+              <span className="tabular-nums text-cyan-200/90 font-semibold">
+                {displaySize}
+              </span>
+            </p>
+            {isLarge && (
+              <p className="text-xs text-amber-200/90 rounded-xl border border-amber-400/30 bg-amber-500/10 px-3 py-2 mt-2">
+                Large file. Prefer Wi‑Fi if possible — this may use mobile data.
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => setStarted(true)}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-500 px-6 py-3 text-sm font-bold text-wisdom-dark hover:bg-cyan-400 transition-colors shadow-lg shadow-cyan-500/20 min-w-[200px]"
+          >
+            <Download className="w-4 h-4" />
+            Download & open
+            {sizeProbe != null && (
+              <span className="opacity-80 font-semibold tabular-nums">
+                ({formatBytes(sizeProbe)})
+              </span>
+            )}
+          </button>
+          <p className="text-[11px] text-white/35 max-w-xs">
+            Nothing downloads until you tap the button. After the first open, this
+            book reopens instantly from cache.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const readerChrome = (
     <>
       <div className="flex items-center gap-2 px-2 sm:px-3 py-2 border-b border-white/10 bg-[#0b1220] shrink-0">
         <FileText className="w-4 h-4 shrink-0 text-amber-300" />
-        <p className="text-xs sm:text-sm text-white/80 truncate font-medium flex-1 min-w-0">{title}</p>
+        <p className="text-xs sm:text-sm text-white/80 truncate font-medium flex-1 min-w-0">
+          {title}
+        </p>
         {!loading && !error && (
           <span className="hidden sm:inline-flex items-center gap-1 rounded-lg border border-amber-400/25 bg-amber-500/10 px-2 py-1 text-[10px] font-semibold tabular-nums text-amber-200/90 shrink-0">
             <Timer className="w-3 h-3" />
-            {Math.floor(focusSeconds / 60)}:{String(focusSeconds % 60).padStart(2, "0")}
+            {Math.floor(focusSeconds / 60)}:
+            {String(focusSeconds % 60).padStart(2, "0")}
           </span>
         )}
         <div className="flex items-center gap-1 shrink-0">
@@ -311,26 +463,46 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
               type="button"
               onClick={downloadPdf}
               className="mr-1 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-cyan-400/35 bg-cyan-500/10 text-cyan-200 text-[11px] font-bold"
-              title={`Download (${formatBytes(fileBytes)})`}
+              title={`Save file (${formatBytes(fileBytes)})`}
             >
               <Download className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Download</span>
+              <span className="hidden sm:inline">Save</span>
               <span className="tabular-nums opacity-80">{formatBytes(fileBytes)}</span>
             </button>
           )}
-          <ToolBtn onClick={() => setScale((s) => Math.max(0.55, Math.round((s - 0.15) * 100) / 100))} label="Zoom out">
+          <ToolBtn
+            onClick={() =>
+              setScale((s) => Math.max(0.55, Math.round((s - 0.15) * 100) / 100))
+            }
+            label="Zoom out"
+          >
             <ZoomOut className="w-4 h-4" />
           </ToolBtn>
-          <span className="text-[11px] tabular-nums text-white/50 w-10 text-center hidden sm:inline">{Math.round(scale * 100)}%</span>
-          <ToolBtn onClick={() => setScale((s) => Math.min(2.2, Math.round((s + 0.15) * 100) / 100))} label="Zoom in">
+          <span className="text-[11px] tabular-nums text-white/50 w-10 text-center hidden sm:inline">
+            {Math.round(scale * 100)}%
+          </span>
+          <ToolBtn
+            onClick={() =>
+              setScale((s) => Math.min(2.2, Math.round((s + 0.15) * 100) / 100))
+            }
+            label="Zoom in"
+          >
             <ZoomIn className="w-4 h-4" />
           </ToolBtn>
           {!fullscreen ? (
-            <button type="button" onClick={() => setFullscreen(true)} className="ml-1 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/90 text-wisdom-dark text-[11px] font-bold">
+            <button
+              type="button"
+              onClick={() => setFullscreen(true)}
+              className="ml-1 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/90 text-wisdom-dark text-[11px] font-bold"
+            >
               <Maximize2 className="w-3.5 h-3.5" /> Full screen
             </button>
           ) : (
-            <button type="button" onClick={() => setFullscreen(false)} className="ml-1 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500 text-white text-[11px] font-bold">
+            <button
+              type="button"
+              onClick={() => setFullscreen(false)}
+              className="ml-1 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500 text-white text-[11px] font-bold"
+            >
               <X className="w-4 h-4" /> Exit
             </button>
           )}
@@ -339,35 +511,76 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
 
       {numPages > 0 && (
         <div className="flex flex-wrap items-center justify-center gap-2 px-2 py-2 border-b border-white/8 bg-[#0d1526] shrink-0">
-          <button type="button" disabled={currentPage <= 1} onClick={() => scrollToPage(currentPage - 1)} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-white/12 text-xs font-semibold text-white/85 disabled:opacity-30">
+          <button
+            type="button"
+            disabled={currentPage <= 1}
+            onClick={() => scrollToPage(currentPage - 1)}
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-white/12 text-xs font-semibold text-white/85 disabled:opacity-30"
+          >
             <ChevronLeft className="w-4 h-4" /> Prev
           </button>
           <form onSubmit={onGotoSubmit} className="flex items-center gap-1.5">
-            <input type="number" min={1} max={numPages} value={gotoInput} placeholder={String(currentPage)} onChange={(e) => setGotoInput(e.target.value)} className="w-14 rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 text-xs text-center tabular-nums text-white focus:outline-none focus:border-amber-400/50" />
+            <input
+              type="number"
+              min={1}
+              max={numPages}
+              value={gotoInput}
+              placeholder={String(currentPage)}
+              onChange={(e) => setGotoInput(e.target.value)}
+              className="w-14 rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 text-xs text-center tabular-nums text-white focus:outline-none focus:border-amber-400/50"
+            />
             <span className="text-[11px] text-white/45 tabular-nums">/ {numPages}</span>
-            <button type="submit" className="px-2 py-1.5 rounded-lg border border-amber-400/30 text-[11px] font-semibold text-amber-200">Go</button>
+            <button
+              type="submit"
+              className="px-2 py-1.5 rounded-lg border border-amber-400/30 text-[11px] font-semibold text-amber-200"
+            >
+              Go
+            </button>
           </form>
-          <button type="button" disabled={currentPage >= numPages} onClick={() => scrollToPage(currentPage + 1)} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-white/12 text-xs font-semibold text-white/85 disabled:opacity-30">
+          <button
+            type="button"
+            disabled={currentPage >= numPages}
+            onClick={() => scrollToPage(currentPage + 1)}
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-white/12 text-xs font-semibold text-white/85 disabled:opacity-30"
+          >
             Next <ChevronRight className="w-4 h-4" />
           </button>
-          <button type="button" onClick={() => scrollToPage(1)} className="p-1.5 rounded-lg border border-white/10 text-white/50" title="Top">
+          <button
+            type="button"
+            onClick={() => scrollToPage(1)}
+            className="p-1.5 rounded-lg border border-white/10 text-white/50"
+            title="Top"
+          >
             <ChevronsUp className="w-4 h-4" />
           </button>
         </div>
       )}
 
-      <div ref={scrollRef} className="overflow-y-auto overflow-x-hidden flex-1 min-h-0 bg-[#121212]">
+      <div
+        ref={scrollRef}
+        className="overflow-y-auto overflow-x-hidden flex-1 min-h-0 bg-[#121212]"
+      >
         {loading && (
           <div className="flex flex-col items-center justify-center w-full py-24 px-6 gap-4">
-            <p className="text-sm text-white/50">{loadPhase === "parse" ? "Opening book…" : "Downloading book…"}</p>
+            <p className="text-sm text-white/50">
+              {loadPhase === "parse" ? "Opening book…" : "Downloading book…"}
+            </p>
             {fileBytes != null && fileBytes >= LARGE_FILE_BYTES && (
               <p className="text-xs text-amber-200/90 text-center max-w-sm rounded-xl border border-amber-400/30 bg-amber-500/10 px-3 py-2">
-                Large file ({formatBytes(fileBytes)}). Please wait — this may take a moment on mobile data.
+                Large file ({formatBytes(fileBytes)}). Please wait — this may take a
+                moment on mobile data.
               </p>
             )}
             <div className="w-full max-w-sm">
               <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-                <div className="h-full rounded-full bg-amber-400 transition-[width] duration-200 ease-out" style={{ width: `${Math.max(4, loadProgress)}%` }} role="progressbar" aria-valuenow={loadProgress} aria-valuemin={0} aria-valuemax={100} />
+                <div
+                  className="h-full rounded-full bg-amber-400 transition-[width] duration-200 ease-out"
+                  style={{ width: `${Math.max(4, loadProgress)}%` }}
+                  role="progressbar"
+                  aria-valuenow={loadProgress}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                />
               </div>
               <p className="mt-2 text-center text-[11px] tabular-nums text-white/40">
                 {loadProgress}%
@@ -384,6 +597,16 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
           <div className="flex flex-col items-center justify-center gap-2 px-4 py-28 w-full">
             <AlertCircle className="w-8 h-8 text-rose-400/80" />
             <p className="text-sm text-rose-200/90 text-center">{error}</p>
+            <button
+              type="button"
+              onClick={() => {
+                setStarted(false);
+                setError("");
+              }}
+              className="mt-2 text-xs font-semibold text-cyan-300 underline"
+            >
+              Back
+            </button>
           </div>
         )}
         {!loading && !error && numPages > 0 && (
@@ -393,11 +616,25 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
               const active = visiblePages.has(pageNumber);
               const h = pageHeights[pageNumber] ?? DEFAULT_PAGE_H;
               return (
-                <div key={pageNumber} data-page={pageNumber} className="relative w-full flex justify-center" style={{ minHeight: active ? undefined : h }}>
+                <div
+                  key={pageNumber}
+                  data-page={pageNumber}
+                  className="relative w-full flex justify-center"
+                  style={{ minHeight: active ? undefined : h }}
+                >
                   {active ? (
-                    <PdfPage pdf={pdfRef.current} pageNumber={pageNumber} scale={scale} containerWidth={scrollWidth} onMeasured={onPageMeasured} />
+                    <PdfPage
+                      pdf={pdfRef.current}
+                      pageNumber={pageNumber}
+                      scale={scale}
+                      containerWidth={scrollWidth}
+                      onMeasured={onPageMeasured}
+                    />
                   ) : (
-                    <div className="w-full max-w-full rounded-sm bg-neutral-800/80 border border-white/5 flex items-center justify-center text-white/25 text-xs" style={{ height: h }}>
+                    <div
+                      className="w-full max-w-full rounded-sm bg-neutral-800/80 border border-white/5 flex items-center justify-center text-white/25 text-xs"
+                      style={{ height: h }}
+                    >
                       {pageNumber}
                     </div>
                   )}
@@ -412,12 +649,28 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
 
   if (mounted && fullscreen) {
     return createPortal(
-      <div className="fixed inset-0 z-[9999] flex flex-col bg-[#0a0a0a]" style={{ height: "100dvh", width: "100vw" }} role="dialog" aria-modal="true" aria-label={title}>
+      <div
+        className="fixed inset-0 z-[9999] flex flex-col bg-[#0a0a0a]"
+        style={{ height: "100dvh", width: "100vw" }}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+      >
         {readerChrome}
-        <button type="button" onClick={() => setFullscreen(false)} className="absolute top-[max(0.75rem,env(safe-area-inset-top))] right-3 z-[10000] inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-rose-500 text-white text-sm font-bold shadow-xl">
+        <button
+          type="button"
+          onClick={() => setFullscreen(false)}
+          className="absolute top-[max(0.75rem,env(safe-area-inset-top))] right-3 z-[10000] inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-rose-500 text-white text-sm font-bold shadow-xl"
+        >
           <X className="w-5 h-5" /> Exit
         </button>
-        <PomodoroBreak open={breakOpen} quote={breakQuote} sessionMinutes={Math.max(1, Math.round(focusSeconds / 60))} onContinue={resetPomodoro} onTakeBreak={resetPomodoro} />
+        <PomodoroBreak
+          open={breakOpen}
+          quote={breakQuote}
+          sessionMinutes={Math.max(1, Math.round(focusSeconds / 60))}
+          onContinue={resetPomodoro}
+          onTakeBreak={resetPomodoro}
+        />
       </div>,
       document.body
     );
@@ -426,14 +679,33 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
   return (
     <div className="relative flex flex-col rounded-2xl border border-white/12 bg-neutral-950 overflow-hidden h-[min(72vh,680px)]">
       {readerChrome}
-      <PomodoroBreak open={breakOpen} quote={breakQuote} sessionMinutes={Math.max(1, Math.round(focusSeconds / 60))} onContinue={resetPomodoro} onTakeBreak={resetPomodoro} />
+      <PomodoroBreak
+        open={breakOpen}
+        quote={breakQuote}
+        sessionMinutes={Math.max(1, Math.round(focusSeconds / 60))}
+        onContinue={resetPomodoro}
+        onTakeBreak={resetPomodoro}
+      />
     </div>
   );
 }
 
-function ToolBtn({ children, onClick, label }: { children: React.ReactNode; onClick: () => void; label: string }) {
+function ToolBtn({
+  children,
+  onClick,
+  label,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  label: string;
+}) {
   return (
-    <button type="button" onClick={onClick} aria-label={label} className="p-1.5 rounded-lg border border-white/12 text-white/75 hover:bg-white/5">
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      className="p-1.5 rounded-lg border border-white/12 text-white/75 hover:bg-white/5"
+    >
       {children}
     </button>
   );
@@ -470,7 +742,10 @@ function PdfPage({
         const pageObj = await pdf.getPage(pageNumber);
         if (cancelled || gen !== renderGen.current) return;
         const base = pageObj.getViewport({ scale: 1 });
-        const fit = containerWidth > 48 ? ((containerWidth - 24) / base.width) * scale : scale;
+        const fit =
+          containerWidth > 48
+            ? ((containerWidth - 24) / base.width) * scale
+            : scale;
         const viewport = pageObj.getViewport({ scale: fit });
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -509,9 +784,14 @@ function PdfPage({
   return (
     <div className="relative shadow-lg">
       {busy && (
-        <div className="absolute inset-0 flex items-center justify-center bg-neutral-900/40 text-white/30 text-xs z-10">…</div>
+        <div className="absolute inset-0 flex items-center justify-center bg-neutral-900/40 text-white/30 text-xs z-10">
+          …
+        </div>
       )}
-      <canvas ref={canvasRef} className="max-w-full h-auto block mx-auto bg-white" />
+      <canvas
+        ref={canvasRef}
+        className="max-w-full h-auto block mx-auto bg-white"
+      />
     </div>
   );
 }
