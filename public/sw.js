@@ -3,7 +3,7 @@
  * Does NOT cache large PDF book downloads (Appwrite /api/content/pdf).
  * Strategy: network-first for navigations, cache-first for static/images.
  */
-const CACHE_VERSION = "wta-offline-v3";
+const CACHE_VERSION = "wta-offline-v4";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const PAGE_CACHE = `${CACHE_VERSION}-pages`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
