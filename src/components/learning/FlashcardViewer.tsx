@@ -102,7 +102,6 @@ export default function FlashcardViewer({ meta, resourceId }: Props) {
         <p className="text-sm text-wisdom-muted">
           Know {stats.know} · Learning {stats.learning} · Again {stats.again}
         </p>
-        <p className="text-xs text-cyan-300/80">Saved on this device. Syncs when online.</p>
         <button
           type="button"
           onClick={() => {
