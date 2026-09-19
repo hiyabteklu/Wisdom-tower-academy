@@ -147,15 +147,25 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
     setIdx(i);
     setShowSol(Boolean(lockedBySolution[i]));
     setAi("");
+    if (submitted) {
+      if (reviewFilter === "missed") {
+        const qq = questions[i];
+        const missed = answers[i] == null || answers[i] !== qq?.correct;
+        if (!missed) setReviewFilter("all");
+      }
+      requestAnimationFrame(() => {
+        document.getElementById(`review-q-${i}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
   }
 
   const reviewQuestions = useMemo(() => {
-    if (!isExam || !submitted) return [];
+    if (!submitted) return [];
     return questions.map((qq, i) => ({ qq, i })).filter(({ qq, i }) => {
       if (reviewFilter === "missed") return answers[i] == null || answers[i] !== qq.correct;
       return true;
     });
-  }, [isExam, submitted, questions, answers, reviewFilter]);
+  }, [submitted, questions, answers, reviewFilter]);
 
   return (
     <div className="space-y-2.5">
@@ -269,7 +279,6 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
             </div>
           )}
 
-          {/* Explain with AI sits under official solution when expanded */}
           {!isExam && (
             <div className={`flex flex-col gap-2 ${showSol ? "mt-2.5" : "mt-3"}`}>
               <button type="button" onClick={() => void explainQ()} disabled={aiLoading}
@@ -328,35 +337,122 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
       )}
 
       {submitted && (
-        <div className="rounded-xl border border-white/12 bg-wisdom-card p-4 space-y-3">
-          <div className="text-center">
-            <p className="font-display text-xl font-bold text-white">
-              {score}/{questions.length}{" "}
-              <span className="text-wisdom-muted text-sm font-semibold">
-                ({questions.length ? Math.round((score / questions.length) * 100) : 0}%)
-              </span>
+        <div className="space-y-3">
+          <div className="rounded-xl border border-white/12 bg-wisdom-card p-4 space-y-3">
+            <div className="text-center">
+              <p className="font-display text-xl font-bold text-white">
+                {score}/{questions.length}{" "}
+                <span className="text-wisdom-muted text-sm font-semibold">
+                  ({questions.length ? Math.round((score / questions.length) * 100) : 0}%)
+                </span>
+              </p>
+              <p className="text-xs text-wisdom-muted mt-1">
+                Correct {score} · Wrong {wrong} · Skipped {skipped}
+              </p>
+              <p className="text-[11px] text-cyan-300/80 mt-1.5">Saved on this device. Syncs when online.</p>
+            </div>
+            <div className="flex flex-wrap gap-2 justify-center">
+              <button type="button" onClick={() => setReviewFilter("all")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${
+                  reviewFilter === "all" ? "border-cyan-400/50 bg-cyan-500/15 text-cyan-100" : "border-white/12 text-wisdom-muted"
+                }`}>All</button>
+              <button type="button" onClick={() => setReviewFilter("missed")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${
+                  reviewFilter === "missed" ? "border-rose-400/50 bg-rose-500/15 text-rose-100" : "border-white/12 text-wisdom-muted"
+                }`}>Missed</button>
+              <button type="button" onClick={() => {
+                setSubmitted(false); setSaved(false); setAnswers({}); setFlagged({});
+                setIdx(0); setShowSol(false); setLockedBySolution({});
+                setReviewSolOpen({}); setReviewAi({});
+                setLeft(durationMin > 0 ? durationMin * 60 : 0);
+              }}
+                className="px-3 py-1.5 rounded-lg text-xs font-bold border border-amber-400/40 text-amber-100 bg-amber-500/10">
+                Retake
+              </button>
+            </div>
+          </div>
+
+          {reviewQuestions.length === 0 ? (
+            <p className="text-center text-sm text-wisdom-muted py-6">
+              {reviewFilter === "missed" ? "No missed questions — nice work." : "No questions to review."}
             </p>
-            <p className="text-xs text-wisdom-muted mt-1">Correct · Wrong {wrong} · Skipped {skipped}</p>
-            <p className="text-[11px] text-cyan-300/80 mt-1.5">Saved on this device. Syncs when online.</p>
-          </div>
-          <div className="flex flex-wrap gap-2 justify-center">
-            <button type="button" onClick={() => setReviewFilter("all")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${reviewFilter === "all" ? "border-cyan-400/50 bg-cyan-500/15 text-cyan-100" : "border-white/12 text-wisdom-muted"}`}>
-              All
-            </button>
-            <button type="button" onClick={() => setReviewFilter("missed")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${reviewFilter === "missed" ? "border-rose-400/50 bg-rose-500/15 text-rose-100" : "border-white/12 text-wisdom-muted"}`}>
-              Missed
-            </button>
-            <button type="button" onClick={() => {
-              setSubmitted(false); setSaved(false); setAnswers({}); setFlagged({});
-              setIdx(0); setShowSol(false); setLockedBySolution({});
-              setLeft(durationMin > 0 ? durationMin * 60 : 0);
-            }}
-              className="px-3 py-1.5 rounded-lg text-xs font-bold border border-amber-400/40 text-amber-100 bg-amber-500/10">
-              Retake
-            </button>
-          </div>
+          ) : (
+            <div className="space-y-3">
+              {reviewQuestions.map(({ qq, i }) => {
+                const selected = answers[i];
+                const isCorrect = selected != null && selected === qq.correct;
+                const isSkipped = selected == null;
+                const solOpen = Boolean(reviewSolOpen[i]);
+                return (
+                  <div key={i} id={`review-q-${i}`}
+                    className={`rounded-xl border p-3 sm:p-4 ${
+                      isCorrect ? "border-emerald-400/30 bg-emerald-500/5"
+                        : isSkipped ? "border-white/12 bg-wisdom-card"
+                        : "border-rose-400/30 bg-rose-500/5"
+                    }`}>
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <span className="text-[11px] font-bold text-wisdom-muted">Q {i + 1}</span>
+                      {isCorrect && <span className="text-[10px] font-bold uppercase tracking-wide text-emerald-300">Correct</span>}
+                      {!isCorrect && !isSkipped && <span className="text-[10px] font-bold uppercase tracking-wide text-rose-300">Wrong</span>}
+                      {isSkipped && <span className="text-[10px] font-bold uppercase tracking-wide text-amber-300">Skipped</span>}
+                    </div>
+                    <div className="text-white font-medium leading-snug mb-2.5 study-prose text-[0.95rem]">
+                      <RichContent body={qq.prompt} />
+                    </div>
+                    <div className="space-y-1.5">
+                      {(qq.choices || []).map((c, ci) => {
+                        const isRight = qq.correct === ci;
+                        const isUser = selected === ci;
+                        return (
+                          <div key={ci}
+                            className={`w-full text-left px-2.5 py-2 rounded-lg border text-[13px] leading-snug ${
+                              isRight ? "border-emerald-400/50 bg-emerald-500/10 text-white"
+                                : isUser ? "border-rose-400/40 bg-rose-500/10 text-white"
+                                : "border-white/10 text-white/70"
+                            }`}>
+                            <span className="font-semibold text-amber-200/90 mr-1">{String.fromCharCode(65 + ci)}.</span>
+                            <span className="study-prose inline"><RichContent body={c} /></span>
+                            {isRight && <span className="ml-1.5 text-[10px] font-bold text-emerald-300">✓ Correct</span>}
+                            {isUser && !isRight && <span className="ml-1.5 text-[10px] font-bold text-rose-300">Your answer</span>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {qq.solution && (
+                      <div className="mt-3">
+                        <button type="button" onClick={() => setReviewSolOpen((m) => ({ ...m, [i]: !m[i] }))}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-400/40 bg-emerald-500/10 text-emerald-100 text-[11px] font-bold">
+                          <BadgeCheck className="w-3.5 h-3.5" />
+                          {solOpen ? "Hide solution" : "Official solution"}
+                        </button>
+                        {solOpen && (
+                          <div className="mt-2 rounded-lg border border-emerald-400/25 bg-emerald-500/10 p-3 text-sm">
+                            <div className="study-prose text-emerald-50 text-[13px] leading-relaxed">
+                              <RichContent body={qq.solution} />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    <div className="mt-2.5">
+                      <button type="button" onClick={() => void explainReview(i)} disabled={Boolean(reviewAiLoading[i])}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-violet-400/40 bg-violet-500/10 text-violet-100 text-[11px] font-bold disabled:opacity-60">
+                        <Lightbulb className="w-3.5 h-3.5" />
+                        {reviewAiLoading[i] ? "Generating…" : "Explain with AI"}
+                      </button>
+                      {reviewAi[i] && (
+                        <div className="mt-2 rounded-lg border border-violet-400/25 bg-violet-500/10 p-3 text-sm">
+                          <div className="study-prose text-white/90 text-[13px] leading-relaxed">
+                            <RichContent body={reviewAi[i]} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
     </div>
