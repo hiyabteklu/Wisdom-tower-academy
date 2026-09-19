@@ -108,7 +108,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
       });
       const data = await res.json();
       setAi(data.explanation || data.error || "—");
-    } catch { setAi("AI unavailable offline"); }
+    } catch { setAi("AI unavailable"); }
     setAiLoading(false);
   }
 
@@ -128,7 +128,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
       });
       const data = await res.json();
       setReviewAi((m) => ({ ...m, [qi]: data.explanation || data.error || "—" }));
-    } catch { setReviewAi((m) => ({ ...m, [qi]: "AI unavailable offline" })); }
+    } catch { setReviewAi((m) => ({ ...m, [qi]: "AI unavailable" })); }
     setReviewAiLoading((m) => ({ ...m, [qi]: false }));
   }
 
@@ -324,7 +324,6 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
               Answered <span className="text-cyan-200 font-semibold">{attempted}</span> ·{" "}
               Skipped <span className="text-amber-200 font-semibold">{skipped}</span>
               {flaggedCount > 0 && <> · Flagged <span className="text-orange-200 font-semibold">{flaggedCount}</span></>}
-              {isExam && <span className="block mt-2 text-white/70">You can still retake offline; results sync when you are online.</span>}
             </p>
             <div className="flex gap-2 justify-end">
               <button type="button" onClick={() => setConfirmOpen(false)}
@@ -349,7 +348,6 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
               <p className="text-xs text-wisdom-muted mt-1">
                 Correct {score} · Wrong {wrong} · Skipped {skipped}
               </p>
-              <p className="text-[11px] text-cyan-300/80 mt-1.5">Saved on this device. Syncs when online.</p>
             </div>
             <div className="flex flex-wrap gap-2 justify-center">
               <button type="button" onClick={() => setReviewFilter("all")}
