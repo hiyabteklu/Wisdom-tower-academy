@@ -27,9 +27,9 @@ function hasFocusedFormField(): boolean {
 }
 
 /**
- * Soft-refresh ownership/progress without full reload.
- * Does NOT run on focus/visibility (that caused awkward jumps).
- * Triggers: back online, or user tapping the Refresh button (wta-refresh).
+ * Soft-refresh ownership/progress without full page reload.
+ * Does NOT run on focus/visibility (that caused jumps).
+ * Triggers: back online, or Refresh button / app hard refresh (wta-refresh).
  */
 export default function LiveRefresh() {
   const router = useRouter();
@@ -42,7 +42,7 @@ export default function LiveRefresh() {
       if (hasFocusedFormField()) return;
 
       const now = Date.now();
-      if (now - lastAt.current < 2500 && !hard) return;
+      if (now - lastAt.current < 1200 && !hard) return;
       lastAt.current = now;
 
       try {
@@ -51,13 +51,7 @@ export default function LiveRefresh() {
         /* ignore */
       }
 
-      try {
-        window.dispatchEvent(
-          new CustomEvent("wta-refresh", { detail: { source, at: now } })
-        );
-      } catch {
-        /* ignore */
-      }
+      // Do NOT re-dispatch wta-refresh here (button/app already did) — listeners handle progress.
 
       try {
         router.refresh();
@@ -68,8 +62,10 @@ export default function LiveRefresh() {
 
     const onOnline = () => run("online", true);
     const onApp = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { source?: string } | undefined;
-      run(detail?.source || "wta-refresh", true);
+      const detail = (e as CustomEvent).detail as
+        | { source?: string; hard?: boolean }
+        | undefined;
+      run(detail?.source || "wta-refresh", Boolean(detail?.hard));
     };
 
     window.addEventListener("online", onOnline);
