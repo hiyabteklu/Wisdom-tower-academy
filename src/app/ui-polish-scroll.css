@@ -1,6 +1,11 @@
 /*
- * Minimal wide-content scroll (no touch-action, no JS gesture lock, no transform).
- * Native nested overflow-x: auto is enough in modern mobile browsers.
+ * CRITICAL: Do NOT put overflow-x: auto on .katex-display.
+ * Even short equations that fit the screen become nested scrollports on
+ * mobile WebView/Chrome, and a touch that starts on them freezes page scroll.
+ * KaTeX already uses white-space: nowrap; long lines may extend slightly —
+ * that is better than trapping vertical gestures.
+ *
+ * Tables are the only intentional horizontal scroller.
  */
 
 .study-table-wrap {
@@ -11,6 +16,11 @@
 
 .study-prose .katex-display {
   max-width: 100%;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
+  overflow-x: visible;
+  overflow-y: visible;
+}
+
+.study-prose .katex {
+  /* do not create a scroll container around inline math */
+  max-width: 100%;
 }
