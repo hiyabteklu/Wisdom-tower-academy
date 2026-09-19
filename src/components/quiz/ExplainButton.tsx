@@ -77,12 +77,6 @@ export default function ExplainButton(props: Props) {
             <span className="text-xs font-bold uppercase tracking-wider text-cyan-300/90">
               Explanation
             </span>
-            {meta?.cached && (
-              <span className="text-[10px] text-wisdom-muted ml-auto">cached</span>
-            )}
-            {meta?.fallback && (
-              <span className="text-[10px] text-amber-400/80 ml-auto">offline tip</span>
-            )}
           </div>
           <p className="text-sm text-white/85 leading-relaxed whitespace-pre-wrap">{text}</p>
         </div>
