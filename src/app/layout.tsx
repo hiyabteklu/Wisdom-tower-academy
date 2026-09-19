@@ -12,6 +12,7 @@ import GlobalFocusBar from "@/components/GlobalFocusBar";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import OfflineSync from "@/components/OfflineSync";
 import LiveRefresh from "@/components/LiveRefresh";
+import StructuralBackBridge from "@/components/StructuralBackBridge";
 
 export const metadata: Metadata = {
   title: "Wisdom Tower Academy | Grades 9–12, Freshman, UAT, GAT, COC & Exit Exam",
@@ -83,6 +84,7 @@ export default function RootLayout({
             <ServiceWorkerRegister />
             <OfflineSync />
             <LiveRefresh />
+            <StructuralBackBridge />
           </AuthProvider>
         </ThemeProvider>
       </body>
