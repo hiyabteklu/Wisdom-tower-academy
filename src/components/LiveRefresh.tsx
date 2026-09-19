@@ -27,8 +27,9 @@ function hasFocusedFormField(): boolean {
 }
 
 /**
- * Keeps package ownership, progress, and list UIs fresh without a full app restart.
- * Never runs on auth pages or while a form field is focused (protects autofill login).
+ * Soft-refresh ownership/progress without full reload.
+ * Does NOT run on focus/visibility (that caused awkward jumps).
+ * Triggers: back online, or user tapping the Refresh button (wta-refresh).
  */
 export default function LiveRefresh() {
   const router = useRouter();
@@ -65,31 +66,18 @@ export default function LiveRefresh() {
       }
     };
 
-    const onVisible = () => {
-      if (document.visibilityState === "visible") run("visibility");
-    };
-    const onFocus = () => run("focus");
     const onOnline = () => run("online", true);
     const onApp = (e: Event) => {
       const detail = (e as CustomEvent).detail as { source?: string } | undefined;
       run(detail?.source || "wta-refresh", true);
     };
 
-    document.addEventListener("visibilitychange", onVisible);
-    window.addEventListener("focus", onFocus);
     window.addEventListener("online", onOnline);
     window.addEventListener("wta-refresh", onApp as EventListener);
 
-    const interval = window.setInterval(() => {
-      if (document.visibilityState === "visible") run("interval");
-    }, 45_000);
-
     return () => {
-      document.removeEventListener("visibilitychange", onVisible);
-      window.removeEventListener("focus", onFocus);
       window.removeEventListener("online", onOnline);
       window.removeEventListener("wta-refresh", onApp as EventListener);
-      window.clearInterval(interval);
     };
   }, [router, pathname]);
 
