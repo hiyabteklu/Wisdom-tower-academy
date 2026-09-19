@@ -20,6 +20,7 @@ import { supabase, recoverSession } from "@/lib/supabase";
 import { isAdminEmail } from "@/lib/admin";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import HeaderLibraryLinks from "@/components/HeaderLibraryLinks";
+import RefreshButton from "@/components/RefreshButton";
 import { DIGITAL_URL } from "@/lib/digital-url";
 
 const mainNavLinks = [
@@ -159,6 +160,7 @@ export default function Header() {
             {!loading && (
               <div className="flex items-center gap-1.5 ml-1">
                 <HeaderLibraryLinks />
+                <RefreshButton />
                 {user ? (
                   <div className="relative" ref={profileRef}>
                     <button
@@ -244,6 +246,7 @@ export default function Header() {
           </nav>
 
           <div className="md:hidden flex items-center gap-1" ref={menuRef}>
+            <RefreshButton />
             <HeaderLibraryLinks size="lg" onNavigate={() => setIsOpen(false)} />
             <button type="button" className="p-2 rounded-lg text-wisdom-muted hover:text-white" onClick={() => setIsOpen((v) => !v)} aria-label="Menu" aria-expanded={isOpen}>
               {isOpen ? <X size={24} /> : <Menu size={24} />}
