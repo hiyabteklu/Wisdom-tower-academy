@@ -14,17 +14,51 @@ export default function NotesViewer({ body, resourceId, onProgress }: Props) {
   const [ai, setAi] = useState("");
   const [loading, setLoading] = useState(false);
   const reported = useRef(false);
+  const onProgressRef = useRef(onProgress);
+  onProgressRef.current = onProgress;
 
+  // Only when opening / switching notes: start at the top once.
+  // Do NOT depend on onProgress (unstable) or it fights the reader while scrolling.
   useEffect(() => {
     reported.current = false;
-    // Always start at the top of the note when opening / switching notes
+    setAi("");
+
+    let prevRestoration: ScrollRestoration | undefined;
     try {
-      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
+      if (typeof history !== "undefined" && "scrollRestoration" in history) {
+        prevRestoration = history.scrollRestoration;
+        history.scrollRestoration = "manual";
+      }
     } catch {
       /* ignore */
     }
+
+    // After paint so layout height is ready; still only once per resourceId
+    const id = window.requestAnimationFrame(() => {
+      try {
+        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      } catch {
+        /* ignore */
+      }
+    });
+
+    return () => {
+      window.cancelAnimationFrame(id);
+      try {
+        if (prevRestoration != null && typeof history !== "undefined") {
+          history.scrollRestoration = prevRestoration;
+        }
+      } catch {
+        /* ignore */
+      }
+    };
+  }, [resourceId]);
+
+  // Progress tracking only — never resets scroll
+  useEffect(() => {
+    reported.current = false;
 
     const onScroll = () => {
       const pageH = Math.max(
@@ -33,21 +67,20 @@ export default function NotesViewer({ body, resourceId, onProgress }: Props) {
       );
       const scrolled = window.scrollY || document.documentElement.scrollTop;
       const pct = Math.min(100, Math.round((scrolled / pageH) * 100));
-      onProgress?.(pct);
+      onProgressRef.current?.(pct);
       if (pct >= 95 && !reported.current) {
         reported.current = true;
-        onProgress?.(100);
+        onProgressRef.current?.(100);
       }
     };
 
-    onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll, { passive: true });
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
     };
-  }, [body, onProgress]);
+  }, [resourceId]);
 
   async function summarize() {
     setLoading(true);
@@ -64,7 +97,7 @@ export default function NotesViewer({ body, resourceId, onProgress }: Props) {
       });
       const data = await res.json();
       setAi(data.explanation || data.error || "No summary returned.");
-      onProgress?.(100);
+      onProgressRef.current?.(100);
     } catch {
       setAi("Could not reach AI. Try again later.");
     }
