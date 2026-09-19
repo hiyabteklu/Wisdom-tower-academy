@@ -244,8 +244,11 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
     (async () => {
       try {
         const pdfjs = await import("pdfjs-dist");
-        // Same-origin worker so offline + Android WebView never depend on CDN
-        pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+        // Bundle worker from node_modules — no CDN, works offline after first load
+        pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+          "pdfjs-dist/build/pdf.worker.min.mjs",
+          import.meta.url
+        ).toString();
 
         const data = await fetchPdfCached(url, (loaded, total) => {
           if (cancelled) return;
@@ -286,7 +289,6 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
         if (!cancelled) {
           console.error(e);
           const msg = e instanceof Error ? e.message : "Failed to load PDF";
-          // Hide noisy pdf.js worker CDN errors from users
           if (/fake worker|dynamically imported module|pdf\.worker/i.test(msg)) {
             setError("Could not open this book. Check your connection and try again.");
           } else {
@@ -621,10 +623,7 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
       </div>
 
       {breakOpen && breakQuote && (
-        <PomodoroBreak
-          quote={breakQuote}
-          onContinue={resetPomodoro}
-        />
+        <PomodoroBreak quote={breakQuote} onContinue={resetPomodoro} />
       )}
     </>
   );
