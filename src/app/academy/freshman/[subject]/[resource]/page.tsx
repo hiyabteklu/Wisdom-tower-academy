@@ -48,7 +48,8 @@ export default async function FreshmanResourcePage({
       <div className="relative min-h-[60vh]">
         <div className="relative max-w-3xl mx-auto px-4 py-12">
           <CategoryBackButton fallback={`/academy/freshman/${subject.id}`} />
-          <FreshmanLockedPanel subjectName={subject.name} hubName={resource.name} />
+          {/* Panel only accepts showBack; page already renders CategoryBackButton */}
+          <FreshmanLockedPanel showBack={false} />
         </div>
       </div>
     );
