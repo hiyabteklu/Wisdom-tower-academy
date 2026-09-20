@@ -5,7 +5,7 @@
  * KaTeX already uses white-space: nowrap; long lines may extend slightly —
  * that is better than trapping vertical gestures.
  *
- * Tables are the only intentional horizontal scroller.
+ * Tables and pre/code are the only intentional horizontal scrollers.
  */
 
 .study-table-wrap {
@@ -23,4 +23,21 @@
 .study-prose .katex {
   /* do not create a scroll container around inline math */
   max-width: 100%;
+}
+
+/* Reinforce: note body never forces page-level horizontal scroll */
+.notes-reading-surface,
+.study-prose,
+[data-learning-content] {
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.study-prose pre,
+.notes-reading-surface pre {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
 }
