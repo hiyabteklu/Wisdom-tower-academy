@@ -194,3 +194,19 @@ body.wta-native-app .animate-fade-up {
   opacity: 1 !important;
   transform: none !important;
 }
+
+/* Native app WebView: no leftover header gap (was pt-16 under hidden site header) */
+html.wta-native-app main,
+body.wta-native-app main {
+  padding-top: 0 !important;
+}
+
+/* Match native top bar (#0F172A) so the seam is not a different-color strip */
+html.wta-native-app,
+body.wta-native-app {
+  background-color: #0f172a !important;
+}
+html.wta-native-app .site-bg,
+body.wta-native-app .site-bg {
+  background-color: #0f172a !important;
+}
