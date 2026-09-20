@@ -11,7 +11,6 @@ import CategoryBackButton from "@/components/CategoryBackButton";
 import AcademicResultSaver from "@/components/AcademicResultSaver";
 import HubContentView from "@/components/learning/HubContentView";
 import type { HubId } from "@/lib/content";
-import Link from "next/link";
 import ResourceHubChips from "@/components/ResourceHubChips";
 
 export function generateStaticParams() {
@@ -48,7 +47,6 @@ export default async function FreshmanResourcePage({
       <div className="relative min-h-[60vh]">
         <div className="relative max-w-3xl mx-auto px-4 py-12">
           <CategoryBackButton fallback={`/academy/freshman/${subject.id}`} />
-          {/* Panel only accepts showBack; page already renders CategoryBackButton */}
           <FreshmanLockedPanel showBack={false} />
         </div>
       </div>
