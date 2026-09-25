@@ -59,16 +59,6 @@ export default async function SpecialPackagePage({
                 >
                   <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
                     <SafeCoverImage src={sem.image} alt="" />
-                    {!sem.purchasable && (
-                      <span className="absolute top-2 right-2 rounded-lg border border-white/20 bg-black/60 px-2 py-0.5 text-[10px] font-bold uppercase text-white/90">
-                        Soon
-                      </span>
-                    )}
-                    {isFree && sem.purchasable && (
-                      <span className="absolute top-2 left-2 rounded-lg border border-emerald-400/40 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-100">
-                        Free
-                      </span>
-                    )}
                   </div>
                   <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8">
                     <h2 className="flex items-center gap-1.5 font-display text-base sm:text-lg font-bold text-white group-hover:text-violet-200">
