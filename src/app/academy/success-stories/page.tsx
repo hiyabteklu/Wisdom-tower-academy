@@ -12,7 +12,6 @@ import CategoryBackButton from "@/components/CategoryBackButton";
 import {
   Trophy,
   Quote,
-  Star,
   Loader2,
   ChevronDown,
   Medal,
@@ -60,12 +59,6 @@ function StoryCard({
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-wisdom-dark via-wisdom-dark/40 to-transparent" />
-
-        {story.featured && (
-          <span className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold uppercase tracking-wider bg-amber-400 text-wisdom-dark shadow-lg">
-            <Star className="w-3.5 h-3.5" /> Featured
-          </span>
-        )}
 
         {/* Score + name over photo */}
         <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
