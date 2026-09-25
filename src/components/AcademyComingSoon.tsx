@@ -43,7 +43,7 @@ export default function AcademyComingSoon({
             </div>
             <h2 className="font-display text-xl font-bold mb-2">Coming soon</h2>
             <p className="text-wisdom-muted text-sm max-w-md mx-auto leading-relaxed mb-8">
-              We're building the full {title} experience. Materials and enrollment options will
+              We&apos;re building the full {title} experience. Materials and enrollment options will
               appear here shortly.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">

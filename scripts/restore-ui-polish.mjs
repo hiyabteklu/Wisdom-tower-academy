@@ -20,11 +20,16 @@ if (!needsRestore) {
   process.exit(0);
 }
 
-const res = await fetch(url);
-if (!res.ok) {
-  console.error("Failed to download ui-polish.css", res.status);
-  process.exit(1);
+try {
+  const res = await fetch(url);
+  if (!res.ok) {
+    console.warn("Failed to download ui-polish.css, status:", res.status);
+    process.exit(0);
+  }
+  const text = await res.text();
+  writeFileSync(target, text);
+  console.log(`Restored ui-polish.css (${text.length} bytes)`);
+} catch (e) {
+  console.warn("Error restoring ui-polish.css:", e);
+  process.exit(0);
 }
-const text = await res.text();
-writeFileSync(target, text);
-console.log(`Restored ui-polish.css (${text.length} bytes)`);

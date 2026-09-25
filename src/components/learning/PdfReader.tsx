@@ -73,7 +73,6 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
   const [breakQuote, setBreakQuote] = useState<MotivationalQuote | null>(null);
   const focusSecondsRef = useRef(0);
   const scrollRef = useRef<HTMLDivElement>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const pdfRef = useRef<any>(null);
   const openedRef = useRef(false);
   const onOpenedRef = useRef(onOpened);
@@ -744,7 +743,7 @@ function PdfPage({
   maxWidth,
   onMeasured,
 }: {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // PDF document proxy
   pdf: any;
   pageNumber: number;
   scale: number;

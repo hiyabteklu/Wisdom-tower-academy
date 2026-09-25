@@ -8,6 +8,7 @@ const DIGITAL =
     : "https://wisdomtower.tech";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   async redirects() {
     return [
       {

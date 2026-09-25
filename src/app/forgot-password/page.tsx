@@ -71,7 +71,7 @@ export default function ForgotPasswordPage() {
             WT
           </div>
           <h1 className="text-3xl font-bold mb-2">Reset password</h1>
-          <p className="text-wisdom-muted">Enter your email and we'll send you a reset link</p>
+          <p className="text-wisdom-muted">Enter your email and we&apos;ll send you a reset link</p>
         </div>
 
         <div className="bg-wisdom-card border border-white/5 rounded-2xl p-8 shadow-xl">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { resourceHubs } from "@/data/academy";
 import ResourceHubCard from "@/components/ResourceHubCard";
 import {
@@ -69,7 +69,7 @@ export default function ResourceHubGrid({
   const scopePath = scopePathProp || inferred.scopePath;
 
   const staticMode = getHubLockMode(basePath);
-  const unlockIds = unlockPackageIdsForPath(basePath);
+  const unlockIds = useMemo(() => unlockPackageIdsForPath(basePath), [basePath]);
   const purchasePackageId = unlockIds[0] || packageId || "freshman";
 
   const [lockMode, setLockMode] = useState<HubLockMode>(staticMode);
@@ -132,7 +132,7 @@ export default function ResourceHubGrid({
       cancelled = true;
       subscription.unsubscribe();
     };
-  }, [basePath, lockMode, unlockIds.join(",")]);
+  }, [basePath, lockMode, unlockIds]);
 
   return (
     <div className="perspective-scene grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 stagger-children">

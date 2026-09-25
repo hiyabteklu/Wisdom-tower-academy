@@ -34,6 +34,11 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "Wisdom Tower Academy",
   },
+  openGraph: {
+    title: "Wisdom Tower Academy",
+    description:
+      "Structured learning platform for Ethiopian students preparing for high-stakes exams (GAT, UAT, COC, Exit Exam, Grades 9–12, and freshman year).",
+  },
 };
 
 export const viewport: Viewport = {

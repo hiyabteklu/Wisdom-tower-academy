@@ -18,7 +18,7 @@ type Props = {
 type ReviewFilter = "all" | "missed";
 
 export default function QuizExamViewer({ meta, isExam, resourceId, title, trackerScopeId }: Props) {
-  const questions = (Array.isArray(meta.questions) ? meta.questions : []) as Q[];
+  const questions = useMemo(() => (Array.isArray(meta.questions) ? meta.questions : []) as Q[], [meta.questions]);
   const durationMin = Number(meta.durationMin || 0);
   const [idx, setIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
@@ -60,6 +60,14 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
   }, [answers, questions]);
   const accuracy = attempted > 0 ? Math.round((score / attempted) * 100) : 0;
   const elapsedSec = Math.max(0, Math.round((Date.now() - startedAt) / 1000));
+
+  const reviewQuestions = useMemo(() => {
+    if (!submitted) return [];
+    return questions.map((qq, i) => ({ qq, i })).filter(({ qq, i }) => {
+      if (reviewFilter === "missed") return answers[i] == null || answers[i] !== qq.correct;
+      return true;
+    });
+  }, [submitted, questions, answers, reviewFilter]);
 
   useEffect(() => {
     if (!resourceId || questions.length === 0) return;
@@ -158,14 +166,6 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
       });
     }
   }
-
-  const reviewQuestions = useMemo(() => {
-    if (!submitted) return [];
-    return questions.map((qq, i) => ({ qq, i })).filter(({ qq, i }) => {
-      if (reviewFilter === "missed") return answers[i] == null || answers[i] !== qq.correct;
-      return true;
-    });
-  }, [submitted, questions, answers, reviewFilter]);
 
   return (
     <div className="space-y-2.5">
