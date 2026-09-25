@@ -14,7 +14,6 @@ import CategoryBackButton from "@/components/CategoryBackButton";
 import {
   GraduationCap,
   Calendar,
-  Star,
   Loader2,
   ChevronDown,
   BadgeCheck,
@@ -125,19 +124,6 @@ function ScholarshipCard({
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-wisdom-dark via-wisdom-dark/50 to-transparent" />
-
-        <div className="absolute top-4 left-4 flex flex-wrap gap-2">
-          {item.featured && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold uppercase tracking-wider bg-amber-400 text-wisdom-dark shadow-lg">
-              <Star className="w-3.5 h-3.5" /> Featured
-            </span>
-          )}
-          {soon && deadlineLabel && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold uppercase tracking-wider bg-rose-500 text-white shadow-lg">
-              Closing soon
-            </span>
-          )}
-        </div>
 
         <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
           <h3 className="font-display text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-white drop-shadow-lg leading-snug">
