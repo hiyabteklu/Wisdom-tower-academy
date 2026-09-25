@@ -9,7 +9,7 @@ type Props = {
   name: string;
   description?: string;
   image: string;
-  /** Show green Ready badge (e.g. first freshman subject) */
+  /** Optional highlight styling for primary subject */
   ready?: boolean;
 };
 
@@ -45,11 +45,6 @@ export default function SubjectCard({ href, name, image, ready = false }: Props)
             </span>
           </div>
         )}
-        {ready && (
-          <span className="absolute top-2 left-2 rounded-lg border border-emerald-400/40 bg-emerald-500/90 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-wisdom-dark shadow-lg">
-            Ready
-          </span>
-        )}
       </div>
 
       <div className="relative px-3.5 py-3.5 sm:px-4 sm:py-4 flex flex-col border-t border-white/8">
@@ -67,7 +62,7 @@ export default function SubjectCard({ href, name, image, ready = false }: Props)
               : "text-purple-400/90 group-hover:text-purple-300"
           }`}
         >
-          {ready ? "Open · live" : "Explore"}
+          Explore
           <ChevronRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
         </div>
       </div>

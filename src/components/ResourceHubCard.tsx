@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { BadgeCheck, ChevronRight, Lock } from "lucide-react";
+import { BadgeCheck, ChevronRight } from "lucide-react";
 import type { ResourceHub } from "@/data/academy";
 import type { HubLockMode } from "@/data/content-availability";
 import ComingSoonModal from "@/components/ComingSoonModal";
@@ -42,14 +42,6 @@ export default function ResourceHubCard({
           fetchPriority="low"
           className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
         />
-        {blocked && (
-          <div className="absolute inset-0 bg-wisdom-dark/25 flex items-start justify-end p-2.5">
-            <span className="inline-flex items-center gap-1 rounded-lg border border-white/15 bg-black/50 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white/90 backdrop-blur-sm">
-              <Lock className="w-3 h-3" />
-              {lockMode === "require_purchase" ? "Unlock" : "Soon"}
-            </span>
-          </div>
-        )}
       </div>
       <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8">
         <h2
