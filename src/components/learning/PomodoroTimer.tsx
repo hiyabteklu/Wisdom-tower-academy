@@ -56,6 +56,9 @@ export default function PomodoroTimer() {
       if (r <= 0 && s.running) {
         resetFocus(s.totalSec);
         sync();
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("wt-focus-timer"));
+        }
         try {
           navigator.vibrate?.(200);
         } catch {
@@ -70,6 +73,9 @@ export default function PomodoroTimer() {
     startFocus();
     setStartLine(pickStartLine());
     sync();
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("wt-focus-timer"));
+    }
   }
 
   function requestStop(kind: "pause" | "reset") {
@@ -78,6 +84,9 @@ export default function PomodoroTimer() {
         resetFocus();
         setStartLine(null);
         sync();
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("wt-focus-timer"));
+        }
       }
       return;
     }
@@ -92,6 +101,9 @@ export default function PomodoroTimer() {
     setNudge(null);
     setStartLine(null);
     sync();
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("wt-focus-timer"));
+    }
   }
 
   function keepGoing() {
@@ -124,6 +136,9 @@ export default function PomodoroTimer() {
                   setPreset(p.minutes * 60);
                   setStartLine(null);
                   sync();
+                  if (typeof window !== "undefined") {
+                    window.dispatchEvent(new CustomEvent("wt-focus-timer"));
+                  }
                 }}
                 className={`rounded-xl px-3 py-1.5 text-xs font-semibold border transition-colors ${
                   state.totalSec === p.minutes * 60
@@ -146,6 +161,9 @@ export default function PomodoroTimer() {
                     setPreset(mins * 60);
                     setStartLine(null);
                     sync();
+                    if (typeof window !== "undefined") {
+                      window.dispatchEvent(new CustomEvent("wt-focus-timer"));
+                    }
                   } else {
                     alert("Please enter a valid duration between 1 and 360 minutes.");
                   }

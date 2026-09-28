@@ -27,11 +27,11 @@ function StoryCard({
 }) {
   const [open, setOpen] = useState(false);
 
-  const name = String(story.meta.studentName || "");
-  const program = String(story.meta.program || "");
-  const result = String(story.meta.result || story.title || "");
-  const year = String(story.meta.year || "");
-  const quote = String(story.meta.quote || "");
+  const name = String(story.meta?.studentName || "");
+  const program = String(story.meta?.program || "");
+  const result = String(story.meta?.result || story.title || "");
+  const year = String(story.meta?.year || "");
+  const quote = String(story.meta?.quote || "");
   const body = (story.bodyMd || "").trim();
   const img = story.imagePath ? freeResourcePublicUrl(story.imagePath) : null;
   const longBody = body.length > 220;

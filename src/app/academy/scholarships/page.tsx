@@ -91,11 +91,11 @@ function ScholarshipCard({
 }) {
   const [open, setOpen] = useState(false);
 
-  const provider = String(item.meta.provider || item.meta.organization || "");
-  const amount = String(item.meta.amount || item.meta.award || "");
-  const eligibility = String(item.meta.eligibility || "");
-  const level = String(item.meta.level || item.meta.degree || "");
-  const country = String(item.meta.country || item.meta.location || "");
+  const provider = String(item.meta?.provider || item.meta?.organization || "");
+  const amount = String(item.meta?.amount || item.meta?.award || "");
+  const eligibility = String(item.meta?.eligibility || "");
+  const level = String(item.meta?.level || item.meta?.degree || "");
+  const country = String(item.meta?.country || item.meta?.location || "");
   const body = (item.bodyMd || "").trim();
   const img = item.imagePath ? freeResourcePublicUrl(item.imagePath) : null;
   const deadlineLabel = formatDeadline(item.deadline);

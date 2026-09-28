@@ -838,21 +838,21 @@ export default function MyLearningPage() {
         )}
 
         {/* ═════════════════════════════════════════════════════════════ */}
-        {/* TAB 3: STANDALONE STUDY PLANNER (COMPACT, CLOCK MINUTE INPUT) */}
+        {/* TAB 3: STANDALONE STUDY PLANNER (24-HOUR TIMETABLE)           */}
         {/* ═════════════════════════════════════════════════════════════ */}
         {activeTab === "planner" && (
-          <section className="space-y-6 animate-fade-up max-w-4xl mx-auto">
-            <div className="text-center mb-6">
+          <section className="space-y-4 animate-fade-up max-w-5xl mx-auto">
+            <div className="text-center mb-3">
               <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center justify-center gap-2">
-                <Calendar className="w-7 h-7 text-sky-400" />
+                <Calendar className="w-6 h-6 text-cyan-400" />
                 Weekly Study Timetable
               </h2>
-              <p className="text-sm text-slate-300 mt-1 max-w-md mx-auto">
-                Organize study blocks with exact clock and minute precision. Formatted to fit cleanly on mobile.
+              <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-md mx-auto">
+                Vertical 24-hour AM/PM timeline with horizontal days of the week and minute-accurate blocks.
               </p>
             </div>
 
-            <div className="rounded-3xl border border-sky-400/25 bg-gradient-to-b from-[#0f1d33] to-[#08101e] p-5 sm:p-7 shadow-2xl">
+            <div className="rounded-3xl border border-white/15 bg-gradient-to-b from-[#0b1528] to-[#070e1c] p-3 sm:p-5 md:p-6 shadow-2xl">
               <StudyPlanner />
             </div>
           </section>

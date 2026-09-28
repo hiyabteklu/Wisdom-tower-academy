@@ -126,6 +126,13 @@ export type FreeResourceItemInput = {
   published?: boolean;
 };
 
+function parseMeta(raw: unknown): Record<string, unknown> {
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+    return raw as Record<string, unknown>;
+  }
+  return {};
+}
+
 function rowToPage(row: Record<string, unknown>): FreeResourcePage {
   return {
     id: String(row.id),
@@ -133,7 +140,7 @@ function rowToPage(row: Record<string, unknown>): FreeResourcePage {
     title: String(row.title ?? ""),
     subtitle: row.subtitle != null ? String(row.subtitle) : null,
     bodyMd: String(row.body_md ?? ""),
-    meta: (row.meta as Record<string, unknown>) || {},
+    meta: parseMeta(row.meta),
     coverPath: row.cover_path ? String(row.cover_path) : null,
     published: Boolean(row.published),
     sortOrder: typeof row.sort_order === "number" ? row.sort_order : 0,
@@ -152,7 +159,7 @@ function rowToItem(row: Record<string, unknown>): FreeResourceItem {
     imagePath: row.image_path != null ? String(row.image_path) : null,
     externalUrl: row.external_url != null ? String(row.external_url) : null,
     deadline: row.deadline != null ? String(row.deadline) : null,
-    meta: (row.meta as Record<string, unknown>) || {},
+    meta: parseMeta(row.meta),
     sortOrder: typeof row.sort_order === "number" ? row.sort_order : 0,
     featured: Boolean(row.featured),
     published: Boolean(row.published),
