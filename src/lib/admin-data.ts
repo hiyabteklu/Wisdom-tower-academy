@@ -8,7 +8,16 @@ export type ProfileRow = {
   id: string;
   email: string | null;
   full_name: string | null;
+  phone?: string | null;
   avatar_url: string | null;
+  avatar_preset?: string | null;
+  education_level?: string | null;
+  school_name?: string | null;
+  town_region?: string | null;
+  stream?: string | null;
+  student_id_number?: string | null;
+  student_folio_number?: string | null;
+  target_exam?: string | null;
   created_at: string;
   updated_at: string | null;
 };
@@ -53,7 +62,7 @@ export type TalentApplicationRow = {
   admin_notes: string | null;
 };
 
-export type DayCount = { day: string; label: string; orders: number; verified: number };
+export type DayCount = { day: string; label: string; orders: number; verified: number; revenue: number };
 
 export type AdminStats = {
   users: number;
@@ -70,9 +79,15 @@ export type AdminStats = {
   inquiriesTotal: number;
   explanationsCached: number;
   academicResults: number;
-  byPackage: { name: string; count: number }[];
+  todayOrdersCount: number;
+  todayVerifiedCount: number;
+  todayRevenueEtb: number;
+  urgentPendingOrdersCount: number;
+  byPackage: { name: string; count: number; revenue: number }[];
   byStatus: { status: OrderStatus; count: number }[];
-  byMethod: { method: string; count: number }[];
+  byMethod: { method: string; count: number; totalEtb: number }[];
+  byStream: { stream: string; count: number }[];
+  byEducationLevel: { level: string; count: number }[];
   last7Days: DayCount[];
   recentOrders: ManualOrder[];
   recentUsers: ProfileRow[];
@@ -127,11 +142,14 @@ function buildLast7Days(orders: ManualOrder[]): DayCount[] {
     const key = d.toISOString().slice(0, 10);
     const label = d.toLocaleDateString(undefined, { weekday: "short" });
     const dayOrders = orders.filter((o) => o.createdAt.slice(0, 10) === key);
+    const verifiedOrders = dayOrders.filter((o) => o.status === "verified");
+    const dayRevenue = verifiedOrders.reduce((sum, o) => sum + (o.amountEtb || 0), 0);
     days.push({
       day: key,
       label,
       orders: dayOrders.length,
-      verified: dayOrders.filter((o) => o.status === "verified").length,
+      verified: verifiedOrders.length,
+      revenue: dayRevenue,
     });
   }
   return days;
@@ -170,9 +188,15 @@ export async function fetchAdminStats(): Promise<AdminStats> {
     inquiriesTotal: 0,
     explanationsCached: 0,
     academicResults: 0,
+    todayOrdersCount: 0,
+    todayVerifiedCount: 0,
+    todayRevenueEtb: 0,
+    urgentPendingOrdersCount: 0,
     byPackage: [],
     byStatus: [],
     byMethod: [],
+    byStream: [],
+    byEducationLevel: [],
     last7Days: buildLast7Days([]),
     recentOrders: [],
     recentUsers: [],
@@ -191,7 +215,7 @@ export async function fetchAdminStats(): Promise<AdminStats> {
     ] = await Promise.all([
       supabase
         .from("profiles")
-        .select("id, email, full_name, avatar_url, created_at, updated_at")
+        .select("id, email, full_name, avatar_url, education_level, school_name, stream, created_at, updated_at")
         .order("created_at", { ascending: false })
         .limit(500),
       supabase
@@ -231,23 +255,67 @@ export async function fetchAdminStats(): Promise<AdminStats> {
     const avgOrderEtb =
       verified.length > 0 ? Math.round(revenueVerifiedEtb / verified.length) : 0;
 
-    const pkgMap = new Map<string, number>();
+    const nowIso = new Date().toISOString().slice(0, 10);
+    const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000;
+    const urgentPendingOrdersCount = pending.filter(
+      (o) => new Date(o.createdAt).getTime() < twoHoursAgo
+    ).length;
+    const todayOrders = orders.filter((o) => o.createdAt.slice(0, 10) === nowIso);
+    const todayVerified = todayOrders.filter((o) => o.status === "verified");
+    const todayRevenueEtb = todayVerified.reduce((s, o) => s + (o.amountEtb || 0), 0);
+
+    const pkgMap = new Map<string, { count: number; revenue: number }>();
     for (const o of orders) {
-      pkgMap.set(o.packageName, (pkgMap.get(o.packageName) || 0) + 1);
+      const cur = pkgMap.get(o.packageName) || { count: 0, revenue: 0 };
+      cur.count += 1;
+      if (o.status === "verified") {
+        cur.revenue += o.amountEtb || 0;
+      }
+      pkgMap.set(o.packageName, cur);
     }
     const byPackage = Array.from(pkgMap.entries())
-      .map(([name, count]) => ({ name, count }))
+      .map(([name, val]) => ({ name, count: val.count, revenue: val.revenue }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 8);
 
-    const methodMap = new Map<string, number>();
+    const methodMap = new Map<string, { count: number; totalEtb: number }>();
     for (const o of orders) {
       const m = o.paymentMethod || "unknown";
-      methodMap.set(m, (methodMap.get(m) || 0) + 1);
+      const cur = methodMap.get(m) || { count: 0, totalEtb: 0 };
+      cur.count += 1;
+      if (o.status === "verified") {
+        cur.totalEtb += o.amountEtb || 0;
+      }
+      methodMap.set(m, cur);
     }
     const byMethod = Array.from(methodMap.entries())
-      .map(([method, count]) => ({ method, count }))
+      .map(([method, val]) => ({ method, count: val.count, totalEtb: val.totalEtb }))
       .sort((a, b) => b.count - a.count);
+
+    const streamMap = new Map<string, number>();
+    for (const p of profiles) {
+      const s = p.stream
+        ? p.stream.toLowerCase().includes("nat")
+          ? "Natural Science"
+          : p.stream.toLowerCase().includes("soc")
+            ? "Social Science"
+            : p.stream
+        : "Unspecified";
+      streamMap.set(s, (streamMap.get(s) || 0) + 1);
+    }
+    const byStream = Array.from(streamMap.entries())
+      .map(([stream, count]) => ({ stream, count }))
+      .sort((a, b) => b.count - a.count);
+
+    const eduMap = new Map<string, number>();
+    for (const p of profiles) {
+      const lvl = p.education_level ? p.education_level.replace(/_/g, " ") : "Not set";
+      eduMap.set(lvl, (eduMap.get(lvl) || 0) + 1);
+    }
+    const byEducationLevel = Array.from(eduMap.entries())
+      .map(([level, count]) => ({ level, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6);
 
     const statusKeys: OrderStatus[] = [
       "pending_verification",
@@ -275,9 +343,15 @@ export async function fetchAdminStats(): Promise<AdminStats> {
       inquiriesTotal: inquiries.length,
       explanationsCached: explainRes.count ?? 0,
       academicResults: academicRes.count ?? 0,
+      todayOrdersCount: todayOrders.length,
+      todayVerifiedCount: todayVerified.length,
+      todayRevenueEtb,
+      urgentPendingOrdersCount,
       byPackage,
       byStatus,
       byMethod,
+      byStream,
+      byEducationLevel,
       last7Days: buildLast7Days(orders),
       recentOrders: orders.slice(0, 10),
       recentUsers: profiles.slice(0, 10),
@@ -381,16 +455,108 @@ export async function fetchDigitalAdminStats(): Promise<DigitalAdminStats> {
 }
 
 export async function listProfiles(): Promise<ProfileRow[]> {
-  const { data, error } = await supabase
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, email, full_name, phone, avatar_url, avatar_preset, education_level, school_name, town_region, stream, student_id_number, student_folio_number, target_exam, created_at, updated_at")
+      .order("created_at", { ascending: false })
+      .limit(500);
+    if (!error && data) {
+      return data as ProfileRow[];
+    }
+  } catch (e) {
+    console.warn("[profiles rich fetch failed]", e);
+  }
+
+  // Graceful fallback if newer columns don't exist yet
+  const { data: fallbackData, error: fbError } = await supabase
     .from("profiles")
     .select("id, email, full_name, avatar_url, created_at, updated_at")
     .order("created_at", { ascending: false })
     .limit(300);
-  if (error) {
-    console.warn("[profiles]", error.message);
+  if (fbError) {
+    console.warn("[profiles fallback]", fbError.message);
     return [];
   }
-  return (data || []) as ProfileRow[];
+  return (fallbackData || []) as ProfileRow[];
+}
+
+export async function getStudentDetail(userId: string, email?: string | null) {
+  try {
+    const queries = [
+      supabase
+        .from("academic_results")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(25),
+      supabase
+        .from("enrollments")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false }),
+    ];
+
+    const [resultsRes, enrollRes] = await Promise.all(queries);
+
+    let accessGrants: Record<string, unknown>[] = [];
+    let orders: Record<string, unknown>[] = [];
+
+    if (email) {
+      const emailLower = email.toLowerCase();
+      const [grantsRes, ordersRes] = await Promise.all([
+        supabase.from("access_grants").select("*").eq("email", emailLower),
+        supabase.from("orders").select("*").eq("email", emailLower).order("created_at", { ascending: false }),
+      ]);
+      if (grantsRes?.data) accessGrants = grantsRes.data;
+      if (ordersRes?.data) orders = ordersRes.data;
+    }
+
+    return {
+      academicResults: resultsRes?.data || [],
+      enrollments: enrollRes?.data || [],
+      accessGrants,
+      orders,
+    };
+  } catch (e) {
+    console.warn("[getStudentDetail]", e);
+    return {
+      academicResults: [],
+      enrollments: [],
+      accessGrants: [],
+      orders: [],
+    };
+  }
+}
+
+/** Universal CSV downloader for Admin records */
+export function downloadCsv(
+  filename: string,
+  headers: string[],
+  rows: (string | number | boolean | null | undefined)[][]
+) {
+  if (typeof window === "undefined") return;
+
+  const escapeCell = (val: string | number | boolean | null | undefined) => {
+    if (val === null || val === undefined) return '""';
+    const str = String(val).replace(/"/g, '""');
+    return `"${str}"`;
+  };
+
+  const content = [
+    headers.map(escapeCell).join(","),
+    ...rows.map((row) => row.map(escapeCell).join(",")),
+  ].join("\r\n");
+
+  const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", filename.endsWith(".csv") ? filename : `${filename}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 export async function listInquiries(): Promise<InquiryRow[]> {

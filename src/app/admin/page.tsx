@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -16,6 +16,7 @@ import ContentPanel from "@/components/admin/ContentPanel";
 import FreeResourcesPanel from "@/components/admin/FreeResourcesPanel";
 import LocksPanel from "@/components/admin/LocksPanel";
 import AccessGrantsPanel from "@/components/admin/AccessGrantsPanel";
+import DatabaseHubPanel from "@/components/admin/DatabaseHubPanel";
 import BrandLoader from "@/components/BrandLoader";
 import {
   LogOut,
@@ -31,34 +32,43 @@ import {
   KeyRound,
   ArrowLeft,
   Library,
+  Database,
+  Search,
+  Sparkles,
+  Command,
+  Eye,
+  Sliders,
+  CheckCircle2,
 } from "lucide-react";
 
 type AcademyTab =
   | "overview"
-  | "content"
-  | "free-resources"
-  | "locks"
-  | "grants"
-  | "catalog"
-  | "payments"
   | "users"
-  | "inquiries";
+  | "payments"
+  | "grants"
+  | "content"
+  | "locks"
+  | "catalog"
+  | "free-resources"
+  | "inquiries"
+  | "database";
 
 const VALID_TABS: AcademyTab[] = [
+  "overview",
+  "users",
+  "payments",
   "grants",
   "content",
-  "free-resources",
   "locks",
   "catalog",
-  "overview",
-  "payments",
-  "users",
+  "free-resources",
   "inquiries",
+  "database",
 ];
 
 function parseTab(raw: string | null): AcademyTab {
   if (raw && (VALID_TABS as string[]).includes(raw)) return raw as AcademyTab;
-  return "grants";
+  return "overview";
 }
 
 function AdminDashboardInner() {
@@ -66,7 +76,13 @@ function AdminDashboardInner() {
   const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [academyTab, setAcademyTab] = useState<AcademyTab>("grants");
+  const [academyTab, setAcademyTab] = useState<AcademyTab>("overview");
+  const [tabSearch, setTabSearch] = useState("");
+
+  // Live badges for pending items
+  const [pendingPaymentsCount, setPendingPaymentsCount] = useState<number>(0);
+  const [newInquiriesCount, setNewInquiriesCount] = useState<number>(0);
+  const [usersCount, setUsersCount] = useState<number>(0);
 
   // Sync tab from URL on load / browser back-forward
   useEffect(() => {
@@ -83,6 +99,7 @@ function AdminDashboardInner() {
     [router, searchParams]
   );
 
+  // Load user session & quick badges
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       const u = session?.user ?? null;
@@ -93,6 +110,20 @@ function AdminDashboardInner() {
       await ensureProfile(u);
       setUser(u);
       setLoading(false);
+
+      // Fetch counts for badges
+      try {
+        const [ordersRes, inqRes, usersRes] = await Promise.all([
+          supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "pending_verification"),
+          supabase.from("inquiries").select("id", { count: "exact", head: true }).eq("status", "new"),
+          supabase.from("profiles").select("id", { count: "exact", head: true }),
+        ]);
+        if (ordersRes.count != null) setPendingPaymentsCount(ordersRes.count);
+        if (inqRes.count != null) setNewInquiriesCount(inqRes.count);
+        if (usersRes.count != null) setUsersCount(usersRes.count);
+      } catch (e) {
+        console.warn("[admin badge counts]", e);
+      }
     });
   }, [router]);
 
@@ -101,122 +132,208 @@ function AdminDashboardInner() {
     router.push("/login");
   };
 
+  const academyTabs: {
+    id: AcademyTab;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    badge?: number | string;
+    badgeColor?: string;
+  }[] = useMemo(
+    () => [
+      { id: "overview", label: "Overview", icon: LayoutDashboard },
+      {
+        id: "users",
+        label: "Scholars & Users",
+        icon: Users,
+        badge: usersCount > 0 ? usersCount : undefined,
+      },
+      {
+        id: "payments",
+        label: "Payments",
+        icon: CreditCard,
+        badge: pendingPaymentsCount > 0 ? pendingPaymentsCount : undefined,
+        badgeColor: "bg-amber-500/20 text-amber-300 border-amber-400/40",
+      },
+      { id: "grants", label: "Access Grants", icon: KeyRound },
+      { id: "content", label: "Course Content", icon: BookOpen },
+      { id: "locks", label: "Content Locks", icon: Shield },
+      { id: "catalog", label: "Pricing & Catalog", icon: Package },
+      { id: "free-resources", label: "Free Resources", icon: Library },
+      {
+        id: "inquiries",
+        label: "Inquiries",
+        icon: Inbox,
+        badge: newInquiriesCount > 0 ? newInquiriesCount : undefined,
+        badgeColor: "bg-cyan-500/20 text-cyan-300 border-cyan-400/40",
+      },
+      { id: "database", label: "Database & SQL Hub", icon: Database },
+    ],
+    [pendingPaymentsCount, newInquiriesCount, usersCount]
+  );
+
+  const filteredTabs = useMemo(() => {
+    if (!tabSearch.trim()) return academyTabs;
+    const q = tabSearch.toLowerCase();
+    return academyTabs.filter((t) => t.label.toLowerCase().includes(q) || t.id.includes(q));
+  }, [academyTabs, tabSearch]);
+
   if (loading || !user) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center" data-wta-spinner="true">
-        <BrandLoader size="md" />
+      <div className="min-h-[70vh] flex flex-col items-center justify-center gap-3" data-wta-spinner="true">
+        <BrandLoader size="md" label="Authenticating executive privileges..." />
       </div>
     );
   }
 
-  const academyTabs: { id: AcademyTab; label: string; icon: typeof LayoutDashboard }[] = [
-    { id: "grants", label: "Access", icon: KeyRound },
-    { id: "content", label: "Content", icon: BookOpen },
-    { id: "free-resources", label: "Free resources", icon: Library },
-    { id: "locks", label: "Locks", icon: Shield },
-    { id: "catalog", label: "Catalog", icon: Package },
-    { id: "overview", label: "Overview", icon: LayoutDashboard },
-    { id: "payments", label: "Payments", icon: CreditCard },
-    { id: "users", label: "Users", icon: Users },
-    { id: "inquiries", label: "Inquiries", icon: Inbox },
-  ];
-
   return (
-    <div className="min-h-screen bg-wisdom-dark text-white">
-      <div className="max-w-6xl mx-auto px-4 py-6 md:py-8">
-        {/* Top bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+    <div className="min-h-screen bg-wisdom-dark text-white pb-20">
+      {/* Top Navigation & Status Bar */}
+      <header className="border-b border-white/8 bg-wisdom-card/60 backdrop-blur-md sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-3">
+          {/* Brand & Identity */}
           <div className="flex items-center gap-3 min-w-0">
             <Link
               href="/account"
-              className="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-white/12 bg-white/5 text-wisdom-muted hover:text-white hover:bg-white/10 shrink-0"
-              title="Back to account"
+              className="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-white/12 bg-white/5 text-wisdom-muted hover:text-white hover:bg-white/10 shrink-0 transition-colors"
+              title="Return to Student Account"
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-600/10 text-amber-300 border border-amber-400/20 shrink-0">
-              <GraduationCap className="w-6 h-6" />
+
+            <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-600/10 text-amber-300 border border-amber-400/20 shrink-0">
+              <GraduationCap className="w-5 h-5" />
             </div>
+
             <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-wider text-amber-300/90">
-                Wisdom Tower Academy
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm sm:text-base text-white truncate">
+                  Wisdom Tower Academy
+                </span>
+                <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-300 border border-emerald-400/30">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Admin Console
+                </span>
+              </div>
+              <p className="text-xs text-wisdom-muted truncate hidden sm:block">
+                Logged in as <span className="text-amber-200/90 font-medium">{user.email}</span>
               </p>
-              <h1 className="text-xl sm:text-2xl font-bold truncate">Admin Dashboard</h1>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
+
+          {/* Quick Links & Actions */}
+          <div className="flex items-center gap-2">
+            <Link
+              href="/academy"
+              target="_blank"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/10 bg-white/5 text-xs font-semibold text-wisdom-muted hover:text-white hover:bg-white/10 transition-colors"
+              title="View Public Academy"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Live Academy</span>
+            </Link>
+
             <a
               href="https://supabase.com/dashboard"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1.5 min-h-[40px] px-3 sm:px-4 py-2 rounded-xl border border-white/12 bg-white/5 text-sm font-medium hover:bg-white/10"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/10 bg-white/5 text-xs font-semibold text-wisdom-muted hover:text-white hover:bg-white/10 transition-colors"
             >
-              Supabase
-              <ExternalLink className="w-3.5 h-3.5 opacity-70" />
+              <Database className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="hidden sm:inline">Supabase</span>
+              <ExternalLink className="w-3 h-3 opacity-60" />
             </a>
-            <Link
-              href="/account"
-              className="inline-flex items-center min-h-[40px] px-3 sm:px-4 py-2 rounded-xl border border-white/12 bg-white/5 text-sm font-medium hover:bg-white/10"
-            >
-              Profile
-            </Link>
+
             <button
               type="button"
               onClick={handleLogout}
-              className="inline-flex items-center gap-2 min-h-[40px] px-3 sm:px-4 py-2 rounded-xl border border-red-500/30 bg-red-500/10 text-sm font-medium text-red-400 hover:bg-red-500/20"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-500/20 bg-rose-500/10 text-xs font-semibold text-rose-300 hover:bg-rose-500/20 transition-colors"
             >
-              <LogOut className="w-4 h-4" />
-              Logout
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Logout</span>
             </button>
           </div>
         </div>
+      </header>
 
-        {/* Tabs — horizontal scroll on mobile; stays inside admin */}
-        <div className="mb-6 -mx-4 px-4 overflow-x-auto">
-          <div className="flex gap-2 min-w-max pb-1">
-            {academyTabs.map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => goTab(id)}
-                className={`inline-flex items-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-xl text-sm font-semibold border whitespace-nowrap transition-colors ${
-                  academyTab === id
-                    ? "border-amber-400/50 bg-amber-500/15 text-amber-200 shadow-sm shadow-amber-500/10"
-                    : "border-white/10 text-wisdom-muted hover:text-white hover:border-white/20"
-                }`}
-              >
-                <Icon className="w-4 h-4 shrink-0" />
-                {label}
-              </button>
-            ))}
+      {/* Main Workspace */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+        {/* Horizontal Navigation Command Strip */}
+        <div className="mb-6 space-y-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            {/* Quick tab filter / search */}
+            <div className="relative w-full sm:w-64">
+              <Search className="w-3.5 h-3.5 text-wisdom-muted absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={tabSearch}
+                onChange={(e) => setTabSearch(e.target.value)}
+                placeholder="Filter admin sections..."
+                className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-wisdom-card border border-white/10 text-xs text-white placeholder-wisdom-muted focus:outline-none focus:border-amber-400 transition-colors"
+              />
+            </div>
+
+            <div className="text-xs text-wisdom-muted flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+              <span>All 10 modules operational</span>
+            </div>
+          </div>
+
+          {/* Tab Ribbon (horizontal scrollable on mobile) */}
+          <div className="overflow-x-auto pb-1.5 -mx-4 px-4 sm:mx-0 sm:px-0">
+            <div className="flex items-center gap-2 min-w-max">
+              {filteredTabs.map(({ id, label, icon: Icon, badge, badgeColor }) => {
+                const active = academyTab === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => goTab(id)}
+                    className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border transition-all ${
+                      active
+                        ? "border-amber-400/50 bg-amber-500/15 text-amber-200 shadow-sm shadow-amber-500/10 font-bold"
+                        : "border-white/10 bg-wisdom-card/60 text-wisdom-muted hover:text-white hover:border-white/20"
+                    }`}
+                  >
+                    <Icon className={`w-4 h-4 shrink-0 ${active ? "text-amber-300" : ""}`} />
+                    <span>{label}</span>
+                    {badge !== undefined && (
+                      <span
+                        className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-md border tabular-nums ${
+                          badgeColor || "bg-white/10 text-white/90 border-white/15"
+                        }`}
+                      >
+                        {badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
-        {/* Panel area */}
-        <div className="rounded-2xl border border-white/8 bg-wisdom-card/40 p-4 sm:p-6 min-h-[50vh]">
-          {academyTab === "grants" && user.email && (
-            <AccessGrantsPanel adminEmail={user.email} />
-          )}
-          {academyTab === "content" && <ContentPanel />}
-          {academyTab === "free-resources" && <FreeResourcesPanel />}
-          {academyTab === "locks" && <LocksPanel />}
+        {/* Dynamic Admin Panel Container */}
+        <section className="rounded-3xl border border-white/10 bg-wisdom-card/40 p-4 sm:p-6 lg:p-7 shadow-2xl min-h-[60vh] backdrop-blur-sm">
           {academyTab === "overview" && <AnalyticsPanel />}
+          {academyTab === "users" && <UsersPanel adminEmail={user.email || undefined} />}
+          {academyTab === "payments" && user.email && <PaymentsPanel adminEmail={user.email} />}
+          {academyTab === "grants" && user.email && <AccessGrantsPanel adminEmail={user.email} />}
+          {academyTab === "content" && <ContentPanel />}
+          {academyTab === "locks" && <LocksPanel />}
           {academyTab === "catalog" && <CatalogPanel />}
-          {academyTab === "payments" && user.email && (
-            <PaymentsPanel adminEmail={user.email} />
-          )}
-          {academyTab === "users" && <UsersPanel />}
+          {academyTab === "free-resources" && <FreeResourcesPanel />}
           {academyTab === "inquiries" && <InquiriesPanel />}
-        </div>
-      </div>
+          {academyTab === "database" && <DatabaseHubPanel />}
+        </section>
+      </main>
     </div>
   );
 }
 
 function AdminFallback() {
   return (
-    <div className="min-h-[60vh] flex items-center justify-center" data-wta-spinner="true">
-      <BrandLoader size="md" />
+    <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3" data-wta-spinner="true">
+      <BrandLoader size="md" label="Loading admin environment..." />
     </div>
   );
 }
