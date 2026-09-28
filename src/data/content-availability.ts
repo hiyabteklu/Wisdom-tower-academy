@@ -12,9 +12,10 @@ export const PURCHASABLE_PACKAGE_IDS = new Set([
   "uat",
   "coc",
   "ece-y3-sem-1",
+  "ece-y3-sem-2",
 ]);
 
-export const COMING_SOON_PACKAGE_IDS = new Set(["gat", "exit-exam", "ece-y3-sem-2"]);
+export const COMING_SOON_PACKAGE_IDS = new Set(["gat", "exit-exam"]);
 
 export type HubLockMode = "open" | "require_purchase" | "coming_soon";
 
@@ -40,6 +41,7 @@ export function unlockPackageIdsForPath(basePath: string): string[] {
   if (basePath.includes("/academy/coc")) return ["coc"];
   if (basePath.includes("/special-packages/electrical-computer-engineering")) {
     if (basePath.includes("/sem-1")) return ["ece-y3-sem-1"];
+    if (basePath.includes("/sem-2")) return ["ece-y3-sem-2"];
     return [];
   }
   return [];
@@ -55,13 +57,10 @@ export function getHubLockMode(basePath: string): HubLockMode {
   if (basePath.includes("/academy/uat") || basePath.includes("/academy/coc")) {
     return "require_purchase";
   }
-  if (basePath.includes("/special-packages") && basePath.includes("/sem-1")) {
+  if (basePath.includes("/special-packages") && (basePath.includes("/sem-1") || basePath.includes("/sem-2"))) {
     return "require_purchase";
   }
-  if (basePath.includes("/special-packages") && basePath.includes("/sem-2")) {
-    return "coming_soon";
-  }
-  if (isSpecialPackagePath(basePath)) return "coming_soon";
+  if (isSpecialPackagePath(basePath)) return "require_purchase";
   return "coming_soon";
 }
 

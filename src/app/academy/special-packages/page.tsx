@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Layers } from "lucide-react";
 import SafeCoverImage from "@/components/SafeCoverImage";
-import { formatEtb } from "@/data/packages";
 import { specialPackages } from "@/data/special-packages";
 
 export const metadata = {
@@ -18,7 +17,6 @@ export default function SpecialPackagesPage() {
       </div>
 
       <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Category header — outside any card */}
         <header className="text-center mb-8 md:mb-10">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-300/90 mb-3">
             Department tracks
@@ -27,11 +25,10 @@ export default function SpecialPackagesPage() {
             Special packages
           </h1>
           <p className="mt-3 text-wisdom-muted max-w-lg mx-auto leading-relaxed text-sm md:text-base">
-            Open a department, then choose a semester. Each semester is purchased separately.
+            Structured course packs built specifically for your field of study. Choose your department track to access semester materials.
           </p>
         </header>
 
-        {/* Department cards only — 16:9 cover */}
         <div className="space-y-6">
           {specialPackages.map((pkg) => (
             <Link
@@ -40,22 +37,22 @@ export default function SpecialPackagesPage() {
               className="card-modern group block hover:border-violet-400/40 shadow-xl"
             >
               <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
-                <SafeCoverImage src={pkg.image} alt="" />
+                <SafeCoverImage src={pkg.image} alt={pkg.name} />
               </div>
               <div className="p-5 sm:p-6 border-t border-white/8">
-                <span className="text-xs font-semibold text-violet-300/90 mb-1.5 block">
-                  {pkg.yearLabel}
-                </span>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-violet-300">
+                    <Layers className="w-3.5 h-3.5" />
+                    {pkg.yearLabel}
+                  </span>
+                </div>
                 <h2 className="font-display text-xl sm:text-2xl font-bold text-white group-hover:text-violet-200 transition-colors">
                   {pkg.name}
                 </h2>
                 <p className="mt-2 text-sm text-slate-300/90 leading-relaxed">{pkg.blurb}</p>
-                <div className="mt-4 pt-3 border-t border-white/6 flex items-center justify-between">
-                  <p className="text-sm font-bold text-amber-300">
-                    {formatEtb(pkg.semesterPriceEtb)} per semester
-                  </p>
-                  <span className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-violet-300 group-hover:text-violet-200">
-                    View semesters
+                <div className="mt-5 pt-4 border-t border-white/8">
+                  <span className="btn-primary w-full text-center">
+                    <span>Open Department Track</span>
                     <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                   </span>
                 </div>

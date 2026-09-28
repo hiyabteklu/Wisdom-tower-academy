@@ -1,13 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, BookOpen } from "lucide-react";
 import SafeCoverImage from "@/components/SafeCoverImage";
 import AddToCartButton from "@/components/AddToCartButton";
-import { formatEtb } from "@/data/packages";
 import { getSpecialPackage, specialPackages } from "@/data/special-packages";
-import { FREE_FOR_REGISTERED_PACKAGE_IDS } from "@/lib/ownership";
-
-const FREE_SET = new Set<string>(FREE_FOR_REGISTERED_PACKAGE_IDS);
 
 export function generateStaticParams() {
   return specialPackages.map((p) => ({ slug: p.slug }));
@@ -46,50 +42,39 @@ export default async function SpecialPackagePage({
         <p className="text-wisdom-muted text-sm mb-8 max-w-xl">{pkg.blurb}</p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 md:gap-6">
-          {pkg.semesters.map((sem) => {
-            const isFree = FREE_SET.has(sem.packageId);
-            return (
-              <div
-                key={sem.id}
-                className="card-modern flex flex-col shadow-xl"
+          {pkg.semesters.map((sem) => (
+            <div
+              key={sem.id}
+              className="card-modern flex flex-col shadow-xl"
+            >
+              <Link
+                href={`/academy/special-packages/${pkg.slug}/${sem.id}`}
+                className="group flex flex-col flex-1"
               >
-                <Link
-                  href={`/academy/special-packages/${pkg.slug}/${sem.id}`}
-                  className="group flex flex-col flex-1"
-                >
-                  <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
-                    <SafeCoverImage src={sem.image} alt="" />
+                <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
+                  <SafeCoverImage src={sem.image} alt={sem.label} />
+                </div>
+                <div className="p-5 border-t border-white/8 flex flex-col flex-1">
+                  <div className="flex items-center gap-1.5 text-xs text-violet-300 mb-1">
+                    <BookOpen className="w-3.5 h-3.5" />
+                    <span>{sem.courses.length} courses</span>
                   </div>
-                  <div className="p-5 border-t border-white/8">
-                    <h2 className="font-display text-lg sm:text-xl font-bold text-white group-hover:text-violet-200 transition-colors">
-                      {sem.label}
-                    </h2>
-                    <p className="mt-1 text-xs sm:text-sm text-wisdom-muted">
-                      {sem.courses.length} courses
-                      {!sem.purchasable
-                        ? " · not for sale yet"
-                        : isFree
-                          ? " · free for registered students"
-                          : ` · ${formatEtb(sem.priceEtb)}`}
-                    </p>
-                    <span className="mt-3 inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-violet-300 group-hover:text-violet-200">
-                      Open semester
-                      <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                  <h2 className="font-display text-lg sm:text-xl font-bold text-white group-hover:text-violet-200 transition-colors">
+                    {sem.label}
+                  </h2>
+                  <div className="mt-5 pt-3 border-t border-white/6">
+                    <span className="btn-primary w-full text-center">
+                      <span>Open {sem.label}</span>
+                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                     </span>
                   </div>
-                </Link>
-                <div className="px-5 pb-5 pt-1">
-                  {sem.purchasable ? (
-                    <AddToCartButton packageId={sem.packageId} variant="ghost" />
-                  ) : (
-                    <p className="text-center text-xs text-wisdom-muted py-2 border border-white/10 rounded-xl">
-                      Coming soon · not available to purchase
-                    </p>
-                  )}
                 </div>
+              </Link>
+              <div className="px-5 pb-5 pt-1">
+                <AddToCartButton packageId={sem.packageId} variant="ghost" />
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
 
         <p className="mt-10 text-sm text-wisdom-muted">

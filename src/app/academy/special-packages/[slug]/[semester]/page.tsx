@@ -3,11 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import SafeCoverImage from "@/components/SafeCoverImage";
 import AddToCartButton from "@/components/AddToCartButton";
-import { formatEtb } from "@/data/packages";
 import { getSemester, specialPackages } from "@/data/special-packages";
-import { FREE_FOR_REGISTERED_PACKAGE_IDS } from "@/lib/ownership";
-
-const FREE_SET = new Set<string>(FREE_FOR_REGISTERED_PACKAGE_IDS);
 
 export function generateStaticParams() {
   const params: { slug: string; semester: string }[] = [];
@@ -41,7 +37,6 @@ export default async function SemesterPage({
   const found = getSemester(slug, semester);
   if (!found) notFound();
   const { pkg, sem } = found;
-  const isFree = FREE_SET.has(sem.packageId);
 
   return (
     <div className="relative min-h-[70vh] py-14 md:py-20">
@@ -52,28 +47,13 @@ export default async function SemesterPage({
         <h1 className="font-display text-3xl md:text-4xl font-extrabold text-white mb-2">
           {sem.label}
         </h1>
+        <p className="text-wisdom-muted text-sm mb-6 max-w-xl">
+          Complete course materials for {pkg.name}, {sem.label}. Master course notes, question banks, flashcards, and official solved exams.
+        </p>
 
-        {sem.purchasable ? (
-          <>
-            <p
-              className={`text-sm font-semibold mb-6 ${
-                isFree ? "text-emerald-300" : "text-amber-300"
-              }`}
-            >
-              {isFree
-                ? "Free for registered students · this semester"
-                : `${formatEtb(sem.priceEtb)} · this semester only`}
-            </p>
-            <div className="mb-8 max-w-sm">
-              <AddToCartButton packageId={sem.packageId} />
-            </div>
-          </>
-        ) : (
-          <div className="mb-8 max-w-md rounded-2xl border border-amber-400/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-100/90">
-            This semester is not for sale yet. Materials are still being prepared. You can browse
-            course titles below.
-          </div>
-        )}
+        <div className="mb-8 max-w-md">
+          <AddToCartButton packageId={sem.packageId} />
+        </div>
 
         {sem.courses.length === 0 ? (
           <div className="rounded-2xl border border-white/10 bg-wisdom-card/80 p-8 text-center text-wisdom-muted">

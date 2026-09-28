@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, ChevronDown } from "lucide-react";
 
 type Props = {
   href: string;
@@ -15,6 +15,7 @@ type Props = {
 
 export default function SubjectCard({ href, name, description, image, ready = false }: Props) {
   const [imgFailed, setImgFailed] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
 
   return (
     <Link
@@ -53,9 +54,29 @@ export default function SubjectCard({ href, name, description, image, ready = fa
         </h3>
 
         {description && (
-          <p className="mt-1.5 text-xs sm:text-sm text-wisdom-muted leading-relaxed line-clamp-2">
-            {description}
-          </p>
+          <div className="mt-2.5">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowDetails((v) => !v);
+              }}
+              className="inline-flex items-center gap-1 text-[11px] font-semibold text-wisdom-muted hover:text-white transition-colors"
+            >
+              <span>{showDetails ? "Hide course scope" : "Course scope & topics"}</span>
+              <ChevronDown
+                className={`w-3 h-3 transition-transform duration-200 ${
+                  showDetails ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+            {showDetails && (
+              <p className="mt-2 text-xs text-slate-300/90 leading-relaxed bg-white/[0.04] p-2.5 rounded-lg border border-white/8">
+                {description}
+              </p>
+            )}
+          </div>
         )}
 
         <div className="mt-auto pt-4 flex items-center justify-between border-t border-white/5 text-xs font-semibold">

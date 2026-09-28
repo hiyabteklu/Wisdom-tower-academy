@@ -11,8 +11,6 @@ const SELECTOR = [
   "[data-scroll-zoom]",
   "main .card-3d",
   "main .surface-card",
-  "main .stat-card",
-  "main .infinity-card",
   "main section",
   "main .stagger-children > *",
 ].join(", ");
@@ -27,7 +25,7 @@ function isNativeApp(): boolean {
 }
 
 function shouldSkip(el: Element): boolean {
-  if (el.closest("[data-scroll-zoom-skip]")) return true;
+  if (el.closest("[data-scroll-zoom-skip], .infinity-card, .stat-card")) return true;
   if (
     el.closest(
       ".notes-reading-surface, .study-prose, [data-learning-content], .formatted-body"
@@ -65,58 +63,67 @@ export default function ScrollZoom() {
       return;
     }
 
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      document.querySelectorAll(SELECTOR).forEach((el) => {
-        el.classList.add("sz-item", "sz-in");
-      });
-      return;
-    }
+    let observer: IntersectionObserver | null = null;
+    let mo: MutationObserver | null = null;
+    let moTimer: ReturnType<typeof setTimeout> | null = null;
 
-    document.documentElement.classList.add("sz-smooth");
+    // Delay initialization until after React finishes hydration
+    const startTimer = setTimeout(() => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        document.querySelectorAll(SELECTOR).forEach((el) => {
+          el.classList.add("sz-item", "sz-in");
+        });
+        return;
+      }
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          const el = entry.target as HTMLElement;
+      document.documentElement.classList.add("sz-smooth");
 
-          if (entry.isIntersecting) {
-            const parent = el.parentElement;
-            if (parent && parent.classList.contains("stagger-children")) {
-              const kids = parent.children;
-              let idx = 0;
-              for (let i = 0; i < kids.length; i++) {
-                if (kids[i] === el) break;
-                if ((kids[i] as HTMLElement).classList?.contains("sz-item")) idx++;
+      observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            const el = entry.target as HTMLElement;
+
+            if (entry.isIntersecting) {
+              const parent = el.parentElement;
+              if (parent && parent.classList.contains("stagger-children")) {
+                const kids = parent.children;
+                let idx = 0;
+                for (let i = 0; i < kids.length; i++) {
+                  if (kids[i] === el) break;
+                  if ((kids[i] as HTMLElement).classList?.contains("sz-item")) idx++;
+                }
+                el.style.transitionDelay = `${Math.min(idx * 55, 280)}ms`;
+              } else {
+                el.style.transitionDelay = "0ms";
               }
-              el.style.transitionDelay = `${Math.min(idx * 55, 280)}ms`;
+              el.classList.add("sz-in");
             } else {
               el.style.transitionDelay = "0ms";
+              el.classList.remove("sz-in");
             }
-            el.classList.add("sz-in");
-          } else {
-            el.style.transitionDelay = "0ms";
-            el.classList.remove("sz-in");
           }
+        },
+        {
+          threshold: [0, 0.08, 0.15],
+          rootMargin: "-6% 0px -6% 0px",
         }
-      },
-      {
-        threshold: [0, 0.08, 0.15],
-        rootMargin: "-6% 0px -6% 0px",
-      }
-    );
+      );
 
-    markAndObserve(document, observer);
+      markAndObserve(document, observer);
 
-    let moTimer: ReturnType<typeof setTimeout> | null = null;
-    const mo = new MutationObserver(() => {
-      if (moTimer) clearTimeout(moTimer);
-      moTimer = setTimeout(() => markAndObserve(document, observer), 80);
-    });
-    mo.observe(document.body, { childList: true, subtree: true });
+      mo = new MutationObserver(() => {
+        if (moTimer) clearTimeout(moTimer);
+        moTimer = setTimeout(() => {
+          if (observer) markAndObserve(document, observer);
+        }, 120);
+      });
+      mo.observe(document.body, { childList: true, subtree: true });
+    }, 250);
 
     return () => {
-      observer.disconnect();
-      mo.disconnect();
+      clearTimeout(startTimer);
+      if (observer) observer.disconnect();
+      if (mo) mo.disconnect();
       if (moTimer) clearTimeout(moTimer);
       document.documentElement.classList.remove("sz-smooth");
     };

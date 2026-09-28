@@ -65,10 +65,6 @@ export default function GradesPage() {
             </article>
           ))}
         </div>
-
-        <p className="mt-12 text-center text-xs text-wisdom-muted">
-          Leaderboards and academic performance tracking live inside each specific grade hub.
-        </p>
       </div>
     </div>
   );

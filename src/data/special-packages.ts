@@ -78,7 +78,7 @@ export const specialPackages: SpecialPackage[] = [
     slug: "electrical-computer-engineering",
     name: "Electrical & Computer Engineering",
     blurb:
-      "Senior-year course packs written for your department. Notes, chapter questions, flashcards, and solved practice exams for each course. Semester 1 is open now. More departments are added over time.",
+      "Senior-year course packs written for your department. Notes, chapter questions, flashcards, and solved practice exams for each course. Both Semester 1 and Semester 2 are ready and open.",
     image: SPECIAL_PACKAGES_HUB_IMAGE,
     yearLabel: "Year 3",
     semesterPriceEtb: ECE_SEMESTER_PRICE_ETB,
@@ -100,7 +100,7 @@ export const specialPackages: SpecialPackage[] = [
         image: "/images/special-packages/ece-sem-2.jpg",
         packageId: "ece-y3-sem-2",
         priceEtb: ECE_SEMESTER_PRICE_ETB,
-        purchasable: false,
+        purchasable: true,
         courses: eceY3Sem2,
       },
     ],

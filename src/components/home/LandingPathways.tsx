@@ -19,7 +19,6 @@ import PartnershipPath from "@/components/PartnershipPath";
 import { packageImages, getPackage } from "@/data/packages";
 import { SPECIAL_PACKAGES_HUB_IMAGE } from "@/data/special-packages";
 
-/** Polished Open CTA — replaced the awkward bright emerald */
 const OPEN_BTN =
   "inline-flex flex-1 min-w-[7.5rem] items-center justify-center gap-1.5 rounded-xl bg-sky-500 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-sky-900/25 hover:bg-sky-400 transition-colors";
 
@@ -35,18 +34,6 @@ type ProgramCard = {
   includes: string[];
 };
 
-function fromPackage(
-  packageId: string,
-  overrides: Partial<ProgramCard> & Pick<ProgramCard, "id" | "href" | "name" | "category" | "image" | "accent" | "border">
-): ProgramCard {
-  const pkg = getPackage(packageId);
-  return {
-    description: pkg?.description || "",
-    includes: pkg?.includes || [],
-    ...overrides,
-  };
-}
-
 const allPrograms: ProgramCard[] = [
   {
     id: "freshman",
@@ -57,12 +44,12 @@ const allPrograms: ProgramCard[] = [
     accent: "text-purple-400",
     border: "hover:border-purple-400/40",
     description:
-      "All freshman semester courses organized by subject. Comprehensive lecture notes, chapter question banks, flashcards, and previous final exams with step-by-step solutions.",
+      "All freshman courses organized by subject with complete learning hubs. Notes, chapter question banks, flashcards, and official midterm and final exams with step-by-step solutions.",
     includes: [
-      "Natural & Social science tracks",
-      "Full course books & chapter short notes",
-      "Interactive question banks & flashcards",
-      "Semester midterm & final exam drills",
+      "Official Textbooks & Comprehensive Reference Books",
+      "Chapter Notes, Summaries & Question Banks",
+      "All Worked with Official Solutions + Explain with AI",
+      "Official University Midterm & Final Exams Worked",
     ],
   },
   {
@@ -74,12 +61,12 @@ const allPrograms: ProgramCard[] = [
     accent: "text-sky-400",
     border: "hover:border-sky-400/40",
     description:
-      "Structured syllabus coverage from Grade 9 to 12. Master textbook chapters, drill with targeted questions, practice with timed exams, and prepare thoroughly for national matriculation.",
+      "Complete Grade 9 to 12 secondary curriculum. Master textbook chapters, drill with targeted questions, practice with timed exams, and prepare thoroughly for national matriculation.",
     includes: [
-      "Grades 9, 10, 11, and 12 complete hubs",
-      "Natural and Social science streams",
-      "Chapter-by-chapter question banks",
-      "National matriculation practice exams",
+      "Official Textbooks & Comprehensive Reference Books",
+      "Chapter Notes, Summaries & Question Banks",
+      "All Worked with Official Solutions + Explain with AI",
+      "National Matriculation & Model Practice Exams",
     ],
   },
   {
@@ -91,12 +78,12 @@ const allPrograms: ProgramCard[] = [
     accent: "text-violet-300",
     border: "hover:border-violet-400/40",
     description:
-      "Advanced undergraduate engineering and specialized department tracks. Semester-specific course materials, technical practice banks, and applied exam solutions.",
+      "Undergraduate engineering and specialized department tracks. Semester-specific course materials, technical practice banks, and applied exam solutions.",
     includes: [
-      "Electrical & Computer Engineering (ECE)",
-      "Semester 1 & Semester 2 core courses",
-      "Applied chapter question banks & notes",
-      "Technical exam drills with solutions",
+      "Department Textbooks & Lecture Reference Materials",
+      "Course Notes, Summaries & Chapter Practice Banks",
+      "All Worked with Official Solutions + Explain with AI",
+      "University Department Exams Worked with Step-by-Step Solutions",
     ],
   },
   {
@@ -110,10 +97,10 @@ const allPrograms: ProgramCard[] = [
     description:
       "University Admission Test preparation. Master quantitative and verbal reasoning under strict timed conditions with verified explanations.",
     includes: [
-      "Quantitative & verbal reasoning sections",
-      "Timed mock examinations with analytics",
-      "Comprehensive answer rationales",
-      "Performance score tracking",
+      "Quantitative & Verbal Exam Question Banks",
+      "Timed Mock & Model Entrance Exams",
+      "All Worked with Official Solutions + Explain with AI",
+      "Full University Entrance Past Papers Worked",
     ],
   },
   {
@@ -127,10 +114,10 @@ const allPrograms: ProgramCard[] = [
     description:
       "Graduate Admission Test preparation for postgraduate entry. Targeted analytical, verbal, and quantitative problem sets with detailed working.",
     includes: [
-      "Postgraduate entrance standard questions",
-      "Analytical & quantitative problem sets",
-      "Full-length timed exam simulations",
-      "Explanatory solution walkthroughs",
+      "Analytical & Quantitative Question Banks",
+      "Full-Length Timed Examination Simulations",
+      "All Worked with Official Solutions + Explain with AI",
+      "Verified Solution Walkthroughs & Method Breakdowns",
     ],
   },
   {
@@ -144,10 +131,10 @@ const allPrograms: ProgramCard[] = [
     description:
       "Center of Competence assessment materials and occupational evaluation preparation designed to build practical and theoretical confidence.",
     includes: [
-      "Competency assessment question banks",
-      "Practical scenario review guides",
-      "Timed assessment simulations",
-      "Progress tracking per competency level",
+      "Occupational Question Banks & Reference Manuals",
+      "Practical Scenario Review Guides",
+      "All Worked with Official Solutions + Explain with AI",
+      "Competency Evaluation Simulations with Solutions",
     ],
   },
   {
@@ -161,10 +148,10 @@ const allPrograms: ProgramCard[] = [
     description:
       "National university graduation exit exam resources. Consolidate your core discipline knowledge with comprehensive practice banks.",
     includes: [
-      "Discipline-focused question banks",
-      "Core subject revision summaries",
-      "Timed graduation exam drills",
-      "Detailed scoring breakdown",
+      "Department Discipline Question Banks",
+      "Core Subject Revision Summaries",
+      "All Worked with Official Solutions + Explain with AI",
+      "Official University Exit Exams Worked with Explanations",
     ],
   },
   {
@@ -178,10 +165,10 @@ const allPrograms: ProgramCard[] = [
     description:
       "Remedial university pathway curriculum. Solidify prerequisite foundations in mathematics, natural sciences, and English for university entry.",
     includes: [
-      "Core remedial subject coverage",
-      "Foundational chapter short notes",
-      "Targeted revision question sets",
-      "Placement exam practice tests",
+      "Official Textbooks & Prerequisite Study Guides",
+      "Chapter Notes, Summaries & Question Banks",
+      "All Worked with Official Solutions + Explain with AI",
+      "Placement & University Entrance Exams Worked",
     ],
   },
 ];

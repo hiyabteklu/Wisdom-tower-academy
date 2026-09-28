@@ -44,10 +44,10 @@ function PackageGrid({ list }: { list: AcademyPackage[] }) {
 
             {pkg.includes.length > 0 && (
               <ul className="space-y-2 mb-6 pt-3 border-t border-white/6">
-                {pkg.includes.slice(0, 4).map((line) => (
-                  <li key={line} className="flex items-start gap-2 text-xs sm:text-sm text-slate-300/85">
+                {pkg.includes.map((line) => (
+                  <li key={line} className="flex items-start gap-2 text-xs sm:text-sm text-slate-300/90 leading-snug">
                     <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
-                    <span className="line-clamp-1">{line}</span>
+                    <span>{line}</span>
                   </li>
                 ))}
               </ul>

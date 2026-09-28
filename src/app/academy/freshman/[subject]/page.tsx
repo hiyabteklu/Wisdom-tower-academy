@@ -7,6 +7,7 @@ import {
 import FreshmanPackageGate from "@/components/FreshmanPackageGate";
 import CategoryBackButton from "@/components/CategoryBackButton";
 import SubjectHeroImage from "@/components/SubjectHeroImage";
+import CollapsibleSubjectOverview from "@/components/CollapsibleSubjectOverview";
 import AcademicResultSaver from "@/components/AcademicResultSaver";
 import ResourceHubGrid from "@/components/ResourceHubGrid";
 
@@ -49,9 +50,9 @@ export default async function FreshmanSubjectPage({
                   {subject.name}
                 </h1>
                 {subject.description && (
-                  <p className="mt-2 text-xs sm:text-sm text-wisdom-muted max-w-md mx-auto">
-                    {subject.description}
-                  </p>
+                  <div className="max-w-md mx-auto">
+                    <CollapsibleSubjectOverview description={subject.description} accent="text-purple-300" />
+                  </div>
                 )}
               </div>
             </div>

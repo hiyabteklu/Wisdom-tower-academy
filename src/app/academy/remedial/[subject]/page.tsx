@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { remedialSubjects, getRemedialSubject } from "@/data/remedial";
 import CategoryBackButton from "@/components/CategoryBackButton";
 import SubjectHeroImage from "@/components/SubjectHeroImage";
+import CollapsibleSubjectOverview from "@/components/CollapsibleSubjectOverview";
 import AcademicResultSaver from "@/components/AcademicResultSaver";
 import ResourceHubGrid from "@/components/ResourceHubGrid";
 
@@ -38,9 +39,9 @@ export default async function RemedialSubjectPage({
                 {subject.name}
               </h1>
               {subject.description && (
-                <p className="mt-2 text-xs sm:text-sm text-wisdom-muted max-w-md mx-auto">
-                  {subject.description}
-                </p>
+                <div className="max-w-md mx-auto">
+                  <CollapsibleSubjectOverview description={subject.description} accent="text-amber-300" />
+                </div>
               )}
             </div>
           </div>
