@@ -162,7 +162,7 @@ export default function AccountPage() {
     <div className="py-6 sm:py-10 md:py-14 min-h-[85vh] relative">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         {/* ========================================================= */}
-        {/* TOP HERO: DIGITAL STUDENT ID & MINI REGISTRATION LEDGER   */}
+        {/* TOP HERO: DIGITAL STUDENT ID & STUDENT ACCOUNT CENTER      */}
         {/* ========================================================= */}
         <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
           {/* Left Column: Physical Realistic ID Card */}
@@ -185,8 +185,9 @@ export default function AccountPage() {
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-300 border border-amber-400/30">
-                      Official Matriculation Ledger
+                    <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-sky-500/20 text-sky-300 border border-sky-400/40">
+                      <UserCheck className="w-3 h-3 text-sky-400" />
+                      Verified Student Account
                     </span>
                     <span className="text-xs font-mono font-bold text-cyan-300">
                       ID: {idData.idNumber}
@@ -197,18 +198,29 @@ export default function AccountPage() {
                   </h1>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <Link
                     href="/settings"
-                    className="btn-secondary text-xs px-3.5 py-2 border-white/15 hover:border-cyan-400/40"
+                    className="px-3.5 py-2 rounded-xl text-xs font-bold border border-white/20 bg-white/5 text-white hover:bg-white/10 hover:border-cyan-400/50 flex items-center gap-1.5 transition-all shadow-sm"
                   >
-                    <Settings2 className="w-3.5 h-3.5 text-cyan-300 mr-1" />
+                    <Settings2 className="w-3.5 h-3.5 text-cyan-300" />
                     Edit Profile
                   </Link>
+
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="px-3.5 py-2 rounded-xl text-xs font-bold border border-rose-500/50 bg-rose-500/15 text-rose-200 hover:bg-rose-500/30 hover:border-rose-400 hover:text-white flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                    title="Sign out of your account"
+                  >
+                    <LogOut className="w-3.5 h-3.5 text-rose-400" />
+                    Log Out
+                  </button>
+
                   {isAdmin && (
                     <Link
                       href="/admin"
-                      className="px-3 py-1.5 rounded-xl text-xs font-bold border border-purple-400/40 bg-purple-500/15 text-purple-200"
+                      className="px-3 py-1.5 rounded-xl text-xs font-bold border border-purple-400/40 bg-purple-500/15 text-purple-200 hover:bg-purple-500/25"
                     >
                       Admin
                     </Link>
@@ -216,11 +228,11 @@ export default function AccountPage() {
                 </div>
               </div>
 
-              {/* Ledger Metadata Grid */}
+              {/* Student Metadata Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 pt-4 text-xs">
                 <div className="p-3 rounded-2xl border border-white/8 bg-white/[0.02]">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-wisdom-muted mb-0.5">
-                    Registry Folio
+                    Student Reference No.
                   </p>
                   <p className="font-mono font-bold text-white flex items-center gap-1.5 truncate">
                     {idData.folioNumber}
