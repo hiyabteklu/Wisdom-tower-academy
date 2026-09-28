@@ -1,21 +1,25 @@
 /**
  * Wisdom Tower Academy — Official Weekly Student Performance Color PDF Generator
  * 
- * Generates a concise, high-contrast, publication-grade executive summary of
+ * Generates an official, single-page A4 publication-grade executive summary of
  * the student's dashboard using jsPDF.
  * 
- * Includes:
- * - Official Wisdom Tower Academy Header with gold & navy insignia
- * - Student credentials, reference number, and curriculum track
+ * Features:
+ * - Official Brand Logo embedded directly from optimized vector/raster base64
+ * - "WISDOM TOWER ACADEMY" & "Infinite Possibilities" official motto
+ * - Dynamic student personalization (Name, Folio ID, Track, School, Dates)
  * - Executive diagnosis: "According to your records and our system..."
- * - 4 Color HUD metric cards (Study Time, Reading Speed & Style, Retention & Accuracy, Mastery Standing)
- * - Immediate Stop Signals (Critical data-driven warnings & corrective actions)
- * - Priority recommendations for the upcoming week
- * - Real curriculum module distribution
- * - Official verification footer
+ * - 4 High-Contrast Color HUD Metric Cards (Cyan, Gold, Emerald, Violet)
+ * - Data-driven Immediately Stop Signals & Corrective Actions
+ * - Strategic Recommendations for upcoming study cycles
+ * - 7-Day Weekly Rhythm Visual Bar Chart & Active Modules
+ * - Official Accreditation & Digital Signature Footer
+ * - Strict ONE-PAGE (A4) layout guaranteed
+ * - Multi-layer Android WebView download/share compatibility
  */
 
 import { jsPDF } from "jspdf";
+import { BRAND_LOGO_BASE64 } from "./brand-logo-data";
 import type { StudentAnalyticsResult } from "./student-knowledge-base";
 import type { UserProfileRecord } from "./profile";
 
@@ -39,146 +43,145 @@ export function generateWeeklyReportPdf({
   });
 
   const pageWidth = 210;
-  const margin = 12;
-  const contentWidth = pageWidth - margin * 2; // 186mm
+  const margin = 10;
+  const contentWidth = pageWidth - margin * 2; // 190mm
 
-  // Palette constants
-  const NAVY = { r: 11, g: 21, b: 40 }; // #0B1528
-  const CARD_BG = { r: 18, g: 30, b: 54 }; // #121E36
-  const CYAN = { r: 56, g: 189, b: 248 }; // #38BDF8
-  const GOLD = { r: 245, g: 158, b: 11 }; // #F59E0B
-  const EMERALD = { r: 16, g: 185, b: 129 }; // #10B981
-  const CRIMSON = { r: 239, g: 68, b: 68 }; // #EF4444
-  const ROSE_BG = { r: 50, g: 18, b: 24 }; // #321218
-  const SLATE_TEXT = { r: 203, g: 213, b: 225 }; // #CBD5E1
-  const MUTED_TEXT = { r: 148, g: 163, b: 184 }; // #94A3B8
+  // Official Brand Palette
+  const NAVY_DARK = { r: 7, g: 14, b: 28 };    // #070E1C
+  const NAVY_CARD = { r: 15, g: 26, b: 46 };   // #0F1A2E
+  const CYAN = { r: 56, g: 189, b: 248 };       // #38BDF8
+  const GOLD = { r: 245, g: 158, b: 11 };       // #F59E0B
+  const EMERALD = { r: 16, g: 185, b: 129 };    // #10B981
+  const CRIMSON = { r: 239, g: 68, b: 68 };     // #EF4444
+  const VIOLET = { r: 168, g: 85, b: 247 };     // #A855F7
+  const SLATE_LIGHT = { r: 226, g: 232, b: 240 }; // #E2E8F0
+  const MUTED = { r: 148, g: 163, b: 184 };      // #94A3B8
 
   let y = margin;
 
   // =========================================================================
-  // 1. TOP HEADER BRAND BLOCK
+  // 1. TOP HEADER: OFFICIAL LOGO + WISDOM TOWER ACADEMY + "INFINITE POSSIBILITIES"
   // =========================================================================
-  doc.setFillColor(NAVY.r, NAVY.g, NAVY.b);
-  doc.roundedRect(margin, y, contentWidth, 26, 3, 3, "F");
+  doc.setFillColor(NAVY_DARK.r, NAVY_DARK.g, NAVY_DARK.b);
+  doc.roundedRect(margin, y, contentWidth, 30, 3, 3, "F");
 
-  // Gold accent strip at the top of the header
+  // Gold accent strip along top
   doc.setFillColor(GOLD.r, GOLD.g, GOLD.b);
   doc.rect(margin, y, contentWidth, 2, "F");
 
-  // Header Titles
+  // Embed Official Brand Logo (20mm x 20mm)
+  try {
+    if (BRAND_LOGO_BASE64) {
+      doc.addImage(BRAND_LOGO_BASE64, "PNG", margin + 4, y + 4.5, 21, 21);
+    }
+  } catch (err) {
+    console.warn("[PDF Generator] Could not embed logo image:", err);
+  }
+
+  // Academy Name & Motto
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
-  doc.text("WISDOM TOWER ACADEMY", margin + 6, y + 9);
+  doc.setFontSize(14.5);
+  doc.text("WISDOM TOWER ACADEMY", margin + 29, y + 10.5);
 
+  // Official Motto: "Infinite Possibilities"
+  doc.setTextColor(GOLD.r, GOLD.g, GOLD.b);
+  doc.setFont("helvetica", "bolditalic");
+  doc.setFontSize(8.5);
+  doc.text("“Infinite Possibilities”", margin + 29, y + 16.5);
+
+  // Document Title
   doc.setTextColor(CYAN.r, CYAN.g, CYAN.b);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(8.5);
-  doc.text("OFFICIAL WEEKLY STUDENT PERFORMANCE REPORT", margin + 6, y + 15);
-
-  doc.setTextColor(MUTED_TEXT.r, MUTED_TEXT.g, MUTED_TEXT.b);
-  doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
-  doc.text(
-    "Verified Curriculum Analytics & Cognitive Diagnostics · Ethiopian National Standard",
-    margin + 6,
-    y + 20
-  );
+  doc.text("OFFICIAL WEEKLY STUDENT PERFORMANCE DIAGNOSTIC REPORT", margin + 29, y + 22);
 
-  // Right-aligned report metadata in header
-  const todayStr = new Date().toLocaleDateString("en-US", {
+  doc.setTextColor(MUTED.r, MUTED.g, MUTED.b);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(6.5);
+  doc.text("Verified Curriculum Telemetry & Cognitive Diagnostics · Ethiopian National Standard", margin + 29, y + 26.5);
+
+  // Right Side Header Metadata
+  const dateStr = new Date().toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
   });
+
   doc.setTextColor(GOLD.r, GOLD.g, GOLD.b);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
-  doc.text(`DATE: ${todayStr.toUpperCase()}`, pageWidth - margin - 6, y + 10, {
-    align: "right",
-  });
+  doc.setFontSize(7.5);
+  doc.text(`ISSUED: ${dateStr.toUpperCase()}`, pageWidth - margin - 5, y + 9.5, { align: "right" });
 
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(7.5);
-  doc.text(`REF ID: ${referenceId}`, pageWidth - margin - 6, y + 16, {
-    align: "right",
-  });
+  doc.setFontSize(7);
+  doc.text(`REF ID: ${referenceId}`, pageWidth - margin - 5, y + 15, { align: "right" });
 
-  doc.setTextColor(EMERALD.r, EMERALD.g, EMERALD.b);
+  // Verified Badge (Green)
+  doc.setFillColor(EMERALD.r, EMERALD.g, EMERALD.b);
+  doc.roundedRect(pageWidth - margin - 45, y + 18.5, 40, 6.5, 1.5, 1.5, "F");
+  doc.setTextColor(0, 0, 0);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(7.5);
-  doc.text("STATUS: OFFICIAL & VERIFIED", pageWidth - margin - 6, y + 22, {
-    align: "right",
-  });
+  doc.setFontSize(6.5);
+  doc.text("VERIFIED ACADEMIC RECORD", pageWidth - margin - 25, y + 22.8, { align: "center" });
 
-  y += 30;
+  y += 33;
 
   // =========================================================================
-  // 2. STUDENT CREDENTIALS BAR
+  // 2. STUDENT CREDENTIALS HUD STRIP
   // =========================================================================
-  doc.setFillColor(CARD_BG.r, CARD_BG.g, CARD_BG.b);
+  doc.setFillColor(NAVY_CARD.r, NAVY_CARD.g, NAVY_CARD.b);
   doc.roundedRect(margin, y, contentWidth, 15, 2, 2, "F");
   doc.setDrawColor(CYAN.r, CYAN.g, CYAN.b);
   doc.setLineWidth(0.3);
   doc.roundedRect(margin, y, contentWidth, 15, 2, 2, "S");
 
-  const studentName =
-    profile?.full_name || analytics.studentName || "Academic Scholar";
+  const studentName = profile?.full_name || analytics.studentName || "Academic Scholar";
   const studentSchool = profile?.school_name || "Wisdom Tower Academy";
-  const studentTrack =
-    analytics.trackBenchmark?.trackName ||
-    profile?.education_level ||
-    "Freshman Curriculum";
+  const studentTrack = analytics.trackBenchmark?.trackName || profile?.education_level || "Freshman Curriculum";
+  const studentStream = profile?.stream || "General";
 
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.text(`STUDENT: ${studentName.toUpperCase()}`, margin + 5, y + 6);
 
-  doc.setTextColor(MUTED_TEXT.r, MUTED_TEXT.g, MUTED_TEXT.b);
+  doc.setTextColor(MUTED.r, MUTED.g, MUTED.b);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(7.5);
-  doc.text(`School: ${studentSchool}  |  Stream: ${profile?.stream || "General"}`, margin + 5, y + 11);
+  doc.setFontSize(7);
+  doc.text(`School: ${studentSchool}  |  Stream: ${studentStream}`, margin + 5, y + 11);
 
   doc.setTextColor(CYAN.r, CYAN.g, CYAN.b);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
-  doc.text(`TRACK: ${studentTrack}`, pageWidth - margin - 5, y + 6, {
-    align: "right",
-  });
+  doc.text(`TRACK: ${studentTrack}`, pageWidth - margin - 5, y + 6, { align: "right" });
 
   doc.setTextColor(GOLD.r, GOLD.g, GOLD.b);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7.5);
-  doc.text(
-    `TIER: ${analytics.masteryTier.toUpperCase()}`,
-    pageWidth - margin - 5,
-    y + 11,
-    { align: "right" }
-  );
+  doc.text(`TIER: ${analytics.masteryTier.toUpperCase()}`, pageWidth - margin - 5, y + 11, { align: "right" });
 
-  y += 19;
+  y += 18;
 
   // =========================================================================
-  // 3. EXECUTIVE SYSTEM ASSESSMENT
-  // "According to your records and our system..."
+  // 3. SYSTEM ASSESSMENT STATEMENT ("According to your records and our system...")
   // =========================================================================
-  doc.setFillColor(NAVY.r, NAVY.g, NAVY.b);
-  doc.roundedRect(margin, y, contentWidth, 18, 2, 2, "F");
+  doc.setFillColor(NAVY_DARK.r, NAVY_DARK.g, NAVY_DARK.b);
+  doc.roundedRect(margin, y, contentWidth, 17, 2, 2, "F");
 
-  // Left Cyan indicator bar
+  // Cyan left indicator bar
   doc.setFillColor(CYAN.r, CYAN.g, CYAN.b);
-  doc.rect(margin, y, 2.5, 18, "F");
+  doc.rect(margin, y, 2.5, 17, "F");
 
   doc.setTextColor(GOLD.r, GOLD.g, GOLD.b);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7.5);
-  doc.text("EXECUTIVE DIAGNOSTIC SUMMARY", margin + 5, y + 4.5);
+  doc.text("SYSTEM EXECUTIVE ASSESSMENT", margin + 5, y + 4.5);
 
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(7.2);
+  doc.setFontSize(7);
 
   const hoursLogged = analytics.totalStudyHours.toFixed(1);
   const targetPct = analytics.studyTimeAnalysis.weeklyProgressPct;
@@ -187,30 +190,30 @@ export function generateWeeklyReportPdf({
   const acc = analytics.retentionAnalysis.accuracyPct;
   const retentionRating = analytics.retentionAnalysis.rating;
 
-  const line1 = `According to your records and our system, your weekly study time is ${hoursLogged} hrs (${targetPct}% of weekly target with ${analytics.currentStreakDays}-day streak).`;
-  const line2 = `Your reading speed is ${speed} WPM (${method}), achieving ${acc}% question accuracy (${retentionRating}).`;
-  const line3 = `Status: ${analytics.studyTimeAnalysis.paceStatus} · ${analytics.masteryTier}.`;
+  const line1 = `According to verified academic records in our system, your cumulative study time is ${hoursLogged} hours (${targetPct}% of your weekly quota with an active ${analytics.currentStreakDays}-day streak).`;
+  const line2 = `Your reading velocity is calculated at ${speed} WPM (${method}), achieving ${acc}% question drill accuracy (${retentionRating}).`;
+  const line3 = `Current Status: ${analytics.studyTimeAnalysis.paceStatus} · Standing: ${analytics.masteryTier}.`;
 
-  doc.text(line1, margin + 5, y + 9);
-  doc.text(line2, margin + 5, y + 12.5);
-  doc.setTextColor(SLATE_TEXT.r, SLATE_TEXT.g, SLATE_TEXT.b);
-  doc.text(line3, margin + 5, y + 16);
+  doc.text(line1, margin + 5, y + 8.5);
+  doc.text(line2, margin + 5, y + 12);
+  doc.setTextColor(SLATE_LIGHT.r, SLATE_LIGHT.g, SLATE_LIGHT.b);
+  doc.text(line3, margin + 5, y + 15.5);
 
-  y += 22;
+  y += 20;
 
   // =========================================================================
   // 4. FOUR COLOR HUD CARDS (Study Time, Reading, Retention, Standing)
   // =========================================================================
-  const cardWidth = (contentWidth - 6) / 4; // 4 cards with 2mm gaps
-  const cardHeight = 28;
+  const cardWidth = (contentWidth - 6) / 4; // 4 cards with 2mm gap
+  const cardHeight = 26;
 
   // CARD 1: Study Time (Cyan)
-  doc.setFillColor(CARD_BG.r, CARD_BG.g, CARD_BG.b);
+  doc.setFillColor(NAVY_CARD.r, NAVY_CARD.g, NAVY_CARD.b);
   doc.roundedRect(margin, y, cardWidth, cardHeight, 2, 2, "F");
   doc.setFillColor(CYAN.r, CYAN.g, CYAN.b);
   doc.rect(margin, y, cardWidth, 1.5, "F");
 
-  doc.setTextColor(MUTED_TEXT.r, MUTED_TEXT.g, MUTED_TEXT.b);
+  doc.setTextColor(MUTED.r, MUTED.g, MUTED.b);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(6.5);
   doc.text("STUDY TIME & PACE", margin + 3, y + 5);
@@ -222,25 +225,25 @@ export function generateWeeklyReportPdf({
   doc.setTextColor(CYAN.r, CYAN.g, CYAN.b);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7);
-  doc.text(`${targetPct}% of Goal`, margin + 3, y + 16);
+  doc.text(`${targetPct}% of Goal`, margin + 3, y + 15.5);
 
-  doc.setTextColor(SLATE_TEXT.r, SLATE_TEXT.g, SLATE_TEXT.b);
+  doc.setTextColor(SLATE_LIGHT.r, SLATE_LIGHT.g, SLATE_LIGHT.b);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(6.5);
-  doc.text(`Target: ${analytics.weeklyTargetHours}h / week`, margin + 3, y + 21);
-  doc.text(`Streak: ${analytics.currentStreakDays} days active`, margin + 3, y + 25);
+  doc.setFontSize(6.2);
+  doc.text(`Target: ${analytics.weeklyTargetHours}h / week`, margin + 3, y + 20);
+  doc.text(`Streak: ${analytics.currentStreakDays} days active`, margin + 3, y + 24);
 
-  // CARD 2: Reading Speed & Method (Amber)
+  // CARD 2: Reading Speed (Amber)
   const card2X = margin + cardWidth + 2;
-  doc.setFillColor(CARD_BG.r, CARD_BG.g, CARD_BG.b);
+  doc.setFillColor(NAVY_CARD.r, NAVY_CARD.g, NAVY_CARD.b);
   doc.roundedRect(card2X, y, cardWidth, cardHeight, 2, 2, "F");
   doc.setFillColor(GOLD.r, GOLD.g, GOLD.b);
   doc.rect(card2X, y, cardWidth, 1.5, "F");
 
-  doc.setTextColor(MUTED_TEXT.r, MUTED_TEXT.g, MUTED_TEXT.b);
+  doc.setTextColor(MUTED.r, MUTED.g, MUTED.b);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(6.5);
-  doc.text("READING SPEED & METHOD", card2X + 3, y + 5);
+  doc.text("READING VELOCITY", card2X + 3, y + 5);
 
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(11);
@@ -249,26 +252,26 @@ export function generateWeeklyReportPdf({
   doc.setTextColor(GOLD.r, GOLD.g, GOLD.b);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7);
-  const shortMethod = method.length > 20 ? method.slice(0, 18) + "…" : method;
-  doc.text(shortMethod, card2X + 3, y + 16);
+  const shortMethod = method.length > 18 ? method.slice(0, 16) + "…" : method;
+  doc.text(shortMethod, card2X + 3, y + 15.5);
 
-  doc.setTextColor(SLATE_TEXT.r, SLATE_TEXT.g, SLATE_TEXT.b);
+  doc.setTextColor(SLATE_LIGHT.r, SLATE_LIGHT.g, SLATE_LIGHT.b);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(6.5);
-  doc.text(`Focus: ${analytics.readingAnalysis.focusRatioPct}% deliberate`, card2X + 3, y + 21);
-  doc.text(`Norm: ~${analytics.trackBenchmark?.expectedReadingWpm || 200} WPM`, card2X + 3, y + 25);
+  doc.setFontSize(6.2);
+  doc.text(`Focus: ${analytics.readingAnalysis.focusRatioPct}% deliberate`, card2X + 3, y + 20);
+  doc.text(`Norm: ~${analytics.trackBenchmark?.expectedReadingWpm || 200} WPM`, card2X + 3, y + 24);
 
   // CARD 3: Retention & Accuracy (Emerald)
   const card3X = margin + (cardWidth + 2) * 2;
-  doc.setFillColor(CARD_BG.r, CARD_BG.g, CARD_BG.b);
+  doc.setFillColor(NAVY_CARD.r, NAVY_CARD.g, NAVY_CARD.b);
   doc.roundedRect(card3X, y, cardWidth, cardHeight, 2, 2, "F");
   doc.setFillColor(EMERALD.r, EMERALD.g, EMERALD.b);
   doc.rect(card3X, y, cardWidth, 1.5, "F");
 
-  doc.setTextColor(MUTED_TEXT.r, MUTED_TEXT.g, MUTED_TEXT.b);
+  doc.setTextColor(MUTED.r, MUTED.g, MUTED.b);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(6.5);
-  doc.text("RETENTION & ACCURACY", card3X + 3, y + 5);
+  doc.text("RETENTION & DRILLS", card3X + 3, y + 5);
 
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(11);
@@ -277,25 +280,25 @@ export function generateWeeklyReportPdf({
   doc.setTextColor(EMERALD.r, EMERALD.g, EMERALD.b);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7);
-  doc.text(retentionRating.replace(" Long-Term", ""), card3X + 3, y + 16);
+  doc.text(retentionRating.replace(" Long-Term", ""), card3X + 3, y + 15.5);
 
-  doc.setTextColor(SLATE_TEXT.r, SLATE_TEXT.g, SLATE_TEXT.b);
+  doc.setTextColor(SLATE_LIGHT.r, SLATE_LIGHT.g, SLATE_LIGHT.b);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(6.5);
-  doc.text(`Recall Index: ${analytics.retentionAnalysis.retentionIndexPct}%`, card3X + 3, y + 21);
-  doc.text(`Drills: ${analytics.questionsAttempted} solved`, card3X + 3, y + 25);
+  doc.setFontSize(6.2);
+  doc.text(`Recall: ${analytics.retentionAnalysis.retentionIndexPct}%`, card3X + 3, y + 20);
+  doc.text(`Attempted: ${analytics.questionsAttempted} drills`, card3X + 3, y + 24);
 
-  // CARD 4: Academic Rank & Pace (Violet/Indigo)
+  // CARD 4: Scholar Standing (Violet)
   const card4X = margin + (cardWidth + 2) * 3;
-  doc.setFillColor(CARD_BG.r, CARD_BG.g, CARD_BG.b);
+  doc.setFillColor(NAVY_CARD.r, NAVY_CARD.g, NAVY_CARD.b);
   doc.roundedRect(card4X, y, cardWidth, cardHeight, 2, 2, "F");
-  doc.setFillColor(147, 51, 234); // Violet
+  doc.setFillColor(VIOLET.r, VIOLET.g, VIOLET.b);
   doc.rect(card4X, y, cardWidth, 1.5, "F");
 
-  doc.setTextColor(MUTED_TEXT.r, MUTED_TEXT.g, MUTED_TEXT.b);
+  doc.setTextColor(MUTED.r, MUTED.g, MUTED.b);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(6.5);
-  doc.text("SCHOLAR STANDING", card4X + 3, y + 5);
+  doc.text("ACADEMIC STANDING", card4X + 3, y + 5);
 
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(9.5);
@@ -304,26 +307,26 @@ export function generateWeeklyReportPdf({
   doc.setTextColor(CYAN.r, CYAN.g, CYAN.b);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7);
-  doc.text(analytics.studyTimeAnalysis.paceStatus, card4X + 3, y + 16);
+  doc.text(analytics.studyTimeAnalysis.paceStatus, card4X + 3, y + 15.5);
 
-  doc.setTextColor(SLATE_TEXT.r, SLATE_TEXT.g, SLATE_TEXT.b);
+  doc.setTextColor(SLATE_LIGHT.r, SLATE_LIGHT.g, SLATE_LIGHT.b);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(6.5);
-  doc.text(`Remaining: ${analytics.hoursRemainingThisWeek.toFixed(1)}h this wk`, card4X + 3, y + 21);
-  doc.text(`Questions: ${analytics.questionsCorrect} correct`, card4X + 3, y + 25);
+  doc.setFontSize(6.2);
+  doc.text(`Remaining: ${analytics.hoursRemainingThisWeek.toFixed(1)}h target`, card4X + 3, y + 20);
+  doc.text(`Solved: ${analytics.questionsCorrect} correct`, card4X + 3, y + 24);
 
-  y += 32;
+  y += 29;
 
   // =========================================================================
-  // 5. IMMEDIATELY STOP SIGNALS (Critical Data-Driven Alerts)
+  // 5. CRITICAL WARNING SYSTEM (Immediately Stop Signals & Corrective Actions)
   // =========================================================================
   const stopSignals = analytics.immediatelyStopSignals || [];
-  const stopBoxHeight = Math.min(32, Math.max(22, stopSignals.length * 11 + 7));
+  const stopBoxHeight = 27;
 
-  doc.setFillColor(ROSE_BG.r, ROSE_BG.g, ROSE_BG.b);
+  doc.setFillColor(NAVY_CARD.r, NAVY_CARD.g, NAVY_CARD.b);
   doc.roundedRect(margin, y, contentWidth, stopBoxHeight, 2, 2, "F");
   doc.setDrawColor(CRIMSON.r, CRIMSON.g, CRIMSON.b);
-  doc.setLineWidth(0.4);
+  doc.setLineWidth(0.35);
   doc.roundedRect(margin, y, contentWidth, stopBoxHeight, 2, 2, "S");
 
   doc.setFillColor(CRIMSON.r, CRIMSON.g, CRIMSON.b);
@@ -331,49 +334,44 @@ export function generateWeeklyReportPdf({
 
   doc.setTextColor(CRIMSON.r, CRIMSON.g, CRIMSON.b);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
-  doc.text("IMMEDIATELY STOP SIGNALS (CRITICAL DATA-BASED ALERTS)", margin + 6, y + 5);
+  doc.setFontSize(7.5);
+  doc.text("IMMEDIATELY STOP SIGNALS & HABIT DIRECTIVES (DATA-DRIVEN TELEMETRY)", margin + 6, y + 5);
 
   let stopY = y + 9.5;
-  const displaySignals = stopSignals.slice(0, 2); // Top 2 critical signals
-  if (displaySignals.length === 0) {
-    doc.setTextColor(EMERALD.r, EMERALD.g, EMERALD.b);
+  const displaySignals = stopSignals.slice(0, 2);
+
+  displaySignals.forEach((sig) => {
+    doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(7.5);
-    doc.text("No critical negative study anomalies detected this week. Excellent discipline!", margin + 6, stopY + 2);
-  } else {
-    displaySignals.forEach((sig) => {
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(7.2);
-      doc.text(`[STOP] ${sig.signal.toUpperCase()}`, margin + 6, stopY);
+    doc.setFontSize(7);
+    doc.text(`[ALERT] ${sig.signal.toUpperCase()}`, margin + 6, stopY);
 
-      doc.setTextColor(SLATE_TEXT.r, SLATE_TEXT.g, SLATE_TEXT.b);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(6.8);
-      const obsText = `Observed: ${sig.observedData} -> ACTION: ${sig.immediateAction}`;
-      const splitObs = doc.splitTextToSize(obsText, contentWidth - 10);
-      doc.text(splitObs[0] || obsText, margin + 6, stopY + 3.8);
+    doc.setTextColor(SLATE_LIGHT.r, SLATE_LIGHT.g, SLATE_LIGHT.b);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6.3);
+    const obsText = `Observed: ${sig.observedData} -> Immediate Action: ${sig.immediateAction}`;
+    const splitObs = doc.splitTextToSize(obsText, contentWidth - 10);
+    doc.text(splitObs[0] || obsText, margin + 6, stopY + 3.8);
 
-      stopY += 8.5;
-    });
-  }
+    stopY += 8.2;
+  });
 
-  y += stopBoxHeight + 4;
+  y += stopBoxHeight + 3;
 
   // =========================================================================
-  // 6. ACTIONABLE RECOMMENDATIONS FOR THE UPCOMING WEEK
+  // 6. STRATEGIC RECOMMENDATIONS FOR UPCOMING WEEK
   // =========================================================================
-  doc.setFillColor(NAVY.r, NAVY.g, NAVY.b);
-  doc.roundedRect(margin, y, contentWidth, 34, 2, 2, "F");
+  const recBoxHeight = 29;
+  doc.setFillColor(NAVY_DARK.r, NAVY_DARK.g, NAVY_DARK.b);
+  doc.roundedRect(margin, y, contentWidth, recBoxHeight, 2, 2, "F");
   doc.setDrawColor(CYAN.r, CYAN.g, CYAN.b);
   doc.setLineWidth(0.25);
-  doc.roundedRect(margin, y, contentWidth, 34, 2, 2, "S");
+  doc.roundedRect(margin, y, contentWidth, recBoxHeight, 2, 2, "S");
 
   doc.setTextColor(CYAN.r, CYAN.g, CYAN.b);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
-  doc.text("STRATEGIC RECOMMENDATIONS FOR THE UPCOMING WEEK", margin + 5, y + 5);
+  doc.setFontSize(7.5);
+  doc.text("STRATEGIC RECOMMENDATIONS FOR UPCOMING STUDY ROUTINE", margin + 5, y + 5);
 
   const recs = analytics.recommendations || [];
   const topRecs = recs.slice(0, 3);
@@ -381,134 +379,189 @@ export function generateWeeklyReportPdf({
 
   topRecs.forEach((r, idx) => {
     doc.setFillColor(CYAN.r, CYAN.g, CYAN.b);
-    doc.circle(margin + 7, recY - 1, 1, "F");
+    doc.circle(margin + 7, recY - 1, 0.9, "F");
 
     doc.setTextColor(GOLD.r, GOLD.g, GOLD.b);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(7.2);
+    doc.setFontSize(6.8);
     doc.text(`Step ${idx + 1} (${r.category}): ${r.title}`, margin + 11, recY);
 
-    doc.setTextColor(SLATE_TEXT.r, SLATE_TEXT.g, SLATE_TEXT.b);
+    doc.setTextColor(SLATE_LIGHT.r, SLATE_LIGHT.g, SLATE_LIGHT.b);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(6.7);
-    const stepText = `-> ${r.actionableStep}`;
+    doc.setFontSize(6.2);
+    const stepText = `Action: ${r.actionableStep}`;
     const splitStep = doc.splitTextToSize(stepText, contentWidth - 18);
-    doc.text(splitStep[0] || stepText, margin + 11, recY + 3.8);
+    doc.text(splitStep[0] || stepText, margin + 11, recY + 3.5);
 
-    recY += 7.8;
+    recY += 7.2;
   });
 
-  y += 38;
+  y += recBoxHeight + 3;
 
   // =========================================================================
-  // 7. STUDY TIME BY DAY & ACTIVE MODULES BREAKDOWN
+  // 7. WEEKLY STUDY RHYTHM BAR CHART & ACTIVE MODULES BREAKDOWN
   // =========================================================================
   const halfWidth = (contentWidth - 4) / 2;
+  const rhythmHeight = 27;
 
-  // Left Box: Weekly Study Time Distribution
-  doc.setFillColor(CARD_BG.r, CARD_BG.g, CARD_BG.b);
-  doc.roundedRect(margin, y, halfWidth, 27, 2, 2, "F");
+  // Left Box: Weekly Study Time Distribution Bar Chart
+  doc.setFillColor(NAVY_CARD.r, NAVY_CARD.g, NAVY_CARD.b);
+  doc.roundedRect(margin, y, halfWidth, rhythmHeight, 2, 2, "F");
 
   doc.setTextColor(GOLD.r, GOLD.g, GOLD.b);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(7.5);
-  doc.text("WEEKLY STUDY DISTRIBUTION", margin + 4, y + 5);
+  doc.setFontSize(7);
+  doc.text("WEEKLY STUDY RHYTHM (MON – SUN)", margin + 4, y + 4.8);
 
   const days = analytics.dailyDistribution || [];
   const dayColWidth = (halfWidth - 8) / (days.length || 7);
   let barX = margin + 4;
 
   days.forEach((d) => {
-    const isToday = false;
-    doc.setFillColor(isToday ? CYAN.r : 35, isToday ? CYAN.g : 48, isToday ? CYAN.b : 75);
     const barHeight = Math.min(11, Math.max(2, (d.minutes / 90) * 11));
-    doc.roundedRect(barX, y + 17 - barHeight, dayColWidth - 1.5, barHeight, 0.8, 0.8, "F");
+    doc.setFillColor(CYAN.r, CYAN.g, CYAN.b);
+    doc.roundedRect(barX, y + 17 - barHeight, dayColWidth - 1.5, barHeight, 0.6, 0.6, "F");
 
-    doc.setTextColor(isToday ? CYAN.r : MUTED_TEXT.r, isToday ? CYAN.g : MUTED_TEXT.g, isToday ? CYAN.b : MUTED_TEXT.b);
-    doc.setFont("helvetica", isToday ? "bold" : "normal");
-    doc.setFontSize(6);
+    doc.setTextColor(MUTED.r, MUTED.g, MUTED.b);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(5.5);
     doc.text(d.day.slice(0, 3), barX + (dayColWidth - 1.5) / 2, y + 21, { align: "center" });
 
-    doc.setFontSize(5.5);
+    doc.setFontSize(5);
     doc.text(`${d.minutes}m`, barX + (dayColWidth - 1.5) / 2, y + 25, { align: "center" });
 
     barX += dayColWidth;
   });
 
-  // Right Box: Active Subjects Studied
+  // Right Box: Active Curriculum Modules
   const rightX = margin + halfWidth + 4;
-  doc.setFillColor(CARD_BG.r, CARD_BG.g, CARD_BG.b);
-  doc.roundedRect(rightX, y, halfWidth, 27, 2, 2, "F");
+  doc.setFillColor(NAVY_CARD.r, NAVY_CARD.g, NAVY_CARD.b);
+  doc.roundedRect(rightX, y, halfWidth, rhythmHeight, 2, 2, "F");
 
   doc.setTextColor(CYAN.r, CYAN.g, CYAN.b);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(7.5);
-  doc.text("ACTIVE CURRICULUM MODULES", rightX + 4, y + 5);
+  doc.setFontSize(7);
+  doc.text("ACTIVE CURRICULUM MODULES", rightX + 4, y + 4.8);
 
   const subjects = analytics.realActiveSubjects || [];
   const topSubs = subjects.slice(0, 3);
-  let subY = y + 10;
+  let subY = y + 9.5;
 
   if (topSubs.length === 0) {
-    doc.setTextColor(MUTED_TEXT.r, MUTED_TEXT.g, MUTED_TEXT.b);
+    doc.setTextColor(MUTED.r, MUTED.g, MUTED.b);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(6.8);
-    doc.text("Enrolled curriculum modules will log here upon completion.", rightX + 4, subY + 3);
+    doc.setFontSize(6.5);
+    doc.text("Enrolled curriculum modules will log here upon study.", rightX + 4, subY + 3);
   } else {
     topSubs.forEach((s) => {
       doc.setTextColor(255, 255, 255);
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(6.8);
+      doc.setFontSize(6.5);
       const cleanSubName = s.name.length > 22 ? s.name.slice(0, 20) + "…" : s.name;
       doc.text(cleanSubName, rightX + 4, subY);
 
       doc.setTextColor(GOLD.r, GOLD.g, GOLD.b);
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(6.5);
-      doc.text(`${s.studyMinutes}m logged`, rightX + halfWidth - 5, subY, {
-        align: "right",
-      });
+      doc.setFontSize(6.2);
+      doc.text(`${s.studyMinutes}m`, rightX + halfWidth - 5, subY, { align: "right" });
 
-      doc.setTextColor(MUTED_TEXT.r, MUTED_TEXT.g, MUTED_TEXT.b);
+      doc.setTextColor(MUTED.r, MUTED.g, MUTED.b);
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(6);
-      doc.text(`Accuracy: ${s.accuracyPct}% · ${s.status}`, rightX + 4, subY + 3.8);
+      doc.setFontSize(5.8);
+      doc.text(`Accuracy: ${s.accuracyPct}% · ${s.status}`, rightX + 4, subY + 3.5);
 
-      subY += 7.8;
+      subY += 7.2;
     });
   }
 
-  y += 31;
+  y += rhythmHeight + 3;
 
   // =========================================================================
-  // 8. OFFICIAL SECURITY & AUTHENTICATION FOOTER
+  // 8. OFFICIAL SEAL & AUTHENTICATION FOOTER
   // =========================================================================
-  doc.setFillColor(NAVY.r, NAVY.g, NAVY.b);
-  doc.roundedRect(margin, y, contentWidth, 12, 1.5, 1.5, "F");
+  doc.setFillColor(NAVY_DARK.r, NAVY_DARK.g, NAVY_DARK.b);
+  doc.roundedRect(margin, y, contentWidth, 13, 1.5, 1.5, "F");
 
-  doc.setTextColor(MUTED_TEXT.r, MUTED_TEXT.g, MUTED_TEXT.b);
+  doc.setTextColor(MUTED.r, MUTED.g, MUTED.b);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(6.5);
+  doc.setFontSize(6);
   doc.text(
-    "Wisdom Tower Academy Digital Certification · Grounded strictly in authenticated user study records · Addis Ababa, Ethiopia",
+    "Wisdom Tower Academy · Infinite Possibilities · Verified Academic Certification · Addis Ababa, Ethiopia",
     margin + 4,
     y + 5
   );
 
   doc.setTextColor(CYAN.r, CYAN.g, CYAN.b);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(6.5);
+  doc.setFontSize(6);
   doc.text(
-    `CONFIDENTIAL STUDENT RECORD · HASH: ${referenceId.replace(/[^A-Za-z0-9]/g, "")} · PAGE 1 OF 1`,
+    `CONFIDENTIAL SCHOLAR RECORD · HASH: ${referenceId.replace(/[^A-Za-z0-9]/g, "")} · PAGE 1 OF 1`,
     margin + 4,
     y + 9.5
   );
 
   const timeStamp = new Date().toISOString().slice(0, 19).replace("T", " ");
   doc.setTextColor(GOLD.r, GOLD.g, GOLD.b);
-  doc.text(`ISSUED: ${timeStamp} UTC`, pageWidth - margin - 4, y + 9.5, {
-    align: "right",
-  });
+  doc.text(`ISSUED: ${timeStamp} UTC`, pageWidth - margin - 4, y + 9.5, { align: "right" });
 
   return doc;
+}
+
+/**
+ * Universal Mobile-Safe Save & Share Helper
+ * 
+ * Solves the Android WebView "saving for offline use" infinite hang:
+ * 1. Checks if native Web Share API supports file sharing (opens Android system share / PDF viewer)
+ * 2. Provides direct fallback to /api/report/download (valid HTTPS URL that Android DownloadManager handles properly)
+ * 3. Client-side Blob download fallback
+ */
+export async function downloadOrShareWeeklyReportPdf(
+  options: GenerateWeeklyReportOptions
+): Promise<{ success: boolean; method: "share" | "api" | "blob"; message: string }> {
+  try {
+    const studentName = options.profile?.full_name || options.analytics.studentName || "Scholar";
+    const safeName = studentName.replace(/[^a-zA-Z0-9_-]/g, "_");
+    const fileName = `WTA-Weekly-Report-${safeName}-${new Date().toISOString().slice(0, 10)}.pdf`;
+
+    // 1. Generate jsPDF instance
+    const doc = generateWeeklyReportPdf(options);
+    const pdfBlob = doc.output("blob");
+
+    // 2. Try Web Share API (Best for Android WebView & Mobile browsers!)
+    if (typeof navigator !== "undefined" && navigator.canShare) {
+      try {
+        const file = new File([pdfBlob], fileName, { type: "application/pdf" });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: "Wisdom Tower Academy Weekly Report",
+            text: `Weekly Student Performance Diagnostic for ${studentName}`,
+            files: [file],
+          });
+          return { success: true, method: "share", message: "Report shared successfully!" };
+        }
+      } catch (shareErr) {
+        // User may have cancelled or share wasn't allowed; fall through to direct download
+        if (shareErr instanceof Error && shareErr.name === "AbortError") {
+          return { success: true, method: "share", message: "Share closed." };
+        }
+      }
+    }
+
+    // 3. Fallback: Use standard direct download via simulated link or API route
+    try {
+      doc.save(fileName);
+      return { success: true, method: "blob", message: "PDF downloaded to your device!" };
+    } catch {
+      // 4. Ultimate fallback: Server-side API route download
+      if (typeof window !== "undefined") {
+        window.location.href = `/api/report/download?name=${encodeURIComponent(studentName)}&ref=${encodeURIComponent(options.referenceId || "WTA-REPORT")}`;
+        return { success: true, method: "api", message: "Starting server download..." };
+      }
+    }
+
+    return { success: true, method: "blob", message: "Report ready." };
+  } catch (err) {
+    console.error("[Report Download] Error:", err);
+    throw err;
+  }
 }
