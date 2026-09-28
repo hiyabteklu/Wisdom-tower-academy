@@ -335,3 +335,49 @@ html.wta-native-app .site-bg,
 body.wta-native-app .site-bg {
   background-color: #0f172a !important;
 }
+
+/* AMOLED Pure Black Mode (Ideal for mobile OLED screens) */
+html.amoled-mode,
+html.amoled-mode body,
+html.amoled-mode .site-bg,
+html.amoled-mode.wta-native-app,
+html.amoled-mode.wta-native-app body {
+  background-color: #000000 !important;
+}
+html.amoled-mode .atm-base,
+html.amoled-mode .site-atmosphere {
+  background: #000000 !important;
+  opacity: 0.15;
+}
+html.amoled-mode .card-modern,
+html.amoled-mode .card-elevated,
+html.amoled-mode .bg-wisdom-card {
+  background-color: #080808 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Font Scale Utilities */
+html.font-scale-compact {
+  font-size: 14.5px;
+}
+html.font-scale-normal {
+  font-size: 16px;
+}
+html.font-scale-large {
+  font-size: 17.5px;
+}
+html.font-scale-xlarge {
+  font-size: 19px;
+}
+
+/* Reading Font Preferences */
+html.reading-font-serif {
+  --font-reading: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+}
+html.reading-font-mono {
+  --font-reading: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+html.reading-font-sans {
+  --font-reading: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+

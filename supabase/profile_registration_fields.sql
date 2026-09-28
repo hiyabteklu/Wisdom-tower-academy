@@ -15,7 +15,19 @@ alter table public.profiles
   add column if not exists stream text,
   add column if not exists hear_about text,
   add column if not exists account_intent text,
-  add column if not exists profile_completed boolean default false;
+  add column if not exists profile_completed boolean default false,
+  -- Advanced Profile & Webview Settings
+  add column if not exists bio text,
+  add column if not exists target_exam text,
+  add column if not exists target_score text,
+  add column if not exists daily_study_goal_minutes integer default 45,
+  add column if not exists preferred_study_time text default 'evening',
+  add column if not exists avatar_preset text default 'scholar-cyan',
+  add column if not exists amoled_mode boolean default false,
+  add column if not exists font_size_preference text default 'normal',
+  add column if not exists data_saver_mode boolean default false,
+  add column if not exists sound_effects_enabled boolean default true,
+  add column if not exists app_preferences jsonb default '{}'::jsonb;
 
 -- Optional: constrain education_level to known values (NULL allowed for old users)
 do $$

@@ -21,6 +21,7 @@ import { isAdminEmail } from "@/lib/admin";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import HeaderLibraryLinks from "@/components/HeaderLibraryLinks";
 import RefreshButton from "@/components/RefreshButton";
+import StudentAvatar from "@/components/StudentAvatar";
 import { DIGITAL_URL } from "@/lib/digital-url";
 
 const mainNavLinks = [
@@ -174,9 +175,14 @@ export default function Header() {
                           : "border-white/10 hover:border-white/25"
                       }`}
                     >
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center text-xs font-bold text-wisdom-dark">
-                        {displayName.charAt(0).toUpperCase()}
-                      </div>
+                      <StudentAvatar
+                        avatarPreset={user?.user_metadata?.avatar_preset}
+                        avatarUrl={user?.user_metadata?.avatar_url}
+                        name={displayName}
+                        size="xs"
+                        className="rounded-full"
+                        showGlow={false}
+                      />
                       <ChevronDown
                         className={`w-3.5 h-3.5 text-wisdom-muted ${profileOpen ? "rotate-180" : ""}`}
                       />

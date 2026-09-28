@@ -64,7 +64,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{localStorage.setItem('wt-theme','dark');var d=document.documentElement;d.classList.remove('theme-light','light');d.classList.add('theme-dark','dark');d.style.colorScheme='dark';d.setAttribute('data-theme','dark');}catch(e){}})();`,
+            __html: `(function(){try{localStorage.setItem('wt-theme','dark');var d=document.documentElement;d.classList.remove('theme-light','light');d.classList.add('theme-dark','dark');d.style.colorScheme='dark';d.setAttribute('data-theme','dark');var p=localStorage.getItem('wt-preferences');if(p){var parsed=JSON.parse(p);if(parsed.amoledMode)d.classList.add('amoled-mode');if(parsed.reducedMotion)d.classList.add('force-reduced-motion');if(parsed.fontSize)d.classList.add('font-scale-'+parsed.fontSize);if(parsed.readingFont)d.classList.add('reading-font-'+parsed.readingFont);}}catch(e){}})();`,
           }}
         />
         <link rel="manifest" href="/manifest.webmanifest" />

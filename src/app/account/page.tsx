@@ -3,18 +3,31 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { isAdminEmail } from "@/lib/admin";
-import { ensureProfile } from "@/lib/profile";
+import { ensureProfile, getFullProfile, type UserProfileRecord } from "@/lib/profile";
+import StudentAvatar from "@/components/StudentAvatar";
+import { listMyOrders, type ManualOrder } from "@/lib/orders";
 import type { User } from "@supabase/supabase-js";
 import {
-  LayoutDashboard,
+  ArrowRight,
+  BookOpen,
+  CheckCircle2,
+  Clock,
+  ExternalLink,
+  GraduationCap,
+  HardDrive,
   Inbox,
-  Shield,
-  Mail,
-  Settings2,
+  LayoutDashboard,
   LogOut,
+  Mail,
+  Package,
+  Settings2,
+  Shield,
+  Smartphone,
+  Sparkles,
+  Target,
+  Zap,
 } from "lucide-react";
 
 interface Inquiry {
@@ -29,45 +42,54 @@ interface Inquiry {
 
 function statusStyle(status: string) {
   const s = (status || "new").toLowerCase();
-  if (s === "replied" || s === "closed") return "bg-green-500/15 text-green-400 border-green-500/30";
-  if (s === "read") return "bg-amber-500/15 text-amber-400 border-amber-500/30";
-  return "bg-wisdom-cyan/15 text-wisdom-cyan border-wisdom-cyan/30";
+  if (s === "replied" || s === "closed" || s === "approved") {
+    return "bg-emerald-500/15 text-emerald-400 border-emerald-500/30";
+  }
+  if (s === "read" || s === "reviewing") {
+    return "bg-amber-500/15 text-amber-400 border-amber-500/30";
+  }
+  return "bg-cyan-500/15 text-cyan-300 border-cyan-400/30";
 }
 
 export default function AccountPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<UserProfileRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+  const [orders, setOrders] = useState<ManualOrder[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
-  const [tab, setTab] = useState<"overview" | "requests">("overview");
+  const [tab, setTab] = useState<"overview" | "packages" | "requests">("overview");
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session?.user) {
-        router.replace("/login");
+        router.replace("/login?next=/account");
         return;
       }
       await ensureProfile(session.user);
+      const full = await getFullProfile(session.user.id);
       setUser(session.user);
+      setProfile(full);
       setLoading(false);
     });
   }, [router]);
 
-  const load = useCallback(async () => {
+  const loadUserData = useCallback(async () => {
     if (!user?.email) return;
     setDataLoading(true);
     try {
-      const client = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
-      const { data } = await client
+      // Load user inquiries
+      const { data: inqData } = await supabase
         .from("inquiries")
         .select("*")
         .eq("email", user.email)
         .order("created_at", { ascending: false });
-      setInquiries((data as Inquiry[]) || []);
+      setInquiries((inqData as Inquiry[]) || []);
+
+      // Load user orders and access grants
+      const myOrders = await listMyOrders();
+      setOrders(myOrders);
     } catch {
       setInquiries([]);
     }
@@ -75,8 +97,8 @@ export default function AccountPage() {
   }, [user?.email]);
 
   useEffect(() => {
-    if (user) load();
-  }, [user, load]);
+    if (user) loadUserData();
+  }, [user, loadUserData]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -86,20 +108,19 @@ export default function AccountPage() {
 
   if (loading || !user) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-wisdom-cyan border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-[65vh] flex flex-col items-center justify-center gap-3">
+        <div className="w-10 h-10 border-3 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs text-wisdom-muted font-medium">Opening student dashboard...</p>
       </div>
     );
   }
 
   const displayName =
+    profile?.full_name ||
     user.user_metadata?.full_name ||
     user.user_metadata?.name ||
     user.email?.split("@")[0] ||
-    "User";
-
-  const avatarUrl =
-    user.user_metadata?.avatar_url || user.user_metadata?.picture || null;
+    "Student";
 
   const memberSince = user.created_at
     ? new Date(user.created_at).toLocaleDateString(undefined, {
@@ -107,161 +128,379 @@ export default function AccountPage() {
         month: "short",
         day: "numeric",
       })
-    : "—";
+    : "Active";
 
   const isAdmin = isAdminEmail(user.email);
-  const activeCount = inquiries.filter((i) => !["closed", "replied"].includes((i.status || "").toLowerCase())).length;
+  const activeRequests = inquiries.filter(
+    (i) => !["closed", "replied"].includes((i.status || "").toLowerCase())
+  ).length;
 
   return (
-    <div className="py-10 md:py-16">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
-        <div className="mb-8 overflow-hidden rounded-2xl border border-white/10 bg-wisdom-card">
-          <div className="h-20 sm:h-24 bg-gradient-to-r from-wisdom-cyan/30 via-cyan-500/10 to-transparent" />
-          <div className="-mt-10 flex flex-col gap-4 px-5 pb-6 sm:flex-row sm:items-end sm:px-8">
-            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl border-4 border-wisdom-card bg-gradient-to-br from-wisdom-cyan to-cyan-800 text-2xl font-bold text-wisdom-dark shadow-lg">
-              {avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
-              ) : (
-                displayName.charAt(0).toUpperCase()
-              )}
+    <div className="py-8 sm:py-12 md:py-16 min-h-[85vh] relative">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Digital Student Identity Card */}
+        <div className="mb-8 rounded-3xl border border-cyan-400/25 bg-gradient-to-br from-wisdom-card via-wisdom-navy/95 to-wisdom-dark shadow-2xl overflow-hidden relative">
+          <div className="h-24 sm:h-28 bg-gradient-to-r from-cyan-500/20 via-sky-600/15 to-transparent relative">
+            <div className="absolute top-3 right-4 flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-black/40 text-cyan-300 border border-cyan-400/30 backdrop-blur-md">
+                <Sparkles className="w-3 h-3 text-cyan-300" />
+                Verified Student ID
+              </span>
             </div>
-            <div className="flex-1 pb-1">
-              <h1 className="text-2xl sm:text-3xl font-bold">{displayName}</h1>
-              <p className="text-sm text-wisdom-muted">{user.email}</p>
-              <p className="mt-1 text-xs text-wisdom-muted">Member since {memberSince}</p>
+          </div>
+
+          <div className="-mt-12 px-6 pb-6 sm:px-8 flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+            <div className="flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-6">
+              <StudentAvatar
+                avatarPreset={profile?.avatar_preset}
+                avatarUrl={profile?.avatar_url}
+                name={displayName}
+                size="xl"
+                className="ring-4 ring-wisdom-dark shadow-xl"
+              />
+              <div className="pb-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-2.5 mb-1">
+                  <h1 className="font-display text-2xl sm:text-3xl font-black text-white tracking-tight">
+                    {displayName}
+                  </h1>
+                  {isAdmin && (
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-400/30">
+                      Faculty / Admin
+                    </span>
+                  )}
+                </div>
+
+                <p className="text-xs sm:text-sm text-cyan-300 font-semibold flex items-center gap-1.5">
+                  <GraduationCap className="w-4 h-4" />
+                  {profile?.education_level || "Academic Pathway"}
+                  {profile?.stream ? ` · ${profile.stream}` : ""}
+                </p>
+
+                <p className="text-xs text-wisdom-muted mt-1">
+                  {profile?.school_name ? `${profile.school_name} · ` : ""}
+                  {profile?.town_region ? `${profile.town_region} · ` : ""}
+                  Member since {memberSince}
+                </p>
+
+                {profile?.bio && (
+                  <p className="mt-2 text-xs italic text-slate-300/90 max-w-xl line-clamp-2">
+                    &ldquo;{profile.bio}&rdquo;
+                  </p>
+                )}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2.5">
+
+            {/* Quick Actions Header Buttons */}
+            <div className="flex flex-wrap gap-2.5 self-start sm:self-end">
               <Link
                 href="/settings"
-                className="btn-secondary px-4 py-2 text-xs sm:text-sm"
+                className="btn-secondary text-xs sm:text-sm px-4 py-2.5 border-white/20 hover:border-cyan-400/50"
               >
-                <Settings2 className="w-4 h-4" />
-                Settings
+                <Settings2 className="w-4 h-4 text-cyan-300" />
+                Advanced Settings
               </Link>
               <Link
                 href="/learning"
-                className="btn-primary px-4 py-2 text-xs sm:text-sm"
+                className="btn-primary text-xs sm:text-sm px-5 py-2.5"
               >
-                My Learning
+                <BookOpen className="w-4 h-4" />
+                My Learning Hub
               </Link>
               {isAdmin && (
                 <Link
                   href="/admin"
-                  className="btn-cyan px-4 py-2 text-xs sm:text-sm"
+                  className="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold border border-purple-400/40 bg-purple-500/15 text-purple-200 hover:bg-purple-500/25 flex items-center gap-1.5 transition-colors"
                 >
                   <Shield className="w-4 h-4" />
                   Admin
                 </Link>
               )}
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-red-500/30 bg-red-500/10 text-xs sm:text-sm font-bold text-red-400 hover:bg-red-500/20 transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                Sign out
-              </button>
             </div>
           </div>
         </div>
 
-        <div className="mb-6 flex gap-2 border-b border-white/10">
+        {/* Tab Navigation Strip */}
+        <div className="mb-6 flex gap-2 border-b border-white/10 overflow-x-auto pb-1">
           {[
-            { id: "overview" as const, label: "Overview" },
-            { id: "requests" as const, label: "My Requests" },
-          ].map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`min-h-[48px] px-5 py-3 text-sm font-semibold border-b-2 transition ${
-                tab === t.id
-                  ? "border-wisdom-cyan text-wisdom-cyan"
-                  : "border-transparent text-wisdom-muted hover:text-white"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
+            { id: "overview" as const, label: "Dashboard Overview", icon: LayoutDashboard },
+            {
+              id: "packages" as const,
+              label: `Unlocked Packages (${orders.length})`,
+              icon: Package,
+            },
+            {
+              id: "requests" as const,
+              label: `Support & Inquiries (${inquiries.length})`,
+              icon: Inbox,
+            },
+          ].map((t) => {
+            const Icon = t.icon;
+            const active = tab === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                className={`flex items-center gap-2 px-5 py-3 text-xs sm:text-sm font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+                  active
+                    ? "border-cyan-400 text-cyan-300 bg-cyan-500/[0.04]"
+                    : "border-transparent text-wisdom-muted hover:text-white"
+                }`}
+              >
+                <Icon className={`w-4 h-4 ${active ? "text-cyan-300" : ""}`} />
+                {t.label}
+              </button>
+            );
+          })}
         </div>
 
+        {/* Tab Panes */}
         {tab === "overview" && (
-          <div className="grid gap-4 sm:grid-cols-3">
-            <button
-              onClick={() => setTab("requests")}
-              className="rounded-2xl border border-white/10 bg-wisdom-card p-5 text-left hover:border-wisdom-cyan/40 transition"
-            >
-              <Inbox className="w-8 h-8 text-wisdom-cyan mb-3" />
-              <h2 className="font-semibold">My Requests</h2>
-              <p className="mt-1 text-sm text-wisdom-muted">Service requests & contact messages</p>
-              <p className="mt-3 text-sm font-medium text-wisdom-cyan">
-                {dataLoading ? "Loading…" : `${activeCount} active · ${inquiries.length} total`}
-              </p>
-            </button>
+          <div className="space-y-6">
+            {/* Quick Metrics & Target Banner */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="card-modern p-4 sm:p-5 border-white/10 bg-wisdom-card/60">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted block mb-1">
+                  Daily Study Target
+                </span>
+                <p className="font-display text-2xl sm:text-3xl font-black text-amber-300">
+                  {profile?.daily_study_goal_minutes || 45}
+                  <span className="text-xs text-wisdom-muted font-normal ml-1">mins</span>
+                </p>
+                <Link
+                  href="/settings?tab=study"
+                  className="text-[11px] text-cyan-300 hover:underline mt-1 block"
+                >
+                  Edit goal →
+                </Link>
+              </div>
 
-            <Link
-              href="/packages"
-              className="rounded-2xl border border-white/10 bg-wisdom-card p-5 hover:border-wisdom-cyan/40 transition"
-            >
-              <LayoutDashboard className="w-8 h-8 text-wisdom-cyan mb-3" />
-              <h2 className="font-semibold">Packages</h2>
-              <p className="mt-1 text-sm text-wisdom-muted">Unlock pathways and learning access</p>
-              <p className="mt-3 text-sm font-medium text-wisdom-cyan">View packages →</p>
-            </Link>
+              <div className="card-modern p-4 sm:p-5 border-white/10 bg-wisdom-card/60">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted block mb-1">
+                  Target Exam
+                </span>
+                <p className="font-display text-sm sm:text-base font-bold text-white truncate">
+                  {profile?.target_exam || "Not set yet"}
+                </p>
+                <Link
+                  href="/settings?tab=profile"
+                  className="text-[11px] text-cyan-300 hover:underline mt-1 block"
+                >
+                  Set milestone →
+                </Link>
+              </div>
 
-            <Link
-              href="/contact"
-              className="rounded-2xl border border-white/10 bg-wisdom-card p-5 hover:border-wisdom-cyan/40 transition"
-            >
-              <Mail className="w-8 h-8 text-wisdom-cyan mb-3" />
-              <h2 className="font-semibold">Contact Us</h2>
-              <p className="mt-1 text-sm text-wisdom-muted">Send a new message or custom request</p>
-              <p className="mt-3 text-sm font-medium text-wisdom-cyan">Open form →</p>
-            </Link>
+              <div className="card-modern p-4 sm:p-5 border-white/10 bg-wisdom-card/60">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted block mb-1">
+                  Packages
+                </span>
+                <p className="font-display text-2xl sm:text-3xl font-black text-emerald-400">
+                  {orders.length}
+                </p>
+                <button
+                  onClick={() => setTab("packages")}
+                  className="text-[11px] text-cyan-300 hover:underline mt-1 block text-left"
+                >
+                  View access →
+                </button>
+              </div>
+
+              <div className="card-modern p-4 sm:p-5 border-white/10 bg-wisdom-card/60">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted block mb-1">
+                  Inquiries
+                </span>
+                <p className="font-display text-2xl sm:text-3xl font-black text-purple-300">
+                  {activeRequests}
+                  <span className="text-xs text-wisdom-muted font-normal ml-1">pending</span>
+                </p>
+                <button
+                  onClick={() => setTab("requests")}
+                  className="text-[11px] text-cyan-300 hover:underline mt-1 block text-left"
+                >
+                  Check tickets →
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Settings Access Grid */}
+            <div className="card-modern p-5 sm:p-7 border-white/10 bg-wisdom-card/60">
+              <h2 className="font-display text-lg sm:text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <Settings2 className="w-5 h-5 text-cyan-300" />
+                Quick Setting Controls
+              </h2>
+
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <Link
+                  href="/settings?tab=profile"
+                  className="p-4 rounded-2xl border border-white/8 bg-white/[0.02] hover:bg-white/[0.05] hover:border-cyan-400/40 transition-all flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-cyan-500/15 border border-cyan-400/25 flex items-center justify-center text-cyan-300">
+                      <GraduationCap className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs sm:text-sm font-bold text-white">Academic Stream</p>
+                      <p className="text-[11px] text-wisdom-muted">Update school & grade level</p>
+                    </div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-wisdom-muted" />
+                </Link>
+
+                <Link
+                  href="/settings?tab=app"
+                  className="p-4 rounded-2xl border border-white/8 bg-white/[0.02] hover:bg-white/[0.05] hover:border-amber-400/40 transition-all flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-400/25 flex items-center justify-center text-amber-300">
+                      <Smartphone className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs sm:text-sm font-bold text-white">App Display & AMOLED</p>
+                      <p className="text-[11px] text-wisdom-muted">Pure black & text scale</p>
+                    </div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-wisdom-muted" />
+                </Link>
+
+                <Link
+                  href="/settings?tab=storage"
+                  className="p-4 rounded-2xl border border-white/8 bg-white/[0.02] hover:bg-white/[0.05] hover:border-purple-400/40 transition-all flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-purple-500/15 border border-purple-400/25 flex items-center justify-center text-purple-300">
+                      <HardDrive className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs sm:text-sm font-bold text-white">Offline Sync Manager</p>
+                      <p className="text-[11px] text-wisdom-muted">Sync offline study logs</p>
+                    </div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-wisdom-muted" />
+                </Link>
+              </div>
+            </div>
           </div>
         )}
 
-        {tab === "requests" && (
-          <div>
-            <p className="mb-4 text-sm text-wisdom-muted">
-              Requests submitted with your email appear here. Status updates when our team reviews them.
-            </p>
-            {dataLoading ? (
-              <p className="text-center text-wisdom-muted py-12">Loading…</p>
-            ) : inquiries.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-white/15 px-6 py-16 text-center">
-                <Inbox className="w-12 h-12 text-wisdom-muted mx-auto mb-4 opacity-40" />
-                <h2 className="text-xl font-semibold mb-2">No requests yet</h2>
-                <p className="text-sm text-wisdom-muted mb-6 max-w-md mx-auto">
-                  Use the contact form with the same email as this account to see them here.
+        {/* Unlocked Packages Tab */}
+        {tab === "packages" && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between pb-2">
+              <p className="text-xs sm:text-sm text-wisdom-muted">
+                Your enrolled courses and payment verification orders.
+              </p>
+              <Link href="/packages" className="btn-secondary text-xs px-3 py-1.5 border-white/15">
+                Browse catalog →
+              </Link>
+            </div>
+
+            {orders.length === 0 ? (
+              <div className="rounded-3xl border border-dashed border-white/15 p-12 text-center">
+                <Package className="w-12 h-12 text-wisdom-muted mx-auto mb-3 opacity-40" />
+                <h3 className="font-display text-lg font-bold text-white mb-1">
+                  No packages unlocked yet
+                </h3>
+                <p className="text-xs sm:text-sm text-wisdom-muted mb-6 max-w-md mx-auto">
+                  Explore Academy pathways (Grades 9–12, Freshman, Exit Exam, GAT) and unlock full question banks and notes.
                 </p>
-                <Link
-                  href="/packages"
-                  className="inline-flex px-6 py-3 rounded-full bg-wisdom-cyan text-wisdom-dark font-semibold hover:bg-wisdom-cyan-dark"
-                >
-                  Browse packages
+                <Link href="/packages" className="btn-primary text-xs px-6 py-3">
+                  Explore Packages
                 </Link>
               </div>
             ) : (
-              <ul className="space-y-3">
-                {inquiries.map((q) => (
-                  <li
-                    key={q.id}
-                    className="rounded-xl border border-white/10 border-l-4 border-l-wisdom-cyan bg-wisdom-card p-4"
+              <div className="grid gap-3">
+                {orders.map((o) => (
+                  <div
+                    key={o.id}
+                    className="p-5 rounded-2xl border border-white/10 bg-wisdom-card flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-cyan-400/30 transition-all"
                   >
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <h3 className="font-semibold">{q.service || "General inquiry"}</h3>
-                      <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold capitalize ${statusStyle(q.status)}`}>
-                        {q.status || "new"}
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2.5">
+                        <span className="font-display font-bold text-white text-base">
+                          {o.packageName || o.packageId || "Curriculum Track"}
+                        </span>
+                        <span
+                          className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${statusStyle(
+                            o.status
+                          )}`}
+                        >
+                          {o.status}
+                        </span>
+                      </div>
+                      <p className="text-xs text-wisdom-muted font-mono">
+                        Ref: {o.transactionRef || o.id} · {o.paymentMethod || "Domestic Transfer"}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 self-start sm:self-center">
+                      <Link
+                        href="/learning"
+                        className="btn-secondary text-xs px-4 py-2 border-cyan-400/30 text-cyan-300"
+                      >
+                        Enter Learning
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Requests Tab */}
+        {tab === "requests" && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between pb-2">
+              <p className="text-xs sm:text-sm text-wisdom-muted">
+                Your submitted messages, service requests, and inquiry replies.
+              </p>
+              <Link href="/contact" className="btn-secondary text-xs px-3 py-1.5 border-white/15">
+                New message →
+              </Link>
+            </div>
+
+            {dataLoading ? (
+              <p className="text-center text-xs text-wisdom-muted py-10">Loading requests...</p>
+            ) : inquiries.length === 0 ? (
+              <div className="rounded-3xl border border-dashed border-white/15 p-12 text-center">
+                <Inbox className="w-12 h-12 text-wisdom-muted mx-auto mb-3 opacity-40" />
+                <h3 className="font-display text-lg font-bold text-white mb-1">
+                  No inquiries or service requests
+                </h3>
+                <p className="text-xs sm:text-sm text-wisdom-muted mb-6 max-w-md mx-auto">
+                  Have a question about a course, syllabus, or payment? Our academic team is here to help.
+                </p>
+                <Link href="/contact" className="btn-primary text-xs px-6 py-3">
+                  Submit Inquiry
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {inquiries.map((q) => (
+                  <div
+                    key={q.id}
+                    className="p-5 rounded-2xl border border-white/10 bg-wisdom-card space-y-2"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-display font-bold text-white text-sm">
+                        {q.service || "General Inquiry"}
+                      </span>
+                      <span
+                        className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${statusStyle(
+                          q.status
+                        )}`}
+                      >
+                        {q.status}
                       </span>
                     </div>
-                    <p className="mt-2 text-sm text-wisdom-muted whitespace-pre-wrap line-clamp-3">{q.message}</p>
-                    <p className="mt-2 text-xs text-wisdom-muted">
+                    <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">
+                      {q.message}
+                    </p>
+                    <p className="text-[10px] text-wisdom-muted font-mono">
                       {new Date(q.created_at).toLocaleString()}
                     </p>
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             )}
           </div>
         )}
