@@ -19,7 +19,24 @@ import {
   LayoutDashboard,
   LogOut,
   Settings2,
+  FileDown,
+  Check,
+  Clock,
+  Gauge,
+  Target,
+  Award,
+  Sparkles,
+  ShieldCheck,
+  Download,
 } from "lucide-react";
+import {
+  computeStudentAnalytics,
+  type StudentAnalyticsResult,
+} from "@/lib/student-knowledge-base";
+import {
+  generateWeeklyReportPdf,
+  downloadOrShareWeeklyReportPdf,
+} from "@/lib/pdf-report-generator";
 
 interface Inquiry {
   id: string;
@@ -53,6 +70,20 @@ export default function AccountPage() {
   const [tab, setTab] = useState<"analytics" | "requests">("analytics");
   const [copiedFolio, setCopiedFolio] = useState(false);
 
+  // Raw progress records for real PDF and metrics computation
+  const [rawProgress, setRawProgress] = useState<
+    {
+      resource_id: string;
+      progress_pct: number;
+      total_seconds: number;
+      focus_seconds: number;
+      last_opened_at: string | null;
+      meta: Record<string, unknown>;
+    }[]
+  >([]);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [pdfSuccessMsg, setPdfSuccessMsg] = useState<string | null>(null);
+
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session?.user) {
@@ -75,23 +106,32 @@ export default function AccountPage() {
   }, [router]);
 
   const loadUserData = useCallback(async () => {
-    if (!user?.email) return;
+    if (!user?.email || !user?.id) return;
     setDataLoading(true);
     try {
-      const { data: inqData } = await supabase
-        .from("inquiries")
-        .select("*")
-        .eq("email", user.email)
-        .order("created_at", { ascending: false });
-      setInquiries((inqData as Inquiry[]) || []);
+      const [inqRes, myOrders, progRes] = await Promise.all([
+        supabase
+          .from("inquiries")
+          .select("*")
+          .eq("email", user.email)
+          .order("created_at", { ascending: false }),
+        listMyOrders(),
+        supabase
+          .from("learning_progress")
+          .select("resource_id, progress_pct, total_seconds, focus_seconds, last_opened_at, meta")
+          .eq("user_id", user.id),
+      ]);
 
-      const myOrders = await listMyOrders();
+      setInquiries((inqRes.data as Inquiry[]) || []);
       setOrders(myOrders);
+      if (progRes.data) {
+        setRawProgress(progRes.data);
+      }
     } catch {
       setInquiries([]);
     }
     setDataLoading(false);
-  }, [user?.email]);
+  }, [user?.email, user?.id]);
 
   useEffect(() => {
     if (user) loadUserData();
@@ -111,6 +151,18 @@ export default function AccountPage() {
     return computeStudentId(profile, user?.created_at);
   }, [profile, user?.created_at]);
 
+  // Real live student analytics computed from actual learning_progress
+  const studentAnalytics: StudentAnalyticsResult = useMemo(() => {
+    return computeStudentAnalytics(
+      rawProgress,
+      displayName,
+      profile?.education_level || "freshman",
+      profile?.stream || null,
+      user?.created_at,
+      orders.map((o) => o.packageId).filter(Boolean) as string[]
+    );
+  }, [rawProgress, displayName, profile?.education_level, profile?.stream, user?.created_at, orders]);
+
   const handleCopyFolio = () => {
     if (typeof navigator !== "undefined" && navigator.clipboard) {
       navigator.clipboard.writeText(idData.folioNumber);
@@ -123,6 +175,40 @@ export default function AccountPage() {
     await supabase.auth.signOut();
     router.replace("/login");
     router.refresh();
+  };
+
+  const handleDownloadWeeklyReport = async () => {
+    if (!user) return;
+    setGeneratingPdf(true);
+    setPdfSuccessMsg(null);
+    try {
+      const res = await downloadOrShareWeeklyReportPdf({
+        analytics: studentAnalytics,
+        profile: profile || undefined,
+        userEmail: user.email,
+        referenceId: idData.folioNumber || `WTA-${user.id.slice(0, 6).toUpperCase()}-2026`,
+      });
+      setPdfSuccessMsg(res.message || "Weekly Report (Color PDF) downloaded successfully!");
+      setTimeout(() => setPdfSuccessMsg(null), 5000);
+    } catch (err) {
+      console.error("[Account] PDF generation error:", err);
+      try {
+        const doc = generateWeeklyReportPdf({
+          analytics: studentAnalytics,
+          profile: profile || undefined,
+          userEmail: user.email,
+          referenceId: idData.folioNumber || `WTA-${user.id.slice(0, 6).toUpperCase()}-2026`,
+        });
+        const fileName = `WTA-Weekly-Report-${studentAnalytics.studentName.replace(/\s+/g, "_")}-${new Date().toISOString().slice(0, 10)}.pdf`;
+        doc.save(fileName);
+        setPdfSuccessMsg("Weekly Report (Color PDF) downloaded successfully!");
+        setTimeout(() => setPdfSuccessMsg(null), 5000);
+      } catch (saveErr) {
+        alert("Failed to generate PDF report. Please try again.");
+      }
+    } finally {
+      setGeneratingPdf(false);
+    }
   };
 
   if (loading || !user) {
@@ -327,6 +413,141 @@ export default function AccountPage() {
             )}
           </div>
         )}
+
+        {/* ========================================================= */}
+        {/* BOTTOM: OFFICIAL WEEKLY PERFORMANCE REPORT (COLOR PDF)    */}
+        {/* ========================================================= */}
+        <section
+          id="weekly-report"
+          className="rounded-3xl border border-amber-400/35 bg-gradient-to-br from-[#070e1c] via-[#0d1b32] to-[#070e1c] p-6 sm:p-8 md:p-10 shadow-2xl space-y-6 relative overflow-hidden"
+        >
+          {/* Subtle gold/cyan ambient glow */}
+          <div
+            className="absolute -top-24 -right-24 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"
+            aria-hidden
+          />
+          <div
+            className="absolute -bottom-24 -left-24 w-72 h-72 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"
+            aria-hidden
+          />
+
+          <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-white/10">
+            <div className="space-y-2 max-w-2xl">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-400/15 text-amber-300 border border-amber-400/35 shadow-sm">
+                  <Award className="w-3.5 h-3.5 text-amber-400" />
+                  Official Weekly Performance Report
+                </span>
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-cyan-400/20 text-cyan-300 border border-cyan-400/35">
+                  <ShieldCheck className="w-3 h-3 text-cyan-300" />
+                  1-Page A4 Color PDF
+                </span>
+              </div>
+
+              <h2 className="font-display text-2xl sm:text-3xl font-black text-white tracking-tight">
+                Executive Scholar Diagnostic Report
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                Generate and download an official single-page A4 publication-grade color PDF. Includes verified study hours, reading velocity (WPM), question drill retention, active streak, academic standing tier, habit directives, and tailored study recommendations.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row md:flex-col items-start md:items-end gap-3 shrink-0">
+              <button
+                type="button"
+                onClick={handleDownloadWeeklyReport}
+                disabled={generatingPdf}
+                className="w-full sm:w-auto px-6 py-3.5 rounded-xl text-xs sm:text-sm font-black bg-amber-400 text-slate-950 hover:bg-amber-300 active:scale-[0.98] transition-all shadow-xl shadow-amber-500/25 flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50"
+              >
+                <FileDown className={`w-4 h-4 text-slate-950 ${generatingPdf ? "animate-bounce" : ""}`} />
+                {generatingPdf ? "Generating Color PDF..." : "Download Weekly Report"}
+              </button>
+
+              <span className="text-[11px] text-wisdom-muted font-mono">
+                Folio: <strong className="text-white">{idData.folioNumber}</strong>
+              </span>
+            </div>
+          </div>
+
+          {/* Success Notification */}
+          {pdfSuccessMsg && (
+            <div className="p-4 rounded-2xl border border-emerald-400/40 bg-emerald-500/15 text-emerald-200 text-xs font-bold flex items-center justify-between gap-3 shadow-lg animate-in fade-in">
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>{pdfSuccessMsg}</span>
+              </div>
+              <span className="text-[10px] text-emerald-300 uppercase tracking-wider font-mono">
+                Saved to Downloads
+              </span>
+            </div>
+          )}
+
+          {/* Live Telemetry Summary Tiles */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 pt-1">
+            <div className="p-4 rounded-2xl border border-white/10 bg-slate-950/60 shadow-inner">
+              <div className="flex items-center justify-between text-slate-400 mb-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider">Logged Hours</span>
+                <Clock className="w-3.5 h-3.5 text-cyan-300" />
+              </div>
+              <p className="text-xl sm:text-2xl font-black text-cyan-300 font-display">
+                {studentAnalytics.totalStudyHours.toFixed(1)}h
+              </p>
+              <p className="text-[11px] text-slate-400 mt-1">
+                {studentAnalytics.studyTimeAnalysis.weeklyProgressPct}% of weekly quota
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl border border-white/10 bg-slate-950/60 shadow-inner">
+              <div className="flex items-center justify-between text-slate-400 mb-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider">Reading Velocity</span>
+                <Gauge className="w-3.5 h-3.5 text-amber-300" />
+              </div>
+              <p className="text-xl sm:text-2xl font-black text-amber-300 font-display">
+                {studentAnalytics.readingSpeedWpm} <span className="text-xs font-normal text-slate-300">WPM</span>
+              </p>
+              <p className="text-[11px] text-slate-400 mt-1 truncate">
+                {studentAnalytics.readingAnalysis.method}
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl border border-white/10 bg-slate-950/60 shadow-inner">
+              <div className="flex items-center justify-between text-slate-400 mb-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider">Drill Accuracy</span>
+                <Target className="w-3.5 h-3.5 text-emerald-400" />
+              </div>
+              <p className="text-xl sm:text-2xl font-black text-emerald-400 font-display">
+                {studentAnalytics.questionAccuracyPct}%
+              </p>
+              <p className="text-[11px] text-slate-400 mt-1 truncate">
+                {studentAnalytics.retentionAnalysis.rating}
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl border border-white/10 bg-slate-950/60 shadow-inner">
+              <div className="flex items-center justify-between text-slate-400 mb-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider">Standing Tier</span>
+                <Sparkles className="w-3.5 h-3.5 text-violet-300" />
+              </div>
+              <p className="text-lg sm:text-xl font-black text-violet-300 font-display truncate">
+                {studentAnalytics.masteryTier.replace(" Rank", "")}
+              </p>
+              <p className="text-[11px] text-slate-400 mt-1">
+                {studentAnalytics.currentStreakDays}-day streak active
+              </p>
+            </div>
+          </div>
+
+          {/* Footer Accreditation Notice */}
+          <div className="pt-3 border-t border-white/8 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-400">
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              Auto-generated from verified curriculum progress & Ethiopian competency benchmarks
+            </span>
+            <span className="font-mono text-slate-500">
+              Template: Single-page executive PDF
+            </span>
+          </div>
+        </section>
       </div>
     </div>
   );

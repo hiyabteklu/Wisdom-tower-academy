@@ -29,7 +29,6 @@ import {
   resolveStudentTrackBenchmark,
   type StudentAnalyticsResult,
 } from "@/lib/student-knowledge-base";
-import { generateWeeklyReportPdf } from "@/lib/pdf-report-generator";
 import type { User } from "@supabase/supabase-js";
 import {
   ArrowLeft,
@@ -97,7 +96,6 @@ function SettingsContent() {
     profile: true,
     study: initialTab === "study",
     notifications: initialTab === "notifications",
-    report: initialTab === "report",
     display: initialTab === "app",
     storage: initialTab === "storage",
     security: initialTab === "security",
@@ -147,8 +145,6 @@ function SettingsContent() {
   const [syncMsg, setSyncMsg] = useState<string | null>(null);
   const [syncingOffline, setSyncingOffline] = useState(false);
   const [storageSize, setStorageSize] = useState<string>("Calculating...");
-  const [generatingPdf, setGeneratingPdf] = useState(false);
-  const [pdfSuccessMsg, setPdfSuccessMsg] = useState<string | null>(null);
 
   // Real user progress from learning_progress
   const [rawProgress, setRawProgress] = useState<
@@ -339,33 +335,6 @@ function SettingsContent() {
     setPasswordLoading(false);
   };
 
-  // Download Weekly Report (Color PDF)
-  const handleDownloadWeeklyReport = () => {
-    if (!user) return;
-    setGeneratingPdf(true);
-    setPdfSuccessMsg(null);
-
-    try {
-      const refId = `WTA-${user.id.slice(0, 6).toUpperCase()}-2026`;
-      const doc = generateWeeklyReportPdf({
-        analytics: studentAnalytics,
-        profile,
-        userEmail: user.email,
-        referenceId: refId,
-      });
-
-      const fileName = `WTA-Weekly-Report-${studentAnalytics.studentName.replace(/\s+/g, "_")}-${new Date().toISOString().slice(0, 10)}.pdf`;
-      doc.save(fileName);
-      setPdfSuccessMsg("Weekly Report (Color PDF) downloaded successfully!");
-      setTimeout(() => setPdfSuccessMsg(null), 5000);
-    } catch (err) {
-      console.error("[Settings] PDF generation error:", err);
-      alert("Could not generate PDF report. Please try again.");
-    } finally {
-      setGeneratingPdf(false);
-    }
-  };
-
   // Sync Offline Queue
   const handleSyncOffline = async () => {
     setSyncingOffline(true);
@@ -482,17 +451,14 @@ function SettingsContent() {
               </span>
             )}
 
-            {/* High-Contrast Download Weekly Report Button in Header */}
-            <button
-              type="button"
-              onClick={handleDownloadWeeklyReport}
-              disabled={generatingPdf}
-              className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black bg-amber-400 text-slate-950 hover:bg-amber-300 active:scale-[0.98] transition-all shadow-md shadow-amber-500/20 flex items-center gap-2 cursor-pointer disabled:opacity-50"
-              title="Download concise color performance report PDF"
+            <Link
+              href="/account#weekly-report"
+              className="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold border border-amber-400/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 transition-all flex items-center gap-1.5 shadow-sm"
+              title="Open and download your Weekly Report in Account Center"
             >
-              <FileDown className={`w-4 h-4 text-slate-950 ${generatingPdf ? "animate-bounce" : ""}`} />
-              {generatingPdf ? "Generating PDF..." : "Download Weekly Report"}
-            </button>
+              <FileDown className="w-3.5 h-3.5 text-amber-400" />
+              Weekly Report
+            </Link>
 
             <Link
               href="/account"
@@ -503,19 +469,6 @@ function SettingsContent() {
             </Link>
           </div>
         </div>
-
-        {/* PDF Download Toast */}
-        {pdfSuccessMsg && (
-          <div className="p-4 rounded-2xl border border-emerald-400/40 bg-emerald-500/15 text-emerald-200 text-xs font-bold flex items-center justify-between gap-3 shadow-lg animate-in fade-in">
-            <div className="flex items-center gap-2">
-              <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>{pdfSuccessMsg}</span>
-            </div>
-            <span className="text-[10px] text-emerald-300 uppercase tracking-wider font-mono">
-              Ready in Downloads
-            </span>
-          </div>
-        )}
 
         {/* ========================================================= */}
         {/* IN-PLACE STACKED ACCORDION SECTIONS                       */}
@@ -1017,98 +970,7 @@ function SettingsContent() {
           </div>
 
           {/* ======================================================= */}
-          {/* SECTION 4: WEEKLY DIAGNOSTIC REPORT (Color PDF)          */}
-          {/* ======================================================= */}
-          <div className="rounded-3xl border border-white/15 bg-wisdom-card overflow-hidden shadow-xl transition-all">
-            <button
-              type="button"
-              onClick={() => toggleSection("report")}
-              className="w-full flex items-center justify-between p-5 sm:p-6 text-left transition-colors hover:bg-white/[0.03] cursor-pointer"
-            >
-              <div className="flex items-center gap-3.5 min-w-0">
-                <div className="p-3 rounded-2xl bg-amber-400/15 border border-amber-400/40 text-amber-300 shrink-0">
-                  <FileDown className="w-5 h-5" />
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h2 className="font-display text-lg sm:text-xl font-bold text-white">
-                      Weekly Performance Report (Color PDF)
-                    </h2>
-                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-400 text-slate-950">
-                      PDF Export
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-300 mt-0.5 truncate">
-                    Generate and download a high-contrast executive summary of your study metrics
-                  </p>
-                </div>
-              </div>
-
-              <ChevronDown
-                className={`w-5 h-5 text-cyan-300 transition-transform duration-300 shrink-0 ml-3 ${
-                  openSections.report ? "rotate-180 text-cyan-400" : ""
-                }`}
-              />
-            </button>
-
-            {openSections.report && (
-              <div className="p-5 sm:p-7 border-t border-white/10 space-y-6 animate-in fade-in duration-200">
-                <div className="p-5 rounded-2xl border border-white/15 bg-slate-950/60 space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                      <h3 className="font-display text-base font-bold text-white">
-                        Executive Scholar Diagnostic Briefing
-                      </h3>
-                      <p className="text-xs text-slate-300 mt-1 max-w-xl leading-relaxed">
-                        Export an official, color-coded diagnostic PDF featuring your study volume, reading speed, retention accuracy, academic ranking tier, and immediate study habit alerts.
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={handleDownloadWeeklyReport}
-                      disabled={generatingPdf}
-                      className="px-5 py-3 rounded-xl text-xs sm:text-sm font-black bg-amber-400 text-slate-950 hover:bg-amber-300 active:scale-[0.98] transition-all shadow-lg shadow-amber-500/25 flex items-center gap-2 shrink-0 cursor-pointer disabled:opacity-50"
-                    >
-                      <FileDown className={`w-4 h-4 text-slate-950 ${generatingPdf ? "animate-bounce" : ""}`} />
-                      {generatingPdf ? "Generating PDF..." : "Download Report (Color PDF)"}
-                    </button>
-                  </div>
-
-                  {/* Summary of current telemetry that will appear on PDF */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-white/10 text-xs">
-                    <div className="p-3 rounded-xl bg-white/[0.02] border border-white/10">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase">Logged Hours</p>
-                      <p className="text-lg font-black text-cyan-300 mt-0.5">
-                        {studentAnalytics.totalStudyHours}h
-                      </p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-white/[0.02] border border-white/10">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase">Reading Velocity</p>
-                      <p className="text-lg font-black text-amber-300 mt-0.5">
-                        {studentAnalytics.readingSpeedWpm} WPM
-                      </p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-white/[0.02] border border-white/10">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase">Drill Accuracy</p>
-                      <p className="text-lg font-black text-emerald-400 mt-0.5">
-                        {studentAnalytics.questionAccuracyPct}%
-                      </p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-white/[0.02] border border-white/10">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase">Active Streak</p>
-                      <p className="text-lg font-black text-violet-300 mt-0.5">
-                        {studentAnalytics.currentStreakDays} days
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* ======================================================= */}
-          {/* SECTION 5: APP & DISPLAY PREFERENCES                    */}
+          {/* SECTION 4: APP & DISPLAY PREFERENCES                    */}
           {/* ======================================================= */}
           <div className="rounded-3xl border border-white/15 bg-wisdom-card overflow-hidden shadow-xl transition-all">
             <button
