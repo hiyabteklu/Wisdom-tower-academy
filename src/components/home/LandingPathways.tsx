@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { useInView } from "@/hooks/useInView";
 import PartnershipPath from "@/components/PartnershipPath";
-import { packageImages, getPackage } from "@/data/packages";
+import { packageImages } from "@/data/packages";
 import { SPECIAL_PACKAGES_HUB_IMAGE } from "@/data/special-packages";
 
 const OPEN_BTN =
@@ -256,7 +256,10 @@ function PathwayCard({ program }: { program: ProgramCard }) {
           {program.name}
         </h3>
 
-        <p className="text-sm text-slate-300/90 leading-relaxed mb-4 line-clamp-3">
+        <p
+          className="text-sm text-slate-300/90 leading-relaxed mb-4 line-clamp-3"
+          suppressHydrationWarning
+        >
           {program.description}
         </p>
 
@@ -290,7 +293,11 @@ export default function LandingPathways() {
 
   return (
     <>
-      <section className="pb-16 md:pb-24 relative" ref={pathwaysSection.ref}>
+      <section
+        className="pb-16 md:pb-24 relative"
+        ref={pathwaysSection.ref}
+        suppressHydrationWarning
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div
             className={`text-center mb-12 md:mb-16 reveal-item ${

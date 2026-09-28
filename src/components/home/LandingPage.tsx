@@ -159,7 +159,11 @@ export default function LandingPage() {
 
   return (
     <div className="relative">
-      <section className="relative overflow-hidden pt-8 pb-16 md:pt-12 md:pb-24" ref={heroSection.ref}>
+      <section
+        className="relative overflow-hidden pt-8 pb-16 md:pt-12 md:pb-24"
+        ref={heroSection.ref}
+        suppressHydrationWarning
+      >
         <div className="absolute inset-0" aria-hidden>
           {/* hero-bg photo removed to free space */}
           <div className="absolute inset-0 bg-gradient-to-b from-wisdom-dark/80 via-wisdom-dark/90 to-wisdom-dark" />

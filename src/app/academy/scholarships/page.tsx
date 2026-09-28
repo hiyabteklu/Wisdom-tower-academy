@@ -11,6 +11,7 @@ import {
 } from "@/lib/free-resources";
 import FormattedBody from "@/components/FormattedBody";
 import CategoryBackButton from "@/components/CategoryBackButton";
+import BrandLoader from "@/components/BrandLoader";
 import {
   GraduationCap,
   Calendar,
@@ -295,9 +296,8 @@ export default function ScholarshipsPage() {
         </header>
 
         {loading && (
-          <div className="flex items-center justify-center gap-2 py-24 text-wisdom-muted">
-            <Loader2 className="w-5 h-5 animate-spin text-rose-400" />
-            Loading scholarships…
+          <div className="flex items-center justify-center py-24" data-wta-spinner="true">
+            <BrandLoader size="sm" label="Loading scholarships…" />
           </div>
         )}
 

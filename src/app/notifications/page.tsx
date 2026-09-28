@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Bell, CheckCircle2, Clock, XCircle, ArrowLeft } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { listMyOrders, type ManualOrder } from "@/lib/orders";
+import BrandLoader from "@/components/BrandLoader";
 
 type Notice = {
   id: string;
@@ -139,8 +140,8 @@ export default function NotificationsPage() {
       )}
 
       {loading && (
-        <div className="flex justify-center py-16">
-          <div className="w-8 h-8 rounded-full border-2 border-cyan-400/25 border-t-cyan-400 animate-spin" />
+        <div className="flex justify-center py-16" data-wta-spinner="true">
+          <BrandLoader size="md" />
         </div>
       )}
 

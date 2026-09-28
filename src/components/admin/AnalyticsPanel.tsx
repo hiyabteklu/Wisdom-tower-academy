@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { fetchAdminStats, type AdminStats } from "@/lib/admin-data";
 import { statusLabel } from "@/lib/orders";
 import { formatEtb } from "@/data/packages";
+import BrandLoader from "@/components/BrandLoader";
 import {
   Users,
   CreditCard,
@@ -157,8 +158,8 @@ export default function AnalyticsPanel() {
 
   if (loading && !stats) {
     return (
-      <div className="py-16 flex justify-center">
-        <div className="w-8 h-8 border-2 border-wisdom-cyan border-t-transparent rounded-full animate-spin" />
+      <div className="py-16 flex justify-center" data-wta-spinner="true">
+        <BrandLoader size="md" />
       </div>
     );
   }

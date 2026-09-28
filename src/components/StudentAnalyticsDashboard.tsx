@@ -5,163 +5,55 @@ import Link from "next/link";
 import {
   Activity,
   ArrowRight,
-  Award,
-  BarChart3,
   BookOpen,
-  Brain,
   Calendar,
   CheckCircle2,
-  ChevronDown,
   Clock,
   Compass,
-  Cpu,
   Flame,
+  Gauge,
   HelpCircle,
   Layers,
-  Lightbulb,
-  Percent,
-  RefreshCw,
   Sparkles,
   Target,
+  Timer,
   TrendingUp,
   Zap,
+  AlertTriangle,
+  GraduationCap,
+  ExternalLink,
 } from "lucide-react";
-import { freshmanSubjects } from "@/data/freshman";
 import { supabase } from "@/lib/supabase";
+import {
+  computeStudentAnalytics,
+  type StudentAnalyticsResult,
+  resolveStudentTrackBenchmark,
+  ACADEMIC_KNOWLEDGE_BASE,
+} from "@/lib/student-knowledge-base";
 
 export interface StudentAnalyticsProps {
   userId: string;
-  defaultEducationLevel?: string | null;
+  studentName?: string;
+  educationLevel?: string | null;
+  stream?: string | null;
+  userCreatedAt?: string;
   dailyGoalMinutes?: number;
-  entitledPackages?: string[];
+  enrolledPackageIds?: string[];
   className?: string;
-}
-
-type Timeframe = "7d" | "30d" | "sem" | "all";
-
-export type AcademicScopeKey =
-  | "freshman"
-  | "grade-12"
-  | "grade-11"
-  | "grade-10"
-  | "grade-9"
-  | "remedial"
-  | "exit-exam"
-  | "ece"
-  | "all";
-
-interface ScopeOption {
-  key: AcademicScopeKey;
-  label: string;
-  category: string;
-  subjects: { id: string; name: string; weight: number }[];
-}
-
-const SCOPES: ScopeOption[] = [
-  {
-    key: "freshman",
-    label: "Freshman University Track",
-    category: "Higher Education Core",
-    subjects: [
-      { id: "math-natural", name: "Calculus & Natural Math", weight: 20 },
-      { id: "physics", name: "General Physics", weight: 20 },
-      { id: "english-1", name: "Communicative English", weight: 15 },
-      { id: "psychology", name: "General Psychology", weight: 15 },
-      { id: "critical-thinking", name: "Logic & Critical Thinking", weight: 15 },
-      { id: "intro-computing", name: "Intro to Computing", weight: 15 },
-    ],
-  },
-  {
-    key: "grade-12",
-    label: "Grade 12 Leaving & Matriculation",
-    category: "Secondary Senior",
-    subjects: [
-      { id: "g12-math", name: "G12 Mathematics", weight: 25 },
-      { id: "g12-physics", name: "G12 Physics", weight: 20 },
-      { id: "g12-english", name: "G12 English Language", weight: 20 },
-      { id: "g12-chemistry", name: "G12 Chemistry", weight: 20 },
-      { id: "g12-biology", name: "G12 Biology", weight: 15 },
-    ],
-  },
-  {
-    key: "grade-11",
-    label: "Grade 11 Secondary Curriculum",
-    category: "Secondary Pre-Exam",
-    subjects: [
-      { id: "g11-math", name: "G11 Advanced Mathematics", weight: 25 },
-      { id: "g11-physics", name: "G11 Mechanics & Energy", weight: 25 },
-      { id: "g11-chemistry", name: "G11 Atomic & Bonding Chemistry", weight: 25 },
-      { id: "g11-biology", name: "G11 Genetics & Physiology", weight: 25 },
-    ],
-  },
-  {
-    key: "remedial",
-    label: "Remedial University Foundation",
-    category: "University Transition",
-    subjects: [
-      { id: "rem-math", name: "Remedial Mathematics", weight: 35 },
-      { id: "rem-physics", name: "Remedial Physics", weight: 35 },
-      { id: "rem-english", name: "Remedial English", weight: 30 },
-    ],
-  },
-  {
-    key: "exit-exam",
-    label: "National University Exit Exam",
-    category: "Graduation Assessment",
-    subjects: [
-      { id: "exit-core", name: "Discipline Core Competencies", weight: 40 },
-      { id: "exit-applied", name: "Applied Problem Solving", weight: 35 },
-      { id: "exit-ethics", name: "Professional Ethics & Law", weight: 25 },
-    ],
-  },
-  {
-    key: "ece",
-    label: "Electrical & Computer Engineering (ECE)",
-    category: "Engineering Department",
-    subjects: [
-      { id: "ece-circuits", name: "Electric Circuits I & II", weight: 30 },
-      { id: "ece-signals", name: "Signals and Systems", weight: 25 },
-      { id: "ece-electronics", name: "Applied Electronics", weight: 25 },
-      { id: "ece-programming", name: "Engineering Programming", weight: 20 },
-    ],
-  },
-  {
-    key: "all",
-    label: "Comprehensive Academic Scope (All Tracks)",
-    category: "Institutional Overview",
-    subjects: [
-      { id: "core-stem", name: "STEM Quantitative Sciences", weight: 35 },
-      { id: "core-humanities", name: "Social Sciences & Humanities", weight: 25 },
-      { id: "core-exams", name: "Standardized Exam Simulations", weight: 25 },
-      { id: "core-applied", name: "Applied Technical Modules", weight: 15 },
-    ],
-  },
-];
-
-function detectInitialScope(eduLevel?: string | null): AcademicScopeKey {
-  if (!eduLevel) return "freshman";
-  const low = eduLevel.toLowerCase();
-  if (low.includes("12")) return "grade-12";
-  if (low.includes("11")) return "grade-11";
-  if (low.includes("10")) return "grade-10";
-  if (low.includes("9")) return "grade-9";
-  if (low.includes("remedial")) return "remedial";
-  if (low.includes("exit")) return "exit-exam";
-  if (low.includes("engineering") || low.includes("ece")) return "ece";
-  return "freshman";
 }
 
 export default function StudentAnalyticsDashboard({
   userId,
-  defaultEducationLevel,
+  studentName = "Scholar",
+  educationLevel,
+  stream,
+  userCreatedAt,
   dailyGoalMinutes = 45,
+  enrolledPackageIds = [],
   className = "",
 }: StudentAnalyticsProps) {
-  const [scopeKey, setScopeKey] = useState<AcademicScopeKey>(() =>
-    detectInitialScope(defaultEducationLevel)
-  );
-  const [timeframe, setTimeframe] = useState<Timeframe>("7d");
   const [loading, setLoading] = useState(false);
+  const [selectedTrackKey, setSelectedTrackKey] = useState<string>("");
 
   // Raw progress records from Supabase learning_progress
   const [rawProgress, setRawProgress] = useState<
@@ -201,378 +93,378 @@ export default function StudentAnalyticsDashboard({
     };
   }, [userId]);
 
-  // Selected Scope configuration
-  const currentScope = useMemo(() => {
-    return SCOPES.find((s) => s.key === scopeKey) || SCOPES[0];
-  }, [scopeKey]);
+  // Determine initial benchmark track key based on auto-read registration
+  const defaultResolvedTrack = useMemo(() => {
+    const touched = rawProgress.map((p) => p.resource_id);
+    return resolveStudentTrackBenchmark(educationLevel, stream, enrolledPackageIds, touched);
+  }, [educationLevel, stream, enrolledPackageIds, rawProgress]);
 
-  // Compute Analytics based on real data or calibrated model
-  const metrics = useMemo(() => {
-    let totalSeconds = 0;
-    let focusSeconds = 0;
-    let quizAttempted = 0;
-    let quizCorrect = 0;
-    let flashcardsKnown = 0;
-    let flashcardsTotal = 0;
-
-    for (const r of rawProgress) {
-      totalSeconds += Number(r.total_seconds || 0);
-      focusSeconds += Number(r.focus_seconds || 0);
-
-      const m = (r.meta || {}) as Record<string, any>;
-      if (m.quiz) {
-        quizAttempted += Number(m.quiz.attempted || 0);
-        quizCorrect += Number(m.quiz.correct || 0);
-      }
-      if (m.flashcards) {
-        flashcardsKnown += Number(m.flashcards.know || 0);
-        flashcardsTotal +=
-          Number(m.flashcards.know || 0) +
-          Number(m.flashcards.again || 0) +
-          Number(m.flashcards.learning || 0);
-      }
+  useEffect(() => {
+    if (!selectedTrackKey) {
+      setSelectedTrackKey(defaultResolvedTrack.trackId);
     }
+  }, [defaultResolvedTrack.trackId, selectedTrackKey]);
 
-    const totalMinutesLogged = Math.round(totalSeconds / 60);
-    const focusRatio = totalSeconds > 0 ? Math.min(100, Math.round((focusSeconds / totalSeconds) * 100)) : 88;
+  // Compute rich dynamic analytics evaluated against the Knowledge Base
+  const analytics: StudentAnalyticsResult = useMemo(() => {
+    // If the user selected a different track in the dropdown, pass that override
+    const effectiveEduLevel = selectedTrackKey || educationLevel;
+    return computeStudentAnalytics(
+      rawProgress,
+      studentName,
+      effectiveEduLevel,
+      stream,
+      userCreatedAt,
+      enrolledPackageIds
+    );
+  }, [rawProgress, studentName, selectedTrackKey, educationLevel, stream, userCreatedAt, enrolledPackageIds]);
 
-    // Retention Rate: combination of quiz accuracy + flashcard mastery
-    let retentionRate = 86.4;
-    if (quizAttempted > 0 || flashcardsTotal > 0) {
-      const qRate = quizAttempted > 0 ? (quizCorrect / quizAttempted) * 100 : 85;
-      const fRate = flashcardsTotal > 0 ? (flashcardsKnown / flashcardsTotal) * 100 : 88;
-      retentionRate = Math.round((qRate * 0.6 + fRate * 0.4) * 10) / 10;
-    }
-
-    // Cognitive Learning Modality / Reading Style
-    let modality = "Deep Conceptual Diver";
-    let modalityDescription =
-      "Your learning logs exhibit high depth in foundational chapter notes, sustained reading intervals, and deliberate pacing before attempting question banks.";
-
-    if (quizAttempted > 30) {
-      modality = "Diagnostic Test Sprinter";
-      modalityDescription =
-        "You thrive on empirical testing, rapidly validating concepts via question banks and timed mock exam iterations.";
-    } else if (flashcardsTotal > 20) {
-      modality = "Active Recall Specialist";
-      modalityDescription =
-        "Your study pattern prioritizes spaced repetition flashcard drills to lock critical formulas and definitions into long-term memory.";
-    }
-
-    // Weekly Distribution Simulation (Sun to Sat)
-    const dailyDistribution = [
-      { day: "Mon", minutes: Math.min(120, Math.max(25, Math.round(totalMinutesLogged * 0.18))) },
-      { day: "Tue", minutes: Math.min(120, Math.max(30, Math.round(totalMinutesLogged * 0.22))) },
-      { day: "Wed", minutes: Math.min(120, Math.max(20, Math.round(totalMinutesLogged * 0.15))) },
-      { day: "Thu", minutes: Math.min(120, Math.max(35, Math.round(totalMinutesLogged * 0.24))) },
-      { day: "Fri", minutes: Math.min(120, Math.max(15, Math.round(totalMinutesLogged * 0.12))) },
-      { day: "Sat", minutes: Math.min(120, Math.max(45, Math.round(totalMinutesLogged * 0.28))) },
-      { day: "Sun", minutes: Math.min(120, Math.max(40, Math.round(totalMinutesLogged * 0.25))) },
-    ];
-
-    // Subject Competency Bars calibrated for this scope
-    const subjectScores = currentScope.subjects.map((subj, idx) => {
-      // Deterministic spread based on user ID and subject index
-      const baseVariation = (idx * 7 + 76) % 25;
-      const score = Math.min(96, Math.max(68, 72 + baseVariation));
-      return {
-        ...subj,
-        score,
-        status:
-          score >= 88
-            ? "Mastered"
-            : score >= 80
-            ? "Proficient"
-            : score >= 70
-            ? "Developing"
-            : "Requires Review",
-      };
-    });
-
-    return {
-      totalMinutesLogged,
-      focusRatio,
-      retentionRate,
-      modality,
-      modalityDescription,
-      dailyDistribution,
-      subjectScores,
-    };
-  }, [rawProgress, currentScope]);
+  const isAutoDetected = selectedTrackKey === defaultResolvedTrack.trackId;
 
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* Scope Customizer & Timeframe Toolbar */}
-      <div className="rounded-3xl border border-white/10 bg-gradient-to-r from-wisdom-card via-wisdom-navy to-wisdom-card p-4 sm:p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-400/30">
-              Active Analytical Scope
+      {/* ========================================================= */}
+      {/* REGISTERED CURRICULUM BANNER & TRACK SELECTOR             */}
+      {/* ========================================================= */}
+      <div className="rounded-3xl border border-white/10 bg-gradient-to-r from-wisdom-card via-wisdom-navy to-wisdom-card p-5 sm:p-7 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-5">
+        <div className="space-y-2 max-w-2xl">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-400/30 flex items-center gap-1.5">
+              <GraduationCap className="w-3.5 h-3.5" />
+              {isAutoDetected ? "Auto-Read From Your Registration" : "Enrolled Curriculum View"}
             </span>
-            <span className="text-xs text-wisdom-muted">
-              {currentScope.category}
-            </span>
+            {educationLevel && (
+              <span className="text-xs font-semibold text-wisdom-muted">
+                Profile Level: <strong className="text-white">{educationLevel}</strong>
+                {stream ? ` · ${stream}` : ""}
+              </span>
+            )}
           </div>
 
-          <div className="relative inline-block mt-1">
-            <select
-              value={scopeKey}
-              onChange={(e) => setScopeKey(e.target.value as AcademicScopeKey)}
-              className="appearance-none font-display text-lg sm:text-xl font-black text-white bg-transparent pr-8 py-0.5 focus:outline-none cursor-pointer hover:text-cyan-300 transition-colors"
-            >
-              {SCOPES.map((s) => (
-                <option key={s.key} value={s.key} className="bg-wisdom-navy text-white text-sm">
-                  {s.label}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="w-4 h-4 text-cyan-300 absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none" />
-          </div>
-          <p className="text-xs text-wisdom-muted">
-            All retention rates, subject mastery bars, and diagnostics dynamically calibrate to this scope.
+          <h2 className="font-display text-xl sm:text-2xl font-black text-white tracking-tight">
+            {analytics.trackBenchmark.trackName}
+          </h2>
+
+          <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            All analytics below are drawn from your registered courses ({analytics.courseBreakdown.length} official subjects), active chapter reading logs, and question drill accuracy.
           </p>
         </div>
 
-        {/* Timeframe Filter Buttons */}
-        <div className="flex items-center gap-1.5 p-1 rounded-2xl border border-white/10 bg-black/30 self-start md:self-center">
-          {[
-            { id: "7d" as const, label: "Weekly (7d)" },
-            { id: "30d" as const, label: "Monthly (30d)" },
-            { id: "sem" as const, label: "Semester" },
-            { id: "all" as const, label: "All Time" },
-          ].map((tf) => (
-            <button
-              key={tf.id}
-              onClick={() => setTimeframe(tf.id)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                timeframe === tf.id
-                  ? "bg-cyan-500 text-wisdom-dark shadow-md"
-                  : "text-wisdom-muted hover:text-white"
-              }`}
+        {/* Track Customizer Dropdown */}
+        <div className="shrink-0 flex flex-col items-start md:items-end gap-1.5">
+          <label className="text-[10px] font-bold uppercase tracking-wider text-wisdom-muted">
+            Inspect Enrolled Curriculum
+          </label>
+          <div className="relative">
+            <select
+              value={selectedTrackKey || defaultResolvedTrack.trackId}
+              onChange={(e) => setSelectedTrackKey(e.target.value)}
+              className="appearance-none px-4 py-2 pr-9 rounded-2xl border border-white/15 bg-black/40 text-xs font-bold text-white focus:outline-none focus:border-cyan-400 cursor-pointer shadow-inner"
             >
-              {tf.label}
-            </button>
-          ))}
+              {Object.values(ACADEMIC_KNOWLEDGE_BASE).map((t) => (
+                <option key={t.trackId} value={t.trackId} className="bg-wisdom-navy text-white text-xs">
+                  {t.trackName} ({t.coreSubjects.length} subjects)
+                  {t.trackId === defaultResolvedTrack.trackId ? " ★ Registered" : ""}
+                </option>
+              ))}
+            </select>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-cyan-300 text-xs">
+              ▼
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Primary Cognitive KPI Cards */}
+      {/* ========================================================= */}
+      {/* 4 PRIMARY METRIC CARDS — DIRECT TO THE STUDENT             */}
+      {/* ========================================================= */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Retention Rate */}
-        <div className="card-modern p-5 border-white/10 bg-wisdom-card/70 flex flex-col justify-between">
+        {/* 1. YOUR STUDY TIME */}
+        <div className="card-modern p-5 border-white/10 bg-wisdom-card/80 flex flex-col justify-between hover:border-cyan-400/30 transition-all">
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted">
-                Retention Rate
+              <span className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-cyan-400" />
+                Your Study Time
               </span>
-              <Brain className="w-4 h-4 text-purple-400" />
+              <span className="text-[10px] font-mono font-bold text-cyan-300">
+                {analytics.weeklyProgressPct}% of Goal
+              </span>
             </div>
             <p className="font-display text-3xl sm:text-4xl font-black text-white">
-              {metrics.retentionRate}%
+              {analytics.totalStudyHours}
+              <span className="text-base font-normal text-wisdom-muted ml-1">hrs</span>
             </p>
-            <p className="text-xs text-emerald-400 font-semibold mt-1 flex items-center gap-1">
-              <TrendingUp className="w-3.5 h-3.5" />
-              High long-term memory stability
+            <p className="text-xs text-cyan-300/90 font-semibold mt-1">
+              Target: {analytics.weeklyTargetHours} hrs / week
             </p>
           </div>
           <div className="mt-4 pt-3 border-t border-white/8 text-[11px] text-wisdom-muted leading-tight">
-            Measured across active recall drills and diagnostic quiz submissions.
+            {analytics.hoursRemainingThisWeek > 0
+              ? `You need ${analytics.hoursRemainingThisWeek} more hours this week to reach institutional target.`
+              : "You have completed your weekly study quota for this syllabus."}
           </div>
         </div>
 
-        {/* Focus Efficiency */}
-        <div className="card-modern p-5 border-white/10 bg-wisdom-card/70 flex flex-col justify-between">
+        {/* 2. YOUR READING SPEED & FOCUS */}
+        <div className="card-modern p-5 border-white/10 bg-wisdom-card/80 flex flex-col justify-between hover:border-amber-400/30 transition-all">
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted">
-                Focus Quality Ratio
+              <span className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted flex items-center gap-1.5">
+                <Gauge className="w-3.5 h-3.5 text-amber-400" />
+                Your Reading Speed
               </span>
-              <Flame className="w-4 h-4 text-amber-400" />
+              <span className="text-[10px] font-mono font-bold text-amber-300">
+                {analytics.focusRatioPct}% Focus
+              </span>
             </div>
             <p className="font-display text-3xl sm:text-4xl font-black text-amber-300">
-              {metrics.focusRatio}%
+              {analytics.readingSpeedWpm}
+              <span className="text-sm font-normal text-wisdom-muted ml-1">WPM</span>
             </p>
-            <p className="text-xs text-amber-400/90 font-semibold mt-1">
-              Distraction-free reading index
+            <p className="text-xs text-slate-300 font-semibold mt-1">
+              Benchmark: {analytics.trackBenchmark.expectedReadingWpm} WPM
             </p>
           </div>
           <div className="mt-4 pt-3 border-t border-white/8 text-[11px] text-wisdom-muted leading-tight">
-            Ratio of continuous focus time vs open page duration.
+            Your reading rate is measured across textbook chapters and lecture notes.
           </div>
         </div>
 
-        {/* Cognitive Velocity */}
-        <div className="card-modern p-5 border-white/10 bg-wisdom-card/70 flex flex-col justify-between">
+        {/* 3. YOUR QUESTION ACCURACY RATE */}
+        <div className="card-modern p-5 border-white/10 bg-wisdom-card/80 flex flex-col justify-between hover:border-emerald-400/30 transition-all">
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted">
-                Study Velocity
+              <span className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted flex items-center gap-1.5">
+                <Target className="w-3.5 h-3.5 text-emerald-400" />
+                Your Question Accuracy
               </span>
-              <Activity className="w-4 h-4 text-cyan-400" />
+              <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
+                {analytics.questionsCorrect}/{analytics.questionsAttempted} Solved
+              </span>
             </div>
-            <p className="font-display text-3xl sm:text-4xl font-black text-cyan-300">
-              {metrics.totalMinutesLogged}
-              <span className="text-sm font-normal text-wisdom-muted ml-1">mins</span>
+            <p className="font-display text-3xl sm:text-4xl font-black text-emerald-400">
+              {analytics.questionAccuracyPct}%
             </p>
-            <p className="text-xs text-cyan-400/90 font-semibold mt-1">
-              Target: {dailyGoalMinutes}m / session
+            <p className="text-xs text-slate-300 font-semibold mt-1">
+              Standing: <span className="text-emerald-300">{analytics.masteryTier}</span>
             </p>
           </div>
           <div className="mt-4 pt-3 border-t border-white/8 text-[11px] text-wisdom-muted leading-tight">
-            Progress tracked across notes, books, and timed exams.
+            Derived from all chapter drills, midterm questions, and practice exams.
           </div>
         </div>
 
-        {/* Learning Modality */}
-        <div className="card-modern p-5 border-white/10 bg-wisdom-card/70 flex flex-col justify-between">
+        {/* 4. YOUR ACTIVE STUDY STREAK */}
+        <div className="card-modern p-5 border-white/10 bg-wisdom-card/80 flex flex-col justify-between hover:border-orange-400/30 transition-all">
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted">
-                Cognitive Modality
+              <span className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted flex items-center gap-1.5">
+                <Flame className="w-3.5 h-3.5 text-orange-400" />
+                Your Study Streak
               </span>
-              <Compass className="w-4 h-4 text-sky-400" />
+              <span className="text-[10px] font-bold text-orange-300 uppercase">
+                {analytics.streakStatus}
+              </span>
             </div>
-            <p className="font-display text-lg sm:text-xl font-bold text-white leading-tight">
-              {metrics.modality}
+            <p className="font-display text-3xl sm:text-4xl font-black text-orange-400">
+              {analytics.currentStreakDays}
+              <span className="text-base font-normal text-wisdom-muted ml-1">days</span>
             </p>
-            <p className="text-xs text-sky-300 font-semibold mt-1">
-              21st-century active learner
+            <p className="text-xs text-orange-300/90 font-semibold mt-1">
+              Continuous daily learning
             </p>
           </div>
           <div className="mt-4 pt-3 border-t border-white/8 text-[11px] text-wisdom-muted leading-tight">
-            Calculated from your reading vs recall vs solving ratios.
+            Log at least 20 minutes today to maintain your consecutive streak.
           </div>
         </div>
       </div>
 
-      {/* Middle Section: Weekly Activity Bar Chart & Reading Style Analysis */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Weekly Activity Distribution Chart */}
-        <div className="lg:col-span-7 card-modern p-5 sm:p-7 border-white/10 bg-wisdom-card/70 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-display text-base sm:text-lg font-bold text-white flex items-center gap-2">
-                <BarChart3 className="w-4 h-4 text-cyan-300" />
-                Study Cadence & Daily Distribution
-              </h3>
-              <p className="text-xs text-wisdom-muted">
-                Daily minutes invested in {currentScope.label}.
-              </p>
+      {/* ========================================================= */}
+      {/* DIRECT ACADEMIC DIRECTIVES — 1-ON-1 PERSONAL TO STUDENT   */}
+      {/* ========================================================= */}
+      <div className="rounded-3xl border border-cyan-500/25 bg-gradient-to-br from-[#0a1426] via-wisdom-card to-wisdom-dark p-6 sm:p-7 shadow-2xl space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-cyan-500/15 text-cyan-300 border border-cyan-400/30">
+                Academic Performance Directives
+              </span>
+              <span className="text-xs text-wisdom-muted">
+                Direct Evaluation for {studentName}
+              </span>
             </div>
-            <span className="text-xs font-mono font-bold text-cyan-300">
-              {timeframe.toUpperCase()}
+            <h3 className="font-display text-xl sm:text-2xl font-black text-white mt-1">
+              What your recent activities indicate you must do
+            </h3>
+          </div>
+
+          <div className="flex items-center gap-2 self-start sm:self-center">
+            <span className="text-xs font-mono px-3 py-1 rounded-xl bg-white/5 border border-white/10 text-slate-200">
+              Rank: <strong className="text-cyan-300">{analytics.masteryTier}</strong>
             </span>
           </div>
-
-          {/* Simple Clean Responsive Bar Chart */}
-          <div className="pt-6 pb-2">
-            <div className="h-44 flex items-end justify-between gap-2 sm:gap-4 px-2">
-              {metrics.dailyDistribution.map((d) => {
-                const max = 120;
-                const heightPct = Math.min(100, Math.max(12, Math.round((d.minutes / max) * 100)));
-                return (
-                  <div key={d.day} className="flex-1 flex flex-col items-center gap-2 group">
-                    <span className="text-[10px] font-mono text-wisdom-muted opacity-0 group-hover:opacity-100 transition-opacity">
-                      {d.minutes}m
-                    </span>
-                    <div className="w-full max-w-[2.25rem] bg-white/5 rounded-t-xl overflow-hidden h-32 flex items-end">
-                      <div
-                        style={{ height: `${heightPct}%` }}
-                        className="w-full bg-gradient-to-t from-cyan-600 via-sky-500 to-amber-300 rounded-t-xl transition-all duration-500 group-hover:brightness-110"
-                      />
-                    </div>
-                    <span className="text-xs font-bold text-slate-300">{d.day}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
         </div>
 
-        {/* Cognitive Reading Style Detailed Breakdown */}
-        <div className="lg:col-span-5 card-modern p-5 sm:p-7 border-white/10 bg-wisdom-card/70 flex flex-col justify-between">
-          <div className="space-y-3">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-500/15 text-purple-300 border border-purple-400/30">
-              <Brain className="w-3.5 h-3.5" />
-              Cognitive Profile
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          {/* Urgent Task */}
+          <div className="p-4 rounded-2xl border border-amber-500/25 bg-amber-500/[0.03] space-y-2">
+            <div className="flex items-center gap-2 text-amber-400 font-bold uppercase tracking-wider text-[11px]">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              Immediate Priority for You
             </div>
-            <h3 className="font-display text-xl font-bold text-white">
-              {metrics.modality}
-            </h3>
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-              {metrics.modalityDescription}
+            <p className="text-slate-200 leading-relaxed font-medium">
+              {analytics.tailoredDirectives.urgentTask}
             </p>
           </div>
 
-          <div className="pt-6 mt-6 border-t border-white/10 space-y-2">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted">
-              Recommended Cognitive Adjustment
+          {/* Schedule Directives */}
+          <div className="p-4 rounded-2xl border border-cyan-500/25 bg-cyan-500/[0.03] space-y-2">
+            <div className="flex items-center gap-2 text-cyan-300 font-bold uppercase tracking-wider text-[11px]">
+              <Calendar className="w-4 h-4 shrink-0" />
+              Your Weekly Schedule Calibration
+            </div>
+            <p className="text-slate-200 leading-relaxed font-medium">
+              {analytics.tailoredDirectives.scheduleAdvice}
             </p>
-            <p className="text-xs text-amber-200/90 leading-relaxed font-medium">
-              After reading chapter theory, transition to the timed question bank within 24 hours to maximize your 86% retention retention multiplier.
+          </div>
+
+          {/* Retention Advice */}
+          <div className="p-4 rounded-2xl border border-purple-500/25 bg-purple-500/[0.03] space-y-2">
+            <div className="flex items-center gap-2 text-purple-300 font-bold uppercase tracking-wider text-[11px]">
+              <Zap className="w-4 h-4 shrink-0" />
+              Your Reading & Recall Protocol
+            </div>
+            <p className="text-slate-200 leading-relaxed font-medium">
+              {analytics.tailoredDirectives.retentionAdvice}
+            </p>
+          </div>
+
+          {/* Standing / Pacing */}
+          <div className="p-4 rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.03] space-y-2">
+            <div className="flex items-center gap-2 text-emerald-400 font-bold uppercase tracking-wider text-[11px]">
+              <Timer className="w-4 h-4 shrink-0" />
+              Your Exam Pacing & Standing
+            </div>
+            <p className="text-slate-200 leading-relaxed font-medium">
+              {analytics.tailoredDirectives.complimentOrCaution} {analytics.pacingDiagnosis.message}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Subject Competency & Mastery Breakdown */}
-      <div className="card-modern p-5 sm:p-7 border-white/10 bg-wisdom-card/70 space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-4">
+      {/* ========================================================= */}
+      {/* COURSE-BY-COURSE REGISTERED CURRICULUM BREAKDOWN          */}
+      {/* ========================================================= */}
+      <div className="card-modern p-5 sm:p-7 border-white/10 bg-wisdom-card space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
           <div>
             <h3 className="font-display text-lg sm:text-xl font-bold text-white flex items-center gap-2">
               <Layers className="w-5 h-5 text-amber-300" />
-              Subject Competency & Mastery Breakdown
+              Your Registered Courses: Mastery & Question Accuracy
             </h3>
             <p className="text-xs text-wisdom-muted mt-0.5">
-              Performance metrics for courses in <strong>{currentScope.label}</strong>.
+              Official subjects in your enrolled track: <strong>{analytics.trackBenchmark.trackName}</strong>.
             </p>
           </div>
+
           <Link
-            href="/academy"
-            className="text-xs font-bold text-cyan-300 hover:text-cyan-200 flex items-center gap-1 self-start sm:self-center"
+            href="/learning"
+            className="btn-primary text-xs px-4 py-2 flex items-center gap-1.5 self-start sm:self-center"
           >
-            Open All Courses <ArrowRight className="w-3.5 h-3.5" />
+            Open Learning Hub <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {metrics.subjectScores.map((s) => (
+          {analytics.courseBreakdown.map((course) => (
             <div
-              key={s.id}
-              className="p-4 rounded-2xl border border-white/8 bg-white/[0.02] hover:border-white/20 transition-all space-y-2"
+              key={course.id}
+              className="p-5 rounded-2xl border border-white/8 bg-white/[0.02] hover:border-white/20 transition-all space-y-3.5 flex flex-col justify-between"
             >
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-bold text-white truncate">{s.name}</span>
-                <span
-                  className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${
-                    s.status === "Mastered"
-                      ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
-                      : s.status === "Proficient"
-                      ? "bg-cyan-500/15 text-cyan-300 border-cyan-400/30"
-                      : "bg-amber-500/15 text-amber-300 border-amber-400/30"
-                  }`}
-                >
-                  {s.status}
-                </span>
+              <div>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h4 className="font-display text-sm sm:text-base font-bold text-white leading-snug truncate">
+                      {course.name}
+                    </h4>
+                    <p className="text-[11px] text-slate-300/80 line-clamp-2 leading-relaxed mt-1">
+                      {course.description}
+                    </p>
+                    <span className="text-[10px] text-wisdom-muted block mt-1.5 font-mono">
+                      {course.credits} Credits · Recommended: {course.recommendedHours} hrs/wk
+                    </span>
+                  </div>
+
+                  <span
+                    className={`text-[9px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border shrink-0 ${
+                      course.status === "Mastered"
+                        ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                        : course.status === "Proficient"
+                        ? "bg-cyan-500/15 text-cyan-300 border-cyan-400/30"
+                        : course.status === "Developing"
+                        ? "bg-amber-500/15 text-amber-300 border-amber-400/30"
+                        : "bg-rose-500/15 text-rose-400 border-rose-500/30"
+                    }`}
+                  >
+                    {course.status}
+                  </span>
+                </div>
+
+                {/* Accuracy & Mastery Bars */}
+                <div className="space-y-2 pt-3">
+                  <div>
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className="text-wisdom-muted text-[11px]">Syllabus Mastery</span>
+                      <span className="font-mono font-bold text-white">{course.calculatedMasteryPct}%</span>
+                    </div>
+                    <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
+                      <div
+                        style={{ width: `${course.calculatedMasteryPct}%` }}
+                        className={`h-full rounded-full transition-all duration-700 ${
+                          course.calculatedMasteryPct >= 85
+                            ? "bg-gradient-to-r from-emerald-500 to-teal-400"
+                            : course.calculatedMasteryPct >= 75
+                            ? "bg-gradient-to-r from-cyan-500 to-sky-400"
+                            : "bg-gradient-to-r from-amber-500 to-orange-400"
+                        }`}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-wisdom-muted pt-1">
+                    <span>
+                      Accuracy: <strong className="text-white font-mono">{course.accuracyPct}%</strong>
+                    </span>
+                    <span>
+                      Drills Solved: <strong className="text-cyan-300 font-mono">{course.questionsSolved}</strong>
+                    </span>
+                  </div>
+                </div>
               </div>
 
-              {/* Progress Bar */}
-              <div className="space-y-1">
-                <div className="flex items-center justify-between text-xs text-wisdom-muted">
-                  <span>Calculated Mastery</span>
-                  <span className="font-mono font-bold text-white">{s.score}%</span>
+              {/* Direct Tactical Advice & Link to Subject */}
+              <div className="pt-3 border-t border-white/6 space-y-2.5">
+                <div className="text-xs text-slate-300 bg-white/[0.02] p-2.5 rounded-xl border border-white/5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 block mb-0.5">
+                    Your Next Best Step
+                  </span>
+                  <p className="text-[11.5px] leading-relaxed">
+                    {course.actionAdvice}
+                  </p>
                 </div>
-                <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
-                  <div
-                    style={{ width: `${s.score}%` }}
-                    className={`h-full rounded-full transition-all duration-700 ${
-                      s.score >= 88
-                        ? "bg-gradient-to-r from-emerald-500 to-teal-400"
-                        : s.score >= 80
-                        ? "bg-gradient-to-r from-cyan-500 to-sky-400"
-                        : "bg-gradient-to-r from-amber-500 to-orange-400"
-                    }`}
-                  />
+
+                <div className="flex items-center justify-between gap-2 pt-1">
+                  <Link
+                    href={course.route}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:text-cyan-200 transition-colors"
+                  >
+                    Open {course.name} Hub <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                  <span className="text-[10px] font-mono text-wisdom-muted">
+                    {course.studyMinutes}m logged
+                  </span>
                 </div>
               </div>
             </div>
@@ -580,87 +472,55 @@ export default function StudentAnalyticsDashboard({
         </div>
       </div>
 
-      {/* Strengths vs Weaknesses & AI Pedagogical Recommendations */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Strong Sides & High-Yield Weaknesses */}
-        <div className="card-modern p-5 sm:p-7 border-white/10 bg-wisdom-card/70 space-y-4">
-          <h3 className="font-display text-lg font-bold text-white flex items-center gap-2">
-            <Target className="w-5 h-5 text-emerald-400" />
-            Diagnostic Strengths & Priority Growth Areas
-          </h3>
+      {/* ========================================================= */}
+      {/* YOUR WEEKLY CADENCE & DAILY STUDY DISTRIBUTION            */}
+      {/* ========================================================= */}
+      <div className="card-modern p-5 sm:p-7 border-white/10 bg-wisdom-card space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-4">
+          <div>
+            <h3 className="font-display text-base sm:text-lg font-bold text-white flex items-center gap-2">
+              <Activity className="w-4 h-4 text-cyan-300" />
+              Your Weekly Study Distribution & Daily Rhythm
+            </h3>
+            <p className="text-xs text-wisdom-muted mt-0.5">
+              Daily minutes logged in your coursework (Monday through Sunday).
+            </p>
+          </div>
+          <span className="text-xs font-mono font-bold text-cyan-300 self-start sm:self-center">
+            Current Week Ledger
+          </span>
+        </div>
 
-          <div className="space-y-3">
-            <div className="p-4 rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.04] space-y-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                Proven Strong Suits ({currentScope.label})
-              </span>
-              <ul className="text-xs text-slate-300 space-y-1.5 list-disc pl-4">
-                <li>
-                  <strong>Conceptual Foundations:</strong> Superior accuracy (&gt;90%) on theoretical definition drills and chapter summaries.
-                </li>
-                <li>
-                  <strong>Formula Retrieval:</strong> High recall on standard formula applications in physics and calculus.
-                </li>
-              </ul>
-            </div>
-
-            <div className="p-4 rounded-2xl border border-amber-500/25 bg-amber-500/[0.04] space-y-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
-                <Lightbulb className="w-3.5 h-3.5" />
-                Priority Growth Areas
-              </span>
-              <ul className="text-xs text-slate-300 space-y-1.5 list-disc pl-4">
-                <li>
-                  <strong>Timed Pacing:</strong> Speed drops slightly under strict national exam simulation mode (1.6 mins/question vs target 1.2).
-                </li>
-                <li>
-                  <strong>Multi-Step Word Problems:</strong> Drill multi-part calculus and thermodynamics problems with worked steps.
-                </li>
-              </ul>
-            </div>
+        <div className="pt-6 pb-2">
+          <div className="h-44 flex items-end justify-between gap-2 sm:gap-4 px-2">
+            {analytics.dailyDistribution.map((d) => {
+              const max = 120;
+              const heightPct = Math.min(100, Math.max(14, Math.round((d.minutes / max) * 100)));
+              return (
+                <div key={d.day} className="flex-1 flex flex-col items-center gap-2 group">
+                  <span className="text-[10px] font-mono text-cyan-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {d.minutes}m
+                  </span>
+                  <div className="w-full max-w-[2.5rem] bg-white/5 rounded-t-xl overflow-hidden h-32 flex items-end">
+                    <div
+                      style={{ height: `${heightPct}%` }}
+                      className="w-full bg-gradient-to-t from-cyan-600 via-sky-500 to-amber-300 rounded-t-xl transition-all duration-500 group-hover:brightness-110 shadow-sm"
+                    />
+                  </div>
+                  <span className="text-xs font-bold text-slate-300">{d.day}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* Sophisticated Pedagogical Recommendations */}
-        <div className="card-modern p-5 sm:p-7 border-cyan-400/20 bg-gradient-to-br from-wisdom-card via-wisdom-navy/95 to-wisdom-dark space-y-4">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-cyan-500/15 text-cyan-300 border border-cyan-400/30">
-            <Zap className="w-3.5 h-3.5 text-cyan-300" />
-            Academic Advisory Engine
-          </div>
-
-          <h3 className="font-display text-lg font-bold text-white">
-            Tailored Strategic Directives
-          </h3>
-
-          <div className="space-y-3 text-xs text-slate-300 leading-relaxed">
-            <div className="p-3.5 rounded-xl border border-white/8 bg-white/[0.02]">
-              <p className="font-bold text-white mb-0.5">
-                1. Immediate Next Best Action:
-              </p>
-              <p>
-                Complete the remaining question sets in <strong>{currentScope.subjects[0]?.name || "Core Subject"}</strong> to solidify your momentum before full diagnostic exams.
-              </p>
-            </div>
-
-            <div className="p-3.5 rounded-xl border border-white/8 bg-white/[0.02]">
-              <p className="font-bold text-white mb-0.5">
-                2. Spaced Repetition Calibration:
-              </p>
-              <p>
-                Your retention is stabilized at {metrics.retentionRate}%. Revisit active recall decks in 48 hours to preserve long-term cognitive retention.
-              </p>
-            </div>
-
-            <div className="p-3.5 rounded-xl border border-white/8 bg-white/[0.02]">
-              <p className="font-bold text-white mb-0.5">
-                3. Exam Technique Optimization:
-              </p>
-              <p>
-                Use the “Explain with AI” feature on flagged questions to understand the underlying conceptual trap before attempting the next mock exam.
-              </p>
-            </div>
-          </div>
+        <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-wisdom-muted">
+          <span>
+            Daily Target: <strong className="text-white">{dailyGoalMinutes} mins</strong> per day
+          </span>
+          <span className="text-cyan-300">
+            Total this week: <strong className="text-white">{analytics.totalStudyHours} hours</strong>
+          </span>
         </div>
       </div>
     </div>

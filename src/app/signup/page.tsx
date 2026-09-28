@@ -2,6 +2,7 @@
 
 import { useState, Suspense } from "react";
 import Link from "next/link";
+import BrandLoader from "@/components/BrandLoader";
 import { supabase } from "@/lib/supabase";
 import {
   looksLikeEmail,
@@ -303,8 +304,11 @@ export default function SignupPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-[100dvh] flex items-start sm:items-center justify-center px-4 py-10 pb-44 overflow-y-auto">
-          <div className="w-8 h-8 rounded-full border-2 border-cyan-400/25 border-t-cyan-400 animate-spin" />
+        <div
+          className="min-h-[100dvh] flex items-start sm:items-center justify-center px-4 py-10 pb-44 overflow-y-auto"
+          data-wta-spinner="true"
+        >
+          <BrandLoader size="md" />
         </div>
       }
     >

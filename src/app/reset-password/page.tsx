@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Lock, Eye, EyeOff, ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
+import BrandLoader from "@/components/BrandLoader";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -177,9 +178,11 @@ export default function ResetPasswordPage() {
 
         <div className="bg-wisdom-card border border-white/5 rounded-2xl p-8 shadow-xl">
           {checkingSession ? (
-            <div className="flex flex-col items-center justify-center py-8 gap-3">
-              <Loader2 className="w-8 h-8 text-wisdom-cyan animate-spin" />
-              <p className="text-wisdom-muted text-sm">Validating reset link...</p>
+            <div
+              className="flex flex-col items-center justify-center py-8 gap-3"
+              data-wta-spinner="true"
+            >
+              <BrandLoader size="md" label="Validating reset link..." />
             </div>
           ) : (
             <form onSubmit={handleReset} className="space-y-5">

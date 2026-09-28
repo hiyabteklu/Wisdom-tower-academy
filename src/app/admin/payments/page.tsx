@@ -13,6 +13,7 @@ import {
   type ManualOrder,
 } from "@/lib/orders";
 import { formatEtb } from "@/data/packages";
+import BrandLoader from "@/components/BrandLoader";
 import {
   Shield,
   RefreshCw,
@@ -95,8 +96,8 @@ export default function AdminPaymentsPage() {
 
   if (!ready) {
     return (
-      <div className="min-h-[50vh] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-wisdom-cyan border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-[50vh] flex items-center justify-center" data-wta-spinner="true">
+        <BrandLoader size="md" />
       </div>
     );
   }

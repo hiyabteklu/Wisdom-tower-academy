@@ -1,5 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { isAndroidWebView } from "@/lib/native-app";
+
 type Size = "sm" | "md" | "lg" | "xl";
 
 const SIZE_MAP: Record<Size, string> = {
@@ -9,7 +12,13 @@ const SIZE_MAP: Record<Size, string> = {
   xl: "w-12 h-12 border-[3px]",
 };
 
-/** Simple cyan circular spinner for all waiting states */
+/**
+ * BrandLoader: Cyan circular spinner for waiting states.
+ *
+ * Normal browsers: Visible with smooth animations and labels.
+ * Native Android app: Suppressed completely via CSS and client unmount so that
+ * the native Jetpack Compose GIF animation remains the ONLY visible loading indicator.
+ */
 export default function BrandLoader({
   size = "lg",
   label,
@@ -21,12 +30,27 @@ export default function BrandLoader({
   fullScreen?: boolean;
   className?: string;
 }) {
+  const [isNative, setIsNative] = useState(false);
+
+  useEffect(() => {
+    if (isAndroidWebView()) {
+      setIsNative(true);
+    }
+  }, []);
+
+  // Suppress in native app (CSS also suppresses before hydration)
+  if (isNative) {
+    return null;
+  }
+
   const body = (
     <div
-      className={`flex flex-col items-center justify-center gap-3 ${className}`}
+      className={`wta-brand-loader flex flex-col items-center justify-center gap-3 ${className}`}
       role="status"
       aria-live="polite"
       aria-label={label || "Loading"}
+      data-brand-loader="true"
+      data-wta-spinner="true"
     >
       <div
         className={`${SIZE_MAP[size]} rounded-full border-cyan-400/25 border-t-cyan-400 animate-spin`}
@@ -39,7 +63,11 @@ export default function BrandLoader({
 
   if (fullScreen) {
     return (
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#0B1220]/90">
+      <div
+        className="wta-fullscreen-loader fixed inset-0 z-[9999] flex items-center justify-center bg-[#0B1220]/90"
+        data-brand-loader="true"
+        data-wta-spinner="true"
+      >
         {body}
       </div>
     );

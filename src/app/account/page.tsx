@@ -10,6 +10,7 @@ import { computeStudentId, persistStudentIdIfNeeded, type StudentIdData } from "
 import StudentAvatar from "@/components/StudentAvatar";
 import StudentIdCard from "@/components/StudentIdCard";
 import StudentAnalyticsDashboard from "@/components/StudentAnalyticsDashboard";
+import BrandLoader from "@/components/BrandLoader";
 import { listMyOrders, type ManualOrder } from "@/lib/orders";
 import type { User } from "@supabase/supabase-js";
 import {
@@ -146,11 +147,11 @@ export default function AccountPage() {
 
   if (loading || !user) {
     return (
-      <div className="min-h-[65vh] flex flex-col items-center justify-center gap-3">
-        <div className="w-10 h-10 border-3 border-cyan-400 border-t-transparent rounded-full animate-spin" />
-        <p className="text-xs text-wisdom-muted font-medium">
-          Loading student command center...
-        </p>
+      <div
+        className="min-h-[65vh] flex flex-col items-center justify-center gap-3"
+        data-wta-spinner="true"
+      >
+        <BrandLoader size="lg" label="Loading student command center..." />
       </div>
     );
   }
@@ -320,22 +321,22 @@ export default function AccountPage() {
           {[
             {
               id: "analytics" as const,
-              label: "Dedicated Progress Tracker & Analytics",
+              label: "Your Academic Analytics & Progress",
               icon: LayoutDashboard,
             },
             {
               id: "id-card" as const,
-              label: "Digital Student ID & Registry",
+              label: "Digital Student ID Card",
               icon: GraduationCap,
             },
             {
               id: "packages" as const,
-              label: `Unlocked Packages (${orders.length})`,
+              label: `Your Unlocked Packages (${orders.length})`,
               icon: Package,
             },
             {
               id: "requests" as const,
-              label: `Inquiries & Support (${inquiries.length})`,
+              label: `Your Inquiries & Support (${inquiries.length})`,
               icon: Inbox,
             },
           ].map((t) => {
@@ -366,9 +367,12 @@ export default function AccountPage() {
         {tab === "analytics" && (
           <StudentAnalyticsDashboard
             userId={user.id}
-            defaultEducationLevel={profile?.education_level}
+            studentName={displayName}
+            educationLevel={profile?.education_level}
+            stream={profile?.stream}
+            userCreatedAt={user?.created_at}
             dailyGoalMinutes={profile?.daily_study_goal_minutes || 45}
-            entitledPackages={orders.map((o) => o.packageName || o.packageId || "")}
+            enrolledPackageIds={orders.map((o) => o.packageId).filter(Boolean) as string[]}
           />
         )}
 

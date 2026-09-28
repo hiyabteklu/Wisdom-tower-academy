@@ -21,6 +21,7 @@ import {
   type UserPreferences,
 } from "@/lib/preferences";
 import StudentAvatar from "@/components/StudentAvatar";
+import BrandLoader from "@/components/BrandLoader";
 import { flushOfflineQueue } from "@/lib/contentWithOffline";
 import type { User } from "@supabase/supabase-js";
 import {
@@ -389,9 +390,11 @@ function SettingsContent() {
 
   if (loading || !user) {
     return (
-      <div className="min-h-[65vh] flex flex-col items-center justify-center gap-3">
-        <div className="w-10 h-10 border-3 border-cyan-400 border-t-transparent rounded-full animate-spin" />
-        <p className="text-xs text-wisdom-muted font-medium">Loading your academic settings...</p>
+      <div
+        className="min-h-[65vh] flex flex-col items-center justify-center gap-3"
+        data-wta-spinner="true"
+      >
+        <BrandLoader size="lg" label="Loading your academic settings..." />
       </div>
     );
   }
@@ -1395,8 +1398,11 @@ export default function SettingsPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-[60vh] flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+        <div
+          className="min-h-[60vh] flex items-center justify-center"
+          data-wta-spinner="true"
+        >
+          <BrandLoader size="md" />
         </div>
       }
     >

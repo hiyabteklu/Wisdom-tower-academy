@@ -9,6 +9,7 @@ import {
 import { supabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
 import { getScopeStats, type HubId, type ScopeStats } from "@/lib/content";
+import BrandLoader from "@/components/BrandLoader";
 
 export type ResultEntry = {
   id: string; title: string; date: string; total: number;
@@ -231,8 +232,8 @@ export default function AcademicResultSaver({
       </div>
 
       {loading ? (
-        <div className="p-10 flex justify-center">
-          <div className="w-8 h-8 border-2 border-wisdom-cyan border-t-transparent rounded-full animate-spin" />
+        <div className="p-10 flex justify-center" data-wta-spinner="true">
+          <BrandLoader size="md" />
         </div>
       ) : !user ? (
         <div className="px-6 py-12 text-center">

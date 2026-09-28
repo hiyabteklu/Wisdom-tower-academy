@@ -21,6 +21,7 @@ import {
   type PaymentMethodId,
 } from "@/data/packages";
 import { getPackageResolved } from "@/lib/catalog";
+import BrandLoader from "@/components/BrandLoader";
 import {
   generateOrderRef,
   saveOrder,
@@ -334,8 +335,8 @@ export default function CheckoutForm({ packageId, packageIds }: Props) {
 
   if (authLoading) {
     return (
-      <div className="min-h-[50vh] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-[50vh] flex items-center justify-center" data-wta-spinner="true">
+        <BrandLoader size="md" />
       </div>
     );
   }

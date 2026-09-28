@@ -9,6 +9,7 @@ import {
   type FreeResourcePage,
 } from "@/lib/free-resources";
 import CategoryBackButton from "@/components/CategoryBackButton";
+import BrandLoader from "@/components/BrandLoader";
 import {
   Trophy,
   Quote,
@@ -195,9 +196,8 @@ export default function SuccessStoriesPage() {
         </header>
 
         {loading && (
-          <div className="flex items-center justify-center gap-2 py-24 text-wisdom-muted animate-fade-up">
-            <Loader2 className="w-5 h-5 animate-spin text-amber-400" />
-            Loading…
+          <div className="flex items-center justify-center py-24" data-wta-spinner="true">
+            <BrandLoader size="sm" label="Loading…" />
           </div>
         )}
 

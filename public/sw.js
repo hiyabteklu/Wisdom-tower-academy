@@ -1,24 +1,18 @@
 /* Wisdom Tower Academy — Offline Service Worker
  *
- * RULE: Never delete caches the user already filled.
- * Opening a page/note/exam/image while online must work offline forever
- * until the user clears site data themselves.
- *
+ * Preserves user data and offline materials:
  * - Pages HTML: network-first when online, cache fallback offline
- * - Static JS/CSS: cache-first
- * - Images/thumbnails: stale-while-revalidate (kept forever)
+ * - Static JS/CSS: network-first when online to prevent hydration mismatch, cache fallback offline
+ * - Images/thumbnails: stale-while-revalidate (permanent)
  * - Same-origin /api + supabase/appwrite GETs: cached after first success
- * - Large book PDFs: NOT in SW (app OfflineVault handles those)
- *
- * Cache size can grow (hundreds of MB / GB) — intentional for full offline study.
+ * - Large book PDFs: handled by app OfflineVault
  */
-const PAGE_CACHE = "wta-pages-permanent";
-const STATIC_CACHE = "wta-static-permanent";
+
+const CACHE_VERSION = "v6";
+const PAGE_CACHE = `wta-pages-${CACHE_VERSION}`;
+const STATIC_CACHE = `wta-static-${CACHE_VERSION}`;
 const IMAGE_CACHE = "wta-images-permanent";
 const DATA_CACHE = "wta-data-permanent";
-
-/* Legacy names we used to delete — KEEP them so yesterday's data still answers */
-const LEGACY_PREFIXES = ["wta-offline-"];
 
 const PRECACHE_URLS = [
   "/",
@@ -42,15 +36,40 @@ self.addEventListener("install", (event) => {
 });
 
 self.addEventListener("activate", (event) => {
-  // DO NOT delete any caches. Ever.
-  // Previous code wiped wta-offline-v1..v4 and destroyed offline notes/pages.
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    (async () => {
+      // Purge stale page & static caches to prevent React hydration mismatches
+      const keys = await caches.keys();
+      for (const key of keys) {
+        if (
+          (key.startsWith("wta-pages-") && key !== PAGE_CACHE) ||
+          (key.startsWith("wta-static-") && key !== STATIC_CACHE)
+        ) {
+          try {
+            await caches.delete(key);
+          } catch {
+            /* ignore */
+          }
+        }
+      }
+      await self.clients.claim();
+    })()
+  );
 });
 
 function isNavigationRequest(request) {
   return (
     request.mode === "navigate" ||
     (request.method === "GET" && request.headers.get("accept")?.includes("text/html"))
+  );
+}
+
+function isDevelopmentAsset(url) {
+  return (
+    url.pathname.includes("hot-update") ||
+    url.pathname.includes("_next/webpack-hmr") ||
+    url.pathname.includes("__nextjs") ||
+    url.searchParams.has("ts")
   );
 }
 
@@ -85,22 +104,24 @@ function isApiOrData(url) {
   );
 }
 
-/** Match request across permanent + any legacy cache names. */
+/** Match request across permanent caches. */
 async function matchAny(request) {
-  const names = await caches.keys();
+  const names = [PAGE_CACHE, STATIC_CACHE, IMAGE_CACHE, DATA_CACHE];
   for (const name of names) {
-    const cache = await caches.open(name);
-    const hit = await cache.match(request);
-    if (hit) return hit;
+    try {
+      const cache = await caches.open(name);
+      const hit = await cache.match(request);
+      if (hit) return hit;
+    } catch {
+      /* ignore */
+    }
   }
   // Also try pathname-only for navigations
   try {
     const url = new URL(request.url);
-    for (const name of names) {
-      const cache = await caches.open(name);
-      const hit = await cache.match(url.pathname);
-      if (hit) return hit;
-    }
+    const pageCache = await caches.open(PAGE_CACHE);
+    const hit = await pageCache.match(url.pathname);
+    if (hit) return hit;
   } catch {}
   return undefined;
 }
@@ -133,21 +154,6 @@ async function networkFirst(request, cacheName) {
   }
 }
 
-async function cacheFirst(request, cacheName) {
-  const cache = await caches.open(cacheName);
-  const cached = (await cache.match(request)) || (await matchAny(request));
-  if (cached) return cached;
-  try {
-    const response = await fetch(request);
-    if (response && response.ok) {
-      cache.put(request, response.clone());
-    }
-    return response;
-  } catch {
-    return cached || Response.error();
-  }
-}
-
 async function staleWhileRevalidate(request, cacheName) {
   const cache = await caches.open(cacheName);
   const cached = (await cache.match(request)) || (await matchAny(request));
@@ -173,6 +179,11 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Development assets and HMR updates must never be intercepted
+  if (isDevelopmentAsset(url)) {
+    return;
+  }
+
   // Books/PDFs stay in the app Offline vault, not SW
   if (isLargeBookPdf(url)) {
     return;
@@ -183,8 +194,9 @@ self.addEventListener("fetch", (event) => {
       event.respondWith(networkFirst(request, PAGE_CACHE));
       return;
     }
+    // Static JS and CSS: network-first so code stays in sync with SSR HTML
     if (isStaticAsset(url)) {
-      event.respondWith(cacheFirst(request, STATIC_CACHE));
+      event.respondWith(networkFirst(request, STATIC_CACHE));
       return;
     }
     if (isImage(url)) {
@@ -204,7 +216,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Supabase / Appwrite GET responses the site already fetched while online
+  // Supabase / Appwrite GET responses
   if (isApiOrData(url)) {
     event.respondWith(staleWhileRevalidate(request, DATA_CACHE));
   }
@@ -216,20 +228,16 @@ self.addEventListener("message", (event) => {
   event.waitUntil(
     (async () => {
       const pageCache = await caches.open(PAGE_CACHE);
-      const imageCache = await caches.open(IMAGE_CACHE);
-      const dataCache = await caches.open(DATA_CACHE);
-      await Promise.allSettled(
-        data.urls.map((u) => {
-          try {
-            const parsed = new URL(u, self.location.origin);
-            if (isImage(parsed)) return imageCache.add(u).catch(() => null);
-            if (isApiOrData(parsed)) return dataCache.add(u).catch(() => null);
-            return pageCache.add(u).catch(() => null);
-          } catch {
-            return null;
+      for (const u of data.urls) {
+        try {
+          const res = await fetch(u);
+          if (res && res.ok) {
+            await pageCache.put(u, res);
           }
-        })
-      );
+        } catch {
+          /* ignore */
+        }
+      }
     })()
   );
 });

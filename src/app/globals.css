@@ -326,6 +326,24 @@ body.wta-native-app main {
   padding-top: 0 !important;
 }
 
+/* ========================================================================= */
+/* Native Android App: Suppress Website's Generic Circular Loaders           */
+/* The native Jetpack Compose app renders its own Wisdom Tower GIF animation. */
+/* Website circular spinners are hidden so only the native GIF is visible.   */
+/* Normal web browser users continue to see full loaders untouched.          */
+/* ========================================================================= */
+html.wta-native-app [data-wta-spinner],
+html.wta-native-app [data-brand-loader],
+html.wta-native-app .wta-brand-loader,
+html.wta-native-app .wta-route-loader,
+html.wta-native-app [data-nextjs-loading],
+html.wta-native-app .wta-fullscreen-loader {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 /* Match native top bar (#0F172A) so the seam is not a different-color strip */
 html.wta-native-app,
 body.wta-native-app {

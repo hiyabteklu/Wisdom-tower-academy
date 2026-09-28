@@ -16,6 +16,7 @@ import ContentPanel from "@/components/admin/ContentPanel";
 import FreeResourcesPanel from "@/components/admin/FreeResourcesPanel";
 import LocksPanel from "@/components/admin/LocksPanel";
 import AccessGrantsPanel from "@/components/admin/AccessGrantsPanel";
+import BrandLoader from "@/components/BrandLoader";
 import {
   LogOut,
   CreditCard,
@@ -102,8 +103,8 @@ function AdminDashboardInner() {
 
   if (loading || !user) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-[60vh] flex items-center justify-center" data-wta-spinner="true">
+        <BrandLoader size="md" />
       </div>
     );
   }
@@ -214,8 +215,8 @@ function AdminDashboardInner() {
 
 function AdminFallback() {
   return (
-    <div className="min-h-[60vh] flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+    <div className="min-h-[60vh] flex items-center justify-center" data-wta-spinner="true">
+      <BrandLoader size="md" />
     </div>
   );
 }

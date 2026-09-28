@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { structuralParent } from "@/lib/nav-parent";
+import { isAndroidWebView } from "@/lib/native-app";
 
 declare global {
   interface Window {
@@ -20,6 +21,8 @@ export default function StructuralBackBridge() {
   const router = useRouter();
 
   useEffect(() => {
+    isAndroidWebView();
+
     window.__wtaStructuralBack = () => {
       try {
         const path = pathname || window.location.pathname || "/";
