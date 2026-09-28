@@ -127,13 +127,40 @@ export default function PomodoroTimer() {
                 }}
                 className={`rounded-xl px-3 py-1.5 text-xs font-semibold border transition-colors ${
                   state.totalSec === p.minutes * 60
-                    ? "border-amber-400/50 bg-amber-500/15 text-amber-200"
-                    : "border-white/10 text-wisdom-muted hover:border-white/25"
+                    ? "border-cyan-400 bg-cyan-500/20 text-cyan-200"
+                    : "border-white/10 text-slate-300 hover:border-white/25"
                 } disabled:opacity-50`}
               >
                 {p.label}
               </button>
             ))}
+
+            <button
+              type="button"
+              disabled={running}
+              onClick={() => {
+                const input = prompt("Enter custom focus duration in minutes (e.g. 45 or 90):", "45");
+                if (input) {
+                  const mins = parseInt(input, 10);
+                  if (!isNaN(mins) && mins > 0 && mins <= 360) {
+                    setPreset(mins * 60);
+                    setStartLine(null);
+                    sync();
+                  } else {
+                    alert("Please enter a valid duration between 1 and 360 minutes.");
+                  }
+                }
+              }}
+              className={`rounded-xl px-3 py-1.5 text-xs font-semibold border transition-colors ${
+                !PRESETS.some((p) => p.minutes * 60 === state.totalSec)
+                  ? "border-amber-400 bg-amber-500/20 text-amber-200 font-bold"
+                  : "border-white/10 text-slate-300 hover:border-cyan-400/40 hover:text-cyan-200"
+              } disabled:opacity-50`}
+            >
+              {!PRESETS.some((p) => p.minutes * 60 === state.totalSec)
+                ? `Custom ${Math.round(state.totalSec / 60)}m`
+                : "Custom..."}
+            </button>
           </div>
 
           <div className="relative mx-auto w-40 h-40 sm:w-48 sm:h-48 mb-4">

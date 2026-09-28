@@ -1,43 +1,42 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CalendarDays, Plus, Trash2, Clock } from "lucide-react";
+import { CalendarDays, Plus, Trash2, Clock, Check, ChevronRight } from "lucide-react";
 import CollapsibleSection from "@/components/CollapsibleSection";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
-const HOURS = Array.from({ length: 24 }, (_, i) => i);
-const STORAGE_KEY = "wt_study_planner_v1";
+const STORAGE_KEY = "wt_study_planner_v2";
 
-type Block = {
+export type StudyBlock = {
   id: string;
   day: number;
-  startHour: number;
-  endHour: number;
+  startTime: string; // "09:00"
+  endTime: string;   // "10:30"
   title: string;
   color: string;
 };
 
 const COLORS = [
-  "bg-cyan-500/80 border-cyan-300/50",
-  "bg-amber-500/80 border-amber-300/50",
-  "bg-violet-500/80 border-violet-300/50",
-  "bg-emerald-500/80 border-emerald-300/50",
-  "bg-rose-500/80 border-rose-300/50",
+  "bg-cyan-500/25 border-cyan-400 text-cyan-200",
+  "bg-amber-500/25 border-amber-400 text-amber-200",
+  "bg-violet-500/25 border-violet-400 text-violet-200",
+  "bg-emerald-500/25 border-emerald-400 text-emerald-200",
+  "bg-sky-500/25 border-sky-400 text-sky-200",
 ];
 
-function loadBlocks(): Block[] {
+function loadBlocks(): StudyBlock[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
-    const parsed = JSON.parse(raw) as Block[];
+    const parsed = JSON.parse(raw) as StudyBlock[];
     return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
   }
 }
 
-function saveBlocks(blocks: Block[]) {
+function saveBlocks(blocks: StudyBlock[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(blocks));
 }
 
@@ -45,67 +44,57 @@ function todayIndex(d = new Date()) {
   return (d.getDay() + 6) % 7;
 }
 
-function formatHour(h: number) {
-  const period = h >= 12 ? "PM" : "AM";
-  const h12 = h % 12 === 0 ? 12 : h % 12;
-  return `${h12}:00 ${period}`;
-}
-
 export default function StudyPlanner() {
-  const [blocks, setBlocks] = useState<Block[]>([]);
+  const [blocks, setBlocks] = useState<StudyBlock[]>([]);
   const [ready, setReady] = useState(false);
-  const [now, setNow] = useState(() => new Date());
-  const [draftDay, setDraftDay] = useState(0);
-  const [draftStart, setDraftStart] = useState(9);
-  const [draftEnd, setDraftEnd] = useState(10);
-  const [draftTitle, setDraftTitle] = useState("");
+  const [selectedDay, setSelectedDay] = useState(0);
+  const [viewMode, setViewMode] = useState<"day" | "week">("day");
+
+  // Form state with minute-precise time inputs
   const [showForm, setShowForm] = useState(false);
+  const [draftDay, setDraftDay] = useState(0);
+  const [draftStart, setDraftStart] = useState("09:00");
+  const [draftEnd, setDraftEnd] = useState("10:30");
+  const [draftTitle, setDraftTitle] = useState("");
 
   useEffect(() => {
-    setBlocks(loadBlocks());
+    const loaded = loadBlocks();
+    if (loaded.length === 0) {
+      // Sensible starter timetable blocks
+      const starter: StudyBlock[] = [
+        { id: "sb-1", day: 0, startTime: "09:00", endTime: "10:30", title: "Mathematics Calculus", color: COLORS[0] },
+        { id: "sb-2", day: 0, startTime: "14:00", endTime: "15:30", title: "Physics Mechanics", color: COLORS[1] },
+        { id: "sb-3", day: 1, startTime: "10:00", endTime: "11:30", title: "Chemistry Kinetics", color: COLORS[2] },
+        { id: "sb-4", day: 2, startTime: "16:00", endTime: "17:15", title: "Flashcard Drill", color: COLORS[3] },
+      ];
+      setBlocks(starter);
+      saveBlocks(starter);
+    } else {
+      setBlocks(loaded);
+    }
+    const today = todayIndex();
+    setSelectedDay(today);
+    setDraftDay(today);
     setReady(true);
   }, []);
 
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(new Date()), 30_000);
-    return () => window.clearInterval(id);
-  }, []);
-
-  const persist = useCallback((next: Block[]) => {
+  const persist = useCallback((next: StudyBlock[]) => {
     setBlocks(next);
     saveBlocks(next);
   }, []);
 
-  const currentDay = todayIndex(now);
-  const currentHour = now.getHours();
-  const minuteFrac = now.getMinutes() / 60;
-
-  const blocksByCell = useMemo(() => {
-    const map = new Map<string, Block[]>();
-    for (const b of blocks) {
-      for (let h = b.startHour; h < b.endHour; h++) {
-        const key = `${b.day}-${h}`;
-        const list = map.get(key) || [];
-        list.push(b);
-        map.set(key, list);
-      }
-    }
-    return map;
-  }, [blocks]);
-
-  function addBlock() {
-    const title = draftTitle.trim() || "Study";
-    const start = Math.min(draftStart, draftEnd - 1);
-    const end = Math.max(draftEnd, start + 1);
-    const block: Block = {
+  function addBlock(e?: React.FormEvent) {
+    e?.preventDefault();
+    const title = draftTitle.trim() || "Study Session";
+    const newBlock: StudyBlock = {
       id: `b-${Date.now()}`,
       day: draftDay,
-      startHour: start,
-      endHour: Math.min(24, end),
+      startTime: draftStart || "09:00",
+      endTime: draftEnd || "10:00",
       title,
       color: COLORS[blocks.length % COLORS.length],
     };
-    persist([...blocks, block]);
+    persist([...blocks, newBlock]);
     setDraftTitle("");
     setShowForm(false);
   }
@@ -114,213 +103,256 @@ export default function StudyPlanner() {
     persist(blocks.filter((b) => b.id !== id));
   }
 
-  function onCellClick(day: number, hour: number) {
-    setDraftDay(day);
-    setDraftStart(hour);
-    setDraftEnd(Math.min(24, hour + 1));
-    setShowForm(true);
-  }
+  // Active day blocks sorted by time
+  const currentDayBlocks = useMemo(() => {
+    return blocks
+      .filter((b) => b.day === selectedDay)
+      .sort((a, b) => a.startTime.localeCompare(b.startTime));
+  }, [blocks, selectedDay]);
 
   if (!ready) return null;
 
   return (
     <CollapsibleSection
       title="Study planner"
-      subtitle="Weekly schedule"
-      icon={<CalendarDays className="w-5 h-5 text-cyan-300" />}
+      subtitle="Weekly schedule & minute-precise timer blocks"
+      icon={<CalendarDays className="w-5 h-5 text-cyan-400" />}
       defaultOpen={false}
     >
-      <div className="flex justify-end mb-3">
-        <button
-          type="button"
-          onClick={() => setShowForm((v) => !v)}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-cyan-500 px-3.5 py-2 text-sm font-bold text-wisdom-dark hover:bg-cyan-400"
-        >
-          <Plus className="w-4 h-4" />
-          Add block
-        </button>
-      </div>
-
-      {showForm && (
-        <div className="mb-4 rounded-2xl border border-cyan-400/30 bg-wisdom-card p-4 grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
-          <label className="text-xs text-wisdom-muted">
-            Title
-            <input
-              value={draftTitle}
-              onChange={(e) => setDraftTitle(e.target.value)}
-              placeholder="e.g. Physics"
-              className="mt-1 w-full rounded-lg border border-white/15 bg-wisdom-dark/50 px-2.5 py-2 text-sm text-white"
-            />
-          </label>
-          <label className="text-xs text-wisdom-muted">
-            Day
-            <select
-              value={draftDay}
-              onChange={(e) => setDraftDay(Number(e.target.value))}
-              className="mt-1 w-full rounded-lg border border-white/15 bg-wisdom-dark/50 px-2.5 py-2 text-sm text-white"
-            >
-              {DAYS.map((d, i) => (
-                <option key={d} value={i}>
-                  {d}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="text-xs text-wisdom-muted">
-            Start
-            <select
-              value={draftStart}
-              onChange={(e) => setDraftStart(Number(e.target.value))}
-              className="mt-1 w-full rounded-lg border border-white/15 bg-wisdom-dark/50 px-2.5 py-2 text-sm text-white"
-            >
-              {HOURS.map((h) => (
-                <option key={h} value={h}>
-                  {formatHour(h)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="text-xs text-wisdom-muted">
-            End
-            <select
-              value={draftEnd}
-              onChange={(e) => setDraftEnd(Number(e.target.value))}
-              className="mt-1 w-full rounded-lg border border-white/15 bg-wisdom-dark/50 px-2.5 py-2 text-sm text-white"
-            >
-              {HOURS.map((h) => (
-                <option key={h} value={h + 1}>
-                  {formatHour((h + 1) % 24)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="flex items-end gap-2">
+      <div className="space-y-4">
+        {/* Top Control Bar: Mode Toggle + Add Block Button */}
+        <div className="flex items-center justify-between gap-2">
+          {/* Day / Week Switcher */}
+          <div className="flex items-center rounded-xl bg-[#0a101c] p-1 border border-white/10 text-xs">
             <button
               type="button"
-              onClick={addBlock}
-              className="flex-1 rounded-xl bg-amber-500 py-2 text-sm font-bold text-wisdom-dark"
+              onClick={() => setViewMode("day")}
+              className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
+                viewMode === "day"
+                  ? "bg-cyan-500 text-black shadow-sm"
+                  : "text-slate-300 hover:text-white"
+              }`}
             >
-              Save
+              Day View
             </button>
             <button
               type="button"
-              onClick={() => setShowForm(false)}
-              className="rounded-xl border border-white/15 px-3 py-2 text-sm text-wisdom-muted"
+              onClick={() => setViewMode("week")}
+              className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
+                viewMode === "week"
+                  ? "bg-cyan-500 text-black shadow-sm"
+                  : "text-slate-300 hover:text-white"
+              }`}
             >
-              Cancel
+              Week Grid
             </button>
           </div>
-        </div>
-      )}
 
-      <div className="rounded-2xl border border-white/12 bg-wisdom-card overflow-hidden shadow-card-3d">
-        <div className="overflow-x-auto">
-          <div className="min-w-[640px]">
-            <div
-              className="grid border-b border-white/10 bg-wisdom-dark/40 sticky top-0 z-20"
-              style={{ gridTemplateColumns: "4.5rem repeat(7, minmax(0, 1fr))" }}
-            >
-              <div className="px-2 py-2.5 text-[10px] font-bold uppercase tracking-wider text-wisdom-muted flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                Time
-              </div>
-              {DAYS.map((d, i) => (
-                <div
-                  key={d}
-                  className={`px-1 py-2.5 text-center text-xs font-bold ${
-                    i === currentDay ? "text-cyan-300 bg-cyan-500/10" : "text-white/80"
-                  }`}
-                >
-                  {d}
-                  {i === currentDay && (
-                    <span className="block text-[9px] font-semibold text-cyan-400/90 normal-case tracking-normal">
-                      Today
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            <div className="relative max-h-[28rem] overflow-y-auto">
-              <div
-                className="pointer-events-none absolute left-0 right-0 z-10 flex items-center"
-                style={{ top: `calc(${(currentHour + minuteFrac) * 2.75}rem)` }}
-                aria-hidden
-              >
-                <span className="ml-[0.15rem] shrink-0 rounded-full bg-rose-500 px-1.5 py-0.5 text-[9px] font-bold text-white shadow">
-                  {now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                </span>
-                <div className="h-0.5 flex-1 bg-rose-500/90 shadow-[0_0_8px_rgba(244,63,94,0.6)]" />
-              </div>
-
-              {HOURS.map((hour) => (
-                <div
-                  key={hour}
-                  className="grid border-b border-white/[0.06]"
-                  style={{
-                    gridTemplateColumns: "4.5rem repeat(7, minmax(0, 1fr))",
-                    height: "2.75rem",
-                  }}
-                >
-                  <div
-                    className={`px-2 text-[10px] font-medium tabular-nums flex items-start pt-1 ${
-                      hour === currentHour ? "text-rose-300" : "text-wisdom-muted"
-                    }`}
-                  >
-                    {formatHour(hour)}
-                  </div>
-                  {DAYS.map((_, day) => {
-                    const cellBlocks = blocksByCell.get(`${day}-${hour}`) || [];
-                    const isNow = day === currentDay && hour === currentHour;
-                    return (
-                      <button
-                        key={`${day}-${hour}`}
-                        type="button"
-                        onClick={() => onCellClick(day, hour)}
-                        className={`relative border-l border-white/[0.06] text-left transition-colors hover:bg-white/[0.04] ${
-                          day === currentDay ? "bg-cyan-500/[0.04]" : ""
-                        } ${isNow ? "ring-1 ring-inset ring-rose-400/40" : ""}`}
-                      >
-                        {cellBlocks.map((b) => (
-                          <div
-                            key={b.id}
-                            className={`absolute inset-x-0.5 top-0.5 bottom-0.5 rounded-md border px-1 py-0.5 overflow-hidden ${b.color}`}
-                            title={b.title}
-                          >
-                            <span className="block text-[9px] font-bold text-white truncate leading-tight">
-                              {b.title}
-                            </span>
-                          </div>
-                        ))}
-                      </button>
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setDraftDay(selectedDay);
+              setShowForm((v) => !v);
+            }}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-cyan-500 px-3.5 py-1.5 text-xs font-bold text-black hover:bg-cyan-400 transition-all shadow-md"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>{showForm ? "Close Form" : "Add Block"}</span>
+          </button>
         </div>
 
-        {blocks.length > 0 && (
-          <div className="border-t border-white/10 p-3 flex flex-wrap gap-2">
-            {blocks.map((b) => (
-              <span
-                key={b.id}
-                className={`inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] text-white ${b.color}`}
-              >
-                {DAYS[b.day]} · {formatHour(b.startHour)}–{formatHour(b.endHour % 24)}
-                {" · "}
-                {b.title}
-                <button
-                  type="button"
-                  onClick={() => removeBlock(b.id)}
-                  className="p-0.5 rounded hover:bg-black/20"
-                  aria-label="Remove"
-                >
-                  <Trash2 className="w-3 h-3" />
-                </button>
+        {/* Add Block Form with Native Rotating Clock / Time Pickers */}
+        {showForm && (
+          <form
+            onSubmit={addBlock}
+            className="rounded-2xl border border-cyan-400/40 bg-[#0a101c] p-4 space-y-3 shadow-xl animate-fade-in"
+          >
+            <div className="flex items-center justify-between pb-2 border-b border-white/8">
+              <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-cyan-400" />
+                Schedule New Study Session
               </span>
-            ))}
+              <span className="text-[10px] text-slate-400">Exact Hour & Minute Inputs</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+              <label className="text-slate-400">
+                Course / Subject Title
+                <input
+                  type="text"
+                  value={draftTitle}
+                  onChange={(e) => setDraftTitle(e.target.value)}
+                  placeholder="e.g. Calculus Derivatives"
+                  className="mt-1 w-full rounded-xl border border-white/12 bg-[#111b2e] px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-400"
+                  required
+                />
+              </label>
+
+              <label className="text-slate-400">
+                Day of Week
+                <select
+                  value={draftDay}
+                  onChange={(e) => setDraftDay(Number(e.target.value))}
+                  className="mt-1 w-full rounded-xl border border-white/12 bg-[#111b2e] px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-400"
+                >
+                  {DAYS.map((d, i) => (
+                    <option key={d} value={i} className="bg-[#111b2e] text-white">
+                      {d}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              {/* Native Rotating Clock Time Pickers (Interactive on mobile/desktop) */}
+              <label className="text-slate-400">
+                Start Time (Clock)
+                <div className="relative mt-1">
+                  <input
+                    type="time"
+                    value={draftStart}
+                    onChange={(e) => setDraftStart(e.target.value)}
+                    className="w-full rounded-xl border border-white/12 bg-[#111b2e] px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-400 font-mono"
+                    required
+                  />
+                </div>
+              </label>
+
+              <label className="text-slate-400">
+                End Time (Clock)
+                <div className="relative mt-1">
+                  <input
+                    type="time"
+                    value={draftEnd}
+                    onChange={(e) => setDraftEnd(e.target.value)}
+                    className="w-full rounded-xl border border-white/12 bg-[#111b2e] px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-400 font-mono"
+                    required
+                  />
+                </div>
+              </label>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-white/8">
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="px-3 py-1.5 rounded-xl border border-white/10 text-xs text-slate-400 hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black text-xs font-bold shadow-md"
+              >
+                Save Session
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* Days Tabs (Mon - Sun) */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+          {DAYS.map((d, i) => {
+            const isSelected = i === selectedDay;
+            const isToday = i === todayIndex();
+            const count = blocks.filter((b) => b.day === i).length;
+            return (
+              <button
+                key={d}
+                type="button"
+                onClick={() => setSelectedDay(i)}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all shrink-0 border ${
+                  isSelected
+                    ? "bg-cyan-500/20 border-cyan-400 text-cyan-200"
+                    : "bg-[#0a101c] border-white/8 text-slate-400 hover:text-white hover:border-white/20"
+                }`}
+              >
+                <span>{d}</span>
+                {isToday && <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />}
+                {count > 0 && (
+                  <span className="text-[10px] px-1 rounded-full bg-white/10 text-slate-300">
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* ── View 1: Day View (Mobile-Friendly, No Overflow, Compact) ── */}
+        {viewMode === "day" && (
+          <div className="rounded-2xl border border-white/10 bg-[#0a101c] p-4 space-y-2.5">
+            <div className="flex items-center justify-between pb-2 border-b border-white/8">
+              <span className="text-xs font-bold text-white">
+                {DAYS[selectedDay]} Study Timeline
+              </span>
+              <span className="text-[11px] text-slate-400">
+                {currentDayBlocks.length} session{currentDayBlocks.length === 1 ? "" : "s"} scheduled
+              </span>
+            </div>
+
+            {currentDayBlocks.length === 0 ? (
+              <div className="p-8 text-center text-xs text-slate-500">
+                No study sessions scheduled for {DAYS[selectedDay]}. Click &quot;Add Block&quot; to set one.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {currentDayBlocks.map((b) => (
+                  <div
+                    key={b.id}
+                    className={`flex items-center justify-between p-3 rounded-xl border text-xs transition-all ${b.color}`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0 pr-2">
+                      <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded-md bg-black/40 shrink-0">
+                        {b.startTime} – {b.endTime}
+                      </span>
+                      <p className="font-bold text-white truncate">{b.title}</p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => removeBlock(b.id)}
+                      className="p-1 rounded text-slate-400 hover:text-rose-400 transition-colors"
+                      title="Delete session"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── View 2: Compact Week Grid (Smaller font, fit in mobile) ── */}
+        {viewMode === "week" && (
+          <div className="rounded-2xl border border-white/10 bg-[#0a101c] p-3 overflow-x-auto">
+            <div className="min-w-[500px] grid grid-cols-7 gap-2 text-center text-[11px]">
+              {DAYS.map((d, i) => {
+                const dayBlocks = blocks
+                  .filter((b) => b.day === i)
+                  .sort((a, b) => a.startTime.localeCompare(b.startTime));
+                return (
+                  <div key={d} className="rounded-xl border border-white/8 bg-[#111b2e] p-2 space-y-1.5">
+                    <p className={`font-bold pb-1 border-b border-white/8 ${i === todayIndex() ? "text-cyan-400" : "text-white"}`}>
+                      {d}
+                    </p>
+                    {dayBlocks.length === 0 ? (
+                      <p className="text-[10px] text-slate-500 py-2">Free</p>
+                    ) : (
+                      dayBlocks.map((b) => (
+                        <div
+                          key={b.id}
+                          className={`p-1.5 rounded-lg border text-[10px] text-left relative group ${b.color}`}
+                        >
+                          <p className="font-bold truncate text-white">{b.title}</p>
+                          <p className="text-[9px] font-mono opacity-80">{b.startTime}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
