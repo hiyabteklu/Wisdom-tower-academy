@@ -35,7 +35,6 @@ import {
   Settings2,
   Shield,
   Smartphone,
-  Sparkles,
   Target,
   UserCheck,
   Zap,

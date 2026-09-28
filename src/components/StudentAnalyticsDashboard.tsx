@@ -22,8 +22,12 @@ import {
   Timer,
   TrendingUp,
   Zap,
+  FileDown,
+  Download,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import CustomSelect from "@/components/ui/CustomSelect";
+import { generateWeeklyReportPdf } from "@/lib/pdf-report-generator";
 import {
   computeStudentAnalytics,
   type StudentAnalyticsResult,
@@ -54,6 +58,8 @@ export default function StudentAnalyticsDashboard({
 }: StudentAnalyticsProps) {
   const [loading, setLoading] = useState(false);
   const [selectedTrackKey, setSelectedTrackKey] = useState<string>("");
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [pdfDownloaded, setPdfDownloaded] = useState(false);
 
   // Raw progress records from Supabase learning_progress
   const [rawProgress, setRawProgress] = useState<
@@ -120,6 +126,35 @@ export default function StudentAnalyticsDashboard({
 
   const isAutoDetected = selectedTrackKey === defaultResolvedTrack.trackId;
 
+  const handleDownloadReport = () => {
+    setGeneratingPdf(true);
+    try {
+      const doc = generateWeeklyReportPdf({
+        analytics,
+        profile: {
+          full_name: studentName,
+          education_level: educationLevel,
+          stream,
+        },
+        referenceId: `WTA-${userId.slice(0, 6).toUpperCase()}-2026`,
+      });
+      doc.save(`WTA-Weekly-Report-${studentName.replace(/\s+/g, "_")}.pdf`);
+      setPdfDownloaded(true);
+      setTimeout(() => setPdfDownloaded(false), 4000);
+    } catch (err) {
+      console.error("[Dashboard] Error generating report PDF:", err);
+      alert("Failed to generate PDF. Please try again.");
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
+
+  const trackOptions = Object.values(ACADEMIC_KNOWLEDGE_BASE).map((t) => ({
+    value: t.trackId,
+    label: t.trackId === defaultResolvedTrack.trackId ? `${t.trackName} (Enrolled)` : t.trackName,
+    description: `${t.category} · ${t.weeklyTargetHours}h / week target`,
+  }));
+
   return (
     <div className={`space-y-7 ${className}`}>
       {/* ========================================================= */}
@@ -138,25 +173,27 @@ export default function StudentAnalyticsDashboard({
             </span>
           </div>
 
-          {/* Curriculum View Selector */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400 hidden sm:inline">Track:</span>
-            <div className="relative">
-              <select
+          {/* Quick Actions: Track Selector & Download Color PDF */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="w-48 sm:w-56">
+              <CustomSelect
                 value={selectedTrackKey || defaultResolvedTrack.trackId}
-                onChange={(e) => setSelectedTrackKey(e.target.value)}
-                className="appearance-none px-3.5 py-1.5 pr-8 rounded-xl border border-white/20 bg-black/60 text-xs font-bold text-white focus:outline-none focus:border-cyan-400 cursor-pointer shadow-inner"
-              >
-                {Object.values(ACADEMIC_KNOWLEDGE_BASE).map((t) => (
-                  <option key={t.trackId} value={t.trackId} className="bg-[#0b1528] text-white text-xs">
-                    {t.trackName} {t.trackId === defaultResolvedTrack.trackId ? " ★ Enrolled" : ""}
-                  </option>
-                ))}
-              </select>
-              <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-cyan-300 text-xs">
-                ▼
-              </div>
+                onChange={(val) => setSelectedTrackKey(val)}
+                options={trackOptions}
+                searchable={false}
+              />
             </div>
+
+            <button
+              type="button"
+              onClick={handleDownloadReport}
+              disabled={generatingPdf}
+              className="px-3.5 py-2 rounded-xl text-xs font-bold border border-cyan-400/40 bg-cyan-500/15 text-cyan-200 hover:bg-cyan-500/25 hover:border-cyan-300 flex items-center gap-1.5 transition-all shadow-sm cursor-pointer disabled:opacity-50"
+              title="Download your weekly report with concise color summary"
+            >
+              <FileDown className={`w-3.5 h-3.5 ${generatingPdf ? "animate-bounce" : ""}`} />
+              {generatingPdf ? "Generating..." : pdfDownloaded ? "PDF Saved!" : "Download Report (Color PDF)"}
+            </button>
           </div>
         </div>
 

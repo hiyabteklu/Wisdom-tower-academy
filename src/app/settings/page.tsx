@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -22,7 +22,14 @@ import {
 } from "@/lib/preferences";
 import StudentAvatar from "@/components/StudentAvatar";
 import BrandLoader from "@/components/BrandLoader";
+import CustomSelect from "@/components/ui/CustomSelect";
 import { flushOfflineQueue } from "@/lib/contentWithOffline";
+import {
+  computeStudentAnalytics,
+  resolveStudentTrackBenchmark,
+  type StudentAnalyticsResult,
+} from "@/lib/student-knowledge-base";
+import { generateWeeklyReportPdf } from "@/lib/pdf-report-generator";
 import type { User } from "@supabase/supabase-js";
 import {
   ArrowLeft,
@@ -31,22 +38,17 @@ import {
   ChevronRight,
   Database,
   Download,
-  Eye,
-  FileText,
+  FileDown,
   HardDrive,
   Key,
-  Layers,
   Lock,
   LogOut,
   Moon,
   RefreshCw,
   Save,
-  Settings2,
   Shield,
   Smartphone,
-  Sparkles,
   Target,
-  Trash2,
   User as UserIcon,
   Volume2,
   Zap,
@@ -54,6 +56,7 @@ import {
 
 type SettingsSection =
   | "profile"
+  | "report"
   | "app"
   | "study"
   | "notifications"
@@ -68,10 +71,11 @@ const SECTIONS: {
   desc: string;
 }[] = [
   { id: "profile", label: "Academic Profile", icon: UserIcon, desc: "Identity, school & stream" },
-  { id: "app", label: "App & Webview", icon: Smartphone, badge: "App", desc: "AMOLED, text scale & data" },
+  { id: "report", label: "Weekly Report", icon: FileDown, badge: "Color PDF", desc: "Download performance PDF" },
+  { id: "app", label: "App & Display", icon: Smartphone, desc: "AMOLED, text scale & data" },
   { id: "study", label: "Study & Goals", icon: Target, desc: "Daily goals & time targets" },
-  { id: "notifications", label: "Notifications", icon: Bell, desc: "Study alerts & updates" },
-  { id: "storage", label: "Offline & Storage", icon: HardDrive, desc: "Sync, cache & data size" },
+  { id: "notifications", label: "Notifications", icon: Bell, desc: "Study alerts & digest" },
+  { id: "storage", label: "Offline Storage", icon: HardDrive, desc: "Sync, cache & local data" },
   { id: "security", label: "Security & Data", icon: Lock, desc: "Password, export & session" },
 ];
 
@@ -143,7 +147,7 @@ function SettingsContent() {
     msg: string;
   } | null>(null);
 
-  // Preferences State (Stored in localStorage and synced)
+  // Preferences State
   const [prefs, setPrefs] = useState<UserPreferences>(DEFAULT_PREFS);
   const [savedFlash, setSavedFlash] = useState(false);
 
@@ -161,7 +165,21 @@ function SettingsContent() {
   const [syncingOffline, setSyncingOffline] = useState(false);
   const [syncMsg, setSyncMsg] = useState<string | null>(null);
 
-  // Initialize and load user data
+  // Real Progress data for Weekly Color PDF Report
+  const [progressRecords, setProgressRecords] = useState<
+    {
+      resource_id: string;
+      progress_pct: number;
+      total_seconds: number;
+      focus_seconds: number;
+      last_opened_at: string | null;
+      meta: Record<string, unknown>;
+    }[]
+  >([]);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [pdfSuccessMsg, setPdfSuccessMsg] = useState<string | null>(null);
+
+  // Load user session & progress records
   useEffect(() => {
     let cancelled = false;
 
@@ -174,8 +192,21 @@ function SettingsContent() {
       await ensureProfile(session.user);
       const full = await getFullProfile(session.user.id);
 
+      // Fetch progress records for student analytics
+      let progData: typeof progressRecords = [];
+      try {
+        const { data: pData } = await supabase
+          .from("learning_progress")
+          .select("resource_id, progress_pct, total_seconds, focus_seconds, last_opened_at, meta")
+          .eq("user_id", session.user.id);
+        if (pData) progData = pData;
+      } catch (err) {
+        console.warn("[Settings] Learning progress fetch notice:", err);
+      }
+
       if (!cancelled) {
         setUser(session.user);
+        setProgressRecords(progData);
         setPrefs(loadPreferences());
 
         const meta = session.user.user_metadata || {};
@@ -208,6 +239,24 @@ function SettingsContent() {
       cancelled = true;
     };
   }, [router]);
+
+  // Compute student analytics for the Weekly Color PDF
+  const studentAnalytics: StudentAnalyticsResult = useMemo(() => {
+    const studentName =
+      profile.full_name ||
+      user?.user_metadata?.full_name ||
+      user?.email?.split("@")[0] ||
+      "Scholar";
+
+    return computeStudentAnalytics(
+      progressRecords,
+      studentName,
+      profile.education_level,
+      profile.stream,
+      user?.created_at,
+      []
+    );
+  }, [progressRecords, profile, user]);
 
   // Calculate local storage footprint
   useEffect(() => {
@@ -258,7 +307,6 @@ function SettingsContent() {
     setSavingProfile(true);
     setProfileFeedback(null);
 
-    // Compute full name if individual names are populated
     let computedFullName = profile.full_name?.trim() || "";
     if (!computedFullName && (profile.first_name || profile.last_name)) {
       computedFullName = `${profile.first_name || ""} ${profile.last_name || ""}`.trim();
@@ -328,6 +376,33 @@ function SettingsContent() {
     setPasswordLoading(false);
   };
 
+  // Download Weekly Report (Color PDF)
+  const handleDownloadWeeklyReport = () => {
+    if (!user) return;
+    setGeneratingPdf(true);
+    setPdfSuccessMsg(null);
+
+    try {
+      const refId = `WTA-${user.id.slice(0, 6).toUpperCase()}-2026`;
+      const doc = generateWeeklyReportPdf({
+        analytics: studentAnalytics,
+        profile,
+        userEmail: user.email,
+        referenceId: refId,
+      });
+
+      const fileName = `WTA-Weekly-Report-${studentAnalytics.studentName.replace(/\s+/g, "_")}-${new Date().toISOString().slice(0, 10)}.pdf`;
+      doc.save(fileName);
+      setPdfSuccessMsg("Weekly Report (Color PDF) downloaded successfully!");
+      setTimeout(() => setPdfSuccessMsg(null), 5000);
+    } catch (err) {
+      console.error("[Settings] PDF generation error:", err);
+      alert("Could not generate PDF report. Please try again.");
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
+
   // Sync Offline Queue
   const handleSyncOffline = async () => {
     setSyncingOffline(true);
@@ -341,7 +416,7 @@ function SettingsContent() {
     setSyncingOffline(false);
   };
 
-  // Clear Offline Storage
+  // Clear Offline Storage - NO clear cache icon
   const handleClearCache = () => {
     if (
       typeof window !== "undefined" &&
@@ -368,6 +443,14 @@ function SettingsContent() {
         profile,
       },
       appPreferences: prefs,
+      studentAnalytics: {
+        masteryTier: studentAnalytics.masteryTier,
+        totalStudyHours: studentAnalytics.totalStudyHours,
+        readingSpeedWpm: studentAnalytics.readingSpeedWpm,
+        readingMethod: studentAnalytics.readingAnalysis.method,
+        retentionRating: studentAnalytics.retentionAnalysis.rating,
+        accuracyPct: studentAnalytics.retentionAnalysis.accuracyPct,
+      },
       system: "Wisdom Tower Academy v3.2",
     };
 
@@ -427,13 +510,27 @@ function SettingsContent() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 self-end sm:self-center">
+          {/* Quick Actions in Header */}
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-center">
             {savedFlash && (
               <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 animate-pulse">
                 <Check className="w-3.5 h-3.5" />
                 Saved
               </span>
             )}
+
+            {/* Direct Download Weekly Report Button in Header */}
+            <button
+              type="button"
+              onClick={handleDownloadWeeklyReport}
+              disabled={generatingPdf}
+              className="px-3.5 py-2 rounded-xl text-xs font-bold border border-cyan-400/40 bg-cyan-500/15 text-cyan-200 hover:bg-cyan-500/25 hover:border-cyan-300 flex items-center gap-1.5 transition-all shadow-sm cursor-pointer disabled:opacity-50"
+              title="Download your concise weekly performance dashboard in high-contrast color PDF"
+            >
+              <FileDown className={`w-3.5 h-3.5 ${generatingPdf ? "animate-bounce" : ""}`} />
+              {generatingPdf ? "Generating..." : "Download Weekly Report"}
+            </button>
+
             <Link
               href="/account"
               className="btn-secondary text-xs sm:text-sm px-3.5 py-2 border-white/15"
@@ -444,10 +541,23 @@ function SettingsContent() {
           </div>
         </div>
 
-        {/* Layout Grid: Left Sidebar Tabs / Right Dynamic Panes */}
+        {/* PDF Download Flash Success Toast */}
+        {pdfSuccessMsg && (
+          <div className="mb-6 p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/15 text-emerald-200 text-xs font-semibold flex items-center justify-between gap-3 shadow-lg animate-in fade-in">
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>{pdfSuccessMsg}</span>
+            </div>
+            <span className="text-[10px] text-emerald-300/80 uppercase tracking-wider font-mono">
+              Ready in Downloads
+            </span>
+          </div>
+        )}
+
+        {/* Layout Grid: Clean non-swiping cards on mobile, vertical sidebar on desktop */}
         <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6 items-start">
-          {/* Navigation Tabs (Horizontal on mobile, Vertical on desktop) */}
-          <nav className="flex lg:flex-col gap-1.5 overflow-x-auto pb-2 lg:pb-0 -mx-1 px-1 sticky lg:top-24 z-10">
+          {/* Navigation Cards: NO horizontal swipe on mobile, clean responsive grid that fits mobile view */}
+          <nav className="grid grid-cols-2 sm:grid-cols-3 lg:flex lg:flex-col gap-2.5">
             {SECTIONS.map((s) => {
               const Icon = s.icon;
               const active = section === s.id;
@@ -456,20 +566,26 @@ function SettingsContent() {
                   key={s.id}
                   type="button"
                   onClick={() => setSection(s.id)}
-                  className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-left transition-all shrink-0 lg:shrink lg:w-full cursor-pointer ${
+                  className={`flex flex-col lg:flex-row items-start lg:items-center gap-2.5 lg:gap-3 rounded-2xl p-3.5 lg:px-4 lg:py-3 text-left transition-all cursor-pointer ${
                     active
                       ? "bg-cyan-500/15 border border-cyan-400/40 text-white shadow-lg shadow-cyan-500/10 font-bold"
-                      : "border border-white/5 text-wisdom-muted hover:bg-white/5 hover:text-white font-medium"
+                      : "border border-white/8 bg-white/[0.02] text-wisdom-muted hover:bg-white/5 hover:text-white font-medium"
                   }`}
                 >
-                  <Icon
-                    className={`w-4.5 h-4.5 shrink-0 ${active ? "text-cyan-300" : "text-wisdom-muted"}`}
-                  />
+                  <div
+                    className={`p-2 rounded-xl shrink-0 ${
+                      active ? "bg-cyan-500/20 text-cyan-300" : "bg-white/5 text-wisdom-muted"
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs sm:text-sm truncate">{s.label}</span>
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-xs sm:text-sm font-semibold truncate leading-tight">
+                        {s.label}
+                      </span>
                       {s.badge && (
-                        <span className="ml-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                        <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 border border-amber-400/30 shrink-0">
                           {s.badge}
                         </span>
                       )}
@@ -485,11 +601,12 @@ function SettingsContent() {
               );
             })}
 
-            <div className="hidden lg:block pt-4 mt-2 border-t border-white/10">
+            {/* Sign Out Card */}
+            <div className="col-span-2 sm:col-span-3 lg:col-span-1 pt-2 lg:pt-4 lg:mt-2 lg:border-t border-white/10">
               <button
                 type="button"
                 onClick={handleLogout}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs font-semibold text-rose-400/80 hover:text-rose-300 hover:bg-rose-500/10 transition-colors"
+                className="w-full flex items-center justify-center lg:justify-start gap-2.5 p-3 lg:px-4 lg:py-2.5 rounded-2xl text-xs font-semibold border border-rose-500/25 bg-rose-500/5 text-rose-300 hover:text-rose-200 hover:bg-rose-500/15 transition-colors cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
                 Sign Out
@@ -520,7 +637,7 @@ function SettingsContent() {
                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-3">
                       Choose Your Academic Avatar
                     </label>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                       {AVATAR_PRESETS.map((p) => {
                         const selected = profile.avatar_preset === p.id;
                         return (
@@ -534,7 +651,7 @@ function SettingsContent() {
                                 avatar_url: null,
                               }))
                             }
-                            className={`p-3 rounded-2xl border text-left flex items-center gap-3 transition-all ${
+                            className={`p-3 rounded-2xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
                               selected
                                 ? `border-cyan-400 bg-cyan-500/15 ${p.glow} ring-2 ring-cyan-400/30`
                                 : "border-white/10 bg-white/[0.02] hover:border-white/20"
@@ -619,50 +736,32 @@ function SettingsContent() {
                     </div>
                   </div>
 
-                  {/* Education Level & Stream */}
+                  {/* Education Level & Stream - CUSTOM SELECT (No default chrome picker) */}
                   <div className="grid sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                        Education Level
-                      </label>
-                      <select
-                        value={profile.education_level || ""}
-                        onChange={(e) =>
-                          setProfile((prev) => ({ ...prev, education_level: e.target.value }))
-                        }
-                        className="w-full px-4 py-2.5 rounded-xl border border-white/15 bg-wisdom-navy text-white text-sm focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400"
-                      >
-                        <option value="">Select your academic level</option>
-                        {EDUCATION_LEVELS.map((lvl) => (
-                          <option key={lvl} value={lvl}>
-                            {lvl}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    <CustomSelect
+                      label="Education Level"
+                      placeholder="Select your academic level"
+                      value={profile.education_level || ""}
+                      onChange={(val) =>
+                        setProfile((prev) => ({ ...prev, education_level: val }))
+                      }
+                      options={EDUCATION_LEVELS}
+                      searchable={false}
+                    />
 
-                    <div>
-                      <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                        Stream / Field of Study
-                      </label>
-                      <select
-                        value={profile.stream || ""}
-                        onChange={(e) =>
-                          setProfile((prev) => ({ ...prev, stream: e.target.value }))
-                        }
-                        className="w-full px-4 py-2.5 rounded-xl border border-white/15 bg-wisdom-navy text-white text-sm focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400"
-                      >
-                        <option value="">Select your discipline stream</option>
-                        {ACADEMIC_STREAMS.map((s) => (
-                          <option key={s} value={s}>
-                            {s}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    <CustomSelect
+                      label="Stream / Field of Study"
+                      placeholder="Select your discipline stream"
+                      value={profile.stream || ""}
+                      onChange={(val) =>
+                        setProfile((prev) => ({ ...prev, stream: val }))
+                      }
+                      options={ACADEMIC_STREAMS}
+                      searchable={false}
+                    />
                   </div>
 
-                  {/* School/University & Region */}
+                  {/* School/University & Region - CUSTOM SELECT (No default chrome picker) */}
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-slate-300 mb-1.5">
@@ -679,25 +778,16 @@ function SettingsContent() {
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                        Town / Region
-                      </label>
-                      <select
-                        value={profile.town_region || ""}
-                        onChange={(e) =>
-                          setProfile((prev) => ({ ...prev, town_region: e.target.value }))
-                        }
-                        className="w-full px-4 py-2.5 rounded-xl border border-white/15 bg-wisdom-navy text-white text-sm focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400"
-                      >
-                        <option value="">Select Region</option>
-                        {ETHIOPIAN_REGIONS.map((r) => (
-                          <option key={r} value={r}>
-                            {r}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    <CustomSelect
+                      label="Town / Region"
+                      placeholder="Select Region"
+                      value={profile.town_region || ""}
+                      onChange={(val) =>
+                        setProfile((prev) => ({ ...prev, town_region: val }))
+                      }
+                      options={ETHIOPIAN_REGIONS}
+                      searchable={true}
+                    />
                   </div>
 
                   {/* Target Goal & Score */}
@@ -785,7 +875,168 @@ function SettingsContent() {
               </div>
             )}
 
-            {/* 2. APP & WEBVIEW DISPLAY TAB */}
+            {/* 2. DEDICATED WEEKLY PERFORMANCE REPORT TAB (Color PDF) */}
+            {section === "report" && (
+              <div>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 mb-6 border-b border-white/10">
+                  <div>
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-400/15 text-amber-300 border border-amber-400/30 mb-2">
+                      <FileDown className="w-3 h-3" />
+                      Executive Scholar Report
+                    </div>
+                    <h2 className="font-display text-xl sm:text-2xl font-bold text-white">
+                      Weekly Performance Report (Color PDF)
+                    </h2>
+                    <p className="text-xs sm:text-sm text-wisdom-muted mt-1">
+                      Download a publication-grade, concise color PDF summary of your dashboard diagnostics.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleDownloadWeeklyReport}
+                    disabled={generatingPdf}
+                    className="btn-primary px-6 py-3 text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg shadow-cyan-500/20 cursor-pointer self-start sm:self-center"
+                  >
+                    <FileDown className={`w-4 h-4 ${generatingPdf ? "animate-bounce" : ""}`} />
+                    {generatingPdf ? "Compiling Color PDF..." : "Download My Weekly Report"}
+                  </button>
+                </div>
+
+                {/* Live Preview Card of the Report */}
+                <div className="rounded-2xl border border-sky-500/30 bg-[#081224] p-5 sm:p-7 space-y-6">
+                  {/* Banner Diagnosis */}
+                  <div className="p-4 rounded-xl border border-cyan-500/30 bg-cyan-500/10 space-y-1.5">
+                    <p className="text-xs font-mono font-bold uppercase tracking-wider text-cyan-300">
+                      According to your records and our system:
+                    </p>
+                    <p className="text-sm font-semibold text-white leading-relaxed">
+                      Your logged study time is{" "}
+                      <strong className="text-cyan-300">
+                        {studentAnalytics.totalStudyHours.toFixed(1)} hours
+                      </strong>{" "}
+                      ({studentAnalytics.studyTimeAnalysis.weeklyProgressPct}% of your weekly milestone).
+                      Your diagnosed reading speed is{" "}
+                      <strong className="text-amber-300">
+                        {studentAnalytics.readingAnalysis.speedWpm} WPM
+                      </strong>{" "}
+                      via{" "}
+                      <strong className="text-white">
+                        {studentAnalytics.readingAnalysis.method}
+                      </strong>
+                      , maintaining{" "}
+                      <strong className="text-emerald-400">
+                        {studentAnalytics.retentionAnalysis.accuracyPct}% accuracy
+                      </strong>{" "}
+                      ({studentAnalytics.retentionAnalysis.rating}).
+                    </p>
+                  </div>
+
+                  {/* 4 HUD Metric Cards */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="p-3.5 rounded-xl border border-white/10 bg-white/[0.02]">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-wisdom-muted mb-1">
+                        Weekly Study Time
+                      </p>
+                      <p className="text-lg font-black text-white">
+                        {studentAnalytics.totalStudyHours.toFixed(1)} hrs
+                      </p>
+                      <p className="text-xs text-cyan-300 font-semibold mt-0.5">
+                        {studentAnalytics.studyTimeAnalysis.weeklyProgressPct}% of weekly target
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl border border-white/10 bg-white/[0.02]">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-wisdom-muted mb-1">
+                        Reading Speed & Style
+                      </p>
+                      <p className="text-lg font-black text-amber-300">
+                        {studentAnalytics.readingAnalysis.speedWpm} WPM
+                      </p>
+                      <p className="text-xs text-slate-300 truncate mt-0.5">
+                        {studentAnalytics.readingAnalysis.method}
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl border border-white/10 bg-white/[0.02]">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-wisdom-muted mb-1">
+                        Retention & Accuracy
+                      </p>
+                      <p className="text-lg font-black text-emerald-400">
+                        {studentAnalytics.retentionAnalysis.accuracyPct}%
+                      </p>
+                      <p className="text-xs text-slate-300 truncate mt-0.5">
+                        {studentAnalytics.retentionAnalysis.rating}
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl border border-white/10 bg-white/[0.02]">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-wisdom-muted mb-1">
+                        Scholar Standing
+                      </p>
+                      <p className="text-sm font-black text-white truncate">
+                        {studentAnalytics.masteryTier}
+                      </p>
+                      <p className="text-xs text-cyan-300 font-semibold mt-0.5">
+                        {studentAnalytics.studyTimeAnalysis.paceStatus}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Immediate Stop Signals Preview */}
+                  <div className="p-4 rounded-xl border border-rose-500/30 bg-rose-500/[0.05] space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-bold uppercase tracking-wider text-rose-300">
+                        Immediately Stop Signals (Data-Driven Alerts)
+                      </p>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-200 border border-rose-500/30">
+                        Included in Color PDF
+                      </span>
+                    </div>
+
+                    {studentAnalytics.immediatelyStopSignals.length === 0 ? (
+                      <p className="text-xs text-slate-300">
+                        No critical anomalies detected in your recent study blocks.
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {studentAnalytics.immediatelyStopSignals.slice(0, 2).map((sig) => (
+                          <div
+                            key={sig.id}
+                            className="p-2.5 rounded-lg bg-black/40 border border-rose-500/20 text-xs space-y-0.5"
+                          >
+                            <p className="font-bold text-rose-200">
+                              STOP: {sig.signal}
+                            </p>
+                            <p className="text-wisdom-muted text-[11px]">
+                              {sig.observedData} &rarr; <span className="text-slate-200">{sig.immediateAction}</span>
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Call to action */}
+                  <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-wisdom-muted border-t border-white/10">
+                    <p>
+                      Your color PDF report includes official Academy header insignia, curriculum breakdown, and verification stamp.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleDownloadWeeklyReport}
+                      disabled={generatingPdf}
+                      className="px-4 py-2.5 rounded-xl border border-cyan-400 bg-cyan-500/20 text-cyan-200 hover:bg-cyan-500/30 font-bold flex items-center justify-center gap-2 cursor-pointer transition-colors self-start sm:self-auto shrink-0"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      Download Color PDF
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 3. APP & WEBVIEW DISPLAY TAB */}
             {section === "app" && (
               <div>
                 <div className="pb-6 mb-6 border-b border-white/10">
@@ -801,7 +1052,7 @@ function SettingsContent() {
                   </p>
                 </div>
 
-                <div className="space-y-5">
+                <div className="space-y-4">
                   {/* AMOLED True-Black Mode */}
                   <div className="p-4 sm:p-5 rounded-2xl border border-white/10 bg-white/[0.02] flex items-center justify-between gap-4">
                     <div className="space-y-1">
@@ -810,7 +1061,7 @@ function SettingsContent() {
                         <p className="text-sm font-bold text-white">AMOLED True-Black Mode</p>
                       </div>
                       <p className="text-xs text-wisdom-muted">
-                        Sets background to pure #000000 black. Saves battery on OLED/AMOLED mobile screens.
+                        Sets background to pure black. Saves battery on OLED/AMOLED mobile screens.
                       </p>
                     </div>
                     <Toggle
@@ -838,7 +1089,7 @@ function SettingsContent() {
                     />
                   </div>
 
-                  {/* Font Size Scaling */}
+                  {/* Font Size Scaling - Clean non-swiping card grid */}
                   <div className="p-4 sm:p-5 rounded-2xl border border-white/10 bg-white/[0.02] space-y-3">
                     <div>
                       <p className="text-sm font-bold text-white">Font Size Scaling</p>
@@ -871,21 +1122,11 @@ function SettingsContent() {
                                 : "border-white/10 bg-white/5 text-wisdom-muted hover:text-white"
                             }`}
                           >
-                            <span className="block text-xs">{item.label}</span>
+                            <span className="block text-xs font-semibold">{item.label}</span>
                             <span className="text-[10px] text-wisdom-muted/70">{item.scale}</span>
                           </button>
                         );
                       })}
-                    </div>
-
-                    {/* Live Preview */}
-                    <div className="mt-3 p-3.5 rounded-xl border border-white/8 bg-black/30">
-                      <p className="text-xs text-wisdom-muted mb-1 font-mono uppercase tracking-wider">
-                        Live Note Preview:
-                      </p>
-                      <p className="text-white/90 leading-relaxed">
-                        “The new modular curriculum prioritizes critical problem solving and analytical competencies.”
-                      </p>
                     </div>
                   </div>
 
@@ -894,7 +1135,7 @@ function SettingsContent() {
                     <div>
                       <p className="text-sm font-bold text-white">Textbook Reading Font</p>
                       <p className="text-xs text-wisdom-muted">
-                        Choose your preferred typography for long study notes and chapter summaries.
+                        Choose typography for long study notes and chapter summaries.
                       </p>
                     </div>
 
@@ -918,7 +1159,7 @@ function SettingsContent() {
                                 : "border-white/10 bg-white/5 text-wisdom-muted hover:text-white"
                             }`}
                           >
-                            <span className="block text-xs">{font.label}</span>
+                            <span className="block text-xs font-semibold">{font.label}</span>
                             <span className="text-[10px] text-wisdom-muted/70">{font.desc}</span>
                           </button>
                         );
@@ -962,7 +1203,7 @@ function SettingsContent() {
               </div>
             )}
 
-            {/* 3. STUDY TARGETS & GOALS TAB */}
+            {/* 4. STUDY TARGETS & GOALS TAB */}
             {section === "study" && (
               <div>
                 <div className="pb-6 mb-6 border-b border-white/10">
@@ -975,7 +1216,7 @@ function SettingsContent() {
                   </p>
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-5">
                   {/* Daily Study Goal */}
                   <div className="p-5 rounded-2xl border border-white/10 bg-white/[0.02] space-y-3">
                     <div className="flex items-center justify-between">
@@ -1037,7 +1278,7 @@ function SettingsContent() {
                                 : "border-white/10 bg-white/5 text-wisdom-muted hover:text-white"
                             }`}
                           >
-                            <span className="block text-xs">{slot.label}</span>
+                            <span className="block text-xs font-semibold">{slot.label}</span>
                             <span className="text-[10px] text-wisdom-muted/70">{slot.time}</span>
                           </button>
                         );
@@ -1054,7 +1295,7 @@ function SettingsContent() {
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       {[
                         { mins: 25, label: "Pomodoro (25m)", note: "Short sprint" },
                         { mins: 45, label: "Deep Work (45m)", note: "High yield" },
@@ -1083,7 +1324,7 @@ function SettingsContent() {
               </div>
             )}
 
-            {/* 4. NOTIFICATIONS TAB */}
+            {/* 5. NOTIFICATIONS TAB */}
             {section === "notifications" && (
               <div>
                 <div className="pb-6 mb-6 border-b border-white/10">
@@ -1140,34 +1381,36 @@ function SettingsContent() {
                     </div>
                   ))}
 
-                  {/* Email Digest Frequency */}
-                  <div className="mt-4 p-4 rounded-2xl border border-white/10 bg-white/[0.02] flex items-center justify-between gap-4">
+                  {/* Email Digest Frequency - CUSTOM SELECT (No default chrome picker) */}
+                  <div className="mt-4 p-4 rounded-2xl border border-white/10 bg-white/[0.02] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                       <p className="text-sm font-bold text-white">Email Digest Frequency</p>
                       <p className="text-xs text-wisdom-muted">
                         Weekly summary of your completed reading time and questions attempted.
                       </p>
                     </div>
-                    <select
-                      value={prefs.emailDigest || "weekly"}
-                      onChange={(e) =>
-                        updatePref(
-                          "emailDigest",
-                          e.target.value as "off" | "daily" | "weekly"
-                        )
-                      }
-                      className="px-3 py-1.5 rounded-xl border border-white/15 bg-wisdom-navy text-white text-xs font-semibold focus:outline-none"
-                    >
-                      <option value="off">Off</option>
-                      <option value="daily">Daily</option>
-                      <option value="weekly">Weekly</option>
-                    </select>
+                    <div className="w-full sm:w-48">
+                      <CustomSelect
+                        value={prefs.emailDigest || "weekly"}
+                        onChange={(val) =>
+                          updatePref(
+                            "emailDigest",
+                            val as "off" | "daily" | "weekly"
+                          )
+                        }
+                        options={[
+                          { value: "off", label: "Off" },
+                          { value: "daily", label: "Daily Digest" },
+                          { value: "weekly", label: "Weekly Summary" },
+                        ]}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* 5. OFFLINE & STORAGE MANAGER TAB */}
+            {/* 6. OFFLINE STORAGE TAB */}
             {section === "storage" && (
               <div>
                 <div className="pb-6 mb-6 border-b border-white/10">
@@ -1180,7 +1423,7 @@ function SettingsContent() {
                   </p>
                 </div>
 
-                <div className="space-y-5">
+                <div className="space-y-4">
                   {/* Storage Status Card */}
                   <div className="p-5 rounded-2xl border border-white/10 bg-white/[0.02] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="space-y-1">
@@ -1218,7 +1461,7 @@ function SettingsContent() {
                     </div>
                   </div>
 
-                  {/* Reset Cache */}
+                  {/* Reset Cache - REMOVED clear cache icon */}
                   <div className="p-5 rounded-2xl border border-rose-500/20 bg-rose-500/[0.03] space-y-3">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div>
@@ -1230,9 +1473,8 @@ function SettingsContent() {
                       <button
                         type="button"
                         onClick={handleClearCache}
-                        className="px-4 py-2 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-300 text-xs font-bold hover:bg-rose-500/20 transition-colors flex items-center gap-1.5 self-start sm:self-center cursor-pointer"
+                        className="px-4 py-2 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-300 text-xs font-bold hover:bg-rose-500/20 transition-colors self-start sm:self-center cursor-pointer"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
                         Clear Local Cache
                       </button>
                     </div>
@@ -1247,7 +1489,7 @@ function SettingsContent() {
               </div>
             )}
 
-            {/* 6. SECURITY & DATA TAB */}
+            {/* 7. SECURITY & DATA TAB */}
             {section === "security" && (
               <div>
                 <div className="pb-6 mb-6 border-b border-white/10">
@@ -1260,7 +1502,7 @@ function SettingsContent() {
                   </p>
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-5">
                   {/* Change Password Form */}
                   <form
                     onSubmit={handlePasswordChange}
@@ -1351,7 +1593,7 @@ function SettingsContent() {
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <Download className="w-4 h-4 text-cyan-400" />
-                        <p className="text-sm font-bold text-white">Export Academic Records</p>
+                        <p className="text-sm font-bold text-white">Export Academic Records (JSON)</p>
                       </div>
                       <p className="text-xs text-wisdom-muted">
                         Download a complete JSON export of your student profile and progress history.

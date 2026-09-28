@@ -34,7 +34,6 @@ import {
   Library,
   Database,
   Search,
-  Sparkles,
   Command,
   Eye,
   Sliders,

@@ -17,7 +17,6 @@ import {
   Percent,
   Wallet,
   Clock,
-  Sparkles,
   AlertCircle,
   Calendar,
   Layers,

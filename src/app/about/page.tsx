@@ -4,7 +4,6 @@ import {
   ArrowRight,
   BookOpen,
   GraduationCap,
-  Sparkles,
   Cpu,
   Layers,
   Globe2,
@@ -112,7 +111,7 @@ export default function AboutPage() {
         {/* Hero Section */}
         <header className="text-center max-w-4xl mx-auto mb-20 md:mb-28">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-[0.2em] bg-amber-400/10 text-amber-300 border border-amber-400/25 mb-6 shadow-sm">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <Award className="w-3.5 h-3.5 text-amber-400" />
             The Next Era of Ethiopian EdTech
           </div>
 

@@ -3,7 +3,7 @@
 import {
   GraduationCap,
   Cpu,
-  Sparkles,
+  Atom,
   HeartPulse,
   Code2,
   Compass,
@@ -37,8 +37,9 @@ function renderPresetIcon(iconName: string, iconClass: string) {
       return <GraduationCap className={iconClass} />;
     case "Cpu":
       return <Cpu className={iconClass} />;
+    case "Atom":
     case "Sparkles":
-      return <Sparkles className={iconClass} />;
+      return <Atom className={iconClass} />;
     case "HeartPulse":
       return <HeartPulse className={iconClass} />;
     case "Code2":

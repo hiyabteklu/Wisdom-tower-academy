@@ -74,7 +74,7 @@ export const AVATAR_PRESETS: AvatarPreset[] = [
     border: "border-emerald-400",
     glow: "shadow-emerald-500/30",
     initials: "NS",
-    iconName: "Sparkles",
+    iconName: "Atom",
   },
   {
     id: "doctor-rose",

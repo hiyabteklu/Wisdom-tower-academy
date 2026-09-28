@@ -12,7 +12,6 @@ import {
   Terminal,
   ShieldCheck,
   Zap,
-  Sparkles,
   Layers,
   Check,
   FileCode2,
