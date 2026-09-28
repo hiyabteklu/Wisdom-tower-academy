@@ -93,7 +93,7 @@ export default function ComingSoonModal({ open, onClose, hubName }: Props) {
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex min-h-[44px] w-full sm:w-auto items-center justify-center rounded-xl bg-amber-500 px-6 py-2.5 text-sm font-bold text-wisdom-dark hover:bg-amber-400 transition-colors"
+            className="btn-accent min-h-[44px] w-full sm:w-auto px-6 py-2.5 text-sm"
           >
             Got it — check back later
           </button>

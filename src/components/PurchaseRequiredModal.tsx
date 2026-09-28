@@ -126,10 +126,10 @@ export default function PurchaseRequiredModal({
             <Link
               href="/login"
               onClick={onClose}
-              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-cyan-500 px-6 py-2.5 text-sm font-bold text-wisdom-dark hover:bg-cyan-400"
+              className="btn-cyan min-h-[44px] w-full px-6 py-2.5 text-sm"
             >
               <LogIn className="w-4 h-4" />
-              Sign in
+              Sign In
             </Link>
             <button
               type="button"
@@ -188,7 +188,7 @@ export default function PurchaseRequiredModal({
           <Link
             href={checkoutHref}
             onClick={onClose}
-            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-amber-500 px-6 py-2.5 text-sm font-bold text-wisdom-dark hover:bg-amber-400"
+            className="btn-accent min-h-[44px] w-full px-6 py-2.5 text-sm"
           >
             <ShoppingBag className="w-4 h-4" />
             Buy {name}
@@ -196,7 +196,7 @@ export default function PurchaseRequiredModal({
           <Link
             href="/packages"
             onClick={onClose}
-            className="inline-flex min-h-[40px] items-center justify-center rounded-xl border border-white/15 text-sm font-semibold text-white/90 hover:border-cyan-400/40"
+            className="btn-secondary min-h-[40px] w-full text-sm"
           >
             View packages
           </Link>

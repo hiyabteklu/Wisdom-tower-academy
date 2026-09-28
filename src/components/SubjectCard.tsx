@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { BadgeCheck, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 type Props = {
   href: string;
@@ -13,17 +13,17 @@ type Props = {
   ready?: boolean;
 };
 
-export default function SubjectCard({ href, name, image, ready = false }: Props) {
+export default function SubjectCard({ href, name, description, image, ready = false }: Props) {
   const [imgFailed, setImgFailed] = useState(false);
 
   return (
     <Link
       href={href}
       prefetch={true}
-      className={`card-3d group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border bg-wisdom-card shadow-lg shadow-black/20 transition-all duration-300 hover:-translate-y-0.5 ${
+      className={`card-modern group flex flex-col shadow-md shadow-black/25 ${
         ready
-          ? "border-emerald-400/40 hover:border-emerald-400/60 hover:shadow-emerald-500/15"
-          : "border-white/12 hover:border-purple-400/35 hover:shadow-purple-500/10"
+          ? "border-emerald-400/40 hover:border-emerald-400/60"
+          : "border-white/10 hover:border-purple-400/40"
       }`}
     >
       <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
@@ -35,7 +35,7 @@ export default function SubjectCard({ href, name, image, ready = false }: Props)
             loading="lazy"
             decoding="async"
             fetchPriority="low"
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
             onError={() => setImgFailed(true)}
           />
         ) : (
@@ -47,23 +47,28 @@ export default function SubjectCard({ href, name, image, ready = false }: Props)
         )}
       </div>
 
-      <div className="relative px-3.5 py-3.5 sm:px-4 sm:py-4 flex flex-col border-t border-white/8">
-        <h3 className="flex items-center gap-1.5 text-sm sm:text-[15px] font-semibold leading-snug text-white group-hover:text-purple-200 transition-colors">
-          <BadgeCheck
-            className="w-4 h-4 sm:w-[18px] sm:h-[18px] shrink-0 text-sky-400"
-            aria-label="Verified"
-          />
-          <span className="line-clamp-1">{name}</span>
+      <div className="p-4 sm:p-5 flex flex-col flex-1 border-t border-white/8">
+        <h3 className="text-base sm:text-lg font-bold leading-snug text-white group-hover:text-purple-200 transition-colors">
+          {name}
         </h3>
-        <div
-          className={`mt-3 flex items-center gap-1 text-[11px] sm:text-xs font-semibold transition-colors ${
-            ready
-              ? "text-emerald-400 group-hover:text-emerald-300"
-              : "text-purple-400/90 group-hover:text-purple-300"
-          }`}
-        >
-          Explore
-          <ChevronRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
+
+        {description && (
+          <p className="mt-1.5 text-xs sm:text-sm text-wisdom-muted leading-relaxed line-clamp-2">
+            {description}
+          </p>
+        )}
+
+        <div className="mt-auto pt-4 flex items-center justify-between border-t border-white/5 text-xs font-semibold">
+          <span
+            className={
+              ready
+                ? "text-emerald-400 group-hover:text-emerald-300"
+                : "text-purple-300 group-hover:text-purple-200"
+            }
+          >
+            Explore materials
+          </span>
+          <ChevronRight className="w-4 h-4 text-wisdom-muted transition-transform duration-200 group-hover:translate-x-1 group-hover:text-white" />
         </div>
       </div>
     </Link>

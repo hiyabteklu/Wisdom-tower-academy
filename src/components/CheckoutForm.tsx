@@ -383,16 +383,16 @@ export default function CheckoutForm({ packageId, packageIds }: Props) {
                 `We will unlock ${displayName} in My Learning after confirming your payment.`}
             </p>
           )}
-          <div className="flex flex-col sm:flex-row gap-2 justify-center">
+          <div className="flex flex-col sm:flex-row gap-2.5 justify-center">
             <Link
               href="/learning"
-              className="inline-flex rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-bold text-wisdom-dark"
+              className="btn-accent px-6 py-2.5 text-sm"
             >
               My Learning
             </Link>
             <Link
               href="/orders"
-              className="inline-flex rounded-xl border border-white/15 px-5 py-2.5 text-sm font-semibold text-white"
+              className="btn-secondary px-6 py-2.5 text-sm"
             >
               View orders
             </Link>
@@ -595,7 +595,7 @@ export default function CheckoutForm({ packageId, packageIds }: Props) {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-xl bg-amber-500 py-3 text-sm font-bold text-wisdom-dark disabled:opacity-60"
+          className="btn-accent w-full py-3.5 text-sm disabled:opacity-60"
         >
           {submitting ? "Submitting…" : "Confirm payment"}
         </button>

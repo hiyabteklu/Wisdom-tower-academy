@@ -131,37 +131,37 @@ export default function AccountPage() {
               <p className="text-sm text-wisdom-muted">{user.email}</p>
               <p className="mt-1 text-xs text-wisdom-muted">Member since {memberSince}</p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2.5">
               <Link
                 href="/settings"
-                className="inline-flex items-center gap-2 min-h-[44px] px-4 py-2 rounded-full border border-cyan-400/30 bg-cyan-500/10 text-sm font-medium text-cyan-300 hover:bg-cyan-500/20"
+                className="btn-secondary px-4 py-2 text-xs sm:text-sm"
               >
                 <Settings2 className="w-4 h-4" />
                 Settings
               </Link>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="inline-flex items-center gap-2 min-h-[44px] px-4 py-2 rounded-full border border-red-500/30 bg-red-500/10 text-sm font-medium text-red-400 hover:bg-red-500/20"
+              <Link
+                href="/learning"
+                className="btn-primary px-4 py-2 text-xs sm:text-sm"
               >
-                <LogOut className="w-4 h-4" />
-                Sign out
-              </button>
+                My Learning
+              </Link>
               {isAdmin && (
                 <Link
                   href="/admin"
-                  className="inline-flex items-center gap-2 min-h-[44px] px-4 py-2 rounded-full border border-wisdom-cyan/30 bg-wisdom-cyan/10 text-sm font-medium text-wisdom-cyan hover:bg-wisdom-cyan/20"
+                  className="btn-cyan px-4 py-2 text-xs sm:text-sm"
                 >
                   <Shield className="w-4 h-4" />
                   Admin
                 </Link>
               )}
-              <Link
-                href="/learning"
-                className="inline-flex items-center gap-2 min-h-[44px] px-4 py-2 rounded-full border border-white/15 bg-white/5 text-sm font-medium hover:bg-white/10"
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-red-500/30 bg-red-500/10 text-xs sm:text-sm font-bold text-red-400 hover:bg-red-500/20 transition-colors"
               >
-                My Learning
-              </Link>
+                <LogOut className="w-4 h-4" />
+                Sign out
+              </button>
             </div>
           </div>
         </div>

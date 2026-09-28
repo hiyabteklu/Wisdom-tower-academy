@@ -6,7 +6,6 @@ import CategoryBackButton from "@/components/CategoryBackButton";
 import AcademicResultSaver from "@/components/AcademicResultSaver";
 import ResourceHubGrid from "@/components/ResourceHubGrid";
 import GradeSubjectIcon from "@/components/GradeSubjectIcon";
-import { BadgeCheck } from "lucide-react";
 
 export function generateStaticParams() {
   const params: { grade: string; subject: string }[] = [];
@@ -45,23 +44,19 @@ export default async function GradeSubjectPage({
         <CategoryBackButton fallback={`/academy/grades/${grade.id}`} />
 
         <div className="max-w-2xl mx-auto mb-8 animate-fade-up">
-          <div className="rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card overflow-hidden shadow-card-3d">
+          <div className="card-modern shadow-xl shadow-black/30">
             <div className="px-5 py-6 sm:px-8 sm:py-8 text-center">
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-sky-400/30 bg-sky-400/10 text-sky-300">
                 <GradeSubjectIcon name={subject.icon} className="w-7 h-7" />
               </div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-wisdom-muted mb-2">
-                {grade.label} · Subject
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-wisdom-muted mb-2">
+                {grade.label} Curriculum
               </p>
-              <h1 className="inline-flex items-center justify-center gap-2 font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-                <BadgeCheck
-                  className="w-6 h-6 sm:w-7 sm:h-7 shrink-0 text-sky-400"
-                  aria-label="Verified"
-                />
+              <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
                 {subject.name}
               </h1>
               {subject.hint ? (
-                <p className="mt-2 text-sm text-wisdom-muted">{subject.hint}</p>
+                <p className="mt-2.5 text-sm text-wisdom-muted max-w-md mx-auto">{subject.hint}</p>
               ) : null}
             </div>
           </div>

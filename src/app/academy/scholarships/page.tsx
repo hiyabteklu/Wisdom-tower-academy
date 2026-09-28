@@ -16,8 +16,9 @@ import {
   Calendar,
   Loader2,
   ChevronDown,
-  BadgeCheck,
+  Info,
   ArrowUpRight,
+  ExternalLink,
 } from "lucide-react";
 
 function formatDeadline(raw: string | null | undefined): string | null {
@@ -102,46 +103,36 @@ function ScholarshipCard({
 
   return (
     <article
-      className={`group relative overflow-hidden rounded-3xl border transition-all duration-500 ease-out
+      className={`card-modern group flex flex-col transition-all duration-300
         ${
           open
-            ? "border-rose-400/40 bg-wisdom-card shadow-[0_0_48px_-16px_rgba(244,63,94,0.28)]"
-            : "border-white/12 bg-wisdom-card/95 hover:border-rose-400/30 hover:shadow-[0_12px_40px_-16px_rgba(244,63,94,0.2)]"
+            ? "border-rose-400/40 shadow-xl shadow-rose-950/20"
+            : "hover:border-rose-400/30"
         }`}
       style={{ animationDelay: `${Math.min(index, 8) * 70}ms` }}
     >
-      <div className="relative w-full aspect-[16/9] sm:aspect-[2.2/1] bg-wisdom-dark overflow-hidden">
+      {/* Clean 16:9 or 2.2:1 image container without overlapping text */}
+      <div className="relative w-full aspect-[16/9] sm:aspect-[2.4/1] bg-wisdom-navy overflow-hidden">
         {img ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={img}
             alt={item.title}
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+            className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-rose-500/20 via-wisdom-dark to-wisdom-navy">
-            <GraduationCap className="w-16 h-16 text-rose-400/35" />
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-rose-500/15 via-wisdom-card to-wisdom-navy">
+            <GraduationCap className="w-14 h-14 text-rose-400/30" />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-wisdom-dark via-wisdom-dark/50 to-transparent" />
-
-        <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
-          <h3 className="font-display text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-white drop-shadow-lg leading-snug">
-            {item.title}
-          </h3>
-          {(provider || amount) && (
-            <p className="mt-1.5 text-sm sm:text-base text-white/85 font-medium">
-              {[provider, amount].filter(Boolean).join(" · ")}
-            </p>
-          )}
-        </div>
       </div>
 
-      <div className="p-5 sm:p-6 space-y-4">
-        <div className="flex flex-wrap gap-2">
+      <div className="p-5 sm:p-7 space-y-4 flex-1 flex flex-col">
+        {/* Meta badges row */}
+        <div className="flex flex-wrap gap-2 items-center">
           {deadlineLabel && (
             <span
-              className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium
+              className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold
                 ${
                   soon
                     ? "border-rose-400/40 bg-rose-500/15 text-rose-200"
@@ -153,27 +144,39 @@ function ScholarshipCard({
             </span>
           )}
           {level && (
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/12 bg-white/[0.04] px-2.5 py-1 text-xs text-wisdom-muted">
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/12 bg-white/[0.04] px-2.5 py-1 text-xs font-medium text-slate-300">
               {level}
             </span>
           )}
           {country && (
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/12 bg-white/[0.04] px-2.5 py-1 text-xs text-wisdom-muted">
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/12 bg-white/[0.04] px-2.5 py-1 text-xs font-medium text-slate-300">
               {country}
             </span>
           )}
         </div>
 
+        {/* Clean headline and provider */}
+        <div>
+          <h3 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-white group-hover:text-rose-200 transition-colors">
+            {item.title}
+          </h3>
+          {(provider || amount) && (
+            <p className="mt-1.5 text-sm sm:text-base text-rose-300/90 font-medium">
+              {[provider, amount].filter(Boolean).join(" · ")}
+            </p>
+          )}
+        </div>
+
         {item.subtitle && (
-          <p className="text-[15px] text-wisdom-muted leading-relaxed">{item.subtitle}</p>
+          <p className="text-sm text-wisdom-muted leading-relaxed">{item.subtitle}</p>
         )}
 
         {eligibility && (
-          <div className="rounded-xl border border-white/8 bg-wisdom-dark/50 px-3.5 py-3">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-white/70 mb-1">
+          <div className="rounded-xl border border-white/8 bg-white/[0.02] px-4 py-3">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-rose-300/80 mb-1">
               Eligibility
             </p>
-            <p className="text-sm text-wisdom-muted leading-relaxed">{eligibility}</p>
+            <p className="text-xs sm:text-sm text-wisdom-muted leading-relaxed">{eligibility}</p>
           </div>
         )}
 
@@ -184,7 +187,7 @@ function ScholarshipCard({
               <button
                 type="button"
                 onClick={() => setOpen((v) => !v)}
-                className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-rose-300 hover:text-rose-200 transition-colors"
+                className="mt-3 inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-rose-300 hover:text-rose-200 transition-colors"
               >
                 {open ? "Show less" : "Read full details"}
                 <ChevronDown
@@ -196,15 +199,17 @@ function ScholarshipCard({
         )}
 
         {item.externalUrl && (
-          <a
-            href={item.externalUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-1 inline-flex items-center gap-2 rounded-xl bg-rose-500/90 px-4 py-2.5 text-sm font-bold text-white shadow-[0_0_24px_-8px_rgba(244,63,94,0.55)] transition-all hover:bg-rose-400 hover:shadow-[0_0_28px_-6px_rgba(244,63,94,0.65)]"
-          >
-            Apply / Official page
-            <ArrowUpRight className="w-4 h-4" />
-          </a>
+          <div className="pt-2 mt-auto">
+            <a
+              href={item.externalUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-primary w-full sm:w-auto text-xs sm:text-sm px-5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white"
+            >
+              Apply / Official Page
+              <ArrowUpRight className="w-4 h-4" />
+            </a>
+          </div>
         )}
       </div>
     </article>
@@ -328,13 +333,13 @@ export default function ScholarshipsPage() {
         )}
 
         {!loading && items.length > 0 && (
-          <div className="mt-14 rounded-2xl border border-white/10 bg-wisdom-card/80 p-6 text-center">
+          <div className="mt-14 card-modern p-6 text-center border-white/10">
             <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl border border-rose-400/25 bg-rose-500/10 text-rose-300">
-              <BadgeCheck className="w-5 h-5" />
+              <Info className="w-5 h-5" />
             </div>
             <p className="text-sm text-wisdom-muted leading-relaxed max-w-md mx-auto">
               Always verify deadlines and requirements on the official page. Requirements change.
-              Treat this as a starting guide.
+              Treat this as a curated guide.
             </p>
           </div>
         )}

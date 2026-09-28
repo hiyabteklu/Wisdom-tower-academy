@@ -232,11 +232,17 @@ export default function Header() {
                     )}
                   </div>
                 ) : (
-                  <div className="flex items-center gap-3 ml-1">
-                    <Link href="/login" className="text-sm text-wisdom-muted hover:text-amber-300">
+                  <div className="flex items-center gap-2.5 ml-2">
+                    <Link
+                      href="/login"
+                      className="px-3.5 py-2 rounded-xl text-sm font-semibold text-wisdom-muted hover:text-white hover:bg-white/5 transition-all"
+                    >
                       Sign In
                     </Link>
-                    <Link href="/signup" className="px-4 py-2 rounded-lg bg-amber-500 text-wisdom-dark text-sm font-medium hover:bg-amber-400">
+                    <Link
+                      href="/signup"
+                      className="btn-accent px-4 py-2 text-sm shadow-md"
+                    >
                       Get Started
                     </Link>
                   </div>
@@ -283,14 +289,22 @@ export default function Header() {
                       </button>
                     </>
                   ) : (
-                    <>
-                      <Link href="/login" className="block text-center text-sm py-2" onClick={() => setIsOpen(false)}>
+                    <div className="space-y-2 pt-1">
+                      <Link
+                        href="/login"
+                        className="block text-center text-sm font-semibold text-wisdom-muted hover:text-white py-2"
+                        onClick={() => setIsOpen(false)}
+                      >
                         Sign In
                       </Link>
-                      <Link href="/signup" className="block text-center px-4 py-2.5 rounded-xl bg-amber-500 text-wisdom-dark text-sm font-semibold" onClick={() => setIsOpen(false)}>
+                      <Link
+                        href="/signup"
+                        className="btn-accent block text-center w-full py-2.5 text-sm"
+                        onClick={() => setIsOpen(false)}
+                      >
                         Get Started
                       </Link>
-                    </>
+                    </div>
                   )}
                 </div>
               </div>

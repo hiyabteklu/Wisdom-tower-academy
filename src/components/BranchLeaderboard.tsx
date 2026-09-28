@@ -135,7 +135,7 @@ export default function BranchLeaderboard({
   const trophyColor = ["text-amber-300", "text-yellow-300", "text-orange-400"];
 
   return (
-    <section className="mb-10 md:mb-12 rounded-3xl border border-white/12 bg-wisdom-card/80 overflow-hidden shadow-card-3d">
+    <section className="mb-10 md:mb-12 card-modern shadow-xl shadow-black/20">
       <div className="w-full px-5 sm:px-7 py-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 border border-amber-400/30">

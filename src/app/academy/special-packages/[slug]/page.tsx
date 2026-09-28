@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, BadgeCheck } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import SafeCoverImage from "@/components/SafeCoverImage";
 import AddToCartButton from "@/components/AddToCartButton";
 import { formatEtb } from "@/data/packages";
@@ -51,7 +51,7 @@ export default async function SpecialPackagePage({
             return (
               <div
                 key={sem.id}
-                className="flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card"
+                className="card-modern flex flex-col shadow-xl"
               >
                 <Link
                   href={`/academy/special-packages/${pkg.slug}/${sem.id}`}
@@ -60,12 +60,11 @@ export default async function SpecialPackagePage({
                   <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
                     <SafeCoverImage src={sem.image} alt="" />
                   </div>
-                  <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8">
-                    <h2 className="flex items-center gap-1.5 font-display text-base sm:text-lg font-bold text-white group-hover:text-violet-200">
-                      <BadgeCheck className="w-4 h-4 shrink-0 text-sky-400" aria-hidden />
+                  <div className="p-5 border-t border-white/8">
+                    <h2 className="font-display text-lg sm:text-xl font-bold text-white group-hover:text-violet-200 transition-colors">
                       {sem.label}
                     </h2>
-                    <p className="mt-1 text-xs text-wisdom-muted">
+                    <p className="mt-1 text-xs sm:text-sm text-wisdom-muted">
                       {sem.courses.length} courses
                       {!sem.purchasable
                         ? " · not for sale yet"
@@ -73,13 +72,13 @@ export default async function SpecialPackagePage({
                           ? " · free for registered students"
                           : ` · ${formatEtb(sem.priceEtb)}`}
                     </p>
-                    <span className="mt-2.5 inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-violet-400/90">
+                    <span className="mt-3 inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-violet-300 group-hover:text-violet-200">
                       Open semester
                       <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
                     </span>
                   </div>
                 </Link>
-                <div className="px-4 pb-4 sm:px-5 sm:pb-5">
+                <div className="px-5 pb-5 pt-1">
                   {sem.purchasable ? (
                     <AddToCartButton packageId={sem.packageId} variant="ghost" />
                   ) : (

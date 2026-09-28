@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, BadgeCheck } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import SafeCoverImage from "@/components/SafeCoverImage";
 import { formatEtb } from "@/data/packages";
 import { specialPackages } from "@/data/special-packages";
@@ -37,27 +37,28 @@ export default function SpecialPackagesPage() {
             <Link
               key={pkg.id}
               href={`/academy/special-packages/${pkg.slug}`}
-              className="group block overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card hover:border-violet-400/40 transition-all shadow-lg"
+              className="card-modern group block hover:border-violet-400/40 shadow-xl"
             >
               <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
                 <SafeCoverImage src={pkg.image} alt="" />
               </div>
-              <div className="px-4 py-4 sm:px-5 sm:py-5 border-t border-white/8">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-300/80 mb-1">
+              <div className="p-5 sm:p-6 border-t border-white/8">
+                <span className="text-xs font-semibold text-violet-300/90 mb-1.5 block">
                   {pkg.yearLabel}
-                </p>
-                <h2 className="flex items-center gap-1.5 font-display text-lg sm:text-xl font-bold text-white group-hover:text-violet-200 transition-colors">
-                  <BadgeCheck className="w-5 h-5 shrink-0 text-sky-400" aria-hidden />
-                  <span>{pkg.name}</span>
-                </h2>
-                <p className="mt-2 text-sm text-wisdom-muted leading-relaxed">{pkg.blurb}</p>
-                <p className="mt-2 text-sm font-semibold text-amber-300">
-                  {formatEtb(pkg.semesterPriceEtb)} per semester
-                </p>
-                <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-violet-400/90">
-                  View semesters
-                  <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
                 </span>
+                <h2 className="font-display text-xl sm:text-2xl font-bold text-white group-hover:text-violet-200 transition-colors">
+                  {pkg.name}
+                </h2>
+                <p className="mt-2 text-sm text-slate-300/90 leading-relaxed">{pkg.blurb}</p>
+                <div className="mt-4 pt-3 border-t border-white/6 flex items-center justify-between">
+                  <p className="text-sm font-bold text-amber-300">
+                    {formatEtb(pkg.semesterPriceEtb)} per semester
+                  </p>
+                  <span className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-violet-300 group-hover:text-violet-200">
+                    View semesters
+                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                  </span>
+                </div>
               </div>
             </Link>
           ))}

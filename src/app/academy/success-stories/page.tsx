@@ -37,55 +37,61 @@ function StoryCard({
 
   return (
     <article
-      className={`group relative overflow-hidden rounded-3xl border transition-all duration-500 ease-spring
-        ${open
-          ? "border-amber-400/40 bg-wisdom-card shadow-[0_0_48px_-16px_rgba(251,191,36,0.35)]"
-          : "border-white/12 bg-wisdom-card/95 hover:border-amber-400/30 hover:shadow-card-3d-hover"
+      className={`card-modern group flex flex-col transition-all duration-300
+        ${
+          open
+            ? "border-amber-400/40 shadow-xl shadow-amber-950/20"
+            : "hover:border-amber-400/30"
         }`}
       style={{ animationDelay: `${Math.min(index, 8) * 70}ms` }}
     >
-      {/* Photo — full width, large */}
-      <div className="relative w-full aspect-[16/10] sm:aspect-[2/1] bg-wisdom-dark overflow-hidden">
+      {/* Clean photo without overlapping text labels */}
+      <div className="relative w-full aspect-[16/10] sm:aspect-[2.2/1] bg-wisdom-navy overflow-hidden">
         {img ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={img}
             alt={name || result}
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-spring group-hover:scale-[1.03]"
+            className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-amber-500/15 via-wisdom-dark to-wisdom-dark">
-            <Trophy className="w-16 h-16 text-amber-400/30" />
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-amber-500/15 via-wisdom-card to-wisdom-dark">
+            <Trophy className="w-14 h-14 text-amber-400/30" />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-wisdom-dark via-wisdom-dark/40 to-transparent" />
+      </div>
 
-        {/* Score + name over photo */}
-        <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
-          <p className="font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white drop-shadow-lg">
-            {result}
-          </p>
+      {/* Editorial Content */}
+      <div className="p-5 sm:p-7 space-y-4 flex-1 flex flex-col">
+        <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-white/6 pb-3">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-wider text-amber-400/90 block mb-1">
+              Achievement
+            </span>
+            <p className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+              {result}
+            </p>
+          </div>
           {(name || program || year) && (
-            <p className="mt-1.5 text-sm sm:text-base text-white/85 font-medium">
+            <p className="text-xs sm:text-sm text-wisdom-muted font-medium self-end">
               {[name, program, year].filter(Boolean).join(" · ")}
             </p>
           )}
         </div>
-      </div>
 
-      {/* Body */}
-      <div className="p-5 sm:p-6 space-y-4">
         {quote && (
-          <p className="flex gap-2.5 text-[15px] sm:text-base text-amber-100/95 leading-relaxed">
-            <Quote className="w-5 h-5 shrink-0 text-amber-400/90 mt-0.5" />
-            <span className="italic">{quote}</span>
-          </p>
+          <div className="rounded-xl border border-amber-400/20 bg-amber-500/5 p-4">
+            <p className="flex gap-2.5 text-sm sm:text-base text-amber-100/90 leading-relaxed italic">
+              <Quote className="w-4 h-4 shrink-0 text-amber-400/80 mt-1" />
+              <span>&ldquo;{quote}&rdquo;</span>
+            </p>
+          </div>
         )}
 
         {body && (
-          <div className="border-t border-white/8 pt-4">
+          <div className="pt-2">
             <div
-              className={`text-[15px] text-wisdom-muted leading-relaxed whitespace-pre-wrap transition-all duration-500 ease-spring
+              className={`text-sm sm:text-[15px] text-wisdom-muted leading-relaxed whitespace-pre-wrap transition-all duration-300
                 ${!open && longBody ? "line-clamp-3" : ""}`}
             >
               {body}
@@ -94,7 +100,7 @@ function StoryCard({
               <button
                 type="button"
                 onClick={() => setOpen((v) => !v)}
-                className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-amber-300 hover:text-amber-200 transition-colors"
+                className="mt-3 inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-amber-300 hover:text-amber-200 transition-colors"
               >
                 {open ? "Show less" : "Read full story"}
                 <ChevronDown

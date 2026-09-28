@@ -332,7 +332,7 @@ export default function SettingsPage() {
                   type="button"
                   onClick={saveProfile}
                   disabled={savingProfile || !displayName.trim()}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-wisdom-cyan text-wisdom-dark text-sm font-bold hover:bg-wisdom-cyan-dark disabled:opacity-50 transition"
+                  className="btn-cyan px-6 py-2.5 text-sm disabled:opacity-50"
                 >
                   <Save className="w-4 h-4" />
                   {savingProfile ? "Saving…" : "Save profile"}

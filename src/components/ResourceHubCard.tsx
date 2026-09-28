@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { BadgeCheck, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import type { ResourceHub } from "@/data/academy";
 import type { HubLockMode } from "@/data/content-availability";
 import ComingSoonModal from "@/components/ComingSoonModal";
@@ -40,23 +40,27 @@ export default function ResourceHubCard({
           loading="lazy"
           decoding="async"
           fetchPriority="low"
-          className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
         />
       </div>
-      <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8">
-        <h2
-          className={`flex items-center gap-1.5 font-display text-base sm:text-lg font-bold ${hub.accent}`}
-        >
-          <BadgeCheck className="w-4 h-4 sm:w-[18px] sm:h-[18px] shrink-0 text-sky-400" aria-label="Verified" />
+      <div className="p-4 sm:p-5 flex flex-col flex-1 border-t border-white/8">
+        <h2 className={`font-display text-lg sm:text-xl font-bold tracking-tight mb-1.5 ${hub.accent}`}>
           {hub.name}
         </h2>
-        <div className={`mt-2.5 flex items-center gap-1 text-xs sm:text-sm font-semibold ${hub.accent}`}>
-          {owned || lockMode === "open"
-            ? "Open"
-            : lockMode === "require_purchase"
-              ? "Unlock"
-              : "Preview"}
-          <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+        {hub.description && (
+          <p className="text-xs sm:text-sm text-wisdom-muted leading-relaxed line-clamp-2 mb-4">
+            {hub.description}
+          </p>
+        )}
+        <div className="mt-auto pt-3 flex items-center justify-between border-t border-white/5">
+          <span className={`text-xs sm:text-sm font-bold flex items-center gap-1.5 ${hub.accent}`}>
+            {owned || lockMode === "open"
+              ? "Open hub"
+              : lockMode === "require_purchase"
+                ? "Unlock hub"
+                : "Preview"}
+            <ChevronRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
+          </span>
         </div>
       </div>
     </>
@@ -70,7 +74,7 @@ export default function ResourceHubCard({
           onClick={() =>
             lockMode === "require_purchase" ? setBuyOpen(true) : setSoonOpen(true)
           }
-          className={`card-3d group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card hover:border-amber-400/30 shadow-lg text-left w-full ${hub.glow}`}
+          className={`card-modern group flex flex-col text-left w-full cursor-pointer hover:border-amber-400/40 shadow-lg ${hub.glow}`}
         >
           {body}
         </button>
@@ -89,7 +93,7 @@ export default function ResourceHubCard({
     <Link
       href={href}
       prefetch={true}
-      className={`card-3d group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card hover:border-white/25 shadow-lg ${hub.glow}`}
+      className={`card-modern group flex flex-col shadow-lg hover:border-white/25 ${hub.glow}`}
     >
       {body}
     </Link>

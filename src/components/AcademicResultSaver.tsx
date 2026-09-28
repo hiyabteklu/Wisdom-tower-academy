@@ -210,7 +210,7 @@ export default function AcademicResultSaver({
   const hubLabel = hub === "short-notes" ? "short notes" : hub ? hub.replace(/-/g, " ") : "all hubs";
 
   return (
-    <section className="rounded-3xl border border-white/12 bg-wisdom-card overflow-hidden shadow-card-3d w-full max-w-full">
+    <section className="card-modern w-full max-w-full shadow-xl shadow-black/25">
       <div className="px-5 sm:px-6 py-5 border-b border-white/10 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-cyan-500/15 border border-cyan-400/30 text-cyan-400">
@@ -240,8 +240,8 @@ export default function AcademicResultSaver({
           <p className="text-sm text-wisdom-muted max-w-sm mx-auto mb-5 leading-relaxed">
             Sign in to see reading time, flashcard stats, exam scores, and streaks.
           </p>
-          <Link href="/login" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-wisdom-cyan text-wisdom-dark text-sm font-semibold">
-            <LogIn className="w-4 h-4" /> Sign in
+          <Link href="/login" className="btn-cyan px-5 py-2.5 text-sm">
+            <LogIn className="w-4 h-4" /> Sign In
           </Link>
         </div>
       ) : !hasAnything ? (

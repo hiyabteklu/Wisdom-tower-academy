@@ -186,7 +186,7 @@ export default function AddToCartButton({
       <button
         type="button"
         onClick={onAdd}
-        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 text-wisdom-dark text-xs font-bold hover:bg-amber-400 ${className}`}
+        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-400 text-slate-950 text-xs font-bold hover:bg-amber-300 shadow-sm transition-all duration-200 active:scale-95 ${className}`}
       >
         <ShoppingBag className="w-3.5 h-3.5" />
         {formatEtb(price)}
@@ -199,9 +199,9 @@ export default function AddToCartButton({
       <button
         type="button"
         onClick={onAdd}
-        className={`inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-amber-400/40 text-amber-200 text-sm font-semibold hover:bg-amber-500/10 ${className}`}
+        className={`inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl border border-amber-400/40 bg-amber-500/5 text-amber-200 text-sm font-bold hover:bg-amber-500/15 hover:border-amber-400/70 transition-all duration-200 active:scale-[0.98] ${className}`}
       >
-        <ShoppingBag className="w-4 h-4" />
+        <ShoppingBag className="w-4 h-4 text-amber-300" />
         Add to cart · {formatEtb(price)}
       </button>
     );
@@ -211,10 +211,10 @@ export default function AddToCartButton({
     <button
       type="button"
       onClick={onAdd}
-      className={`inline-flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-amber-500 text-wisdom-dark text-sm font-semibold hover:bg-amber-400 transition-colors ${className}`}
+      className={`btn-accent w-full ${className}`}
     >
       <ShoppingBag className="w-4 h-4" />
-      Add to cart · {formatEtb(price)}
+      <span>Add to cart · {formatEtb(price)}</span>
     </button>
   );
 }

@@ -9,7 +9,6 @@ import CategoryBackButton from "@/components/CategoryBackButton";
 import SubjectHeroImage from "@/components/SubjectHeroImage";
 import AcademicResultSaver from "@/components/AcademicResultSaver";
 import ResourceHubGrid from "@/components/ResourceHubGrid";
-import { BadgeCheck } from "lucide-react";
 
 export function generateStaticParams() {
   return freshmanSubjects.map((s) => ({ subject: s.id }));
@@ -38,21 +37,22 @@ export default async function FreshmanSubjectPage({
           <CategoryBackButton fallback="/academy/freshman" />
 
           <div className="max-w-2xl mx-auto mb-8 animate-fade-up">
-            <div className="rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card overflow-hidden shadow-card-3d">
+            <div className="card-modern shadow-xl shadow-black/30">
               <div className="relative aspect-video w-full bg-wisdom-navy">
                 <SubjectHeroImage src={subject.image} alt={subject.name} />
               </div>
-              <div className="px-5 py-4 sm:px-6 sm:py-5 text-center border-t border-white/8">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-wisdom-muted mb-2">
-                  Freshman · Subject
+              <div className="p-5 sm:p-6 text-center border-t border-white/8">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-purple-300 mb-1.5">
+                  Freshman Subject
                 </p>
-                <h1 className="inline-flex items-center justify-center gap-2 font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-                  <BadgeCheck
-                    className="w-6 h-6 sm:w-7 sm:h-7 shrink-0 text-sky-400"
-                    aria-label="Verified"
-                  />
+                <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
                   {subject.name}
                 </h1>
+                {subject.description && (
+                  <p className="mt-2 text-xs sm:text-sm text-wisdom-muted max-w-md mx-auto">
+                    {subject.description}
+                  </p>
+                )}
               </div>
             </div>
           </div>

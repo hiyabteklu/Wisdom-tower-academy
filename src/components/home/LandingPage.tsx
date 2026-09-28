@@ -179,31 +179,30 @@ export default function LandingPage() {
             </h1>
             {/* Structured pathways tagline removed */}
 
-            <div className="flex flex-wrap gap-3 items-center min-h-[3.25rem] mb-8">
+            <div className="flex flex-wrap gap-3.5 items-center min-h-[3.25rem] mb-8">
               <Link
                 href="/academy"
-                className="landing-cta-primary group inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-cyan-400 text-wisdom-dark font-bold shadow-lg shadow-cyan-500/30 hover:bg-cyan-300 hover:shadow-cyan-400/40 transition-all duration-300 hover:-translate-y-0.5"
+                className="btn-primary text-sm sm:text-base px-6 py-3.5"
               >
                 Enter Academy
-                <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+                <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
               </Link>
 
               {authReady && isSignedIn ? (
                 <Link
                   href="/learning"
-                  className="group relative inline-flex items-center gap-2 px-6 py-3.5 rounded-xl font-bold text-white overflow-hidden border-2 border-cyan-400/50 bg-cyan-500/10 shadow-[0_0_20px_-6px_rgba(34,211,238,0.35)] hover:bg-cyan-400 hover:text-wisdom-dark hover:border-cyan-300 transition-all duration-300 hover:-translate-y-0.5"
+                  className="btn-secondary text-sm sm:text-base px-6 py-3.5"
                 >
-                  <GraduationCap className="w-4 h-4 relative z-10" />
-                  <span className="relative z-10">My Learning</span>
+                  <GraduationCap className="w-4 h-4 text-cyan-300" />
+                  My Learning
                 </Link>
               ) : authReady ? (
                 <Link
                   href="/login"
-                  className="landing-cta-signin group relative inline-flex items-center gap-2 px-6 py-3.5 rounded-xl font-bold text-white overflow-hidden border-2 border-amber-400/70 bg-amber-500/15 shadow-[0_0_24px_-4px_rgba(251,191,36,0.45)] hover:bg-amber-500 hover:text-wisdom-dark hover:border-amber-300 transition-all duration-300 hover:-translate-y-0.5"
+                  className="btn-secondary text-sm sm:text-base px-6 py-3.5 border-amber-400/40 hover:border-amber-400/60"
                 >
-                  <span className="landing-cta-signin-shine" aria-hidden />
-                  <LogIn className="w-4 h-4 relative z-10" />
-                  <span className="relative z-10">Sign in</span>
+                  <LogIn className="w-4 h-4 text-amber-300" />
+                  Sign in
                 </Link>
               ) : (
                 <span className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl border-2 border-transparent opacity-0 pointer-events-none select-none" aria-hidden>
@@ -234,14 +233,14 @@ export default function LandingPage() {
 
             {/* Welcome image as primary hero visual */}
             <div className="mt-8 max-w-5xl">
-              <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-white/14 bg-wisdom-navy">
+              <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-navy shadow-2xl shadow-black/40">
                 <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy min-h-[12rem] sm:min-h-[16rem]">
                   {imgOk ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={ACADEMY_IMAGE}
-                      alt="Welcome to Wisdom Tower Academy"
-                      className="absolute inset-0 h-full w-full object-cover"
+                      alt="Wisdom Tower Academy Learning Environment"
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 hover:scale-[1.02]"
                       loading="eager"
                       decoding="async"
                       onError={() => setImgOk(false)}
@@ -251,11 +250,6 @@ export default function LandingPage() {
                       <p className="font-display text-xl sm:text-2xl font-bold text-white/90">Wisdom Tower Academy</p>
                     </div>
                   )}
-                  <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/55 to-transparent pointer-events-none" />
-                  <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-300/90 mb-1">Welcome</p>
-                    <span className="font-display text-base sm:text-lg font-semibold text-white/95 drop-shadow-md">Wisdom Tower Academy</span>
-                  </div>
                 </div>
               </div>
             </div>
@@ -288,9 +282,9 @@ export default function LandingPage() {
             <p className="text-wisdom-muted text-sm md:text-base mb-6 leading-relaxed">
               Design, writing, web, marketing, data and business solutions on our Digital site.
             </p>
-            <a href={DIGITAL_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 min-h-[3rem] px-8 py-3 rounded-xl border-2 border-wisdom-cyan/60 bg-wisdom-cyan/10 text-wisdom-cyan font-bold hover:bg-wisdom-cyan hover:text-wisdom-dark transition-all">
+            <a href={DIGITAL_URL} target="_blank" rel="noopener noreferrer" className="btn-secondary px-8 py-3 text-cyan-300 border-cyan-400/30 hover:border-cyan-400/60 hover:bg-cyan-500/10">
               Open Wisdom Digital
-              <ExternalLink className="w-4 h-4" />
+              <ExternalLink className="w-4 h-4 ml-1" />
             </a>
           </div>
         </div>
@@ -304,11 +298,11 @@ export default function LandingPage() {
                 <h2 className="font-display text-2xl md:text-3xl font-bold text-white mb-3">Pick up where you left off</h2>
                 <p className="text-wisdom-muted mb-6 max-w-md mx-auto">Your pathways are ready. Jump back into Academy or My Learning.</p>
                 <div className="flex flex-wrap justify-center gap-3">
-                  <Link href="/academy" className="landing-cta-primary group inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-cyan-400 text-wisdom-dark font-bold shadow-lg shadow-cyan-500/30 hover:bg-cyan-300 transition-all duration-300 hover:-translate-y-0.5">
+                  <Link href="/academy" className="btn-primary px-7 py-3.5">
                     Enter Academy
                     <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                   </Link>
-                  <Link href="/learning" className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl border border-cyan-400/40 text-cyan-200 font-semibold hover:border-cyan-300 hover:bg-cyan-500/10 transition-all">
+                  <Link href="/learning" className="btn-secondary px-6 py-3.5 border-cyan-400/40 text-cyan-200 hover:border-cyan-300 hover:bg-cyan-500/10">
                     <GraduationCap className="w-4 h-4" />
                     My Learning
                   </Link>
@@ -319,11 +313,11 @@ export default function LandingPage() {
                 <h2 className="font-display text-2xl md:text-3xl font-bold text-white mb-3">Ready when you are</h2>
                 <p className="text-wisdom-muted mb-6 max-w-md mx-auto">Create a free account and start with the pathway that fits you.</p>
                 <div className="flex flex-wrap justify-center gap-3">
-                  <Link href="/signup" className="landing-cta-primary group inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-cyan-400 text-wisdom-dark font-bold shadow-lg shadow-cyan-500/30 hover:bg-cyan-300 transition-all duration-300 hover:-translate-y-0.5">
+                  <Link href="/signup" className="btn-primary px-8 py-3.5">
                     Get started
                     <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                   </Link>
-                  <Link href="/login" className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl border border-white/20 text-white font-semibold hover:border-amber-400/50 hover:bg-amber-500/10 transition-all">
+                  <Link href="/login" className="btn-secondary px-6 py-3.5 border-white/20 text-white hover:border-amber-400/50 hover:bg-amber-500/10">
                     <LogIn className="w-4 h-4" />
                     Sign in
                   </Link>

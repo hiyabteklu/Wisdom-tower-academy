@@ -7,7 +7,6 @@ import {
   Library,
   GraduationCap as GradCap,
   Trees,
-  BadgeCheck,
 } from "lucide-react";
 import VoiceMessageCard from "@/components/VoiceMessageCard";
 import TestimonialMarquee from "@/components/TestimonialMarquee";
@@ -23,66 +22,93 @@ type ProgramCard = {
   id: string;
   href: string;
   name: string;
+  category: string;
   image: string;
   accent: string;
   border: string;
-  cta: string;
+  description: string;
 };
 
 const programs: ProgramCard[] = [
   {
-    id: "grade-9-12",
-    href: "/academy/grades",
-    name: "Grade 9–12",
-    image: packageImages["grade-9-12"],
-    accent: "text-sky-400",
-    border: "hover:border-sky-400/40",
-    cta: "Open",
-  },
-  {
     id: "freshman",
     href: "/academy/freshman",
     name: "Freshman",
+    category: "First-Year University",
     image: packageImages.freshman,
     accent: "text-purple-400",
     border: "hover:border-purple-400/40",
-    cta: "Open",
+    description: "Complete course hubs for Natural & Social streams with textbook notes, question banks, and exams.",
+  },
+  {
+    id: "grade-9-12",
+    href: "/academy/grades",
+    name: "Grade 9–12",
+    category: "Secondary Education",
+    image: packageImages["grade-9-12"],
+    accent: "text-sky-400",
+    border: "hover:border-sky-400/40",
+    description: "National secondary curriculum with chapter-by-chapter drills and matriculation practice.",
+  },
+  {
+    id: "special",
+    href: "/academy/special-packages",
+    name: "Special Packages",
+    category: "Department Tracks",
+    image: SPECIAL_PACKAGES_HUB_IMAGE,
+    accent: "text-violet-300",
+    border: "hover:border-violet-400/40",
+    description: "Undergraduate department engineering courses, chapter exercises, and technical problem sets.",
   },
   {
     id: "uat",
     href: "/academy/uat",
     name: "UAT",
+    category: "University Entrance",
     image: packageImages.uat,
     accent: "text-emerald-400",
     border: "hover:border-emerald-400/40",
-    cta: "Open",
+    description: "Undergraduate Admission Test preparation covering quantitative reasoning and verbal problem solving.",
   },
   {
     id: "gat",
     href: "/academy/gat",
     name: "GAT",
+    category: "Postgraduate Entrance",
     image: packageImages.gat,
     accent: "text-rose-400",
     border: "hover:border-rose-400/40",
-    cta: "Open",
+    description: "Graduate Admission Test practice sets, analytical reasoning drills, and timed simulations.",
   },
   {
     id: "coc",
     href: "/academy/coc",
     name: "COC",
+    category: "Occupational Assessment",
     image: packageImages.coc,
     accent: "text-indigo-400",
     border: "hover:border-indigo-400/40",
-    cta: "Open",
+    description: "Center of Competence assessment question banks and applied practical revision guides.",
   },
   {
     id: "exit-exam",
     href: "/academy/exit-exam",
     name: "Exit Exam",
+    category: "Graduation Assessment",
     image: packageImages["exit-exam"],
     accent: "text-fuchsia-400",
     border: "hover:border-fuchsia-400/40",
-    cta: "Open",
+    description: "National university exit examination materials to consolidate your field of study.",
+  },
+  {
+    id: "remedial",
+    href: "/academy/remedial",
+    name: "Remedial Program",
+    category: "Foundation Catch-Up",
+    image: packageImages.remedial,
+    accent: "text-amber-400",
+    border: "hover:border-amber-400/40",
+    description: "Core prerequisite subject strengthening for university transition and placement success.",
   },
 ];
 
@@ -172,70 +198,46 @@ export default function AcademyPage() {
             </h1>
           </div>
 
-          <div className="perspective-scene grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {programs.map((program) => (
-              <Link
+              <article
                 key={program.id}
-                href={program.href}
-                className={`card-3d group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card ${program.border} transition-all duration-300 hover:-translate-y-1`}
+                className={`card-modern group flex flex-col ${program.border} shadow-lg shadow-black/25`}
               >
-                <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
+                <Link href={program.href} className="relative aspect-video w-full overflow-hidden bg-wisdom-navy block">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={program.image}
                     alt={program.name}
-                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+                    loading="lazy"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
-                </div>
-                <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8 flex items-center justify-between gap-2">
-                  <h3
-                    className={`flex items-center gap-1.5 font-display text-base sm:text-lg font-bold ${program.accent}`}
-                  >
-                    <BadgeCheck
-                      className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-sky-400"
-                      aria-label="Verified"
-                    />
-                    {program.name}
-                  </h3>
-                  <span
-                    className={`inline-flex items-center gap-1 text-xs sm:text-sm font-semibold ${program.accent}`}
-                  >
-                    {program.cta}
-                    <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                </Link>
+                <div className="p-5 sm:p-6 flex flex-col flex-1 border-t border-white/8">
+                  <span className="text-xs font-semibold text-wisdom-muted tracking-wide mb-1.5">
+                    {program.category}
                   </span>
+                  <h2
+                    className={`font-display text-xl font-bold tracking-tight mb-2 ${program.accent}`}
+                  >
+                    {program.name}
+                  </h2>
+                  <p className="text-sm text-slate-300/90 leading-relaxed mb-5 flex-1 line-clamp-3">
+                    {program.description}
+                  </p>
+                  <div className="mt-auto pt-2">
+                    <Link
+                      href={program.href}
+                      className="btn-primary w-full text-center"
+                    >
+                      <span>Explore {program.name}</span>
+                      <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
+                    </Link>
+                  </div>
                 </div>
-              </Link>
+              </article>
             ))}
           </div>
-
-          <section className="mt-20 md:mt-24" id="special-packages">
-            <div className="text-center mb-8">
-              <h2 className="font-display text-3xl md:text-4xl font-bold text-white">
-                Special packages
-              </h2>
-            </div>
-
-            <Link
-              href="/academy/special-packages"
-              className="group block max-w-xl mx-auto overflow-hidden rounded-2xl sm:rounded-3xl border border-violet-400/30 bg-wisdom-card hover:border-violet-300/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_48px_-16px_rgba(167,139,250,0.35)]"
-            >
-              <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
-                <SafeCoverImage src={SPECIAL_PACKAGES_HUB_IMAGE} alt="Special packages" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
-              </div>
-              <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8 flex items-center justify-between gap-2">
-                <h3 className="flex items-center gap-1.5 font-display text-base sm:text-lg font-bold text-white group-hover:text-violet-200 transition-colors">
-                  <BadgeCheck className="w-4 h-4 shrink-0 text-sky-400" aria-hidden />
-                  Special packages
-                </h3>
-                <span className="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-violet-300">
-                  Open
-                  <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-                </span>
-              </div>
-            </Link>
-          </section>
 
           <section className="mt-20 md:mt-24">
             <div className="text-center mb-8 md:mb-10">

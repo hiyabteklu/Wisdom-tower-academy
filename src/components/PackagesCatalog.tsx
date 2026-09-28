@@ -10,56 +10,56 @@ import AddToCartButton from "@/components/AddToCartButton";
 function PackageGrid({ list }: { list: AcademyPackage[] }) {
   if (list.length === 0) return null;
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {list.map((pkg) => (
         <article
           key={pkg.id}
-          className="flex flex-col overflow-hidden rounded-3xl border border-white/12 bg-wisdom-card shadow-card-3d"
+          className="card-modern group flex flex-col shadow-lg shadow-black/25"
         >
-          <div className="relative h-32 overflow-hidden">
-            <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: `url(${pkg.image})` }}
+          <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={pkg.image}
+              alt={pkg.name}
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+              loading="lazy"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-wisdom-card via-wisdom-card/40 to-transparent" />
-            <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between gap-2">
-              <h2 className="font-display text-lg font-bold text-white">{pkg.name}</h2>
-              <span className="shrink-0 rounded-lg bg-amber-500 text-wisdom-dark text-sm font-black px-2.5 py-1">
+          </div>
+
+          <div className="p-5 sm:p-6 flex flex-col flex-1 border-t border-white/8">
+            <div className="flex items-start justify-between gap-3 mb-2.5">
+              <h2 className="font-display text-lg sm:text-xl font-bold text-white leading-snug">
+                {pkg.name}
+              </h2>
+              <span className="shrink-0 font-display font-black text-amber-300 text-base sm:text-lg">
                 {formatEtb(pkg.priceEtb)}
               </span>
             </div>
-          </div>
-          <div className="p-5 flex flex-col flex-1">
+
             {pkg.description ? (
-              <div className="mb-3 rounded-xl border border-white/8 bg-wisdom-dark/30 p-3">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-400/90 mb-1 inline-flex items-center gap-1">
-                  <FileText className="w-3 h-3" />
-                  About
-                </p>
-                <p className="text-sm text-wisdom-muted leading-relaxed">{pkg.description}</p>
-              </div>
-            ) : null}
-            <ul className="space-y-1.5 mb-3">
-              {pkg.includes.map((line) => (
-                <li key={line} className="flex gap-2 text-xs text-white/85">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                  {line}
-                </li>
-              ))}
-            </ul>
-            {pkg.enrolledLabel && (
-              <p className="flex items-center gap-1.5 text-[11px] text-wisdom-muted mb-4">
-                <Users className="w-3.5 h-3.5" />
-                {pkg.enrolledLabel}
+              <p className="text-xs sm:text-sm text-wisdom-muted leading-relaxed line-clamp-3 mb-4">
+                {pkg.description}
               </p>
+            ) : null}
+
+            {pkg.includes.length > 0 && (
+              <ul className="space-y-2 mb-6 pt-3 border-t border-white/6">
+                {pkg.includes.slice(0, 4).map((line) => (
+                  <li key={line} className="flex items-start gap-2 text-xs sm:text-sm text-slate-300/85">
+                    <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                    <span className="line-clamp-1">{line}</span>
+                  </li>
+                ))}
+              </ul>
             )}
-            <div className="mt-auto space-y-2">
+
+            <div className="mt-auto pt-2 space-y-2.5">
               <AddToCartButton packageId={pkg.id} />
               <Link
                 href={pkg.href}
-                className="block text-center text-xs font-semibold text-wisdom-muted hover:text-cyan-300"
+                className="btn-secondary w-full text-center text-xs py-2"
               >
-                Preview
+                Preview curriculum
               </Link>
             </div>
           </div>

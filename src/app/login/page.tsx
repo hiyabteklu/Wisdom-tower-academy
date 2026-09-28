@@ -87,7 +87,7 @@ function LoginForm() {
           <p className="text-sm text-wisdom-muted">Sign in to continue learning</p>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-wisdom-card/80 backdrop-blur p-6 sm:p-8">
+        <div className="card-modern p-6 sm:p-8 shadow-2xl">
           <form onSubmit={onSubmit} className="space-y-4">
             <div>
               <label className={labelClass}>Email or phone number</label>
@@ -174,7 +174,7 @@ function LoginForm() {
             <button
               type="submit"
               disabled={loading || !agreedToTerms}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-cyan-400 text-wisdom-dark font-semibold hover:bg-cyan-300 transition-colors disabled:opacity-60 mt-2"
+              className="btn-cyan w-full py-3.5 text-sm mt-2 disabled:opacity-50"
             >
               {loading ? (
                 "Signing in…"

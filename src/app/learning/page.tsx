@@ -132,14 +132,14 @@ export default function LearningPage() {
         </div>
 
         {!loggedIn && !loading ? (
-          <div className="rounded-3xl border border-white/12 bg-wisdom-card p-8 text-center mb-10">
+          <div className="card-modern p-8 text-center mb-10 shadow-xl">
             <BookOpen className="w-10 h-10 text-white/20 mx-auto mb-3" />
-            <p className="font-semibold text-white mb-2">Sign in to see your packages</p>
+            <p className="font-semibold text-white mb-3">Sign in to see your packages</p>
             <Link
               href="/login?next=/learning"
-              className="inline-flex rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-bold text-wisdom-dark"
+              className="btn-accent px-6 py-2.5 text-sm"
             >
-              Sign in
+              Sign In
             </Link>
           </div>
         ) : null}
@@ -166,7 +166,7 @@ export default function LearningPage() {
                     <li key={row.id}>
                       <Link
                         href={row.href}
-                        className="flex gap-3 rounded-2xl border border-white/12 bg-wisdom-card p-3 sm:p-4 hover:border-cyan-400/35 transition"
+                        className="card-modern flex gap-4 p-4 hover:border-cyan-400/40 transition-all items-center shadow-md"
                       >
                         {row.image ? (
                           <div
@@ -178,9 +178,9 @@ export default function LearningPage() {
                         )}
                         <div className="min-w-0 flex-1">
                           <p className="font-semibold text-white truncate">{row.title}</p>
-                          <p className="text-xs text-wisdom-muted">{row.subtitle}</p>
-                          <span className="text-xs font-semibold text-cyan-300 mt-1 inline-block">
-                            Open →
+                          <p className="text-xs text-wisdom-muted mt-0.5">{row.subtitle}</p>
+                          <span className="text-xs font-bold text-cyan-300 mt-1.5 inline-block">
+                            Open learning hubs →
                           </span>
                         </div>
                       </Link>

@@ -3,7 +3,7 @@ import BranchLeaderboard from "@/components/BranchLeaderboard";
 import AcademicResultSaver from "@/components/AcademicResultSaver";
 import PackageOfferBanner from "@/components/PackageOfferBanner";
 import ResourceHubGrid from "@/components/ResourceHubGrid";
-import { BadgeCheck } from "lucide-react";
+import { Award } from "lucide-react";
 
 export default function CocPage() {
   return (
@@ -14,7 +14,7 @@ export default function CocPage() {
         <div className="mb-8 animate-fade-up text-center sm:text-left">
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mb-4">
             <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-indigo-400/30 bg-wisdom-card text-indigo-400">
-              <BadgeCheck className="w-5 h-5" />
+              <Award className="w-5 h-5" />
             </span>
             <p className="text-sm font-semibold tracking-[0.18em] uppercase text-wisdom-muted">
               Academic branch

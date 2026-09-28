@@ -208,12 +208,12 @@ export default function CartPage() {
               })}
             </ul>
 
-            <div className="rounded-2xl border border-white/12 bg-wisdom-card p-5">
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-wisdom-muted">Selected total</span>
-                <span className="font-black text-amber-300 text-lg">{formatEtb(total)}</span>
+            <div className="card-modern p-5 sm:p-6 shadow-xl">
+              <div className="flex justify-between items-baseline text-sm mb-1.5">
+                <span className="text-wisdom-muted font-medium">Selected total</span>
+                <span className="font-black text-amber-300 text-xl tracking-tight">{formatEtb(total)}</span>
               </div>
-              <p className="text-xs text-wisdom-muted mb-4 leading-relaxed">
+              <p className="text-xs text-wisdom-muted mb-5 leading-relaxed">
                 Tick only the packages you want to pay for now. One transfer covers the selected
                 total.
               </p>
@@ -221,7 +221,7 @@ export default function CartPage() {
                 type="button"
                 disabled={selectedPackages.length === 0}
                 onClick={proceed}
-                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-amber-500 text-wisdom-dark text-sm font-bold hover:bg-amber-400 disabled:opacity-40 disabled:pointer-events-none"
+                className="btn-accent flex items-center justify-center gap-2 w-full py-3.5 text-sm disabled:opacity-40 disabled:pointer-events-none"
               >
                 Proceed to payment · {formatEtb(total)}
                 <ArrowRight className="w-4 h-4" />

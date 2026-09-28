@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BadgeCheck } from "lucide-react";
 import { getCourse, specialPackages } from "@/data/special-packages";
 import CategoryBackButton from "@/components/CategoryBackButton";
 import SubjectHeroImage from "@/components/SubjectHeroImage";
@@ -53,17 +52,16 @@ export default async function CoursePage({
         <CategoryBackButton fallback={`/academy/special-packages/${pkg.slug}/${sem.id}`} />
 
         <div className="max-w-2xl mx-auto mb-8 animate-fade-up">
-          <div className="rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card overflow-hidden shadow-card-3d">
+          <div className="card-modern shadow-xl shadow-black/30">
             <div className="relative aspect-video w-full bg-wisdom-navy">
               <SubjectHeroImage src={course.image} alt={course.title} />
             </div>
-            <div className="px-5 py-4 sm:px-6 sm:py-5 text-center border-t border-white/8">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-300/90 mb-2">
+            <div className="p-5 sm:p-6 text-center border-t border-white/8">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-300/90 mb-1.5">
                 {pkg.name} · {sem.shortLabel}
               </p>
               <p className="font-mono text-xs text-wisdom-muted mb-1">{course.code}</p>
-              <h1 className="inline-flex items-center justify-center gap-2 font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-                <BadgeCheck className="w-6 h-6 shrink-0 text-sky-400" aria-label="Verified" />
+              <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
                 {course.title}
               </h1>
             </div>

@@ -10,7 +10,6 @@ import {
   Library,
   GraduationCap as GradCap,
   Trees,
-  BadgeCheck,
   FileText,
   CheckCircle2,
   ChevronDown,
@@ -28,6 +27,7 @@ type ProgramCard = {
   id: string;
   href: string;
   name: string;
+  category: string;
   image: string;
   accent: string;
   border: string;
@@ -37,7 +37,7 @@ type ProgramCard = {
 
 function fromPackage(
   packageId: string,
-  overrides: Partial<ProgramCard> & Pick<ProgramCard, "id" | "href" | "name" | "image" | "accent" | "border">
+  overrides: Partial<ProgramCard> & Pick<ProgramCard, "id" | "href" | "name" | "category" | "image" | "accent" | "border">
 ): ProgramCard {
   const pkg = getPackage(packageId);
   return {
@@ -47,225 +47,251 @@ function fromPackage(
   };
 }
 
-const programs: ProgramCard[] = [
+const allPrograms: ProgramCard[] = [
+  {
+    id: "freshman",
+    href: "/academy/freshman",
+    name: "Freshman",
+    category: "First-Year University",
+    image: packageImages.freshman,
+    accent: "text-purple-400",
+    border: "hover:border-purple-400/40",
+    description:
+      "All freshman semester courses organized by subject. Comprehensive lecture notes, chapter question banks, flashcards, and previous final exams with step-by-step solutions.",
+    includes: [
+      "Natural & Social science tracks",
+      "Full course books & chapter short notes",
+      "Interactive question banks & flashcards",
+      "Semester midterm & final exam drills",
+    ],
+  },
   {
     id: "grade-9-12",
     href: "/academy/grades",
     name: "Grade 9–12",
+    category: "Secondary Curriculum",
     image: packageImages["grade-9-12"],
     accent: "text-sky-400",
     border: "hover:border-sky-400/40",
     description:
-      "Secondary packages built grade by grade. Notes for every subject, chapter question banks, flashcards, and practice exams with solutions. Buy a full grade or focus on individual subjects. AI tutor support inside notes and questions, plus verified scholarship listings.",
+      "Structured syllabus coverage from Grade 9 to 12. Master textbook chapters, drill with targeted questions, practice with timed exams, and prepare thoroughly for national matriculation.",
     includes: [
-      "Full grade or individual subjects",
-      "Notes for every subject",
-      "Question bank per chapter",
-      "Flashcards per chapter",
-      "Practice exams with solutions",
-      "AI tutor inside notes and questions",
-      "Verified scholarship listings",
+      "Grades 9, 10, 11, and 12 complete hubs",
+      "Natural and Social science streams",
+      "Chapter-by-chapter question banks",
+      "National matriculation practice exams",
     ],
   },
-  fromPackage("freshman", {
-    id: "freshman",
-    href: "/academy/freshman",
-    name: "Freshman",
-    image: packageImages.freshman,
-    accent: "text-purple-400",
-    border: "hover:border-purple-400/40",
-  }),
-  fromPackage("uat", {
+  {
+    id: "special",
+    href: "/academy/special-packages",
+    name: "Special Packages",
+    category: "Department Tracks",
+    image: SPECIAL_PACKAGES_HUB_IMAGE,
+    accent: "text-violet-300",
+    border: "hover:border-violet-400/40",
+    description:
+      "Advanced undergraduate engineering and specialized department tracks. Semester-specific course materials, technical practice banks, and applied exam solutions.",
+    includes: [
+      "Electrical & Computer Engineering (ECE)",
+      "Semester 1 & Semester 2 core courses",
+      "Applied chapter question banks & notes",
+      "Technical exam drills with solutions",
+    ],
+  },
+  {
     id: "uat",
     href: "/academy/uat",
     name: "UAT",
+    category: "Undergraduate Entrance",
     image: packageImages.uat,
     accent: "text-emerald-400",
     border: "hover:border-emerald-400/40",
-  }),
-  fromPackage("gat", {
+    description:
+      "University Admission Test preparation. Master quantitative and verbal reasoning under strict timed conditions with verified explanations.",
+    includes: [
+      "Quantitative & verbal reasoning sections",
+      "Timed mock examinations with analytics",
+      "Comprehensive answer rationales",
+      "Performance score tracking",
+    ],
+  },
+  {
     id: "gat",
     href: "/academy/gat",
     name: "GAT",
+    category: "Graduate Admission",
     image: packageImages.gat,
     accent: "text-rose-400",
     border: "hover:border-rose-400/40",
-  }),
-  fromPackage("coc", {
+    description:
+      "Graduate Admission Test preparation for postgraduate entry. Targeted analytical, verbal, and quantitative problem sets with detailed working.",
+    includes: [
+      "Postgraduate entrance standard questions",
+      "Analytical & quantitative problem sets",
+      "Full-length timed exam simulations",
+      "Explanatory solution walkthroughs",
+    ],
+  },
+  {
     id: "coc",
     href: "/academy/coc",
     name: "COC",
+    category: "Competency Certification",
     image: packageImages.coc,
     accent: "text-indigo-400",
     border: "hover:border-indigo-400/40",
-  }),
-  fromPackage("exit-exam", {
+    description:
+      "Center of Competence assessment materials and occupational evaluation preparation designed to build practical and theoretical confidence.",
+    includes: [
+      "Competency assessment question banks",
+      "Practical scenario review guides",
+      "Timed assessment simulations",
+      "Progress tracking per competency level",
+    ],
+  },
+  {
     id: "exit-exam",
     href: "/academy/exit-exam",
     name: "Exit Exam",
+    category: "University Exit Certification",
     image: packageImages["exit-exam"],
     accent: "text-fuchsia-400",
     border: "hover:border-fuchsia-400/40",
-  }),
-  fromPackage("remedial", {
+    description:
+      "National university graduation exit exam resources. Consolidate your core discipline knowledge with comprehensive practice banks.",
+    includes: [
+      "Discipline-focused question banks",
+      "Core subject revision summaries",
+      "Timed graduation exam drills",
+      "Detailed scoring breakdown",
+    ],
+  },
+  {
     id: "remedial",
     href: "/academy/remedial",
-    name: "Remedial",
+    name: "Remedial Program",
+    category: "Higher Ed Catch-Up",
     image: packageImages.remedial,
     accent: "text-amber-400",
     border: "hover:border-amber-400/40",
-  }),
+    description:
+      "Remedial university pathway curriculum. Solidify prerequisite foundations in mathematics, natural sciences, and English for university entry.",
+    includes: [
+      "Core remedial subject coverage",
+      "Foundational chapter short notes",
+      "Targeted revision question sets",
+      "Placement exam practice tests",
+    ],
+  },
 ];
-
-const specialCard: ProgramCard = {
-  id: "special",
-  href: "/academy/special-packages",
-  name: "Special packages",
-  image: SPECIAL_PACKAGES_HUB_IMAGE,
-  accent: "text-violet-300",
-  border: "hover:border-violet-400/40",
-  description:
-    "Senior engineering and select department tracks. Course material written for your department, not general content. Question banks, flashcards, and practice exams with solutions per chapter. More departments added over time. AI tutor support and scholarship access included.",
-  includes: [
-    "Department-specific course material",
-    "Question bank per chapter",
-    "Flashcards per chapter",
-    "Practice exams with solutions",
-    "More departments over time",
-    "AI tutor inside notes and questions",
-    "Verified scholarship listings",
-  ],
-};
 
 const freeResources = [
   {
     href: "/academy/success-stories",
     name: "Success Stories",
-    blurb: "How top students prepared and what they learned along the way",
+    blurb: "Real preparation strategies, score milestones, and study habits from top-ranking students.",
     icon: Trophy,
     accent: "text-amber-300",
-    border: "border-white/12 hover:border-amber-400/40",
-    iconBg: "border-amber-400/30 bg-amber-500/15 text-amber-300",
+    border: "border-white/10 hover:border-amber-400/40",
+    iconBg: "border-amber-400/30 bg-amber-500/10 text-amber-300",
   },
   {
     href: "/academy/study-techniques",
     name: "Study Techniques",
-    blurb: "Practical ways to learn faster and remember more",
+    blurb: "Active recall, spaced repetition, and focus management frameworks proven for exam mastery.",
     icon: Lightbulb,
     accent: "text-cyan-300",
-    border: "border-white/12 hover:border-cyan-400/40",
-    iconBg: "border-cyan-400/30 bg-cyan-500/15 text-cyan-300",
+    border: "border-white/10 hover:border-cyan-400/40",
+    iconBg: "border-cyan-400/30 bg-cyan-500/10 text-cyan-300",
   },
   {
     href: "/academy/campus-life",
     name: "Campus Life",
-    blurb: "Friends, focus, lectures, and life between classes",
+    blurb: "Living guides, campus navigation, study balance, and dorm survival tips for university students.",
     icon: Trees,
     accent: "text-sky-300",
-    border: "border-white/12 hover:border-sky-400/40",
-    iconBg: "border-sky-400/30 bg-sky-500/15 text-sky-300",
+    border: "border-white/10 hover:border-sky-400/40",
+    iconBg: "border-sky-400/30 bg-sky-500/10 text-sky-300",
   },
   {
     href: "/academy/universities",
-    name: "Universities",
-    blurb: "Schools, programs, and what each is known for",
+    name: "Universities Directory",
+    blurb: "In-depth profiles, campus climate, department strengths, and admission data across Ethiopia.",
     icon: Building2,
     accent: "text-violet-300",
-    border: "border-white/12 hover:border-violet-400/40",
-    iconBg: "border-violet-400/30 bg-violet-500/15 text-violet-300",
+    border: "border-white/10 hover:border-violet-400/40",
+    iconBg: "border-violet-400/30 bg-violet-500/10 text-violet-300",
   },
   {
     href: "/academy/departments",
-    name: "Departments",
-    blurb: "Clear picture of each field before you choose",
+    name: "Departments Guide",
+    blurb: "Understand curriculum requirements, career prospects, and daily realities of each major before choosing.",
     icon: Library,
     accent: "text-orange-300",
-    border: "border-white/12 hover:border-orange-400/40",
-    iconBg: "border-orange-400/30 bg-orange-500/15 text-orange-300",
+    border: "border-white/10 hover:border-orange-400/40",
+    iconBg: "border-orange-400/30 bg-orange-500/10 text-orange-300",
   },
   {
     href: "/academy/scholarships",
-    name: "Scholarships",
-    blurb: "Funding options and how to apply with confidence",
+    name: "Scholarships Guide",
+    blurb: "Verified domestic and international funding opportunities with deadline tracking and guidance.",
     icon: GradCap,
     accent: "text-rose-300",
-    border: "border-white/12 hover:border-rose-400/40",
-    iconBg: "border-rose-400/30 bg-rose-500/15 text-rose-300",
+    border: "border-white/10 hover:border-rose-400/40",
+    iconBg: "border-rose-400/30 bg-rose-500/10 text-rose-300",
   },
 ];
 
-function ProgramCardView({ program }: { program: ProgramCard }) {
-  const [expanded, setExpanded] = useState(false);
-
+function PathwayCard({ program }: { program: ProgramCard }) {
   return (
     <article
-      className={`card-3d group relative flex flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card ${program.border} transition-all duration-300 hover:-translate-y-0.5`}
+      className={`card-modern group flex flex-col ${program.border} shadow-lg shadow-black/25`}
     >
       <Link href={program.href} className="relative aspect-video w-full overflow-hidden bg-wisdom-navy block">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={program.image}
           alt={program.name}
-          className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+          loading="lazy"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
       </Link>
 
-      <div className="px-4 py-3.5 sm:px-5 sm:py-4 border-t border-white/8 space-y-3">
-        <h3 className={`flex items-center gap-1.5 font-display text-base sm:text-lg font-bold ${program.accent}`}>
-          <BadgeCheck className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-sky-400" aria-hidden />
+      <div className="p-5 sm:p-6 flex flex-col flex-1 border-t border-white/8">
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <span className="text-xs font-semibold text-wisdom-muted tracking-wide">
+            {program.category}
+          </span>
+        </div>
+
+        <h3 className={`font-display text-xl font-bold tracking-tight mb-2.5 ${program.accent}`}>
           {program.name}
         </h3>
 
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setExpanded((v) => !v)}
-            aria-expanded={expanded}
-            className={`inline-flex items-center justify-center gap-1.5 rounded-xl border px-3.5 py-2.5 text-xs sm:text-sm font-semibold transition-colors ${
-              expanded
-                ? "border-cyan-400/40 bg-cyan-500/15 text-cyan-100"
-                : "border-white/15 bg-white/[0.04] text-white/90 hover:border-white/25 hover:bg-white/[0.06]"
-            }`}
-          >
-            <FileText className="w-3.5 h-3.5" />
-            Description
-            <ChevronDown
-              className={`w-3.5 h-3.5 transition-transform duration-300 ${
-                expanded ? "rotate-180" : ""
-              }`}
-            />
-          </button>
-          <Link href={program.href} className={OPEN_BTN}>
-            Open
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
+        <p className="text-sm text-slate-300/90 leading-relaxed mb-4 line-clamp-3">
+          {program.description}
+        </p>
 
-        <div
-          className={`grid transition-[grid-template-rows] duration-300 ease-out ${
-            expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
-          }`}
-        >
-          <div className="overflow-hidden">
-            <div className="pt-1 pb-1 space-y-3 border-t border-white/8 mt-1">
-              <p className="text-sm text-white/85 leading-relaxed pt-3">{program.description}</p>
-              {program.includes.length > 0 && (
-                <ul className="space-y-1.5">
-                  {program.includes.map((line) => (
-                    <li key={line} className="flex gap-2 text-xs sm:text-sm text-white/90">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-sky-400 shrink-0 mt-0.5" />
-                      {line}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <Link href={program.href} className={`${OPEN_BTN} w-full mt-1`}>
-                Open {program.name}
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          </div>
+        {program.includes.length > 0 && (
+          <ul className="space-y-2 mb-6 pt-3 border-t border-white/6">
+            {program.includes.slice(0, 3).map((line) => (
+              <li key={line} className="flex items-start gap-2 text-xs sm:text-sm text-slate-300/85">
+                <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                <span className="line-clamp-1">{line}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <div className="mt-auto pt-2">
+          <Link
+            href={program.href}
+            className="btn-primary w-full text-center"
+          >
+            <span>Explore {program.name}</span>
+            <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
+          </Link>
         </div>
       </div>
     </article>
@@ -274,88 +300,73 @@ function ProgramCardView({ program }: { program: ProgramCard }) {
 
 export default function LandingPathways() {
   const pathwaysSection = useInView();
-  const branchPrograms = programs.filter((p) => p.id !== "freshman");
-  const freshman = programs.find((p) => p.id === "freshman");
 
   return (
     <>
-      <section className="pb-16 md:pb-20 relative" ref={pathwaysSection.ref}>
+      <section className="pb-16 md:pb-24 relative" ref={pathwaysSection.ref}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div
-            className={`text-center mb-12 md:mb-14 reveal-item ${
+            className={`text-center mb-12 md:mb-16 reveal-item ${
               pathwaysSection.inView ? "is-visible" : ""
             }`}
           >
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-white">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-400/90 mb-3">
+              Curated Academic Tracks
+            </p>
+            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-white mb-4">
               Choose your pathway
             </h2>
+            <p className="text-wisdom-muted text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
+              Every course, question bank, and exam simulation is tailored to Ethiopian national syllabus and university standards.
+            </p>
           </div>
 
-          <section className="mb-14 md:mb-16">
-            <div className="text-center mb-6">
-              <h3 className="font-display text-2xl md:text-3xl font-bold text-white">
-                Special packages
+          {/* All Academic Pathways Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20 md:mb-24">
+            {allPrograms.map((program) => (
+              <PathwayCard key={program.id} program={program} />
+            ))}
+          </div>
+
+          {/* Free Academic Resources Section */}
+          <section className="mb-12">
+            <div className="text-center mb-10 md:mb-12">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-400/90 mb-2">
+                Open Access
+              </p>
+              <h3 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3">
+                Free resources & guides
               </h3>
-            </div>
-            <div className="max-w-xl mx-auto">
-              <ProgramCardView program={specialCard} />
-            </div>
-          </section>
-
-          {freshman && (
-            <section className="mb-14 md:mb-16">
-              <div className="text-center mb-6">
-                <h3 className="font-display text-2xl md:text-3xl font-bold text-white">Freshman</h3>
-              </div>
-              <div className="max-w-xl mx-auto">
-                <ProgramCardView program={freshman} />
-              </div>
-            </section>
-          )}
-
-          <section className="mb-16 md:mb-20">
-            <div className="text-center mb-6">
-              <h3 className="font-display text-2xl md:text-3xl font-bold text-white">
-                Academic branches
-              </h3>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-              {branchPrograms.map((program) => (
-                <ProgramCardView key={program.id} program={program} />
-              ))}
-            </div>
-          </section>
-
-          <section className="mb-8">
-            <div className="text-center mb-8 md:mb-10">
-              <h3 className="font-display text-2xl md:text-3xl font-bold text-white mb-2">
-                Free resources
-              </h3>
+              <p className="text-wisdom-muted text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
+                Study frameworks, student insights, and university directories available freely to every learner.
+              </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {freeResources.map((item) => {
                 const Icon = item.icon;
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`group relative rounded-2xl border bg-wisdom-card/95 p-5 sm:p-6 transition-all duration-300 ease-out hover:-translate-y-1 hover:bg-white/[0.04] ${item.border}`}
+                    className={`card-modern group p-5 sm:p-6 flex flex-col transition-all duration-300 hover:-translate-y-1 ${item.border}`}
                   >
                     <div
-                      className={`mb-4 inline-flex p-3 rounded-xl border ${item.iconBg} transition-transform duration-300 group-hover:scale-105`}
+                      className={`mb-4 inline-flex p-3 rounded-xl border w-fit ${item.iconBg} transition-transform duration-300 group-hover:scale-105`}
                     >
                       <Icon className="w-5 h-5" />
                     </div>
                     <h4
-                      className={`font-display text-lg sm:text-xl mb-2 font-semibold transition-colors ${item.accent}`}
+                      className={`font-display text-lg sm:text-xl mb-2 font-bold transition-colors ${item.accent}`}
                     >
                       {item.name}
                     </h4>
-                    <p className="text-sm text-wisdom-muted leading-relaxed">{item.blurb}</p>
-                    <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-sky-400/90 group-hover:text-sky-300 transition-colors">
-                      Explore
-                      <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+                    <p className="text-sm text-wisdom-muted leading-relaxed mb-5 flex-1">
+                      {item.blurb}
+                    </p>
+                    <span className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-cyan-300 group-hover:text-cyan-200 transition-colors">
+                      Open guide
+                      <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-1" />
                     </span>
                   </Link>
                 );

@@ -8,7 +8,6 @@ import SubjectHeroImage from "@/components/SubjectHeroImage";
 import BranchLeaderboard from "@/components/BranchLeaderboard";
 import GradeStreamsPanel from "@/components/GradeStreamsPanel";
 import CollapsibleProgress from "@/components/CollapsibleProgress";
-import { BadgeCheck } from "lucide-react";
 
 export function generateStaticParams() {
   return grades.map((g) => ({ grade: g.id }));
@@ -33,21 +32,20 @@ export default async function GradeDetailPage({
         <CategoryBackButton fallback="/academy/grades" />
 
         <div className="max-w-2xl mx-auto mb-8 animate-fade-up">
-          <div className="rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-card overflow-hidden shadow-card-3d">
+          <div className="card-modern shadow-xl shadow-black/30">
             <div className="relative aspect-video w-full bg-wisdom-navy">
               <SubjectHeroImage src={grade.image} alt={grade.label} />
             </div>
-            <div className="px-5 py-4 sm:px-6 sm:py-5 text-center border-t border-white/8">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-wisdom-muted mb-2">
-                Grade pathway
+            <div className="p-5 sm:p-6 text-center border-t border-white/8">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-wisdom-muted mb-1.5">
+                Secondary Curriculum
               </p>
-              <h1 className="inline-flex items-center justify-center gap-2 font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-                <BadgeCheck
-                  className="w-6 h-6 sm:w-7 sm:h-7 shrink-0 text-sky-400"
-                  aria-label="Verified"
-                />
+              <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
                 <span className={grade.accent}>{grade.label}</span>
               </h1>
+              <p className="mt-2 text-xs sm:text-sm text-wisdom-muted max-w-md mx-auto">
+                Official syllabus subjects, question banks, flashcards, and timed examination simulations.
+              </p>
             </div>
           </div>
         </div>
