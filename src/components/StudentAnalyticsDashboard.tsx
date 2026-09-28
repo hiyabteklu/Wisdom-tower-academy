@@ -178,108 +178,137 @@ export default function StudentAnalyticsDashboard({
       {/* ========================================================= */}
       {/* 4 PRIMARY METRIC CARDS — DIRECT TO THE STUDENT             */}
       {/* ========================================================= */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* 1. YOUR STUDY TIME */}
-        <div className="card-modern p-5 border-white/10 bg-wisdom-card/80 flex flex-col justify-between hover:border-cyan-400/30 transition-all">
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-cyan-400" />
-                Your Study Time
-              </span>
-              <span className="text-[10px] font-mono font-bold text-cyan-300">
-                {analytics.weeklyProgressPct}% of Goal
-              </span>
-            </div>
-            <p className="font-display text-3xl sm:text-4xl font-black text-white">
-              {analytics.totalStudyHours}
-              <span className="text-base font-normal text-wisdom-muted ml-1">hrs</span>
-            </p>
-            <p className="text-xs text-cyan-300/90 font-semibold mt-1">
-              Target: {analytics.weeklyTargetHours} hrs / week
-            </p>
-          </div>
-          <div className="mt-4 pt-3 border-t border-white/8 text-[11px] text-wisdom-muted leading-tight">
-            {analytics.hoursRemainingThisWeek > 0
-              ? `You need ${analytics.hoursRemainingThisWeek} more hours this week to reach institutional target.`
-              : "You have completed your weekly study quota for this syllabus."}
-          </div>
-        </div>
+      {(() => {
+        const timeLevel = analytics.weeklyProgressPct >= 75
+          ? { text: "text-emerald-400", border: "hover:border-emerald-400/40", badge: "bg-emerald-500/15 text-emerald-300", dot: "bg-emerald-400" }
+          : analytics.weeklyProgressPct >= 50
+          ? { text: "text-amber-400", border: "hover:border-amber-400/40", badge: "bg-amber-500/15 text-amber-300", dot: "bg-amber-400" }
+          : { text: "text-rose-400", border: "hover:border-rose-400/40", badge: "bg-rose-500/15 text-rose-300", dot: "bg-rose-400" };
 
-        {/* 2. YOUR READING SPEED & FOCUS */}
-        <div className="card-modern p-5 border-white/10 bg-wisdom-card/80 flex flex-col justify-between hover:border-amber-400/30 transition-all">
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted flex items-center gap-1.5">
-                <Gauge className="w-3.5 h-3.5 text-amber-400" />
-                Your Reading Speed
-              </span>
-              <span className="text-[10px] font-mono font-bold text-amber-300">
-                {analytics.focusRatioPct}% Focus
-              </span>
-            </div>
-            <p className="font-display text-3xl sm:text-4xl font-black text-amber-300">
-              {analytics.readingSpeedWpm}
-              <span className="text-sm font-normal text-wisdom-muted ml-1">WPM</span>
-            </p>
-            <p className="text-xs text-slate-300 font-semibold mt-1">
-              Benchmark: {analytics.trackBenchmark.expectedReadingWpm} WPM
-            </p>
-          </div>
-          <div className="mt-4 pt-3 border-t border-white/8 text-[11px] text-wisdom-muted leading-tight">
-            Your reading rate is measured across textbook chapters and lecture notes.
-          </div>
-        </div>
+        const speedRatio = Math.round((analytics.readingSpeedWpm / (analytics.trackBenchmark.expectedReadingWpm || 180)) * 100);
+        const speedLevel = speedRatio >= 90
+          ? { text: "text-emerald-400", border: "hover:border-emerald-400/40", badge: "bg-emerald-500/15 text-emerald-300" }
+          : speedRatio >= 65
+          ? { text: "text-amber-400", border: "hover:border-amber-400/40", badge: "bg-amber-500/15 text-amber-300" }
+          : { text: "text-rose-400", border: "hover:border-rose-400/40", badge: "bg-rose-500/15 text-rose-300" };
 
-        {/* 3. YOUR QUESTION ACCURACY RATE */}
-        <div className="card-modern p-5 border-white/10 bg-wisdom-card/80 flex flex-col justify-between hover:border-emerald-400/30 transition-all">
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted flex items-center gap-1.5">
-                <Target className="w-3.5 h-3.5 text-emerald-400" />
-                Your Question Accuracy
-              </span>
-              <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
-                {analytics.questionsCorrect}/{analytics.questionsAttempted} Solved
-              </span>
-            </div>
-            <p className="font-display text-3xl sm:text-4xl font-black text-emerald-400">
-              {analytics.questionAccuracyPct}%
-            </p>
-            <p className="text-xs text-slate-300 font-semibold mt-1">
-              Standing: <span className="text-emerald-300">{analytics.masteryTier}</span>
-            </p>
-          </div>
-          <div className="mt-4 pt-3 border-t border-white/8 text-[11px] text-wisdom-muted leading-tight">
-            Derived from all chapter drills, midterm questions, and practice exams.
-          </div>
-        </div>
+        const accuracyLevel = analytics.questionAccuracyPct >= 75
+          ? { text: "text-emerald-400", border: "hover:border-emerald-400/40", badge: "bg-emerald-500/15 text-emerald-300" }
+          : analytics.questionAccuracyPct >= 50
+          ? { text: "text-amber-400", border: "hover:border-amber-400/40", badge: "bg-amber-500/15 text-amber-300" }
+          : { text: "text-rose-400", border: "hover:border-rose-400/40", badge: "bg-rose-500/15 text-rose-300" };
 
-        {/* 4. YOUR ACTIVE STUDY STREAK */}
-        <div className="card-modern p-5 border-white/10 bg-wisdom-card/80 flex flex-col justify-between hover:border-orange-400/30 transition-all">
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted flex items-center gap-1.5">
-                <Flame className="w-3.5 h-3.5 text-orange-400" />
-                Your Study Streak
-              </span>
-              <span className="text-[10px] font-bold text-orange-300 uppercase">
-                {analytics.streakStatus}
-              </span>
+        const streakLevel = analytics.currentStreakDays >= 7
+          ? { text: "text-emerald-400", border: "hover:border-emerald-400/40", badge: "bg-emerald-500/15 text-emerald-300" }
+          : analytics.currentStreakDays >= 3
+          ? { text: "text-amber-400", border: "hover:border-amber-400/40", badge: "bg-amber-500/15 text-amber-300" }
+          : { text: "text-rose-400", border: "hover:border-rose-400/40", badge: "bg-rose-500/15 text-rose-300" };
+
+        return (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* 1. YOUR STUDY TIME */}
+            <div className={`card-modern p-5 border-white/10 bg-wisdom-card/80 flex flex-col justify-between ${timeLevel.border} transition-all`}>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-cyan-400" />
+                    Your Study Time
+                  </span>
+                  <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${timeLevel.badge}`}>
+                    {analytics.weeklyProgressPct}% of Goal
+                  </span>
+                </div>
+                <p className={`font-display text-3xl sm:text-4xl font-black ${timeLevel.text}`}>
+                  {analytics.totalStudyHours}
+                  <span className="text-base font-normal text-wisdom-muted ml-1">hrs</span>
+                </p>
+                <p className="text-xs text-slate-300 font-semibold mt-1">
+                  Target: {analytics.weeklyTargetHours} hrs / week
+                </p>
+              </div>
+              <div className="mt-4 pt-3 border-t border-white/8 text-[11px] text-wisdom-muted leading-tight">
+                {analytics.hoursRemainingThisWeek > 0
+                  ? `Need ${analytics.hoursRemainingThisWeek} more hrs this week to reach institutional target.`
+                  : "Institutional weekly study quota reached."}
+              </div>
             </div>
-            <p className="font-display text-3xl sm:text-4xl font-black text-orange-400">
-              {analytics.currentStreakDays}
-              <span className="text-base font-normal text-wisdom-muted ml-1">days</span>
-            </p>
-            <p className="text-xs text-orange-300/90 font-semibold mt-1">
-              Continuous daily learning
-            </p>
+
+            {/* 2. YOUR READING SPEED & FOCUS */}
+            <div className={`card-modern p-5 border-white/10 bg-wisdom-card/80 flex flex-col justify-between ${speedLevel.border} transition-all`}>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted flex items-center gap-1.5">
+                    <Gauge className="w-3.5 h-3.5 text-cyan-400" />
+                    Reading Speed
+                  </span>
+                  <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${speedLevel.badge}`}>
+                    {analytics.focusRatioPct}% Focus
+                  </span>
+                </div>
+                <p className={`font-display text-3xl sm:text-4xl font-black ${speedLevel.text}`}>
+                  {analytics.readingSpeedWpm}
+                  <span className="text-sm font-normal text-wisdom-muted ml-1">WPM</span>
+                </p>
+                <p className="text-xs text-slate-300 font-semibold mt-1">
+                  Benchmark: {analytics.trackBenchmark.expectedReadingWpm} WPM
+                </p>
+              </div>
+              <div className="mt-4 pt-3 border-t border-white/8 text-[11px] text-wisdom-muted leading-tight">
+                Measured across textbook chapters and lecture notes.
+              </div>
+            </div>
+
+            {/* 3. YOUR QUESTION ACCURACY RATE */}
+            <div className={`card-modern p-5 border-white/10 bg-wisdom-card/80 flex flex-col justify-between ${accuracyLevel.border} transition-all`}>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted flex items-center gap-1.5">
+                    <Target className="w-3.5 h-3.5 text-cyan-400" />
+                    Question Accuracy
+                  </span>
+                  <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${accuracyLevel.badge}`}>
+                    {analytics.questionsCorrect}/{analytics.questionsAttempted} Solved
+                  </span>
+                </div>
+                <p className={`font-display text-3xl sm:text-4xl font-black ${accuracyLevel.text}`}>
+                  {analytics.questionAccuracyPct}%
+                </p>
+                <p className="text-xs text-slate-300 font-semibold mt-1">
+                  Standing: <span className={accuracyLevel.text}>{analytics.masteryTier}</span>
+                </p>
+              </div>
+              <div className="mt-4 pt-3 border-t border-white/8 text-[11px] text-wisdom-muted leading-tight">
+                Derived from all chapter drills, midterms, and model exams.
+              </div>
+            </div>
+
+            {/* 4. YOUR ACTIVE STUDY STREAK */}
+            <div className={`card-modern p-5 border-white/10 bg-wisdom-card/80 flex flex-col justify-between ${streakLevel.border} transition-all`}>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted flex items-center gap-1.5">
+                    <Flame className="w-3.5 h-3.5 text-amber-400" />
+                    Active Streak
+                  </span>
+                  <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${streakLevel.badge}`}>
+                    {analytics.streakStatus}
+                  </span>
+                </div>
+                <p className={`font-display text-3xl sm:text-4xl font-black ${streakLevel.text}`}>
+                  {analytics.currentStreakDays}
+                  <span className="text-base font-normal text-wisdom-muted ml-1">days</span>
+                </p>
+                <p className="text-xs text-slate-300 font-semibold mt-1">
+                  Daily active learning
+                </p>
+              </div>
+              <div className="mt-4 pt-3 border-t border-white/8 text-[11px] text-wisdom-muted leading-tight">
+                Log at least 20 minutes today to maintain consecutive streak.
+              </div>
+            </div>
           </div>
-          <div className="mt-4 pt-3 border-t border-white/8 text-[11px] text-wisdom-muted leading-tight">
-            Log at least 20 minutes today to maintain your consecutive streak.
-          </div>
-        </div>
-      </div>
+        );
+      })()}
 
       {/* ========================================================= */}
       {/* DIRECT ACADEMIC DIRECTIVES — 1-ON-1 PERSONAL TO STUDENT   */}
