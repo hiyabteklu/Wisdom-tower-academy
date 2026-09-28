@@ -797,37 +797,87 @@ export function computeStudentAnalytics(
     },
   ];
 
-  // 5. Immediately Stop Signals (What went wrong recently based on real data)
-  const immediatelyStopSignals = [
-    {
-      id: "stop-skimming-without-testing",
-      severity: "Critical" as const,
-      signal: "STOP Passive Skimming Without Self-Testing",
-      observedData: `Measured reading pace (${readingSpeedWpm} WPM) with rapid page turns. Skimming without immediate retrieval questions leads to rapid forgetting.`,
-      immediateAction: "Never finish a textbook section without answering the mid-chapter checkpoint questions.",
-    },
-    {
+  // 5. Immediately Stop Signals (Constructed dynamically from real student activity records)
+  type StopSignal = {
+    id: string;
+    severity: "Critical" | "Warning";
+    signal: string;
+    observedData: string;
+    immediateAction: string;
+  };
+
+  const immediatelyStopSignals: StopSignal[] = [];
+
+  // Check 1: Inactivity / Zero study time
+  if (totalStudyMinutes === 0) {
+    immediatelyStopSignals.push({
+      id: "stop-inactivity-gap",
+      severity: "Warning",
+      signal: "Zero Study Sessions Logged This Week",
+      observedData: `0.0 hours recorded toward your ${benchmark.weeklyTargetHours}-hour target for ${benchmark.trackName}. Zero active sessions detected in this period.`,
+      immediateAction: "Open a chapter in your Learning Hub today and complete an initial 20-minute study interval.",
+    });
+  } else if (hoursRemainingThisWeek > 0 && weeklyProgressPct < 40) {
+    immediatelyStopSignals.push({
+      id: "stop-lagging-weekly-target",
+      severity: "Warning",
+      signal: "Pacing Significantly Behind Weekly Quota",
+      observedData: `Logged ${totalStudyHours}h out of ${benchmark.weeklyTargetHours}h target (${weeklyProgressPct}%). You need ${hoursRemainingThisWeek} more hours to prevent end-of-week cramming.`,
+      immediateAction: `Add a dedicated 30-minute daily study block to stay on track for the ${benchmark.trackName} curriculum.`,
+    });
+  }
+
+  // Check 2: Low question accuracy review
+  if (questionsAttempted > 0 && questionAccuracyPct < 60) {
+    immediatelyStopSignals.push({
       id: "stop-unreviewed-misses",
-      severity: "Critical" as const,
-      signal: "STOP Skipping Detailed Review of Wrong Answers",
-      observedData: "Recent question history shows moving straight to the next practice set without reviewing the step-by-step solution rationale for missed items.",
-      immediateAction: "When a question is missed, read the complete solution explanation before attempting the next question.",
-    },
-    {
-      id: "stop-marathon-fatigue",
-      severity: "Warning" as const,
-      signal: "STOP Studying Past Cognitive Fatigue Threshold",
-      observedData: "Sessions running beyond 50 continuous minutes show a sharp dip in focus ratio and increased time per question.",
-      immediateAction: "Stop studying immediately when you catch your eyes drifting. Take a physical 5-minute break away from screens.",
-    },
-    {
-      id: "stop-sporadic-gaps",
-      severity: "Warning" as const,
-      signal: "STOP Irregular Multi-Day Study Gaps",
-      observedData: "Gaps of 3 or more days between study sessions require 40% more revision time to regain previous retention levels.",
-      immediateAction: "Lock in a minimum of 25 minutes of active study every single day to protect your learning streak.",
-    },
-  ];
+      severity: "Critical",
+      signal: "Low Question Drill Accuracy (< 60%)",
+      observedData: `Recorded accuracy is ${questionAccuracyPct}% (${questionsCorrect} correct out of ${questionsAttempted} attempts). Advancing without reviewing missed items solidifies mistakes.`,
+      immediateAction: "Pause new drill sets. Open missed questions and read the step-by-step solution derivation before re-attempting.",
+    });
+  }
+
+  // Check 3: High speed skimming or low focus dwell
+  if (totalStudyMinutes > 10 && focusRatioPct < 60) {
+    immediatelyStopSignals.push({
+      id: "stop-idle-distraction",
+      severity: "Warning",
+      signal: "High Off-Focus / Passive Dwell Ratio",
+      observedData: `Active focus ratio is measured at ${focusRatioPct}%. More than 40% of session time was spent idle or in background tabs.`,
+      immediateAction: "Use 25-minute Pomodoro focus blocks with fullscreen reading mode to eliminate tab-switching distractions.",
+    });
+  } else if (readingSpeedWpm > 260 && focusRatioPct < 75) {
+    immediatelyStopSignals.push({
+      id: "stop-skimming-pace",
+      severity: "Warning",
+      signal: "Superficial Reading Velocity (Pacing Too Fast)",
+      observedData: `Velocity clocked at ${readingSpeedWpm} WPM. Rapid skimming on complex technical chapters reduces conceptual retention.`,
+      immediateAction: "Slow down reading pace by 20% on theoretical derivations and pause to summarize key formulas in your notes.",
+    });
+  }
+
+  // Check 4: Zero active streak after previously studying
+  if (totalStudyMinutes > 0 && currentStreakDays === 0) {
+    immediatelyStopSignals.push({
+      id: "stop-broken-streak",
+      severity: "Warning",
+      signal: "Study Cadence Stalled (0-Day Streak)",
+      observedData: "Recent multi-day lapse detected since last logged study activity. Inconsistent intervals compound forgetting rates.",
+      immediateAction: "Complete at least one short 15-minute flashcard or question bank review today to restore your active streak.",
+    });
+  }
+
+  // Check 5: If student is performing well and has no negative anomalies, provide a positive, verified status signal!
+  if (immediatelyStopSignals.length === 0) {
+    immediatelyStopSignals.push({
+      id: "signal-healthy-habits",
+      severity: "Warning",
+      signal: "Study Cadence Verified — No Destructive Anomalies",
+      observedData: `Current verified metrics: ${totalStudyHours}h logged, ${readingSpeedWpm} WPM velocity, and ${focusRatioPct}% focus ratio with ${currentStreakDays}-day streak. Data shows consistent learning discipline.`,
+      immediateAction: "Maintain your active recall cycle and schedule a comprehensive chapter mock exam every weekend.",
+    });
+  }
 
   // Direct, personal student directives
   const primaryLaggingCourse =

@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, BookOpen } from "lucide-react";
-import SafeCoverImage from "@/components/SafeCoverImage";
-import AddToCartButton from "@/components/AddToCartButton";
+import SpecialSemesterCard from "@/components/SpecialSemesterCard";
 import { getSpecialPackage, specialPackages } from "@/data/special-packages";
 
 export function generateStaticParams() {
@@ -43,37 +41,7 @@ export default async function SpecialPackagePage({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 md:gap-6">
           {pkg.semesters.map((sem) => (
-            <div
-              key={sem.id}
-              className="card-modern flex flex-col shadow-xl"
-            >
-              <Link
-                href={`/academy/special-packages/${pkg.slug}/${sem.id}`}
-                className="group flex flex-col flex-1"
-              >
-                <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
-                  <SafeCoverImage src={sem.image} alt={sem.label} />
-                </div>
-                <div className="p-5 border-t border-white/8 flex flex-col flex-1">
-                  <div className="flex items-center gap-1.5 text-xs text-violet-300 mb-1">
-                    <BookOpen className="w-3.5 h-3.5" />
-                    <span>{sem.courses.length} courses</span>
-                  </div>
-                  <h2 className="font-display text-lg sm:text-xl font-bold text-white group-hover:text-violet-200 transition-colors">
-                    {sem.label}
-                  </h2>
-                  <div className="mt-5 pt-3 border-t border-white/6">
-                    <span className="btn-primary w-full text-center">
-                      <span>Open {sem.label}</span>
-                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                    </span>
-                  </div>
-                </div>
-              </Link>
-              <div className="px-5 pb-5 pt-1">
-                <AddToCartButton packageId={sem.packageId} variant="ghost" />
-              </div>
-            </div>
+            <SpecialSemesterCard key={sem.id} pkg={pkg} sem={sem} />
           ))}
         </div>
 

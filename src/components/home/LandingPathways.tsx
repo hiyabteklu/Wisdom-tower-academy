@@ -13,10 +13,11 @@ import {
   FileText,
   CheckCircle2,
   ChevronDown,
+  Info,
 } from "lucide-react";
 import { useInView } from "@/hooks/useInView";
 import PartnershipPath from "@/components/PartnershipPath";
-import { packageImages } from "@/data/packages";
+import { packageImages, getPackage, CORE_PACKAGE_INCLUDES } from "@/data/packages";
 import { SPECIAL_PACKAGES_HUB_IMAGE } from "@/data/special-packages";
 
 const OPEN_BTN =
@@ -34,6 +35,14 @@ type ProgramCard = {
   includes: string[];
 };
 
+const freshmanPkg = getPackage("freshman");
+const g912Pkg = getPackage("grade-9-12");
+const uatPkg = getPackage("uat");
+const gatPkg = getPackage("gat");
+const cocPkg = getPackage("coc");
+const exitPkg = getPackage("exit-exam");
+const remedialPkg = getPackage("remedial");
+
 const allPrograms: ProgramCard[] = [
   {
     id: "freshman",
@@ -44,12 +53,12 @@ const allPrograms: ProgramCard[] = [
     accent: "text-purple-400",
     border: "hover:border-purple-400/40",
     description:
-      "All freshman courses organized by subject with complete learning hubs. Notes, chapter question banks, flashcards, and official midterm and final exams with step-by-step solutions.",
-    includes: [
-      "Official Textbooks & Comprehensive Reference Books",
-      "Chapter Notes, Summaries & Question Banks",
-      "All Worked with Official Solutions + Explain with AI",
-      "Official University Midterm & Final Exams Worked",
+      freshmanPkg?.description ||
+      "Every first-year course in one place, natural and social streams included. Notes, chapter questions, flashcards, and solved practice exams for 20+ courses, plus tools that keep you on track.",
+    includes: freshmanPkg?.includes || [
+      "All 20+ freshman courses (natural and social streams)",
+      "Ethiopian university GPA calculator & field leaderboard",
+      ...CORE_PACKAGE_INCLUDES,
     ],
   },
   {
@@ -61,29 +70,27 @@ const allPrograms: ProgramCard[] = [
     accent: "text-sky-400",
     border: "hover:border-sky-400/40",
     description:
+      g912Pkg?.description ||
       "Complete Grade 9 to 12 secondary curriculum. Master textbook chapters, drill with targeted questions, practice with timed exams, and prepare thoroughly for national matriculation.",
-    includes: [
-      "Official Textbooks & Comprehensive Reference Books",
-      "Chapter Notes, Summaries & Question Banks",
-      "All Worked with Official Solutions + Explain with AI",
-      "National Matriculation & Model Practice Exams",
+    includes: g912Pkg?.includes || [
+      "Complete Grade 9, 10, 11, and 12 Ethiopian national curriculum",
+      ...CORE_PACKAGE_INCLUDES,
     ],
   },
   {
     id: "special",
     href: "/academy/special-packages",
-    name: "Special Packages",
+    name: "Special Packages (ECE 1 & 2)",
     category: "Department Tracks",
     image: SPECIAL_PACKAGES_HUB_IMAGE,
     accent: "text-violet-300",
     border: "hover:border-violet-400/40",
     description:
-      "Undergraduate engineering and specialized department tracks. Semester-specific course materials, technical practice banks, and applied exam solutions.",
+      "Senior Electrical and Computer Engineering, Semester 1 & Semester 2. Course material written for your department, not generic engineering notes. Each course carries its own question bank, flashcards, and practice exams with solutions.",
     includes: [
-      "Department Textbooks & Lecture Reference Materials",
-      "Course Notes, Summaries & Chapter Practice Banks",
-      "All Worked with Official Solutions + Explain with AI",
-      "University Department Exams Worked with Step-by-Step Solutions",
+      "All 7 Year 3 Semester 1 engineering courses",
+      "All 7 Year 3 Semester 2 engineering courses",
+      ...CORE_PACKAGE_INCLUDES,
     ],
   },
   {
@@ -95,12 +102,11 @@ const allPrograms: ProgramCard[] = [
     accent: "text-emerald-400",
     border: "hover:border-emerald-400/40",
     description:
-      "University Admission Test preparation. Master quantitative and verbal reasoning under strict timed conditions with verified explanations.",
-    includes: [
-      "Quantitative & Verbal Exam Question Banks",
-      "Timed Mock & Model Entrance Exams",
-      "All Worked with Official Solutions + Explain with AI",
-      "Full University Entrance Past Papers Worked",
+      uatPkg?.description ||
+      "University Admission Test prep that respects how the exam is actually written. Focused notes, chapter question banks, flashcards for rapid recall, and practice exams with solutions.",
+    includes: uatPkg?.includes || [
+      "Comprehensive UAT quantitative & verbal entrance tracks",
+      ...CORE_PACKAGE_INCLUDES,
     ],
   },
   {
@@ -112,12 +118,11 @@ const allPrograms: ProgramCard[] = [
     accent: "text-rose-400",
     border: "hover:border-rose-400/40",
     description:
-      "Graduate Admission Test preparation for postgraduate entry. Targeted analytical, verbal, and quantitative problem sets with detailed working.",
-    includes: [
-      "Analytical & Quantitative Question Banks",
-      "Full-Length Timed Examination Simulations",
-      "All Worked with Official Solutions + Explain with AI",
-      "Verified Solution Walkthroughs & Method Breakdowns",
+      gatPkg?.description ||
+      "Graduate Admission Test resources organized the way the exam expects you to think. Notes on core GAT material, chapter questions, flashcards, and practice exams with solutions.",
+    includes: gatPkg?.includes || [
+      "Postgraduate GAT analytical & quantitative problem tracks",
+      ...CORE_PACKAGE_INCLUDES,
     ],
   },
   {
@@ -129,12 +134,11 @@ const allPrograms: ProgramCard[] = [
     accent: "text-indigo-400",
     border: "hover:border-indigo-400/40",
     description:
-      "Center of Competence assessment materials and occupational evaluation preparation designed to build practical and theoretical confidence.",
-    includes: [
-      "Occupational Question Banks & Reference Manuals",
-      "Practical Scenario Review Guides",
-      "All Worked with Official Solutions + Explain with AI",
-      "Competency Evaluation Simulations with Solutions",
+      cocPkg?.description ||
+      "Certificate of Competency prep with clear notes, chapter practice, flashcards, and solved exams. Material aimed at the skills and judgment the assessment rewards.",
+    includes: cocPkg?.includes || [
+      "Occupational standard competencies & evaluation prep",
+      ...CORE_PACKAGE_INCLUDES,
     ],
   },
   {
@@ -146,12 +150,11 @@ const allPrograms: ProgramCard[] = [
     accent: "text-fuchsia-400",
     border: "hover:border-fuchsia-400/40",
     description:
-      "National university graduation exit exam resources. Consolidate your core discipline knowledge with comprehensive practice banks.",
-    includes: [
-      "Department Discipline Question Banks",
-      "Core Subject Revision Summaries",
-      "All Worked with Official Solutions + Explain with AI",
-      "Official University Exit Exams Worked with Explanations",
+      exitPkg?.description ||
+      "University exit exam review by department, with structured notes and practice when materials open. Designed for final-year students who need focused revision, not generic summaries.",
+    includes: exitPkg?.includes || [
+      "Department graduation exit exam comprehensive tracks",
+      ...CORE_PACKAGE_INCLUDES,
     ],
   },
   {
@@ -163,12 +166,11 @@ const allPrograms: ProgramCard[] = [
     accent: "text-amber-400",
     border: "hover:border-amber-400/40",
     description:
-      "Remedial university pathway curriculum. Solidify prerequisite foundations in mathematics, natural sciences, and English for university entry.",
-    includes: [
-      "Official Textbooks & Prerequisite Study Guides",
-      "Chapter Notes, Summaries & Question Banks",
-      "All Worked with Official Solutions + Explain with AI",
-      "Placement & University Entrance Exams Worked",
+      remedialPkg?.description ||
+      "Catch-up pathway for core subjects. Strengthen foundations in English, Maths, Physics, Chemistry, Biology, History and Geography with the same learning hubs used across the Academy — notes, flashcards, question banks and practice exams.",
+    includes: remedialPkg?.includes || [
+      "All seven core remedial prerequisite subjects",
+      ...CORE_PACKAGE_INCLUDES,
     ],
   },
 ];
@@ -231,9 +233,11 @@ const freeResources = [
 ];
 
 function PathwayCard({ program }: { program: ProgramCard }) {
+  const [expanded, setExpanded] = useState(false);
+
   return (
     <article
-      className={`card-modern group flex flex-col ${program.border} shadow-lg shadow-black/25`}
+      className={`card-modern group flex flex-col ${program.border} shadow-lg shadow-black/25 transition-all`}
     >
       <Link href={program.href} className="relative aspect-video w-full overflow-hidden bg-wisdom-navy block">
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -257,21 +261,46 @@ function PathwayCard({ program }: { program: ProgramCard }) {
         </h3>
 
         <p
-          className="text-sm text-slate-300/90 leading-relaxed mb-4 line-clamp-3"
+          className={`text-sm text-slate-300/90 leading-relaxed mb-2 ${
+            expanded ? "" : "line-clamp-2"
+          }`}
           suppressHydrationWarning
         >
           {program.description}
         </p>
 
-        {program.includes.length > 0 && (
-          <ul className="space-y-2 mb-6 pt-3 border-t border-white/6">
-            {program.includes.slice(0, 3).map((line) => (
-              <li key={line} className="flex items-start gap-2 text-xs sm:text-sm text-slate-300/85">
-                <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
-                <span className="line-clamp-1">{line}</span>
-              </li>
-            ))}
-          </ul>
+        {/* Collapsible Trigger: About & What's Included */}
+        <button
+          type="button"
+          onClick={() => setExpanded(!expanded)}
+          className="w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-bold border border-white/10 bg-white/5 text-cyan-300 hover:bg-white/10 hover:border-cyan-400/40 transition-colors my-2.5 cursor-pointer"
+        >
+          <span className="flex items-center gap-1.5">
+            <Info className="w-3.5 h-3.5" />
+            {expanded ? "Hide Details" : "About & What's Included"}
+          </span>
+          <ChevronDown
+            className={`w-4 h-4 transition-transform duration-200 ${
+              expanded ? "rotate-180 text-cyan-400" : ""
+            }`}
+          />
+        </button>
+
+        {/* Collapsible Detailed Bullets */}
+        {expanded && program.includes.length > 0 && (
+          <div className="space-y-2 mb-4 pt-3 border-t border-white/6 animate-in fade-in duration-200">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+              Everything Included:
+            </p>
+            <ul className="space-y-2">
+              {program.includes.map((line) => (
+                <li key={line} className="flex items-start gap-2 text-xs sm:text-sm text-slate-300/90 leading-snug">
+                  <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                  <span>{line}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
 
         <div className="mt-auto pt-2">

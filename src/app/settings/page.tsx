@@ -35,12 +35,11 @@ import {
   ArrowLeft,
   Bell,
   Check,
-  ChevronRight,
+  ChevronDown,
+  Clock,
   Database,
-  Download,
   FileDown,
   HardDrive,
-  Key,
   Lock,
   LogOut,
   Moon,
@@ -50,34 +49,8 @@ import {
   Smartphone,
   Target,
   User as UserIcon,
-  Volume2,
   Zap,
 } from "lucide-react";
-
-type SettingsSection =
-  | "profile"
-  | "report"
-  | "app"
-  | "study"
-  | "notifications"
-  | "storage"
-  | "security";
-
-const SECTIONS: {
-  id: SettingsSection;
-  label: string;
-  icon: typeof UserIcon;
-  badge?: string;
-  desc: string;
-}[] = [
-  { id: "profile", label: "Academic Profile", icon: UserIcon, desc: "Identity, school & stream" },
-  { id: "report", label: "Weekly Report", icon: FileDown, badge: "Color PDF", desc: "Download performance PDF" },
-  { id: "app", label: "App & Display", icon: Smartphone, desc: "AMOLED, text scale & data" },
-  { id: "study", label: "Study & Goals", icon: Target, desc: "Daily goals & time targets" },
-  { id: "notifications", label: "Notifications", icon: Bell, desc: "Study alerts & digest" },
-  { id: "storage", label: "Offline Storage", icon: HardDrive, desc: "Sync, cache & local data" },
-  { id: "security", label: "Security & Data", icon: Lock, desc: "Password, export & session" },
-];
 
 function Toggle({
   on,
@@ -99,12 +72,12 @@ function Toggle({
       disabled={disabled}
       onClick={() => !disabled && onChange(!on)}
       className={`relative w-12 h-6.5 rounded-full transition-colors duration-200 shrink-0 ${
-        on ? "bg-cyan-500 shadow-sm shadow-cyan-500/30" : "bg-white/15"
+        on ? "bg-cyan-400 shadow-sm shadow-cyan-400/40" : "bg-white/20"
       } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
     >
       <span
-        className={`absolute top-0.5 left-0.5 w-5.5 h-5.5 rounded-full bg-white shadow-md transition-transform duration-200 ${
-          on ? "translate-x-5.5" : "translate-x-0"
+        className={`absolute top-0.5 left-0.5 w-5.5 h-5.5 rounded-full bg-slate-950 shadow-md transition-transform duration-200 ${
+          on ? "translate-x-5.5 bg-slate-950" : "translate-x-0 bg-white"
         }`}
       />
     </button>
@@ -114,13 +87,28 @@ function Toggle({
 function SettingsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialTab = (searchParams.get("tab") as SettingsSection) || "profile";
+  const initialTab = searchParams.get("tab");
 
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [section, setSection] = useState<SettingsSection>(
-    SECTIONS.some((s) => s.id === initialTab) ? initialTab : "profile"
-  );
+
+  // In-place accordion states — Profile starts expanded by default
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    profile: true,
+    study: initialTab === "study",
+    notifications: initialTab === "notifications",
+    report: initialTab === "report",
+    display: initialTab === "app",
+    storage: initialTab === "storage",
+    security: initialTab === "security",
+  });
+
+  const toggleSection = (id: string) => {
+    setOpenSections((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
 
   // Profile State
   const [profile, setProfile] = useState<Partial<UserProfileRecord>>({
@@ -138,35 +126,32 @@ function SettingsContent() {
     daily_study_goal_minutes: 45,
     preferred_study_time: "evening",
     avatar_preset: "scholar-cyan",
-    avatar_url: "",
+    avatar_url: null,
   });
 
-  const [savingProfile, setSavingProfile] = useState(false);
-  const [profileFeedback, setProfileFeedback] = useState<{
-    type: "success" | "error";
-    msg: string;
-  } | null>(null);
-
-  // Preferences State
+  // App Preferences
   const [prefs, setPrefs] = useState<UserPreferences>(DEFAULT_PREFS);
-  const [savedFlash, setSavedFlash] = useState(false);
 
-  // Password Update State
+  // Password Update
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordLoading, setPasswordLoading] = useState(false);
-  const [passwordMsg, setPasswordMsg] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
+  const [passwordMsg, setPasswordMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  // Storage State
-  const [storageSize, setStorageSize] = useState<string>("Calculating...");
-  const [syncingOffline, setSyncingOffline] = useState(false);
+  // Status feedback
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savingStudy, setSavingStudy] = useState(false);
+  const [savingNotifications, setSavingNotifications] = useState(false);
+  const [savingPrefs, setSavingPrefs] = useState(false);
+  const [savedFlash, setSavedFlash] = useState(false);
   const [syncMsg, setSyncMsg] = useState<string | null>(null);
+  const [syncingOffline, setSyncingOffline] = useState(false);
+  const [storageSize, setStorageSize] = useState<string>("Calculating...");
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [pdfSuccessMsg, setPdfSuccessMsg] = useState<string | null>(null);
 
-  // Real Progress data for Weekly Color PDF Report
-  const [progressRecords, setProgressRecords] = useState<
+  // Real user progress from learning_progress
+  const [rawProgress, setRawProgress] = useState<
     {
       resource_id: string;
       progress_pct: number;
@@ -176,173 +161,151 @@ function SettingsContent() {
       meta: Record<string, unknown>;
     }[]
   >([]);
-  const [generatingPdf, setGeneratingPdf] = useState(false);
-  const [pdfSuccessMsg, setPdfSuccessMsg] = useState<string | null>(null);
 
-  // Load user session & progress records
+  // Calculate Storage Size
+  const calculateStorageSize = useCallback(() => {
+    if (typeof window === "undefined") return;
+    try {
+      let total = 0;
+      for (const key of Object.keys(localStorage)) {
+        if (key.startsWith("wta_") || key.startsWith("supabase")) {
+          const item = localStorage.getItem(key);
+          if (item) total += item.length * 2; // UTF-16 bytes approx
+        }
+      }
+      const kb = Math.round(total / 1024);
+      if (kb > 1024) {
+        setStorageSize(`${(kb / 1024).toFixed(1)} MB`);
+      } else {
+        setStorageSize(`${kb} KB`);
+      }
+    } catch {
+      setStorageSize("120 KB");
+    }
+  }, []);
+
+  // Load Session and Profile
   useEffect(() => {
-    let cancelled = false;
-
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session?.user) {
         router.replace("/login?next=/settings");
         return;
       }
-
+      setUser(session.user);
       await ensureProfile(session.user);
-      const full = await getFullProfile(session.user.id);
+      const data = await getFullProfile(session.user.id);
+      if (data) {
+        setProfile({
+          ...data,
+          first_name: data.first_name || data.full_name?.split(" ")[0] || "",
+          last_name: data.last_name || data.full_name?.split(" ").slice(1).join(" ") || "",
+        });
+      }
+      const savedPrefs = loadPreferences();
+      setPrefs(savedPrefs);
 
-      // Fetch progress records for student analytics
-      let progData: typeof progressRecords = [];
+      // Load progress for PDF report
       try {
-        const { data: pData } = await supabase
+        const { data: progData } = await supabase
           .from("learning_progress")
           .select("resource_id, progress_pct, total_seconds, focus_seconds, last_opened_at, meta")
           .eq("user_id", session.user.id);
-        if (pData) progData = pData;
+        if (progData) setRawProgress(progData);
       } catch (err) {
-        console.warn("[Settings] Learning progress fetch notice:", err);
+        console.warn("[Settings] Could not load progress:", err);
       }
 
-      if (!cancelled) {
-        setUser(session.user);
-        setProgressRecords(progData);
-        setPrefs(loadPreferences());
-
-        const meta = session.user.user_metadata || {};
-        setProfile({
-          full_name: full?.full_name || meta.full_name || meta.name || "",
-          first_name: full?.first_name || meta.first_name || "",
-          last_name: full?.last_name || meta.last_name || "",
-          phone: full?.phone || meta.phone || "",
-          education_level: full?.education_level || meta.education_level || "",
-          school_name: full?.school_name || meta.school_name || "",
-          town_region: full?.town_region || meta.town_region || "",
-          stream: full?.stream || meta.stream || "",
-          bio: full?.bio || meta.bio || "",
-          target_exam: full?.target_exam || meta.target_exam || "",
-          target_score: full?.target_score || meta.target_score || "",
-          daily_study_goal_minutes:
-            full?.daily_study_goal_minutes || meta.daily_study_goal_minutes || 45,
-          preferred_study_time:
-            full?.preferred_study_time || meta.preferred_study_time || "evening",
-          avatar_preset:
-            full?.avatar_preset || meta.avatar_preset || "scholar-cyan",
-          avatar_url: full?.avatar_url || meta.avatar_url || "",
-        });
-
-        setLoading(false);
-      }
+      setLoading(false);
+      calculateStorageSize();
     });
+  }, [router, calculateStorageSize]);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [router]);
+  // Compute profile completion percentage
+  const profileCompletion = useMemo(() => {
+    let score = 0;
+    if (profile.first_name || profile.full_name) score += 20;
+    if (profile.education_level) score += 20;
+    if (profile.stream) score += 15;
+    if (profile.school_name) score += 15;
+    if (profile.town_region) score += 10;
+    if (profile.target_exam) score += 10;
+    if (profile.phone) score += 10;
+    return Math.min(100, score);
+  }, [profile]);
 
-  // Compute student analytics for the Weekly Color PDF
+  // Live student analytics for PDF report
   const studentAnalytics: StudentAnalyticsResult = useMemo(() => {
-    const studentName =
-      profile.full_name ||
-      user?.user_metadata?.full_name ||
-      user?.email?.split("@")[0] ||
-      "Scholar";
-
     return computeStudentAnalytics(
-      progressRecords,
-      studentName,
-      profile.education_level,
-      profile.stream,
-      user?.created_at,
-      []
+      rawProgress,
+      profile.full_name || user?.email?.split("@")[0] || "Scholar",
+      profile.education_level || "freshman",
+      profile.stream || null,
+      user?.created_at
     );
-  }, [progressRecords, profile, user]);
+  }, [rawProgress, profile.full_name, profile.education_level, profile.stream, user]);
 
-  // Calculate local storage footprint
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      let totalBytes = 0;
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key) {
-          totalBytes += (localStorage.getItem(key) || "").length * 2;
-        }
-      }
-      if (totalBytes < 1024) {
-        setStorageSize(`${totalBytes} B`);
-      } else if (totalBytes < 1024 * 1024) {
-        setStorageSize(`${(totalBytes / 1024).toFixed(1)} KB`);
-      } else {
-        setStorageSize(`${(totalBytes / (1024 * 1024)).toFixed(2)} MB`);
-      }
-    } catch {
-      setStorageSize("Available");
-    }
-  }, []);
-
-  // Update client preference & save
-  const updatePref = useCallback(
-    <K extends keyof UserPreferences>(key: K, value: UserPreferences[K]) => {
-      setPrefs((prev) => {
-        const next = { ...prev, [key]: value };
-        savePreferences(next);
-        setSavedFlash(true);
-        return next;
-      });
-    },
-    []
-  );
-
-  useEffect(() => {
-    if (!savedFlash) return;
-    const t = setTimeout(() => setSavedFlash(false), 2000);
-    return () => clearTimeout(t);
-  }, [savedFlash]);
-
-  // Save Full Academic Profile
-  const handleSaveProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Save Profile Handler
+  const handleSaveProfile = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!user) return;
     setSavingProfile(true);
-    setProfileFeedback(null);
 
-    let computedFullName = profile.full_name?.trim() || "";
-    if (!computedFullName && (profile.first_name || profile.last_name)) {
-      computedFullName = `${profile.first_name || ""} ${profile.last_name || ""}`.trim();
-    }
+    const composedName =
+      [profile.first_name?.trim(), profile.last_name?.trim()].filter(Boolean).join(" ") ||
+      profile.full_name ||
+      "";
 
-    const updates: Partial<UserProfileRecord> = {
+    const updatePayload: Partial<UserProfileRecord> = {
       ...profile,
-      full_name: computedFullName,
-      profile_completed: true,
-      updated_at: new Date().toISOString(),
+      full_name: composedName,
     };
 
-    const res = await updateFullProfile(user.id, updates);
-
-    if (res.success) {
-      setProfileFeedback({ type: "success", msg: "Academic profile saved successfully." });
+    const success = await updateFullProfile(user.id, updatePayload);
+    if (success) {
+      setProfile((prev) => ({ ...prev, full_name: composedName }));
       setSavedFlash(true);
-    } else {
-      setProfileFeedback({
-        type: "error",
-        msg: res.error || "Could not save profile. Check your connection.",
-      });
+      setTimeout(() => setSavedFlash(false), 3000);
     }
-
     setSavingProfile(false);
   };
 
-  // Change Password Action
-  const handlePasswordChange = async (e: React.FormEvent) => {
+  // Save Study Goals Handler
+  const handleSaveStudyGoals = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!user) return;
+    setSavingStudy(true);
+
+    const success = await updateFullProfile(user.id, {
+      daily_study_goal_minutes: profile.daily_study_goal_minutes,
+      preferred_study_time: profile.preferred_study_time,
+      target_exam: profile.target_exam,
+      target_score: profile.target_score,
+    });
+
+    if (success) {
+      setSavedFlash(true);
+      setTimeout(() => setSavedFlash(false), 3000);
+    }
+    setSavingStudy(false);
+  };
+
+  // Save Preferences Handler
+  const handleSavePrefs = (newPrefs: UserPreferences) => {
+    setPrefs(newPrefs);
+    savePreferences(newPrefs);
+    setSavedFlash(true);
+    setTimeout(() => setSavedFlash(false), 3000);
+  };
+
+  // Update Password Handler
+  const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setPasswordMsg(null);
 
     if (newPassword.length < 6) {
       setPasswordMsg({
         type: "error",
-        text: "Password must be at least 6 characters long.",
+        text: "Password must be at least 6 characters.",
       });
       return;
     }
@@ -448,10 +411,10 @@ function SettingsContent() {
         totalStudyHours: studentAnalytics.totalStudyHours,
         readingSpeedWpm: studentAnalytics.readingSpeedWpm,
         readingMethod: studentAnalytics.readingAnalysis.method,
-        retentionRating: studentAnalytics.retentionAnalysis.rating,
-        accuracyPct: studentAnalytics.retentionAnalysis.accuracyPct,
+        accuracyPct: studentAnalytics.questionAccuracyPct,
+        streakDays: studentAnalytics.currentStreakDays,
       },
-      system: "Wisdom Tower Academy v3.2",
+      rawProgressRecords: rawProgress,
     };
 
     const blob = new Blob([JSON.stringify(dataToExport, null, 2)], {
@@ -460,12 +423,11 @@ function SettingsContent() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `wta-academic-record-${user.id.slice(0, 8)}.json`;
+    a.download = `WTA-Student-Data-${user.id.slice(0, 8)}-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
 
-  // Logout
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.replace("/");
@@ -477,16 +439,18 @@ function SettingsContent() {
         className="min-h-[65vh] flex flex-col items-center justify-center gap-3"
         data-wta-spinner="true"
       >
-        <BrandLoader size="lg" label="Loading your academic settings..." />
+        <BrandLoader size="lg" label="Loading student settings..." />
       </div>
     );
   }
 
   return (
     <div className="py-6 sm:py-10 md:py-14 min-h-[85vh] relative">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Top Header Card */}
-        <div className="mb-6 rounded-2xl sm:rounded-3xl border border-white/10 bg-gradient-to-r from-wisdom-card via-wisdom-navy to-wisdom-card p-4 sm:p-6 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        {/* ========================================================= */}
+        {/* TOP HEADER: STUDENT IDENTITY & ACTIONS                     */}
+        {/* ========================================================= */}
+        <div className="rounded-3xl border border-white/15 bg-gradient-to-r from-wisdom-card via-[#0b1528] to-wisdom-card p-5 sm:p-7 shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-5">
           <div className="flex items-center gap-4">
             <StudentAvatar
               avatarPreset={profile.avatar_preset}
@@ -499,143 +463,118 @@ function SettingsContent() {
                 <h1 className="font-display text-xl sm:text-2xl font-black text-white truncate">
                   {profile.full_name || "Enrolled Student"}
                 </h1>
-                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-cyan-500/15 text-cyan-300 border border-cyan-400/30">
+                <span className="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-cyan-400 text-slate-950">
                   Verified
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-wisdom-muted truncate">
+              <p className="text-xs sm:text-sm text-slate-300 font-medium truncate mt-0.5">
                 {profile.education_level || "Academic Scholar"}
                 {profile.school_name ? ` · ${profile.school_name}` : ""}
               </p>
             </div>
           </div>
 
-          {/* Quick Actions in Header */}
-          <div className="flex flex-wrap items-center gap-2 self-start sm:self-center">
+          <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-center">
             {savedFlash && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 animate-pulse">
-                <Check className="w-3.5 h-3.5" />
-                Saved
+              <span className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-full text-xs font-black bg-emerald-400 text-slate-950 shadow-md shadow-emerald-500/30 animate-pulse">
+                <Check className="w-3.5 h-3.5 text-slate-950" />
+                Settings Saved
               </span>
             )}
 
-            {/* Direct Download Weekly Report Button in Header */}
+            {/* High-Contrast Download Weekly Report Button in Header */}
             <button
               type="button"
               onClick={handleDownloadWeeklyReport}
               disabled={generatingPdf}
-              className="px-3.5 py-2 rounded-xl text-xs font-bold border border-cyan-400/40 bg-cyan-500/15 text-cyan-200 hover:bg-cyan-500/25 hover:border-cyan-300 flex items-center gap-1.5 transition-all shadow-sm cursor-pointer disabled:opacity-50"
-              title="Download your concise weekly performance dashboard in high-contrast color PDF"
+              className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black bg-amber-400 text-slate-950 hover:bg-amber-300 active:scale-[0.98] transition-all shadow-md shadow-amber-500/20 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              title="Download concise color performance report PDF"
             >
-              <FileDown className={`w-3.5 h-3.5 ${generatingPdf ? "animate-bounce" : ""}`} />
-              {generatingPdf ? "Generating..." : "Download Weekly Report"}
+              <FileDown className={`w-4 h-4 text-slate-950 ${generatingPdf ? "animate-bounce" : ""}`} />
+              {generatingPdf ? "Generating PDF..." : "Download Weekly Report"}
             </button>
 
             <Link
               href="/account"
-              className="btn-secondary text-xs sm:text-sm px-3.5 py-2 border-white/15"
+              className="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold border border-white/25 bg-white/10 text-white hover:bg-white/20 transition-all flex items-center gap-1.5"
             >
-              <ArrowLeft className="w-3.5 h-3.5 mr-1" />
+              <ArrowLeft className="w-3.5 h-3.5" />
               Account
             </Link>
           </div>
         </div>
 
-        {/* PDF Download Flash Success Toast */}
+        {/* PDF Download Toast */}
         {pdfSuccessMsg && (
-          <div className="mb-6 p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/15 text-emerald-200 text-xs font-semibold flex items-center justify-between gap-3 shadow-lg animate-in fade-in">
+          <div className="p-4 rounded-2xl border border-emerald-400/40 bg-emerald-500/15 text-emerald-200 text-xs font-bold flex items-center justify-between gap-3 shadow-lg animate-in fade-in">
             <div className="flex items-center gap-2">
               <Check className="w-4 h-4 text-emerald-400 shrink-0" />
               <span>{pdfSuccessMsg}</span>
             </div>
-            <span className="text-[10px] text-emerald-300/80 uppercase tracking-wider font-mono">
+            <span className="text-[10px] text-emerald-300 uppercase tracking-wider font-mono">
               Ready in Downloads
             </span>
           </div>
         )}
 
-        {/* Layout Grid: Clean non-swiping cards on mobile, vertical sidebar on desktop */}
-        <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6 items-start">
-          {/* Navigation Cards: NO horizontal swipe on mobile, clean responsive grid that fits mobile view */}
-          <nav className="grid grid-cols-2 sm:grid-cols-3 lg:flex lg:flex-col gap-2.5">
-            {SECTIONS.map((s) => {
-              const Icon = s.icon;
-              const active = section === s.id;
-              return (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => setSection(s.id)}
-                  className={`flex flex-col lg:flex-row items-start lg:items-center gap-2.5 lg:gap-3 rounded-2xl p-3.5 lg:px-4 lg:py-3 text-left transition-all cursor-pointer ${
-                    active
-                      ? "bg-cyan-500/15 border border-cyan-400/40 text-white shadow-lg shadow-cyan-500/10 font-bold"
-                      : "border border-white/8 bg-white/[0.02] text-wisdom-muted hover:bg-white/5 hover:text-white font-medium"
-                  }`}
-                >
-                  <div
-                    className={`p-2 rounded-xl shrink-0 ${
-                      active ? "bg-cyan-500/20 text-cyan-300" : "bg-white/5 text-wisdom-muted"
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-1">
-                      <span className="text-xs sm:text-sm font-semibold truncate leading-tight">
-                        {s.label}
-                      </span>
-                      {s.badge && (
-                        <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 border border-amber-400/30 shrink-0">
-                          {s.badge}
-                        </span>
-                      )}
-                    </div>
-                    <span className="hidden lg:block text-[11px] text-wisdom-muted/70 truncate mt-0.5">
-                      {s.desc}
+        {/* ========================================================= */}
+        {/* IN-PLACE STACKED ACCORDION SECTIONS                       */}
+        {/* Each section expands in order directly beneath its header */}
+        {/* ========================================================= */}
+        <div className="space-y-4">
+          {/* ======================================================= */}
+          {/* SECTION 1: ACADEMIC PROFILE & IDENTITY (Profile Completion) */}
+          {/* ======================================================= */}
+          <div className="rounded-3xl border border-white/15 bg-wisdom-card overflow-hidden shadow-xl transition-all">
+            <button
+              type="button"
+              onClick={() => toggleSection("profile")}
+              className="w-full flex items-center justify-between p-5 sm:p-6 text-left transition-colors hover:bg-white/[0.03] cursor-pointer"
+            >
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="p-3 rounded-2xl bg-cyan-400/15 border border-cyan-400/40 text-cyan-300 shrink-0">
+                  <UserIcon className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2.5">
+                    <h2 className="font-display text-lg sm:text-xl font-bold text-white">
+                      Academic Profile & Identity
+                    </h2>
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-cyan-400 text-slate-950">
+                      {profileCompletion}% Complete
                     </span>
                   </div>
-                  {active && (
-                    <ChevronRight className="w-4 h-4 ml-auto text-cyan-300 hidden lg:block shrink-0" />
-                  )}
-                </button>
-              );
-            })}
-
-            {/* Sign Out Card */}
-            <div className="col-span-2 sm:col-span-3 lg:col-span-1 pt-2 lg:pt-4 lg:mt-2 lg:border-t border-white/10">
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="w-full flex items-center justify-center lg:justify-start gap-2.5 p-3 lg:px-4 lg:py-2.5 rounded-2xl text-xs font-semibold border border-rose-500/25 bg-rose-500/5 text-rose-300 hover:text-rose-200 hover:bg-rose-500/15 transition-colors cursor-pointer"
-              >
-                <LogOut className="w-4 h-4" />
-                Sign Out
-              </button>
-            </div>
-          </nav>
-
-          {/* Settings Detail Pane */}
-          <main className="rounded-3xl border border-white/10 bg-wisdom-card/90 backdrop-blur-md p-5 sm:p-8 shadow-2xl">
-            {/* 1. ACADEMIC PROFILE TAB */}
-            {section === "profile" && (
-              <div>
-                <div className="flex items-center justify-between pb-6 mb-6 border-b border-white/10">
-                  <div>
-                    <h2 className="font-display text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
-                      <UserIcon className="w-5 h-5 text-cyan-300" />
-                      Academic & Student Identity
-                    </h2>
-                    <p className="text-xs sm:text-sm text-wisdom-muted mt-1">
-                      Customize your Ethiopian curriculum profile, academic level, and avatar.
-                    </p>
-                  </div>
+                  <p className="text-xs text-slate-300 mt-0.5 truncate">
+                    School, level, stream, student bio, and avatar character
+                  </p>
                 </div>
+              </div>
 
+              <ChevronDown
+                className={`w-5 h-5 text-cyan-300 transition-transform duration-300 shrink-0 ml-3 ${
+                  openSections.profile ? "rotate-180 text-cyan-400" : ""
+                }`}
+              />
+            </button>
+
+            {/* Profile Completion Bar */}
+            <div className="px-5 sm:px-6 pb-2">
+              <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
+                <div
+                  style={{ width: `${profileCompletion}%` }}
+                  className="h-full bg-gradient-to-r from-cyan-400 via-sky-400 to-amber-300 rounded-full transition-all duration-700"
+                />
+              </div>
+            </div>
+
+            {/* In-Place Expanded Form */}
+            {openSections.profile && (
+              <div className="p-5 sm:p-7 border-t border-white/10 space-y-6 animate-in fade-in duration-200">
                 <form onSubmit={handleSaveProfile} className="space-y-6">
                   {/* Avatar Preset Selector */}
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-3">
-                      Choose Your Academic Avatar
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-200 mb-3">
+                      Choose Your Academic Character Avatar
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                       {AVATAR_PRESETS.map((p) => {
@@ -653,14 +592,14 @@ function SettingsContent() {
                             }
                             className={`p-3 rounded-2xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
                               selected
-                                ? `border-cyan-400 bg-cyan-500/15 ${p.glow} ring-2 ring-cyan-400/30`
-                                : "border-white/10 bg-white/[0.02] hover:border-white/20"
+                                ? "border-cyan-400 bg-cyan-500/20 ring-2 ring-cyan-400/40 font-bold"
+                                : "border-white/15 bg-slate-950/40 hover:border-white/30"
                             }`}
                           >
                             <StudentAvatar avatarPreset={p.id} size="sm" showGlow={false} />
                             <div className="min-w-0">
                               <p className="text-xs font-bold text-white truncate">{p.name}</p>
-                              <p className="text-[10px] text-wisdom-muted truncate">{p.role}</p>
+                              <p className="text-[10px] text-slate-300 truncate">{p.role}</p>
                             </div>
                           </button>
                         );
@@ -671,7 +610,7 @@ function SettingsContent() {
                   {/* Name Fields */}
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                      <label className="block text-xs font-bold text-slate-200 mb-1.5">
                         First Name
                       </label>
                       <input
@@ -681,11 +620,11 @@ function SettingsContent() {
                           setProfile((prev) => ({ ...prev, first_name: e.target.value }))
                         }
                         placeholder="e.g. Abebe"
-                        className="w-full px-4 py-2.5 rounded-xl border border-white/15 bg-white/5 text-white text-sm focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400"
+                        className="w-full px-4 py-3 rounded-xl border border-white/20 bg-slate-950/80 text-white text-sm focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 font-medium"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                      <label className="block text-xs font-bold text-slate-200 mb-1.5">
                         Last Name
                       </label>
                       <input
@@ -695,7 +634,7 @@ function SettingsContent() {
                           setProfile((prev) => ({ ...prev, last_name: e.target.value }))
                         }
                         placeholder="e.g. Bikila"
-                        className="w-full px-4 py-2.5 rounded-xl border border-white/15 bg-white/5 text-white text-sm focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400"
+                        className="w-full px-4 py-3 rounded-xl border border-white/20 bg-slate-950/80 text-white text-sm focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 font-medium"
                       />
                     </div>
                   </div>
@@ -703,7 +642,7 @@ function SettingsContent() {
                   {/* Contact Phone & Email */}
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                      <label className="block text-xs font-bold text-slate-200 mb-1.5">
                         Phone Number (Ethiopia)
                       </label>
                       <input
@@ -713,25 +652,25 @@ function SettingsContent() {
                           setProfile((prev) => ({ ...prev, phone: e.target.value }))
                         }
                         placeholder="09... or +251..."
-                        className="w-full px-4 py-2.5 rounded-xl border border-white/15 bg-white/5 text-white text-sm focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400 font-mono"
+                        className="w-full px-4 py-3 rounded-xl border border-white/20 bg-slate-950/80 text-white text-sm focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 font-mono"
                       />
-                      <p className="text-[11px] text-wisdom-muted mt-1">
-                        Used for payment verification & SMS order delivery.
+                      <p className="text-[11px] text-slate-400 mt-1">
+                        Used for payment verification and order confirmation.
                       </p>
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                        Email Address
+                      <label className="block text-xs font-bold text-slate-200 mb-1.5">
+                        Email Address (Account ID)
                       </label>
                       <input
                         type="email"
                         disabled
                         value={user.email || "No email linked"}
-                        className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-white/[0.03] text-wisdom-muted text-sm cursor-not-allowed font-mono"
+                        className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/[0.03] text-slate-400 text-sm cursor-not-allowed font-mono"
                       />
-                      <p className="text-[11px] text-wisdom-muted mt-1">
-                        Primary authentication identity.
+                      <p className="text-[11px] text-slate-400 mt-1">
+                        Fixed login credential.
                       </p>
                     </div>
                   </div>
@@ -750,8 +689,8 @@ function SettingsContent() {
                     />
 
                     <CustomSelect
-                      label="Stream / Field of Study"
-                      placeholder="Select your discipline stream"
+                      label="Stream / Academic Track"
+                      placeholder="Select your stream"
                       value={profile.stream || ""}
                       onChange={(val) =>
                         setProfile((prev) => ({ ...prev, stream: val }))
@@ -761,10 +700,10 @@ function SettingsContent() {
                     />
                   </div>
 
-                  {/* School/University & Region - CUSTOM SELECT (No default chrome picker) */}
+                  {/* School Name & Ethiopian Region */}
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                      <label className="block text-xs font-bold text-slate-200 mb-1.5">
                         School / University Name
                       </label>
                       <input
@@ -773,14 +712,14 @@ function SettingsContent() {
                         onChange={(e) =>
                           setProfile((prev) => ({ ...prev, school_name: e.target.value }))
                         }
-                        placeholder="e.g. Addis Ababa University (AAU) or High School"
-                        className="w-full px-4 py-2.5 rounded-xl border border-white/15 bg-white/5 text-white text-sm focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400"
+                        placeholder="e.g. Addis Ababa University"
+                        className="w-full px-4 py-3 rounded-xl border border-white/20 bg-slate-950/80 text-white text-sm focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 font-medium"
                       />
                     </div>
 
                     <CustomSelect
-                      label="Town / Region"
-                      placeholder="Select Region"
+                      label="Town / Region in Ethiopia"
+                      placeholder="Select your region"
                       value={profile.town_region || ""}
                       onChange={(val) =>
                         setProfile((prev) => ({ ...prev, town_region: val }))
@@ -790,10 +729,113 @@ function SettingsContent() {
                     />
                   </div>
 
-                  {/* Target Goal & Score */}
+                  {/* Bio / Scholar Statement */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-200 mb-1.5">
+                      Student Motto or Scholar Bio
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={profile.bio || ""}
+                      onChange={(e) =>
+                        setProfile((prev) => ({ ...prev, bio: e.target.value }))
+                      }
+                      placeholder="e.g. Aspiring software engineer aiming for top rank in national entrance."
+                      className="w-full px-4 py-2.5 rounded-xl border border-white/20 bg-slate-950/80 text-white text-sm focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 resize-none font-medium"
+                    />
+                  </div>
+
+                  {/* High Contrast Save Button */}
+                  <div className="pt-2 flex items-center justify-between">
+                    <button
+                      type="submit"
+                      disabled={savingProfile}
+                      className="px-6 py-3 rounded-xl text-xs sm:text-sm font-black bg-cyan-400 text-slate-950 hover:bg-cyan-300 active:scale-[0.98] transition-all shadow-lg shadow-cyan-500/25 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      <Save className="w-4 h-4 text-slate-950" />
+                      {savingProfile ? "Saving Profile..." : "Save Academic Profile"}
+                    </button>
+                    <span className="text-xs text-slate-400 font-mono">
+                      Changes persist across all devices
+                    </span>
+                  </div>
+                </form>
+              </div>
+            )}
+          </div>
+
+          {/* ======================================================= */}
+          {/* SECTION 2: STUDY GOALS & PACING                          */}
+          {/* ======================================================= */}
+          <div className="rounded-3xl border border-white/15 bg-wisdom-card overflow-hidden shadow-xl transition-all">
+            <button
+              type="button"
+              onClick={() => toggleSection("study")}
+              className="w-full flex items-center justify-between p-5 sm:p-6 text-left transition-colors hover:bg-white/[0.03] cursor-pointer"
+            >
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="p-3 rounded-2xl bg-amber-400/15 border border-amber-400/40 text-amber-300 shrink-0">
+                  <Target className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="font-display text-lg sm:text-xl font-bold text-white">
+                    Study Goals & Target Milestones
+                  </h2>
+                  <p className="text-xs text-slate-300 mt-0.5 truncate">
+                    Daily time quota ({profile.daily_study_goal_minutes || 45} mins), study hours, and exam targets
+                  </p>
+                </div>
+              </div>
+
+              <ChevronDown
+                className={`w-5 h-5 text-cyan-300 transition-transform duration-300 shrink-0 ml-3 ${
+                  openSections.study ? "rotate-180 text-cyan-400" : ""
+                }`}
+              />
+            </button>
+
+            {openSections.study && (
+              <div className="p-5 sm:p-7 border-t border-white/10 space-y-6 animate-in fade-in duration-200">
+                <form onSubmit={handleSaveStudyGoals} className="space-y-6">
+                  {/* Daily Study Goal (Clear High Contrast Selection Buttons) */}
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-200 mb-2">
+                      Daily Study Target (Minutes Per Day)
+                    </label>
+                    <p className="text-xs text-slate-400 mb-3">
+                      Select your target study commitment. This powers your streak calculation and pacing HUD.
+                    </p>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5">
+                      {[15, 30, 45, 60, 90, 120].map((mins) => {
+                        const selected = profile.daily_study_goal_minutes === mins;
+                        return (
+                          <button
+                            key={mins}
+                            type="button"
+                            onClick={() =>
+                              setProfile((prev) => ({
+                                ...prev,
+                                daily_study_goal_minutes: mins,
+                              }))
+                            }
+                            className={`py-3 px-3 rounded-xl text-xs sm:text-sm font-bold border transition-all cursor-pointer ${
+                              selected
+                                ? "bg-amber-400 text-slate-950 border-amber-400 shadow-md shadow-amber-400/30 ring-2 ring-amber-400/50 font-black"
+                                : "bg-slate-950/60 border-white/20 text-white hover:bg-white/10 hover:border-white/40"
+                            }`}
+                          >
+                            {mins} min/day
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Target Exam & Score */}
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                      <label className="block text-xs font-bold text-slate-200 mb-1.5">
                         Target Milestone / Exam
                       </label>
                       <input
@@ -802,14 +844,14 @@ function SettingsContent() {
                         onChange={(e) =>
                           setProfile((prev) => ({ ...prev, target_exam: e.target.value }))
                         }
-                        placeholder="e.g. 2026 Matriculation Exam or Freshman Sem 1"
-                        className="w-full px-4 py-2.5 rounded-xl border border-white/15 bg-white/5 text-white text-sm focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400"
+                        placeholder="e.g. University Exit Exam or Matriculation 2026"
+                        className="w-full px-4 py-3 rounded-xl border border-white/20 bg-slate-950/80 text-white text-sm focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 font-medium"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                        Target Score Goal
+                      <label className="block text-xs font-bold text-slate-200 mb-1.5">
+                        Target Score / GPA
                       </label>
                       <input
                         type="text"
@@ -817,819 +859,546 @@ function SettingsContent() {
                         onChange={(e) =>
                           setProfile((prev) => ({ ...prev, target_score: e.target.value }))
                         }
-                        placeholder="e.g. 600+ / 3.9 GPA / Distinction"
-                        className="w-full px-4 py-2.5 rounded-xl border border-white/15 bg-white/5 text-white text-sm focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400"
+                        placeholder="e.g. 3.85 GPA or 90%+"
+                        className="w-full px-4 py-3 rounded-xl border border-white/20 bg-slate-950/80 text-white text-sm focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 font-medium"
                       />
                     </div>
                   </div>
 
-                  {/* Academic Bio / Motto */}
-                  <div>
-                    <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                      Academic Motto / Bio
-                    </label>
-                    <textarea
-                      rows={2}
-                      value={profile.bio || ""}
-                      onChange={(e) =>
-                        setProfile((prev) => ({ ...prev, bio: e.target.value }))
-                      }
-                      placeholder="Share a short study mantra, dream university, or professional vision..."
-                      className="w-full px-4 py-2.5 rounded-xl border border-white/15 bg-white/5 text-white text-sm focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400 resize-none"
-                    />
-                  </div>
-
-                  {/* Feedback Message */}
-                  {profileFeedback && (
-                    <div
-                      className={`p-3.5 rounded-xl text-xs font-medium border ${
-                        profileFeedback.type === "success"
-                          ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
-                          : "bg-rose-500/15 border-rose-500/30 text-rose-400"
-                      }`}
-                    >
-                      {profileFeedback.msg}
-                    </div>
-                  )}
-
-                  <div className="pt-2 flex justify-end">
-                    <button
-                      type="submit"
-                      disabled={savingProfile}
-                      className="btn-primary px-7 py-3 text-sm flex items-center gap-2"
-                    >
-                      {savingProfile ? (
-                        <>
-                          <RefreshCw className="w-4 h-4 animate-spin" />
-                          Saving...
-                        </>
-                      ) : (
-                        <>
-                          <Save className="w-4 h-4" />
-                          Save Academic Profile
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
-
-            {/* 2. DEDICATED WEEKLY PERFORMANCE REPORT TAB (Color PDF) */}
-            {section === "report" && (
-              <div>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 mb-6 border-b border-white/10">
-                  <div>
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-400/15 text-amber-300 border border-amber-400/30 mb-2">
-                      <FileDown className="w-3 h-3" />
-                      Executive Scholar Report
-                    </div>
-                    <h2 className="font-display text-xl sm:text-2xl font-bold text-white">
-                      Weekly Performance Report (Color PDF)
-                    </h2>
-                    <p className="text-xs sm:text-sm text-wisdom-muted mt-1">
-                      Download a publication-grade, concise color PDF summary of your dashboard diagnostics.
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleDownloadWeeklyReport}
-                    disabled={generatingPdf}
-                    className="btn-primary px-6 py-3 text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg shadow-cyan-500/20 cursor-pointer self-start sm:self-center"
-                  >
-                    <FileDown className={`w-4 h-4 ${generatingPdf ? "animate-bounce" : ""}`} />
-                    {generatingPdf ? "Compiling Color PDF..." : "Download My Weekly Report"}
-                  </button>
-                </div>
-
-                {/* Live Preview Card of the Report */}
-                <div className="rounded-2xl border border-sky-500/30 bg-[#081224] p-5 sm:p-7 space-y-6">
-                  {/* Banner Diagnosis */}
-                  <div className="p-4 rounded-xl border border-cyan-500/30 bg-cyan-500/10 space-y-1.5">
-                    <p className="text-xs font-mono font-bold uppercase tracking-wider text-cyan-300">
-                      According to your records and our system:
-                    </p>
-                    <p className="text-sm font-semibold text-white leading-relaxed">
-                      Your logged study time is{" "}
-                      <strong className="text-cyan-300">
-                        {studentAnalytics.totalStudyHours.toFixed(1)} hours
-                      </strong>{" "}
-                      ({studentAnalytics.studyTimeAnalysis.weeklyProgressPct}% of your weekly milestone).
-                      Your diagnosed reading speed is{" "}
-                      <strong className="text-amber-300">
-                        {studentAnalytics.readingAnalysis.speedWpm} WPM
-                      </strong>{" "}
-                      via{" "}
-                      <strong className="text-white">
-                        {studentAnalytics.readingAnalysis.method}
-                      </strong>
-                      , maintaining{" "}
-                      <strong className="text-emerald-400">
-                        {studentAnalytics.retentionAnalysis.accuracyPct}% accuracy
-                      </strong>{" "}
-                      ({studentAnalytics.retentionAnalysis.rating}).
-                    </p>
-                  </div>
-
-                  {/* 4 HUD Metric Cards */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div className="p-3.5 rounded-xl border border-white/10 bg-white/[0.02]">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-wisdom-muted mb-1">
-                        Weekly Study Time
-                      </p>
-                      <p className="text-lg font-black text-white">
-                        {studentAnalytics.totalStudyHours.toFixed(1)} hrs
-                      </p>
-                      <p className="text-xs text-cyan-300 font-semibold mt-0.5">
-                        {studentAnalytics.studyTimeAnalysis.weeklyProgressPct}% of weekly target
-                      </p>
-                    </div>
-
-                    <div className="p-3.5 rounded-xl border border-white/10 bg-white/[0.02]">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-wisdom-muted mb-1">
-                        Reading Speed & Style
-                      </p>
-                      <p className="text-lg font-black text-amber-300">
-                        {studentAnalytics.readingAnalysis.speedWpm} WPM
-                      </p>
-                      <p className="text-xs text-slate-300 truncate mt-0.5">
-                        {studentAnalytics.readingAnalysis.method}
-                      </p>
-                    </div>
-
-                    <div className="p-3.5 rounded-xl border border-white/10 bg-white/[0.02]">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-wisdom-muted mb-1">
-                        Retention & Accuracy
-                      </p>
-                      <p className="text-lg font-black text-emerald-400">
-                        {studentAnalytics.retentionAnalysis.accuracyPct}%
-                      </p>
-                      <p className="text-xs text-slate-300 truncate mt-0.5">
-                        {studentAnalytics.retentionAnalysis.rating}
-                      </p>
-                    </div>
-
-                    <div className="p-3.5 rounded-xl border border-white/10 bg-white/[0.02]">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-wisdom-muted mb-1">
-                        Scholar Standing
-                      </p>
-                      <p className="text-sm font-black text-white truncate">
-                        {studentAnalytics.masteryTier}
-                      </p>
-                      <p className="text-xs text-cyan-300 font-semibold mt-0.5">
-                        {studentAnalytics.studyTimeAnalysis.paceStatus}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Immediate Stop Signals Preview */}
-                  <div className="p-4 rounded-xl border border-rose-500/30 bg-rose-500/[0.05] space-y-3">
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs font-bold uppercase tracking-wider text-rose-300">
-                        Immediately Stop Signals (Data-Driven Alerts)
-                      </p>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-200 border border-rose-500/30">
-                        Included in Color PDF
-                      </span>
-                    </div>
-
-                    {studentAnalytics.immediatelyStopSignals.length === 0 ? (
-                      <p className="text-xs text-slate-300">
-                        No critical anomalies detected in your recent study blocks.
-                      </p>
-                    ) : (
-                      <div className="space-y-2">
-                        {studentAnalytics.immediatelyStopSignals.slice(0, 2).map((sig) => (
-                          <div
-                            key={sig.id}
-                            className="p-2.5 rounded-lg bg-black/40 border border-rose-500/20 text-xs space-y-0.5"
-                          >
-                            <p className="font-bold text-rose-200">
-                              STOP: {sig.signal}
-                            </p>
-                            <p className="text-wisdom-muted text-[11px]">
-                              {sig.observedData} &rarr; <span className="text-slate-200">{sig.immediateAction}</span>
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Call to action */}
-                  <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-wisdom-muted border-t border-white/10">
-                    <p>
-                      Your color PDF report includes official Academy header insignia, curriculum breakdown, and verification stamp.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={handleDownloadWeeklyReport}
-                      disabled={generatingPdf}
-                      className="px-4 py-2.5 rounded-xl border border-cyan-400 bg-cyan-500/20 text-cyan-200 hover:bg-cyan-500/30 font-bold flex items-center justify-center gap-2 cursor-pointer transition-colors self-start sm:self-auto shrink-0"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      Download Color PDF
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* 3. APP & WEBVIEW DISPLAY TAB */}
-            {section === "app" && (
-              <div>
-                <div className="pb-6 mb-6 border-b border-white/10">
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-400/15 text-amber-300 border border-amber-400/30 mb-2">
-                    <Smartphone className="w-3 h-3" />
-                    Webview & Mobile App Optimization
-                  </div>
-                  <h2 className="font-display text-xl sm:text-2xl font-bold text-white">
-                    Display & Ergonomics
-                  </h2>
-                  <p className="text-xs sm:text-sm text-wisdom-muted mt-1">
-                    Fine-tuned for running inside Android WebViews and mobile screens.
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  {/* AMOLED True-Black Mode */}
-                  <div className="p-4 sm:p-5 rounded-2xl border border-white/10 bg-white/[0.02] flex items-center justify-between gap-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Moon className="w-4 h-4 text-purple-400" />
-                        <p className="text-sm font-bold text-white">AMOLED True-Black Mode</p>
-                      </div>
-                      <p className="text-xs text-wisdom-muted">
-                        Sets background to pure black. Saves battery on OLED/AMOLED mobile screens.
-                      </p>
-                    </div>
-                    <Toggle
-                      label="AMOLED Mode"
-                      on={prefs.amoledMode}
-                      onChange={(v) => updatePref("amoledMode", v)}
-                    />
-                  </div>
-
-                  {/* Data Saver Mode */}
-                  <div className="p-4 sm:p-5 rounded-2xl border border-white/10 bg-white/[0.02] flex items-center justify-between gap-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Zap className="w-4 h-4 text-amber-400" />
-                        <p className="text-sm font-bold text-white">Ethiopian Cellular Data Saver</p>
-                      </div>
-                      <p className="text-xs text-wisdom-muted">
-                        Limits non-essential image preloading to conserve mobile package data.
-                      </p>
-                    </div>
-                    <Toggle
-                      label="Data Saver"
-                      on={prefs.dataSaver}
-                      onChange={(v) => updatePref("dataSaver", v)}
-                    />
-                  </div>
-
-                  {/* Font Size Scaling - Clean non-swiping card grid */}
-                  <div className="p-4 sm:p-5 rounded-2xl border border-white/10 bg-white/[0.02] space-y-3">
-                    <div>
-                      <p className="text-sm font-bold text-white">Font Size Scaling</p>
-                      <p className="text-xs text-wisdom-muted">
-                        Adjust reading comfort across mobile phones and tablets.
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {[
-                        { id: "compact", label: "Compact", scale: "14.5px" },
-                        { id: "normal", label: "Standard", scale: "16px" },
-                        { id: "large", label: "Large", scale: "17.5px" },
-                        { id: "xlarge", label: "Extra Large", scale: "19px" },
-                      ].map((item) => {
-                        const active = (prefs.fontSize || "normal") === item.id;
-                        return (
-                          <button
-                            key={item.id}
-                            type="button"
-                            onClick={() =>
-                              updatePref(
-                                "fontSize",
-                                item.id as "compact" | "normal" | "large" | "xlarge"
-                              )
-                            }
-                            className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
-                              active
-                                ? "border-cyan-400 bg-cyan-500/20 text-white font-bold"
-                                : "border-white/10 bg-white/5 text-wisdom-muted hover:text-white"
-                            }`}
-                          >
-                            <span className="block text-xs font-semibold">{item.label}</span>
-                            <span className="text-[10px] text-wisdom-muted/70">{item.scale}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Reading Font Family */}
-                  <div className="p-4 sm:p-5 rounded-2xl border border-white/10 bg-white/[0.02] space-y-3">
-                    <div>
-                      <p className="text-sm font-bold text-white">Textbook Reading Font</p>
-                      <p className="text-xs text-wisdom-muted">
-                        Choose typography for long study notes and chapter summaries.
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-2">
-                      {[
-                        { id: "sans", label: "Modern Sans", desc: "Clean & Crisp" },
-                        { id: "serif", label: "Academic Serif", desc: "Booklike" },
-                        { id: "mono", label: "Technical Mono", desc: "Engineers" },
-                      ].map((font) => {
-                        const active = (prefs.readingFont || "sans") === font.id;
-                        return (
-                          <button
-                            key={font.id}
-                            type="button"
-                            onClick={() =>
-                              updatePref("readingFont", font.id as "sans" | "serif" | "mono")
-                            }
-                            className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
-                              active
-                                ? "border-cyan-400 bg-cyan-500/20 text-white font-bold"
-                                : "border-white/10 bg-white/5 text-wisdom-muted hover:text-white"
-                            }`}
-                          >
-                            <span className="block text-xs font-semibold">{font.label}</span>
-                            <span className="text-[10px] text-wisdom-muted/70">{font.desc}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Sound Effects */}
-                  <div className="p-4 sm:p-5 rounded-2xl border border-white/10 bg-white/[0.02] flex items-center justify-between gap-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Volume2 className="w-4 h-4 text-cyan-400" />
-                        <p className="text-sm font-bold text-white">Sound Effects & Haptics</p>
-                      </div>
-                      <p className="text-xs text-wisdom-muted">
-                        Audio cues on quiz answer submissions and Pomodoro focus timer bells.
-                      </p>
-                    </div>
-                    <Toggle
-                      label="Sound Effects"
-                      on={prefs.soundEffects}
-                      onChange={(v) => updatePref("soundEffects", v)}
-                    />
-                  </div>
-
-                  {/* Reduced Motion */}
-                  <div className="p-4 sm:p-5 rounded-2xl border border-white/10 bg-white/[0.02] flex items-center justify-between gap-4">
-                    <div className="space-y-1">
-                      <p className="text-sm font-bold text-white">Reduced Motion</p>
-                      <p className="text-xs text-wisdom-muted">
-                        Minimizes 3D tilts and animations for smoother rendering on budget smartphones.
-                      </p>
-                    </div>
-                    <Toggle
-                      label="Reduced Motion"
-                      on={prefs.reducedMotion}
-                      onChange={(v) => updatePref("reducedMotion", v)}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* 4. STUDY TARGETS & GOALS TAB */}
-            {section === "study" && (
-              <div>
-                <div className="pb-6 mb-6 border-b border-white/10">
-                  <h2 className="font-display text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
-                    <Target className="w-5 h-5 text-amber-300" />
-                    Daily Study Goals & Pomodoro
-                  </h2>
-                  <p className="text-xs sm:text-sm text-wisdom-muted mt-1">
-                    Set your daily minute milestones and focus habits.
-                  </p>
-                </div>
-
-                <div className="space-y-5">
-                  {/* Daily Study Goal */}
-                  <div className="p-5 rounded-2xl border border-white/10 bg-white/[0.02] space-y-3">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-bold text-white">Daily Target Study Time</p>
-                      <span className="text-sm font-extrabold text-cyan-300 font-mono">
-                        {prefs.studyGoalMinutes || 45} mins / day
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                      {[15, 30, 45, 60, 90, 120].map((mins) => {
-                        const active = (prefs.studyGoalMinutes || 45) === mins;
-                        return (
-                          <button
-                            key={mins}
-                            type="button"
-                            onClick={() => updatePref("studyGoalMinutes", mins)}
-                            className={`py-2.5 px-2 rounded-xl border text-center font-bold text-xs transition-all cursor-pointer ${
-                              active
-                                ? "border-amber-400 bg-amber-500/20 text-amber-200"
-                                : "border-white/10 bg-white/5 text-wisdom-muted hover:text-white"
-                            }`}
-                          >
-                            {mins}m
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <p className="text-xs text-wisdom-muted">
-                      Your streak counter increments as you read chapter notes and solve exam banks.
-                    </p>
-                  </div>
-
                   {/* Preferred Study Time */}
-                  <div className="p-5 rounded-2xl border border-white/10 bg-white/[0.02] space-y-3">
-                    <p className="text-sm font-bold text-white">Optimal Study Time Window</p>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-200 mb-2">
+                      Preferred Daily Study Window
+                    </label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                       {[
-                        { id: "morning", label: "Morning", time: "5 AM - 9 AM" },
-                        { id: "afternoon", label: "Afternoon", time: "1 PM - 5 PM" },
-                        { id: "evening", label: "Evening", time: "6 PM - 10 PM" },
-                        { id: "night", label: "Late Night", time: "11 PM - 3 AM" },
+                        { id: "morning", label: "Early Morning", hours: "5:00 AM – 8:00 AM" },
+                        { id: "afternoon", label: "Afternoon", hours: "1:00 PM – 4:00 PM" },
+                        { id: "evening", label: "Evening", hours: "6:00 PM – 9:00 PM" },
+                        { id: "night", label: "Late Night", hours: "10:00 PM – 1:00 AM" },
                       ].map((slot) => {
-                        const active =
-                          (prefs.preferredStudyTime || "evening") === slot.id;
+                        const selected = profile.preferred_study_time === slot.id;
                         return (
                           <button
                             key={slot.id}
                             type="button"
                             onClick={() =>
-                              updatePref(
-                                "preferredStudyTime",
-                                slot.id as "morning" | "afternoon" | "evening" | "night"
-                              )
+                              setProfile((prev) => ({
+                                ...prev,
+                                preferred_study_time: slot.id,
+                              }))
                             }
-                            className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
-                              active
-                                ? "border-cyan-400 bg-cyan-500/20 text-white font-bold"
-                                : "border-white/10 bg-white/5 text-wisdom-muted hover:text-white"
+                            className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                              selected
+                                ? "bg-cyan-400 text-slate-950 border-cyan-400 shadow-md shadow-cyan-400/25 ring-2 ring-cyan-400/40"
+                                : "bg-slate-950/60 border-white/20 text-white hover:bg-white/10"
                             }`}
                           >
-                            <span className="block text-xs font-semibold">{slot.label}</span>
-                            <span className="text-[10px] text-wisdom-muted/70">{slot.time}</span>
+                            <p className="text-xs font-black">{slot.label}</p>
+                            <p className={`text-[10px] ${selected ? "text-slate-900 font-semibold" : "text-slate-400"}`}>
+                              {slot.hours}
+                            </p>
                           </button>
                         );
                       })}
                     </div>
                   </div>
 
-                  {/* Focus Session Pomodoro Duration */}
-                  <div className="p-5 rounded-2xl border border-white/10 bg-white/[0.02] space-y-3">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-bold text-white">Default Focus Timer Length</p>
-                      <span className="text-sm font-mono text-amber-300 font-bold">
-                        {prefs.focusSessionDuration || 25} minutes
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                      {[
-                        { mins: 25, label: "Pomodoro (25m)", note: "Short sprint" },
-                        { mins: 45, label: "Deep Work (45m)", note: "High yield" },
-                        { mins: 60, label: "Full Exam (60m)", note: "Simulated exam" },
-                      ].map((item) => {
-                        const active = (prefs.focusSessionDuration || 25) === item.mins;
-                        return (
-                          <button
-                            key={item.mins}
-                            type="button"
-                            onClick={() => updatePref("focusSessionDuration", item.mins)}
-                            className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
-                              active
-                                ? "border-cyan-400 bg-cyan-500/20 text-white font-bold"
-                                : "border-white/10 bg-white/5 text-wisdom-muted hover:text-white"
-                            }`}
-                          >
-                            <span className="block text-xs font-semibold">{item.label}</span>
-                            <span className="text-[10px] text-wisdom-muted/70">{item.note}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* 5. NOTIFICATIONS TAB */}
-            {section === "notifications" && (
-              <div>
-                <div className="pb-6 mb-6 border-b border-white/10">
-                  <h2 className="font-display text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
-                    <Bell className="w-5 h-5 text-cyan-300" />
-                    Notification Center
-                  </h2>
-                  <p className="text-xs sm:text-sm text-wisdom-muted mt-1">
-                    Control learning milestones, payment updates, and exam alerts.
-                  </p>
-                </div>
-
-                <div className="space-y-3">
-                  {[
-                    {
-                      key: "notifDailyStudy" as const,
-                      title: "Daily Study & Streak Reminders",
-                      desc: "Keep your momentum alive with notifications for daily minute milestones.",
-                    },
-                    {
-                      key: "notifPayment" as const,
-                      title: "Order & Payment Verification Updates",
-                      desc: "Real-time alerts when your Telebirr / CBE payment receipt is verified and unlocked.",
-                    },
-                    {
-                      key: "notifExams" as const,
-                      title: "New Exam Banks & Chapter Solutions",
-                      desc: "Receive updates when fresh midterms, finals, or COC/Exit Exam questions are published.",
-                    },
-                    {
-                      key: "notifScholarships" as const,
-                      title: "Scholarship & University Admissions",
-                      desc: "Alerts for newly published fully funded international and Ethiopian university opportunities.",
-                    },
-                    {
-                      key: "notifMarketing" as const,
-                      title: "Educational Newsletters",
-                      desc: "Occasional strategy guides on exam techniques and university placement.",
-                    },
-                  ].map((row) => (
-                    <div
-                      key={row.key}
-                      className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 p-4 bg-white/[0.02] hover:bg-white/[0.04] transition-colors"
+                  {/* High Contrast Save Button */}
+                  <div className="pt-2 flex items-center justify-between">
+                    <button
+                      type="submit"
+                      disabled={savingStudy}
+                      className="px-6 py-3 rounded-xl text-xs sm:text-sm font-black bg-cyan-400 text-slate-950 hover:bg-cyan-300 active:scale-[0.98] transition-all shadow-lg shadow-cyan-500/25 flex items-center gap-2 cursor-pointer disabled:opacity-50"
                     >
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold text-white">{row.title}</p>
-                        <p className="text-xs text-wisdom-muted mt-0.5">{row.desc}</p>
-                      </div>
-                      <Toggle
-                        label={row.title}
-                        on={Boolean(prefs[row.key])}
-                        onChange={(v) => updatePref(row.key, v)}
-                      />
-                    </div>
-                  ))}
+                      <Save className="w-4 h-4 text-slate-950" />
+                      {savingStudy ? "Saving..." : "Save Study Goals"}
+                    </button>
+                    <span className="text-xs text-slate-400 font-mono">
+                      Reflected in learning analytics
+                    </span>
+                  </div>
+                </form>
+              </div>
+            )}
+          </div>
 
-                  {/* Email Digest Frequency - CUSTOM SELECT (No default chrome picker) */}
-                  <div className="mt-4 p-4 rounded-2xl border border-white/10 bg-white/[0.02] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          {/* ======================================================= */}
+          {/* SECTION 3: NOTIFICATIONS & STUDY REMINDERS               */}
+          {/* ======================================================= */}
+          <div className="rounded-3xl border border-white/15 bg-wisdom-card overflow-hidden shadow-xl transition-all">
+            <button
+              type="button"
+              onClick={() => toggleSection("notifications")}
+              className="w-full flex items-center justify-between p-5 sm:p-6 text-left transition-colors hover:bg-white/[0.03] cursor-pointer"
+            >
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="p-3 rounded-2xl bg-violet-400/15 border border-violet-400/40 text-violet-300 shrink-0">
+                  <Bell className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="font-display text-lg sm:text-xl font-bold text-white">
+                    Notifications & Study Alerts
+                  </h2>
+                  <p className="text-xs text-slate-300 mt-0.5 truncate">
+                    Daily study reminders, active streak warnings, and weekly summary digest
+                  </p>
+                </div>
+              </div>
+
+              <ChevronDown
+                className={`w-5 h-5 text-cyan-300 transition-transform duration-300 shrink-0 ml-3 ${
+                  openSections.notifications ? "rotate-180 text-cyan-400" : ""
+                }`}
+              />
+            </button>
+
+            {openSections.notifications && (
+              <div className="p-5 sm:p-7 border-t border-white/10 space-y-4 animate-in fade-in duration-200">
+                <div className="space-y-3">
+                  <div className="p-4 rounded-2xl border border-white/15 bg-slate-950/60 flex items-center justify-between gap-4">
                     <div>
-                      <p className="text-sm font-bold text-white">Email Digest Frequency</p>
-                      <p className="text-xs text-wisdom-muted">
-                        Weekly summary of your completed reading time and questions attempted.
+                      <p className="text-sm font-bold text-white">Daily Study Goal Reminder</p>
+                      <p className="text-xs text-slate-300">
+                        Receive a gentle prompt to complete your {profile.daily_study_goal_minutes || 45}-minute daily session.
                       </p>
                     </div>
-                    <div className="w-full sm:w-48">
-                      <CustomSelect
-                        value={prefs.emailDigest || "weekly"}
-                        onChange={(val) =>
-                          updatePref(
-                            "emailDigest",
-                            val as "off" | "daily" | "weekly"
-                          )
-                        }
-                        options={[
-                          { value: "off", label: "Off" },
-                          { value: "daily", label: "Daily Digest" },
-                          { value: "weekly", label: "Weekly Summary" },
-                        ]}
-                      />
+                    <Toggle
+                      on={prefs.notifDailyStudy}
+                      onChange={(v) => handleSavePrefs({ ...prefs, notifDailyStudy: v })}
+                      label="Daily Study Reminder"
+                    />
+                  </div>
+
+                  <div className="p-4 rounded-2xl border border-white/15 bg-slate-950/60 flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-bold text-white">Exam & Syllabus Updates</p>
+                      <p className="text-xs text-slate-300">
+                        Alert when new model exams, matriculation past papers, or questions are published.
+                      </p>
                     </div>
+                    <Toggle
+                      on={prefs.notifExams}
+                      onChange={(v) => handleSavePrefs({ ...prefs, notifExams: v })}
+                      label="Exam Updates"
+                    />
+                  </div>
+
+                  <div className="p-4 rounded-2xl border border-white/15 bg-slate-950/60 flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-bold text-white">Weekly Performance Digest</p>
+                      <p className="text-xs text-slate-300">
+                        Receive a concise weekly summary of your total study hours and accuracy.
+                      </p>
+                    </div>
+                    <Toggle
+                      on={prefs.emailDigest !== "off"}
+                      onChange={(v) => handleSavePrefs({ ...prefs, emailDigest: v ? "weekly" : "off" })}
+                      label="Weekly Performance Digest"
+                    />
+                  </div>
+
+                  <div className="p-4 rounded-2xl border border-white/15 bg-slate-950/60 flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-bold text-white">Sound Effects on Correct Answers</p>
+                      <p className="text-xs text-slate-300">
+                        Subtle acoustic feedback during flashcard and question practice drills.
+                      </p>
+                    </div>
+                    <Toggle
+                      on={prefs.soundEffects}
+                      onChange={(v) => handleSavePrefs({ ...prefs, soundEffects: v })}
+                      label="Sound Effects"
+                    />
                   </div>
                 </div>
               </div>
             )}
+          </div>
 
-            {/* 6. OFFLINE STORAGE TAB */}
-            {section === "storage" && (
-              <div>
-                <div className="pb-6 mb-6 border-b border-white/10">
-                  <h2 className="font-display text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
-                    <HardDrive className="w-5 h-5 text-cyan-300" />
-                    Offline Storage & Data Sync
-                  </h2>
-                  <p className="text-xs sm:text-sm text-wisdom-muted mt-1">
-                    Manage local device storage used for studying without internet in Ethiopia.
-                  </p>
+          {/* ======================================================= */}
+          {/* SECTION 4: WEEKLY DIAGNOSTIC REPORT (Color PDF)          */}
+          {/* ======================================================= */}
+          <div className="rounded-3xl border border-white/15 bg-wisdom-card overflow-hidden shadow-xl transition-all">
+            <button
+              type="button"
+              onClick={() => toggleSection("report")}
+              className="w-full flex items-center justify-between p-5 sm:p-6 text-left transition-colors hover:bg-white/[0.03] cursor-pointer"
+            >
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="p-3 rounded-2xl bg-amber-400/15 border border-amber-400/40 text-amber-300 shrink-0">
+                  <FileDown className="w-5 h-5" />
                 </div>
-
-                <div className="space-y-4">
-                  {/* Storage Status Card */}
-                  <div className="p-5 rounded-2xl border border-white/10 bg-white/[0.02] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Database className="w-4 h-4 text-cyan-400" />
-                        <p className="text-sm font-bold text-white">Device Offline Cache Size</p>
-                      </div>
-                      <p className="text-xs text-wisdom-muted">
-                        Includes downloaded chapter summaries, flashcard sets, and progress timestamps.
-                      </p>
-                    </div>
-                    <div className="px-3.5 py-1.5 rounded-xl border border-cyan-400/30 bg-cyan-500/10 text-cyan-300 font-mono font-bold text-sm self-start sm:self-center">
-                      {storageSize}
-                    </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h2 className="font-display text-lg sm:text-xl font-bold text-white">
+                      Weekly Performance Report (Color PDF)
+                    </h2>
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-400 text-slate-950">
+                      PDF Export
+                    </span>
                   </div>
-
-                  {/* Sync Offline Queue */}
-                  <div className="p-5 rounded-2xl border border-white/10 bg-white/[0.02] space-y-3">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-bold text-white">Flush Offline Queue</p>
-                        <p className="text-xs text-wisdom-muted">
-                          Upload any quiz answers or reading seconds accumulated while offline.
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleSyncOffline}
-                        disabled={syncingOffline}
-                        className="btn-secondary text-xs px-4 py-2 border-cyan-400/30 text-cyan-300 flex items-center gap-1.5 self-start sm:self-center cursor-pointer"
-                      >
-                        <RefreshCw className={`w-3.5 h-3.5 ${syncingOffline ? "animate-spin" : ""}`} />
-                        {syncingOffline ? "Syncing..." : "Sync to Cloud Now"}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Reset Cache - REMOVED clear cache icon */}
-                  <div className="p-5 rounded-2xl border border-rose-500/20 bg-rose-500/[0.03] space-y-3">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-bold text-rose-300">Clear Offline Cache</p>
-                        <p className="text-xs text-wisdom-muted">
-                          Frees up phone storage. Cloud records and purchased packages are untouched.
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleClearCache}
-                        className="px-4 py-2 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-300 text-xs font-bold hover:bg-rose-500/20 transition-colors self-start sm:self-center cursor-pointer"
-                      >
-                        Clear Local Cache
-                      </button>
-                    </div>
-                  </div>
-
-                  {syncMsg && (
-                    <div className="p-3.5 rounded-xl border border-cyan-400/30 bg-cyan-500/10 text-cyan-300 text-xs font-medium">
-                      {syncMsg}
-                    </div>
-                  )}
+                  <p className="text-xs text-slate-300 mt-0.5 truncate">
+                    Generate and download a high-contrast executive summary of your study metrics
+                  </p>
                 </div>
               </div>
-            )}
 
-            {/* 7. SECURITY & DATA TAB */}
-            {section === "security" && (
-              <div>
-                <div className="pb-6 mb-6 border-b border-white/10">
-                  <h2 className="font-display text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
-                    <Lock className="w-5 h-5 text-cyan-300" />
-                    Security & Data Governance
-                  </h2>
-                  <p className="text-xs sm:text-sm text-wisdom-muted mt-1">
-                    Manage passwords, review authenticated sessions, and export records.
-                  </p>
-                </div>
+              <ChevronDown
+                className={`w-5 h-5 text-cyan-300 transition-transform duration-300 shrink-0 ml-3 ${
+                  openSections.report ? "rotate-180 text-cyan-400" : ""
+                }`}
+              />
+            </button>
 
-                <div className="space-y-5">
-                  {/* Change Password Form */}
-                  <form
-                    onSubmit={handlePasswordChange}
-                    className="p-5 rounded-2xl border border-white/10 bg-white/[0.02] space-y-4"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Key className="w-4 h-4 text-amber-400" />
-                      <p className="text-sm font-bold text-white">Change Account Password</p>
-                    </div>
-
-                    <div className="grid sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-bold text-slate-300 mb-1">
-                          New Password
-                        </label>
-                        <input
-                          type="password"
-                          value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)}
-                          placeholder="Minimum 6 characters"
-                          className="w-full px-4 py-2 rounded-xl border border-white/15 bg-white/5 text-white text-xs focus:border-cyan-400 focus:outline-none"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-slate-300 mb-1">
-                          Confirm New Password
-                        </label>
-                        <input
-                          type="password"
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          placeholder="Re-enter password"
-                          className="w-full px-4 py-2 rounded-xl border border-white/15 bg-white/5 text-white text-xs focus:border-cyan-400 focus:outline-none"
-                        />
-                      </div>
-                    </div>
-
-                    {passwordMsg && (
-                      <div
-                        className={`p-3 rounded-xl text-xs font-medium border ${
-                          passwordMsg.type === "success"
-                            ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
-                            : "bg-rose-500/15 border-rose-500/30 text-rose-400"
-                        }`}
-                      >
-                        {passwordMsg.text}
-                      </div>
-                    )}
-
-                    <div className="flex justify-end">
-                      <button
-                        type="submit"
-                        disabled={passwordLoading || !newPassword}
-                        className="btn-primary text-xs px-5 py-2.5 cursor-pointer disabled:opacity-50"
-                      >
-                        {passwordLoading ? "Updating..." : "Update Password"}
-                      </button>
-                    </div>
-                  </form>
-
-                  {/* Active Session Info */}
-                  <div className="p-5 rounded-2xl border border-white/10 bg-white/[0.02] space-y-3">
-                    <p className="text-sm font-bold text-white">Active Session Details</p>
-                    <div className="grid sm:grid-cols-2 gap-3 text-xs text-wisdom-muted font-mono">
-                      <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
-                        <span className="block text-slate-400 text-[10px] uppercase font-sans font-bold">
-                          Identity Provider
-                        </span>
-                        <span className="text-white font-semibold capitalize">
-                          {user.app_metadata?.provider || "Email"}
-                        </span>
-                      </div>
-                      <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
-                        <span className="block text-slate-400 text-[10px] uppercase font-sans font-bold">
-                          Account Created
-                        </span>
-                        <span className="text-white">
-                          {user.created_at
-                            ? new Date(user.created_at).toLocaleDateString()
-                            : "Recent"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Export Academic Data */}
-                  <div className="p-5 rounded-2xl border border-white/10 bg-white/[0.02] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Download className="w-4 h-4 text-cyan-400" />
-                        <p className="text-sm font-bold text-white">Export Academic Records (JSON)</p>
-                      </div>
-                      <p className="text-xs text-wisdom-muted">
-                        Download a complete JSON export of your student profile and progress history.
+            {openSections.report && (
+              <div className="p-5 sm:p-7 border-t border-white/10 space-y-6 animate-in fade-in duration-200">
+                <div className="p-5 rounded-2xl border border-white/15 bg-slate-950/60 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <h3 className="font-display text-base font-bold text-white">
+                        Executive Scholar Diagnostic Briefing
+                      </h3>
+                      <p className="text-xs text-slate-300 mt-1 max-w-xl leading-relaxed">
+                        Export an official, color-coded diagnostic PDF featuring your study volume, reading speed, retention accuracy, academic ranking tier, and immediate study habit alerts.
                       </p>
                     </div>
+
                     <button
                       type="button"
-                      onClick={handleExportData}
-                      className="btn-secondary text-xs px-4 py-2 border-white/15 text-white flex items-center gap-1.5 self-start sm:self-center cursor-pointer"
+                      onClick={handleDownloadWeeklyReport}
+                      disabled={generatingPdf}
+                      className="px-5 py-3 rounded-xl text-xs sm:text-sm font-black bg-amber-400 text-slate-950 hover:bg-amber-300 active:scale-[0.98] transition-all shadow-lg shadow-amber-500/25 flex items-center gap-2 shrink-0 cursor-pointer disabled:opacity-50"
                     >
-                      <Download className="w-3.5 h-3.5" />
-                      Download JSON
+                      <FileDown className={`w-4 h-4 text-slate-950 ${generatingPdf ? "animate-bounce" : ""}`} />
+                      {generatingPdf ? "Generating PDF..." : "Download Report (Color PDF)"}
                     </button>
                   </div>
 
-                  {/* Session Sign-Out */}
-                  <div className="p-5 rounded-2xl border border-white/10 bg-white/[0.02] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="space-y-1">
-                      <p className="text-sm font-bold text-white">End Active Session</p>
-                      <p className="text-xs text-wisdom-muted">
-                        Safely sign out from this device or webview app.
+                  {/* Summary of current telemetry that will appear on PDF */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-white/10 text-xs">
+                    <div className="p-3 rounded-xl bg-white/[0.02] border border-white/10">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">Logged Hours</p>
+                      <p className="text-lg font-black text-cyan-300 mt-0.5">
+                        {studentAnalytics.totalStudyHours}h
                       </p>
                     </div>
+                    <div className="p-3 rounded-xl bg-white/[0.02] border border-white/10">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">Reading Velocity</p>
+                      <p className="text-lg font-black text-amber-300 mt-0.5">
+                        {studentAnalytics.readingSpeedWpm} WPM
+                      </p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-white/[0.02] border border-white/10">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">Drill Accuracy</p>
+                      <p className="text-lg font-black text-emerald-400 mt-0.5">
+                        {studentAnalytics.questionAccuracyPct}%
+                      </p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-white/[0.02] border border-white/10">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">Active Streak</p>
+                      <p className="text-lg font-black text-violet-300 mt-0.5">
+                        {studentAnalytics.currentStreakDays} days
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ======================================================= */}
+          {/* SECTION 5: APP & DISPLAY PREFERENCES                    */}
+          {/* ======================================================= */}
+          <div className="rounded-3xl border border-white/15 bg-wisdom-card overflow-hidden shadow-xl transition-all">
+            <button
+              type="button"
+              onClick={() => toggleSection("display")}
+              className="w-full flex items-center justify-between p-5 sm:p-6 text-left transition-colors hover:bg-white/[0.03] cursor-pointer"
+            >
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="p-3 rounded-2xl bg-sky-400/15 border border-sky-400/40 text-sky-300 shrink-0">
+                  <Smartphone className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="font-display text-lg sm:text-xl font-bold text-white">
+                    App & Reading Display Preferences
+                  </h2>
+                  <p className="text-xs text-slate-300 mt-0.5 truncate">
+                    AMOLED pure black mode, font size scaling, reading font, and low-data mode
+                  </p>
+                </div>
+              </div>
+
+              <ChevronDown
+                className={`w-5 h-5 text-cyan-300 transition-transform duration-300 shrink-0 ml-3 ${
+                  openSections.display ? "rotate-180 text-cyan-400" : ""
+                }`}
+              />
+            </button>
+
+            {openSections.display && (
+              <div className="p-5 sm:p-7 border-t border-white/10 space-y-6 animate-in fade-in duration-200">
+                {/* Font Scaling Buttons */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-200 mb-2">
+                    Reading Font Scale
+                  </label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { id: "compact", label: "Compact", sample: "14px text" },
+                      { id: "normal", label: "Standard", sample: "16px text" },
+                      { id: "large", label: "Large Reading", sample: "18px text" },
+                    ].map((sz) => {
+                      const selected = prefs.fontSize === sz.id;
+                      return (
+                        <button
+                          key={sz.id}
+                          type="button"
+                          onClick={() => handleSavePrefs({ ...prefs, fontSize: sz.id as "compact" | "normal" | "large" })}
+                          className={`p-3.5 rounded-xl border text-center transition-all cursor-pointer ${
+                            selected
+                              ? "bg-cyan-400 text-slate-950 border-cyan-400 shadow-md shadow-cyan-400/30 font-black"
+                              : "bg-slate-950/60 border-white/20 text-white hover:bg-white/10"
+                          }`}
+                        >
+                          <p className="text-sm font-bold">{sz.label}</p>
+                          <p className={`text-[11px] ${selected ? "text-slate-900 font-medium" : "text-slate-400"}`}>
+                            {sz.sample}
+                          </p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Display Toggles */}
+                <div className="space-y-3">
+                  <div className="p-4 rounded-2xl border border-white/15 bg-slate-950/60 flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-bold text-white">AMOLED Pure Black Theme</p>
+                      <p className="text-xs text-slate-300">
+                        Maximizes battery life on mobile OLED screens during extended late-night study sessions.
+                      </p>
+                    </div>
+                    <Toggle
+                      on={prefs.amoledMode}
+                      onChange={(v) => handleSavePrefs({ ...prefs, amoledMode: v })}
+                      label="AMOLED Mode"
+                    />
+                  </div>
+
+                  <div className="p-4 rounded-2xl border border-white/15 bg-slate-950/60 flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-bold text-white">Low-Bandwidth Optimization</p>
+                      <p className="text-xs text-slate-300">
+                        Prioritizes lightweight text notes and reduces large image resolutions to conserve mobile data.
+                      </p>
+                    </div>
+                    <Toggle
+                      on={prefs.dataSaver}
+                      onChange={(v) => handleSavePrefs({ ...prefs, dataSaver: v })}
+                      label="Low Bandwidth Data Saver"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ======================================================= */}
+          {/* SECTION 6: OFFLINE STORAGE & DATA SYNC                   */}
+          {/* ======================================================= */}
+          <div className="rounded-3xl border border-white/15 bg-wisdom-card overflow-hidden shadow-xl transition-all">
+            <button
+              type="button"
+              onClick={() => toggleSection("storage")}
+              className="w-full flex items-center justify-between p-5 sm:p-6 text-left transition-colors hover:bg-white/[0.03] cursor-pointer"
+            >
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="p-3 rounded-2xl bg-emerald-400/15 border border-emerald-400/40 text-emerald-300 shrink-0">
+                  <HardDrive className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="font-display text-lg sm:text-xl font-bold text-white">
+                    Offline Storage & Data Sync
+                  </h2>
+                  <p className="text-xs text-slate-300 mt-0.5 truncate">
+                    Cache status ({storageSize}), cloud sync, and offline storage management
+                  </p>
+                </div>
+              </div>
+
+              <ChevronDown
+                className={`w-5 h-5 text-cyan-300 transition-transform duration-300 shrink-0 ml-3 ${
+                  openSections.storage ? "rotate-180 text-cyan-400" : ""
+                }`}
+              />
+            </button>
+
+            {openSections.storage && (
+              <div className="p-5 sm:p-7 border-t border-white/10 space-y-6 animate-in fade-in duration-200">
+                {syncMsg && (
+                  <div className="p-4 rounded-xl border border-cyan-400/40 bg-cyan-500/15 text-cyan-200 text-xs font-semibold flex items-center gap-2">
+                    <Check className="w-4 h-4 text-cyan-300 shrink-0" />
+                    <span>{syncMsg}</span>
+                  </div>
+                )}
+
+                <div className="p-5 rounded-2xl border border-white/15 bg-slate-950/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-bold text-white">Local Offline Storage Size</p>
+                    <p className="text-xs text-slate-300 mt-0.5">
+                      Cached chapter notes, question sets, and offline sync logs on this device.
+                    </p>
+                  </div>
+                  <span className="font-mono text-base font-black text-cyan-300 px-3.5 py-1.5 rounded-xl bg-cyan-500/10 border border-cyan-400/30 self-start sm:self-center">
+                    {storageSize}
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={handleSyncOffline}
+                    disabled={syncingOffline}
+                    className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-black bg-cyan-400 text-slate-950 hover:bg-cyan-300 transition-all shadow-md shadow-cyan-500/20 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-4 h-4 text-slate-950 ${syncingOffline ? "animate-spin" : ""}`} />
+                    {syncingOffline ? "Syncing..." : "Sync Offline Queue to Cloud"}
+                  </button>
+
+                  {/* Clean Clear Offline Cache Button - NO clear cache icon */}
+                  <button
+                    type="button"
+                    onClick={handleClearCache}
+                    className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold border border-rose-500/50 bg-rose-500/15 text-rose-200 hover:bg-rose-500/25 hover:border-rose-400 hover:text-white transition-all cursor-pointer"
+                  >
+                    Clear Offline Cache
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ======================================================= */}
+          {/* SECTION 7: SECURITY & ACCOUNT DATA                      */}
+          {/* ======================================================= */}
+          <div className="rounded-3xl border border-white/15 bg-wisdom-card overflow-hidden shadow-xl transition-all">
+            <button
+              type="button"
+              onClick={() => toggleSection("security")}
+              className="w-full flex items-center justify-between p-5 sm:p-6 text-left transition-colors hover:bg-white/[0.03] cursor-pointer"
+            >
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="p-3 rounded-2xl bg-rose-400/15 border border-rose-400/40 text-rose-300 shrink-0">
+                  <Lock className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="font-display text-lg sm:text-xl font-bold text-white">
+                    Security, Credentials & Data Export
+                  </h2>
+                  <p className="text-xs text-slate-300 mt-0.5 truncate">
+                    Update password, export academic records JSON, and sign out
+                  </p>
+                </div>
+              </div>
+
+              <ChevronDown
+                className={`w-5 h-5 text-cyan-300 transition-transform duration-300 shrink-0 ml-3 ${
+                  openSections.security ? "rotate-180 text-cyan-400" : ""
+                }`}
+              />
+            </button>
+
+            {openSections.security && (
+              <div className="p-5 sm:p-7 border-t border-white/10 space-y-6 animate-in fade-in duration-200">
+                {passwordMsg && (
+                  <div
+                    className={`p-4 rounded-xl border text-xs font-semibold ${
+                      passwordMsg.type === "success"
+                        ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-200"
+                        : "border-rose-500/40 bg-rose-500/15 text-rose-200"
+                    }`}
+                  >
+                    {passwordMsg.text}
+                  </div>
+                )}
+
+                {/* Password Update Form */}
+                <form onSubmit={handleUpdatePassword} className="space-y-4">
+                  <h3 className="font-display text-sm font-bold text-white">
+                    Update Account Password
+                  </h3>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-200 mb-1.5">
+                        New Password
+                      </label>
+                      <input
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="At least 6 characters"
+                        className="w-full px-4 py-3 rounded-xl border border-white/20 bg-slate-950/80 text-white text-sm focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 font-medium"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-200 mb-1.5">
+                        Confirm New Password
+                      </label>
+                      <input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Repeat new password"
+                        className="w-full px-4 py-3 rounded-xl border border-white/20 bg-slate-950/80 text-white text-sm focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/20 font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={passwordLoading}
+                    className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-black bg-cyan-400 text-slate-950 hover:bg-cyan-300 transition-all shadow-md shadow-cyan-500/20 cursor-pointer disabled:opacity-50"
+                  >
+                    {passwordLoading ? "Updating..." : "Update Password"}
+                  </button>
+                </form>
+
+                {/* Data Export & Sign Out */}
+                <div className="pt-6 border-t border-white/10 flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <h4 className="font-display text-sm font-bold text-white">
+                      Export Complete Academic Archive
+                    </h4>
+                    <p className="text-xs text-slate-300 mt-0.5">
+                      Download a JSON file with all your study logs, accuracy scores, and account settings.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={handleExportData}
+                      className="px-4 py-2.5 rounded-xl text-xs font-bold border border-white/25 bg-white/10 text-white hover:bg-white/20 transition-all cursor-pointer"
+                    >
+                      Export Data (JSON)
+                    </button>
+
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="px-4 py-2 rounded-xl border border-rose-500/30 text-rose-300 text-xs font-bold hover:bg-rose-500/10 transition-colors flex items-center gap-1.5 self-start sm:self-center cursor-pointer"
+                      className="px-4 py-2.5 rounded-xl text-xs font-bold border border-rose-500/50 bg-rose-500/15 text-rose-200 hover:bg-rose-500/25 hover:border-rose-400 hover:text-white flex items-center gap-1.5 transition-all cursor-pointer"
                     >
-                      <LogOut className="w-3.5 h-3.5" />
+                      <LogOut className="w-3.5 h-3.5 text-rose-400" />
                       Sign Out
                     </button>
                   </div>
                 </div>
               </div>
             )}
-          </main>
+          </div>
         </div>
       </div>
     </div>
@@ -1641,10 +1410,10 @@ export default function SettingsPage() {
     <Suspense
       fallback={
         <div
-          className="min-h-[60vh] flex items-center justify-center"
+          className="min-h-[65vh] flex flex-col items-center justify-center gap-3"
           data-wta-spinner="true"
         >
-          <BrandLoader size="md" />
+          <BrandLoader size="lg" label="Loading student settings..." />
         </div>
       }
     >

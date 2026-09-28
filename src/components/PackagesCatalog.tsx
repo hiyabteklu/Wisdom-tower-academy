@@ -2,68 +2,103 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Users, CheckCircle2, Shield, FileText } from "lucide-react";
+import { Users, CheckCircle2, Shield, FileText, ChevronDown, Info } from "lucide-react";
 import { formatEtb, type AcademyPackage } from "@/data/packages";
 import { listSellablePackages } from "@/lib/catalog";
 import AddToCartButton from "@/components/AddToCartButton";
+
+function PackageCatalogCard({ pkg }: { pkg: AcademyPackage }) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <article className="card-modern group flex flex-col shadow-lg shadow-black/25 transition-all">
+      <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={pkg.image}
+          alt={pkg.name}
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+          loading="lazy"
+        />
+      </div>
+
+      <div className="p-5 sm:p-6 flex flex-col flex-1 border-t border-white/8">
+        <div className="flex items-start justify-between gap-3 mb-2.5">
+          <h2 className="font-display text-lg sm:text-xl font-bold text-white leading-snug">
+            {pkg.name}
+          </h2>
+          <span className="shrink-0 font-display font-black text-amber-300 text-base sm:text-lg">
+            {formatEtb(pkg.priceEtb)}
+          </span>
+        </div>
+
+        {pkg.description ? (
+          <p
+            className={`text-xs sm:text-sm text-wisdom-muted leading-relaxed mb-3 ${
+              expanded ? "" : "line-clamp-2"
+            }`}
+          >
+            {pkg.description}
+          </p>
+        ) : null}
+
+        {/* Collapsible About / Details Button */}
+        <button
+          type="button"
+          onClick={() => setExpanded(!expanded)}
+          className="w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-bold border border-white/10 bg-white/5 text-cyan-300 hover:bg-white/10 hover:border-cyan-400/40 transition-colors my-2.5 cursor-pointer"
+        >
+          <span className="flex items-center gap-1.5">
+            <Info className="w-3.5 h-3.5" />
+            {expanded ? "Hide Details" : "About & What's Included"}
+          </span>
+          <ChevronDown
+            className={`w-4 h-4 transition-transform duration-200 ${
+              expanded ? "rotate-180 text-cyan-400" : ""
+            }`}
+          />
+        </button>
+
+        {/* Collapsible Includes List */}
+        {expanded && pkg.includes.length > 0 && (
+          <div className="space-y-2 mb-4 pt-3 border-t border-white/6 animate-in fade-in duration-200">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+              Everything Included:
+            </p>
+            <ul className="space-y-2">
+              {pkg.includes.map((line) => (
+                <li
+                  key={line}
+                  className="flex items-start gap-2 text-xs sm:text-sm text-slate-300/90 leading-snug"
+                >
+                  <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                  <span>{line}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div className="mt-auto pt-3 space-y-2.5">
+          <AddToCartButton packageId={pkg.id} />
+          <Link
+            href={pkg.href}
+            className="btn-secondary w-full text-center text-xs py-2"
+          >
+            Preview curriculum
+          </Link>
+        </div>
+      </div>
+    </article>
+  );
+}
 
 function PackageGrid({ list }: { list: AcademyPackage[] }) {
   if (list.length === 0) return null;
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {list.map((pkg) => (
-        <article
-          key={pkg.id}
-          className="card-modern group flex flex-col shadow-lg shadow-black/25"
-        >
-          <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={pkg.image}
-              alt={pkg.name}
-              className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
-              loading="lazy"
-            />
-          </div>
-
-          <div className="p-5 sm:p-6 flex flex-col flex-1 border-t border-white/8">
-            <div className="flex items-start justify-between gap-3 mb-2.5">
-              <h2 className="font-display text-lg sm:text-xl font-bold text-white leading-snug">
-                {pkg.name}
-              </h2>
-              <span className="shrink-0 font-display font-black text-amber-300 text-base sm:text-lg">
-                {formatEtb(pkg.priceEtb)}
-              </span>
-            </div>
-
-            {pkg.description ? (
-              <p className="text-xs sm:text-sm text-wisdom-muted leading-relaxed line-clamp-3 mb-4">
-                {pkg.description}
-              </p>
-            ) : null}
-
-            {pkg.includes.length > 0 && (
-              <ul className="space-y-2 mb-6 pt-3 border-t border-white/6">
-                {pkg.includes.map((line) => (
-                  <li key={line} className="flex items-start gap-2 text-xs sm:text-sm text-slate-300/90 leading-snug">
-                    <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
-                    <span>{line}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            <div className="mt-auto pt-2 space-y-2.5">
-              <AddToCartButton packageId={pkg.id} />
-              <Link
-                href={pkg.href}
-                className="btn-secondary w-full text-center text-xs py-2"
-              >
-                Preview curriculum
-              </Link>
-            </div>
-          </div>
-        </article>
+        <PackageCatalogCard key={pkg.id} pkg={pkg} />
       ))}
     </div>
   );

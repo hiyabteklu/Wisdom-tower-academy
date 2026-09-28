@@ -587,28 +587,28 @@ export default function StudentAnalyticsDashboard({
       </div>
 
       {/* ========================================================= */}
-      {/* 6. IMMEDIATELY STOP SIGNALS (Critical Warning System)      */}
-      {/* "Immediately stop signals (what was wrong recently...)"   */}
+      {/* 6. CRITICAL WARNING SYSTEM (Immediately Stop Signals)     */}
+      {/* Normal dark card background, red warning & icon           */}
       {/* ========================================================= */}
-      <div className="rounded-3xl border border-rose-500/50 bg-gradient-to-br from-[#1a070a] via-[#140608] to-[#0d0305] p-6 sm:p-7 shadow-2xl space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-rose-500/30 pb-4">
+      <div className="rounded-3xl border border-white/10 bg-wisdom-card p-6 sm:p-7 shadow-2xl space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-rose-500/25 text-rose-300 border border-rose-500/50 flex items-center gap-1.5">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-rose-500/15 text-rose-400 border border-rose-500/30 flex items-center gap-1.5">
                 <AlertOctagon className="w-3.5 h-3.5 text-rose-400" />
                 Critical Warning System
               </span>
-              <span className="text-xs text-rose-300/80">
-                Real data-detected counter-productive habits
+              <span className="text-xs text-slate-400">
+                Derived directly from your recent study telemetry
               </span>
             </div>
-            <h3 className="font-display text-lg sm:text-xl font-black text-white mt-1 flex items-center gap-2">
-              Immediately Stop Signals
+            <h3 className="font-display text-lg sm:text-xl font-bold text-white mt-1 flex items-center gap-2">
+              Immediately Stop Signals & Habits
             </h3>
           </div>
 
           <span className="text-xs font-mono font-bold text-rose-300 px-3 py-1 rounded-xl bg-rose-500/10 border border-rose-500/30 self-start sm:self-center">
-            Zero Tolerance Flags
+            {analytics.immediatelyStopSignals.length} Active Directives
           </span>
         </div>
 
@@ -616,26 +616,26 @@ export default function StudentAnalyticsDashboard({
           {analytics.immediatelyStopSignals.map((sig) => (
             <div
               key={sig.id}
-              className="p-4 sm:p-5 rounded-2xl border border-rose-500/30 bg-rose-950/20 hover:border-rose-400/50 transition-all space-y-3 flex flex-col justify-between"
+              className="p-4 sm:p-5 rounded-2xl border border-white/10 bg-white/[0.02] hover:border-rose-400/40 transition-all space-y-3 flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-rose-500/25 text-rose-200 border border-rose-500/40">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30">
                     {sig.severity} Alert
                   </span>
                 </div>
-                <h4 className="font-display text-sm font-extrabold text-white flex items-center gap-1.5">
+                <h4 className="font-display text-sm font-bold text-white flex items-center gap-1.5">
                   <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0" />
                   {sig.signal}
                 </h4>
-                <p className="text-rose-200/90 text-[11.5px] leading-relaxed mt-1">
-                  <strong className="text-rose-300">Observed Data: </strong>
+                <p className="text-slate-300 text-[11.5px] leading-relaxed mt-1">
+                  <strong className="text-white">Observed Data: </strong>
                   {sig.observedData}
                 </p>
               </div>
 
-              <div className="p-2.5 rounded-xl border border-rose-500/30 bg-rose-950/40 text-[11.5px] text-white font-medium">
-                <strong className="text-rose-300 block text-[10px] uppercase tracking-wider mb-0.5">
+              <div className="p-2.5 rounded-xl border border-white/10 bg-white/[0.03] text-[11.5px] text-slate-200 font-medium">
+                <strong className="text-rose-400 block text-[10px] uppercase tracking-wider mb-0.5">
                   Immediate Corrective Action:
                 </strong>
                 {sig.immediateAction}
@@ -646,111 +646,44 @@ export default function StudentAnalyticsDashboard({
       </div>
 
       {/* ========================================================= */}
-      {/* 7. REAL ACTIVE SUBJECTS (No Hallucinations) & CADENCE      */}
-      {/* Avoid per-subject hallucinations: ONLY real active ones    */}
+      {/* 7. WEEKLY READING TIME & DAILY STUDY RHYTHM CHART          */}
       {/* ========================================================= */}
-      <div className="rounded-3xl border border-white/10 bg-[#080e1c] p-6 sm:p-7 shadow-xl space-y-6">
+      <div className="rounded-3xl border border-white/10 bg-wisdom-card p-6 sm:p-7 shadow-xl space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
           <div>
             <h3 className="font-display text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-              <Layers className="w-5 h-5 text-sky-400" />
-              Your Active Enrolled Courses
+              <Calendar className="w-5 h-5 text-sky-400" />
+              Weekly Reading Time & Daily Study Rhythm
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              Only subjects where you have active logged reading or solved questions. Zero placeholder items.
+              Verified daily distribution of your reading sessions and question practice (Monday – Sunday).
             </p>
           </div>
 
-          <Link
-            href="/learning"
-            className="px-4 py-2 rounded-xl text-xs font-bold border border-cyan-400/40 bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/25 flex items-center gap-1.5 self-start sm:self-center transition-all"
-          >
-            Enter Study Hub <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+          <span className="text-xs font-mono font-bold text-cyan-300 px-3 py-1 rounded-xl bg-cyan-500/10 border border-cyan-400/20 self-start sm:self-center">
+            {analytics.totalStudyHours} hrs logged this week
+          </span>
         </div>
 
-        {analytics.realActiveSubjects.length === 0 ? (
-          <div className="p-8 rounded-2xl border border-dashed border-white/15 bg-white/[0.01] text-center space-y-3">
-            <BookOpen className="w-10 h-10 text-slate-500 mx-auto opacity-40" />
-            <h4 className="font-display text-sm font-bold text-white">
-              No Course Modules Actively Started Yet
-            </h4>
-            <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-              Open your textbook chapters, flashcard decks, or question banks in the Learning Hub to start building verified per-subject mastery records.
-            </p>
-            <div className="pt-2">
-              <Link
-                href="/learning"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold border border-sky-400/50 bg-sky-500/20 text-sky-200 hover:bg-sky-500/30 transition-all"
-              >
-                Browse Syllabus & Start Studying
-              </Link>
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {analytics.realActiveSubjects.map((sub) => (
-              <div
-                key={sub.id}
-                className="p-4 rounded-2xl border border-white/10 bg-white/[0.02] hover:border-cyan-400/30 transition-all space-y-3 flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <h4 className="font-display text-sm font-bold text-white truncate">
-                      {sub.name}
-                    </h4>
-                    <span className="text-[10px] font-mono text-cyan-300 font-bold px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-400/20">
-                      {sub.studyMinutes}m logged
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-300">
-                    Accuracy: <strong className="text-white font-mono">{sub.accuracyPct}%</strong> · Drills: <strong className="text-white font-mono">{sub.questionsSolved}</strong>
-                  </p>
+        <div className="h-40 flex items-end justify-between gap-2 sm:gap-4 px-2 pt-2">
+          {analytics.dailyDistribution.map((d) => {
+            const max = 120;
+            const heightPct = Math.min(100, Math.max(14, Math.round((d.minutes / max) * 100)));
+            return (
+              <div key={d.day} className="flex-1 flex flex-col items-center gap-2 group">
+                <span className="text-[10px] font-mono text-cyan-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {d.minutes}m
+                </span>
+                <div className="w-full max-w-[2.5rem] bg-white/5 rounded-t-xl overflow-hidden h-28 flex items-end">
+                  <div
+                    style={{ height: `${heightPct}%` }}
+                    className="w-full bg-gradient-to-t from-cyan-600 via-sky-500 to-amber-300 rounded-t-xl transition-all duration-500 group-hover:brightness-110 shadow-sm"
+                  />
                 </div>
-
-                <Link
-                  href={sub.route}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 hover:text-cyan-200 transition-colors pt-2 border-t border-white/6"
-                >
-                  Continue Course <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
+                <span className="text-xs font-bold text-slate-300">{d.day}</span>
               </div>
-            ))}
-          </div>
-        )}
-
-        {/* Weekly Daily Rhythm Chart */}
-        <div className="pt-4 border-t border-white/10 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-sky-400" />
-              Daily Study Rhythm (Monday – Sunday)
-            </span>
-            <span className="text-xs font-mono text-cyan-300 font-bold">
-              {analytics.totalStudyHours} hrs logged this week
-            </span>
-          </div>
-
-          <div className="h-36 flex items-end justify-between gap-2 sm:gap-4 px-2 pt-4">
-            {analytics.dailyDistribution.map((d) => {
-              const max = 120;
-              const heightPct = Math.min(100, Math.max(14, Math.round((d.minutes / max) * 100)));
-              return (
-                <div key={d.day} className="flex-1 flex flex-col items-center gap-2 group">
-                  <span className="text-[10px] font-mono text-cyan-300 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {d.minutes}m
-                  </span>
-                  <div className="w-full max-w-[2.5rem] bg-white/5 rounded-t-xl overflow-hidden h-24 flex items-end">
-                    <div
-                      style={{ height: `${heightPct}%` }}
-                      className="w-full bg-gradient-to-t from-cyan-600 via-sky-500 to-amber-300 rounded-t-xl transition-all duration-500 group-hover:brightness-110 shadow-sm"
-                    />
-                  </div>
-                  <span className="text-xs font-bold text-slate-300">{d.day}</span>
-                </div>
-              );
-            })}
-          </div>
+            );
+          })}
         </div>
       </div>
     </div>

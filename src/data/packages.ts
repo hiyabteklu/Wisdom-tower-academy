@@ -241,7 +241,25 @@ export const academyPackages: AcademyPackage[] = [
   },
 ];
 
+export const GRADE_9_12_PACKAGE: AcademyPackage = {
+  id: "grade-9-12",
+  name: "Grade 9–12 Secondary Curriculum",
+  shortName: "G9–12",
+  description:
+    "Complete Grade 9 to 12 secondary curriculum. Master textbook chapters, drill with targeted questions, practice with timed exams, and prepare thoroughly for national matriculation.",
+  priceEtb: 1000,
+  href: "/academy/grades",
+  image: packageImages["grade-9-12"],
+  includes: [
+    "Complete Grade 9, 10, 11, and 12 Ethiopian national curriculum",
+    ...CORE_PACKAGE_INCLUDES,
+  ],
+  enrolledLabel: "1,200+ students",
+  group: "grades",
+};
+
 export function getPackage(id: string): AcademyPackage | undefined {
+  if (id === "grade-9-12") return GRADE_9_12_PACKAGE;
   return academyPackages.find((p) => p.id === id);
 }
 
