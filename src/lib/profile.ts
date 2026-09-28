@@ -26,6 +26,10 @@ export interface UserProfileRecord {
   font_size_preference?: string;
   data_saver_mode?: boolean;
   sound_effects_enabled?: boolean;
+  student_id_number?: string | null;
+  id_issued_at?: string | null;
+  id_expires_at?: string | null;
+  active_academic_scope?: string | null;
   created_at?: string;
   updated_at?: string;
 }
