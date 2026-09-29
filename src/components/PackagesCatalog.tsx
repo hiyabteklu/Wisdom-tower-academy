@@ -2,13 +2,32 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Users, CheckCircle2, Shield, FileText, ChevronDown, Info } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { CheckCircle2, Shield, ChevronDown, Check } from "lucide-react";
 import { formatEtb, type AcademyPackage } from "@/data/packages";
 import { listSellablePackages } from "@/lib/catalog";
-import AddToCartButton from "@/components/AddToCartButton";
+import { isPackageOwned } from "@/lib/ownership";
+import { addToCart } from "@/lib/cart";
 
 function PackageCatalogCard({ pkg }: { pkg: AcademyPackage }) {
   const [expanded, setExpanded] = useState(false);
+  const [owned, setOwned] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    let cancelled = false;
+    isPackageOwned(pkg.id).then((has) => {
+      if (!cancelled) setOwned(has);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [pkg.id]);
+
+  const handlePurchase = () => {
+    addToCart(pkg.id);
+    router.push("/cart");
+  };
 
   return (
     <article className="card-modern group flex flex-col shadow-lg shadow-black/25 transition-all">
@@ -22,72 +41,67 @@ function PackageCatalogCard({ pkg }: { pkg: AcademyPackage }) {
         />
       </div>
 
-      <div className="p-5 sm:p-6 flex flex-col flex-1 border-t border-white/8">
-        <div className="flex items-start justify-between gap-3 mb-2.5">
-          <h2 className="font-display text-lg sm:text-xl font-bold text-white leading-snug">
+      <div className="p-4 sm:p-5 flex flex-col flex-1 border-t border-white/8 space-y-3">
+        {/* Title with price next to title */}
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="font-display text-lg font-bold text-white leading-snug truncate">
             {pkg.name}
           </h2>
-          <span className="shrink-0 font-display font-black text-amber-300 text-base sm:text-lg">
+          <span className="shrink-0 font-display font-black text-amber-300 text-base">
             {formatEtb(pkg.priceEtb)}
           </span>
         </div>
 
-        {pkg.description ? (
-          <p
-            className={`text-xs sm:text-sm text-wisdom-muted leading-relaxed mb-3 ${
-              expanded ? "" : "line-clamp-2"
-            }`}
+        {/* Two clean buttons side by side (mobile view and desktop) */}
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <button
+            type="button"
+            onClick={() => setExpanded(!expanded)}
+            className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold border border-white/15 bg-white/5 text-cyan-300 hover:bg-white/10 hover:border-cyan-400/40 transition-colors cursor-pointer"
           >
-            {pkg.description}
-          </p>
-        ) : null}
+            <span>What&apos;s included</span>
+            <ChevronDown
+              className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                expanded ? "rotate-180 text-cyan-400" : ""
+              }`}
+            />
+          </button>
 
-        {/* Collapsible About / Details Button */}
-        <button
-          type="button"
-          onClick={() => setExpanded(!expanded)}
-          className="w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-bold border border-white/10 bg-white/5 text-cyan-300 hover:bg-white/10 hover:border-cyan-400/40 transition-colors my-2.5 cursor-pointer"
-        >
-          <span className="flex items-center gap-1.5">
-            <Info className="w-3.5 h-3.5" />
-            {expanded ? "Hide Details" : "About & What's Included"}
-          </span>
-          <ChevronDown
-            className={`w-4 h-4 transition-transform duration-200 ${
-              expanded ? "rotate-180 text-cyan-400" : ""
-            }`}
-          />
-        </button>
+          {owned ? (
+            <Link
+              href={pkg.href || "/learning"}
+              className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 hover:bg-emerald-500/30 transition-colors text-center"
+            >
+              <Check className="w-3.5 h-3.5" />
+              <span>Owned</span>
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={handlePurchase}
+              className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-md transition-colors cursor-pointer"
+            >
+              <span>Purchase</span>
+            </button>
+          )}
+        </div>
 
-        {/* Collapsible Includes List */}
+        {/* In What's included: collapsed bullets only */}
         {expanded && pkg.includes.length > 0 && (
-          <div className="space-y-2 mb-4 pt-3 border-t border-white/6 animate-in fade-in duration-200">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-              Everything Included:
-            </p>
-            <ul className="space-y-2">
+          <div className="pt-3 border-t border-white/10 space-y-2 animate-in fade-in duration-200">
+            <ul className="space-y-1.5">
               {pkg.includes.map((line) => (
                 <li
                   key={line}
-                  className="flex items-start gap-2 text-xs sm:text-sm text-slate-300/90 leading-snug"
+                  className="flex items-start gap-2 text-xs text-slate-300 leading-snug"
                 >
-                  <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5" />
                   <span>{line}</span>
                 </li>
               ))}
             </ul>
           </div>
         )}
-
-        <div className="mt-auto pt-3 space-y-2.5">
-          <AddToCartButton packageId={pkg.id} />
-          <Link
-            href={pkg.href}
-            className="btn-secondary w-full text-center text-xs py-2"
-          >
-            Preview curriculum
-          </Link>
-        </div>
       </div>
     </article>
   );

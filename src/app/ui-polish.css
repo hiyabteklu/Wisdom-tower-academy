@@ -24,11 +24,12 @@
 }
 
 .study-prose {
-  font-family: var(--font-reading), Georgia, serif;
+  font-family: var(--font-reading), 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   font-size: 1.125rem;
   line-height: 1.8;
-  color: rgba(236, 242, 250, 0.94);
-  letter-spacing: 0.005em;
+  color: rgba(236, 242, 250, 0.96);
+  letter-spacing: -0.01em;
+  font-weight: 500;
   width: 100%;
   max-width: 100%;
   overflow-wrap: anywhere;

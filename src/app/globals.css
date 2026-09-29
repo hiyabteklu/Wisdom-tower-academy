@@ -23,7 +23,7 @@
   --wt-muted-rgb: 170 182 200;
   --font-display: 'Outfit', system-ui, sans-serif;
   --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
-  --font-reading: 'Times New Roman', Times, Georgia, 'Source Serif 4', serif;
+  --font-reading: 'Plus Jakarta Sans', system-ui, sans-serif;
 }
 
 .theme-light {
@@ -478,33 +478,41 @@ html.amoled-mode .bg-wisdom-card {
   border-color: rgba(255, 255, 255, 0.12) !important;
 }
 
-/* Font Scale Utilities */
+/* Font Scale Utilities (Clean and legible, never shrunken or tiny) */
 html.font-scale-compact {
-  font-size: 14.5px;
+  font-size: 15.5px;
 }
 html.font-scale-normal {
   font-size: 16px;
 }
 html.font-scale-large {
-  font-size: 17.5px;
+  font-size: 18px;
 }
 html.font-scale-xlarge {
-  font-size: 19px;
+  font-size: 20px;
 }
 
-/* Reading Font Preferences */
+/* Reading Font Preferences (Wisdom Tower Signature Bold & Stylized Sans) */
 html.reading-font-default,
-html.reading-font-sans {
-  --font-reading: 'Plus Jakarta Sans', system-ui, sans-serif;
-  --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
-}
+html.reading-font-sans,
 html.reading-font-times,
 html.reading-font-serif {
-  --font-reading: 'Times New Roman', Times, Georgia, serif;
-  --font-body: 'Times New Roman', Times, Georgia, serif;
+  --font-reading: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-body: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
 }
 html.reading-font-mono {
   --font-reading: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* Preserve rich bold stylized look on study content */
+.study-prose {
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.study-prose strong,
+.study-prose b {
+  font-weight: 700;
+  color: #ffffff;
 }
 
 /* Sharp horizontal shake animation for wrong answer card mistake signal */

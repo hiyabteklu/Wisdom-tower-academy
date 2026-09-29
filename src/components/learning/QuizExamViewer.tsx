@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import RichContent from "@/components/learning/RichContent";
 import { saveProgress, saveExamAttempt } from "@/lib/contentWithOffline";
-import { triggerAnswerFeedback, triggerFiftyFeedback } from "@/lib/sound-haptics";
+import { triggerHaptic } from "@/lib/sound-haptics";
 import { triggerCorrectConfetti } from "@/lib/confetti";
 
 type Q = { prompt: string; choices?: string[]; correct?: number; solution?: string };
@@ -162,7 +162,6 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
       const next = !v;
       if (next) {
         setLockedBySolution((prev) => ({ ...prev, [idx]: true }));
-        triggerFiftyFeedback(Boolean(isExam));
       }
       return next;
     });
@@ -296,10 +295,10 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
               {flagged[idx] ? <><Flag className="w-3 h-3 fill-current" /> Flagged</> : <><FlagOff className="w-3 h-3" /> Flag</>}
             </button>
           </div>
-          <div className="text-white font-medium leading-snug mb-2.5 study-prose text-[0.95rem]">
+          <div className="text-white font-bold leading-snug mb-3.5 study-prose text-base sm:text-lg">
             <RichContent body={q.prompt} />
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             {(q.choices || []).map((c, ci) => {
               const selected = answers[idx] === ci;
               const isRight = q.correct === ci;
@@ -307,13 +306,13 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
               const showMark = isExam ? submitted : (isImmediate ? isAnswered : (showSol || submitted));
               const isShaking = wrongShakeOption?.idx === idx && wrongShakeOption?.choice === ci;
 
-              let choiceCls = "border-white/12 text-white/85 hover:border-white/25 hover:bg-white/[0.04]";
+              let choiceCls = "border-white/15 bg-white/[0.03] text-white/90 hover:border-white/30 hover:bg-white/[0.06]";
               if (showMark && isRight) {
-                choiceCls = "!border-emerald-400 !bg-emerald-500/20 !text-emerald-100 shadow-[0_0_15px_rgba(16,185,129,0.25)] font-semibold";
+                choiceCls = "!border-emerald-400 !bg-emerald-500/20 !text-emerald-100 shadow-[0_0_15px_rgba(16,185,129,0.25)] font-bold";
               } else if (showMark && selected && !isRight) {
-                choiceCls = "!border-rose-500 !bg-rose-500/20 !text-rose-100 shadow-[0_0_15px_rgba(244,63,94,0.25)] font-semibold";
+                choiceCls = "!border-rose-500 !bg-rose-500/20 !text-rose-100 shadow-[0_0_15px_rgba(244,63,94,0.25)] font-bold";
               } else if (selected) {
-                choiceCls = "border-cyan-400 bg-cyan-500/15 text-white ring-1 ring-cyan-400/40 font-semibold";
+                choiceCls = "border-cyan-400 bg-cyan-500/20 text-white ring-2 ring-cyan-400/50 font-bold";
               }
 
               if (isShaking) {
@@ -331,11 +330,11 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                       if (!isExam && q.correct !== undefined) {
                         if (feedbackMode === "immediate") {
                           if (ci === q.correct) {
+                            // Immediate Confetti (no sound)
                             triggerCorrectConfetti(e.currentTarget);
-                            triggerAnswerFeedback(true, false);
                           } else {
-                            // Sharp double-pulse vibration + horizontal shake
-                            triggerAnswerFeedback(false, false);
+                            // Sharp double-pulse tactile vibration + horizontal shake (no sound)
+                            triggerHaptic("wrong");
                             setWrongShakeOption({ idx, choice: ci });
                             setTimeout(() => setWrongShakeOption(null), 500);
                           }
@@ -343,11 +342,11 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                       }
                     }
                   }}
-                  className={`w-full text-left px-2.5 py-2 rounded-lg border text-[13px] leading-snug transition-all ${choiceCls} ${
+                  className={`w-full text-left px-3.5 py-2.5 rounded-xl border text-sm sm:text-base leading-snug font-semibold transition-all ${choiceCls} ${
                     answersLocked ? "opacity-90 cursor-not-allowed" : ""
                   }`}
                 >
-                  <span className="font-semibold text-amber-200/90 mr-1">{String.fromCharCode(65 + ci)}.</span>
+                  <span className="font-extrabold text-amber-300 mr-2">{String.fromCharCode(65 + ci)}.</span>
                   <span className="study-prose inline"><RichContent body={c} /></span>
                 </button>
               );
@@ -355,9 +354,9 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
           </div>
 
           {!isExam && (
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-3.5 flex flex-wrap gap-2">
               <button type="button" onClick={openOfficialSolution}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-emerald-400/45 bg-emerald-500/15 text-emerald-50 text-xs font-bold">
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-emerald-400/45 bg-emerald-500/15 text-emerald-50 text-xs font-bold hover:bg-emerald-500/25 transition-colors cursor-pointer">
                 <BadgeCheck className="w-4 h-4" />
                 {showSol ? "Hide official solution" : "Official solution"}
               </button>
@@ -365,29 +364,29 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
           )}
 
           {!isExam && showSol && q.solution && (
-            <div className="mt-2.5 rounded-lg border border-emerald-400/25 bg-emerald-500/10 p-3 text-sm">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 mb-1.5 inline-flex items-center gap-1">
-                <BadgeCheck className="w-3.5 h-3.5" /> Official solution
+            <div className="mt-3 rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-4 text-sm sm:text-base">
+              <p className="text-xs font-black uppercase tracking-wider text-emerald-300 mb-2 inline-flex items-center gap-1.5">
+                <BadgeCheck className="w-4 h-4" /> Official solution
               </p>
-              <div className="study-prose text-emerald-50 text-[13px] leading-relaxed">
+              <div className="study-prose text-emerald-50 text-sm sm:text-base leading-relaxed font-medium">
                 <RichContent body={q.solution} />
               </div>
             </div>
           )}
 
           {!isExam && (
-            <div className={`flex flex-col gap-2 ${showSol ? "mt-2.5" : "mt-3"}`}>
+            <div className={`flex flex-col gap-2 ${showSol ? "mt-3" : "mt-3.5"}`}>
               <button type="button" onClick={() => void explainQ()} disabled={aiLoading}
-                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-violet-400/45 bg-violet-500/15 text-violet-50 text-xs font-bold disabled:opacity-60 w-full sm:w-auto">
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-violet-400/45 bg-violet-500/15 text-violet-50 text-xs font-bold disabled:opacity-60 w-full sm:w-auto hover:bg-violet-500/25 transition-colors cursor-pointer">
                 <Lightbulb className="w-4 h-4" />
                 {aiLoading ? "Generating…" : "Explain with AI"}
               </button>
               {ai && (
-                <div className="rounded-lg border border-violet-400/25 bg-violet-500/10 p-3 text-sm">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-violet-300 mb-1.5 inline-flex items-center gap-1">
-                    <Lightbulb className="w-3.5 h-3.5" /> AI explanation
+                <div className="rounded-xl border border-violet-400/30 bg-violet-500/10 p-4 text-sm sm:text-base">
+                  <p className="text-xs font-black uppercase tracking-wider text-violet-300 mb-2 inline-flex items-center gap-1.5">
+                    <Lightbulb className="w-4 h-4" /> AI explanation
                   </p>
-                  <div className="study-prose text-white/90 text-[13px] leading-relaxed">
+                  <div className="study-prose text-white/95 text-sm sm:text-base leading-relaxed font-medium">
                     <RichContent body={ai} />
                   </div>
                 </div>
@@ -490,24 +489,24 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                       {!isCorrect && !isSkipped && <span className="text-[10px] font-bold uppercase tracking-wide text-rose-300">Wrong</span>}
                       {isSkipped && <span className="text-[10px] font-bold uppercase tracking-wide text-amber-300">Skipped</span>}
                     </div>
-                    <div className="text-white font-medium leading-snug mb-2.5 study-prose text-[0.95rem]">
+                    <div className="text-white font-bold leading-snug mb-3 study-prose text-base sm:text-lg">
                       <RichContent body={qq.prompt} />
                     </div>
-                    <div className="space-y-1.5">
+                    <div className="space-y-2">
                       {(qq.choices || []).map((c, ci) => {
                         const isRight = qq.correct === ci;
                         const isUser = selected === ci;
                         return (
                           <div key={ci}
-                            className={`w-full text-left px-2.5 py-2 rounded-lg border text-[13px] leading-snug ${
-                              isRight ? "border-emerald-400/50 bg-emerald-500/10 text-white"
-                                : isUser ? "border-rose-400/40 bg-rose-500/10 text-white"
+                            className={`w-full text-left px-3.5 py-2.5 rounded-xl border text-sm sm:text-base leading-snug font-semibold ${
+                              isRight ? "border-emerald-400/50 bg-emerald-500/10 text-white font-bold"
+                                : isUser ? "border-rose-400/40 bg-rose-500/10 text-white font-bold"
                                 : "border-white/10 text-white/70"
                             }`}>
-                            <span className="font-semibold text-amber-200/90 mr-1">{String.fromCharCode(65 + ci)}.</span>
+                            <span className="font-extrabold text-amber-300 mr-2">{String.fromCharCode(65 + ci)}.</span>
                             <span className="study-prose inline"><RichContent body={c} /></span>
-                            {isRight && <span className="ml-1.5 text-[10px] font-bold text-emerald-300">✓ Correct</span>}
-                            {isUser && !isRight && <span className="ml-1.5 text-[10px] font-bold text-rose-300">Your answer</span>}
+                            {isRight && <span className="ml-2 text-xs font-bold text-emerald-300">✓ Correct</span>}
+                            {isUser && !isRight && <span className="ml-2 text-xs font-bold text-rose-300">Your answer</span>}
                           </div>
                         );
                       })}
@@ -515,13 +514,13 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                     {qq.solution && (
                       <div className="mt-3">
                         <button type="button" onClick={() => setReviewSolOpen((m) => ({ ...m, [i]: !m[i] }))}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-400/40 bg-emerald-500/10 text-emerald-100 text-[11px] font-bold">
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-400/40 bg-emerald-500/10 text-emerald-100 text-xs font-bold hover:bg-emerald-500/20 transition-colors">
                           <BadgeCheck className="w-3.5 h-3.5" />
                           {solOpen ? "Hide solution" : "Official solution"}
                         </button>
                         {solOpen && (
-                          <div className="mt-2 rounded-lg border border-emerald-400/25 bg-emerald-500/10 p-3 text-sm">
-                            <div className="study-prose text-emerald-50 text-[13px] leading-relaxed">
+                          <div className="mt-2.5 rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-4 text-sm sm:text-base">
+                            <div className="study-prose text-emerald-50 text-sm sm:text-base leading-relaxed font-medium">
                               <RichContent body={qq.solution} />
                             </div>
                           </div>
@@ -530,13 +529,13 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                     )}
                     <div className="mt-2.5">
                       <button type="button" onClick={() => void explainReview(i)} disabled={Boolean(reviewAiLoading[i])}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-violet-400/40 bg-violet-500/10 text-violet-100 text-[11px] font-bold disabled:opacity-60">
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-violet-400/40 bg-violet-500/10 text-violet-100 text-xs font-bold disabled:opacity-60 hover:bg-violet-500/20 transition-colors">
                         <Lightbulb className="w-3.5 h-3.5" />
                         {reviewAiLoading[i] ? "Generating…" : "Explain with AI"}
                       </button>
                       {reviewAi[i] && (
-                        <div className="mt-2 rounded-lg border border-violet-400/25 bg-violet-500/10 p-3 text-sm">
-                          <div className="study-prose text-white/90 text-[13px] leading-relaxed">
+                        <div className="mt-2.5 rounded-xl border border-violet-400/30 bg-violet-500/10 p-4 text-sm sm:text-base">
+                          <div className="study-prose text-white/95 text-sm sm:text-base leading-relaxed font-medium">
                             <RichContent body={reviewAi[i]} />
                           </div>
                         </div>

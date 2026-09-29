@@ -17,7 +17,7 @@ export type UserPreferences = {
   soundPreset: "crystal" | "arcade" | "zen";
   hapticFeedback: boolean; // default true
   fontSize: "compact" | "normal" | "large" | "xlarge";
-  readingFont: "default" | "times" | "sans" | "serif" | "mono";
+  readingFont: "default" | "sans" | "mono";
 
   // Study & Goals
   studyGoalMinutes: number;

@@ -322,7 +322,7 @@ export default function TermsPage() {
               <div className="rounded-xl border border-white/10 bg-wisdom-card p-4 space-y-1 font-mono text-xs text-slate-300">
                 <p className="text-white font-semibold font-sans text-sm mb-1">Wisdom Tower Academy — Legal & Academic Affairs</p>
                 <p>Addis Ababa, Ethiopia</p>
-                <p>Email: <a href="mailto:hiyabteklu720@gmail.com" className="text-amber-300 hover:underline">hiyabteklu720@gmail.com</a></p>
+                <p>Email: <a href="mailto:support@wisdomtower.tech" className="text-amber-300 hover:underline">support@wisdomtower.tech</a></p>
                 <p>Telegram Official: <a href="https://t.me/wisdom_tower2" target="_blank" rel="noopener noreferrer" className="text-cyan-300 hover:underline">@wisdom_tower2</a></p>
               </div>
             </div>

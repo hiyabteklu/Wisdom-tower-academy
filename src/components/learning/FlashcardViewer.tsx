@@ -168,19 +168,19 @@ export default function FlashcardViewer({ meta, resourceId }: Props) {
           }}
         >
           <div className="fc-face fc-front">
-            <p className="text-[10px] uppercase tracking-wider text-violet-300/80 mb-2">
+            <p className="text-xs uppercase tracking-wider text-violet-300 font-extrabold mb-2.5">
               Question · tap to flip
             </p>
-            <div className="study-prose text-white text-base leading-relaxed">
+            <div className="study-prose text-white text-lg sm:text-xl font-bold leading-snug">
               <RichContent body={card.front} />
             </div>
           </div>
 
           <div className="fc-face fc-back">
-            <p className="text-[10px] uppercase tracking-wider text-cyan-300/90 mb-2">
+            <p className="text-xs uppercase tracking-wider text-cyan-300 font-extrabold mb-2.5">
               Answer · tap to flip
             </p>
-            <div className="study-prose text-white text-base leading-relaxed">
+            <div className="study-prose text-white text-lg sm:text-xl font-bold leading-snug">
               <RichContent body={card.back} />
             </div>
           </div>

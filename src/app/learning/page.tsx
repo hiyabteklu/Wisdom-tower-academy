@@ -725,26 +725,9 @@ export default function MyLearningPage() {
                         priority
                         referrerPolicy="no-referrer"
                       />
-                      {/* Dark gradient overlay for text readability */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#08101e] via-black/25 to-transparent" />
-
-                      {/* Level Badge on top-left */}
-                      <span className="absolute top-3 left-3 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full bg-slate-950/80 backdrop-blur-md text-sky-300 border border-sky-400/40 shadow-md">
-                        {course.level}
-                      </span>
-
-                      {/* Remove Button on top-right */}
-                      <button
-                        onClick={() => removeCourse(course.id)}
-                        className="absolute top-3 right-3 text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-950/80 backdrop-blur-md text-slate-300 hover:text-rose-400 border border-white/15 transition-colors shadow-md"
-                        title="Remove from my learning"
-                      >
-                        Remove
-                      </button>
-
-                      {/* Course Title over image */}
-                      <div className="absolute bottom-3 left-3 right-3">
-                        <h3 className="text-xl sm:text-2xl font-black text-white drop-shadow-md">
+                      {/* Only the package title at the bottom of the card with subtle background for readability */}
+                      <div className="absolute inset-x-0 bottom-0 px-4 py-2.5 bg-slate-950/75 backdrop-blur-sm border-t border-white/10">
+                        <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
                           {course.title}
                         </h3>
                       </div>
@@ -757,9 +740,18 @@ export default function MyLearningPage() {
 
                   {/* 5 Distinct High-Contrast Hub Action Buttons */}
                   <div className="mt-5 pt-4 border-t border-white/10 space-y-3">
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-sky-300">
-                      Access Learning Hubs
-                    </p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-sky-300">
+                        Learning Hubs
+                      </p>
+                      <button
+                        onClick={() => removeCourse(course.id)}
+                        className="text-[11px] font-medium text-slate-400 hover:text-rose-400 transition-colors cursor-pointer"
+                        title="Remove from my learning"
+                      >
+                        Remove course
+                      </button>
+                    </div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                       <Link
                         href={`${course.path}/books`}
@@ -801,14 +793,6 @@ export default function MyLearningPage() {
                         <span>Exams</span>
                       </Link>
                     </div>
-
-                    <Link
-                      href={course.path}
-                      className="flex items-center justify-between w-full py-2.5 px-3.5 rounded-xl text-xs font-bold text-sky-300 hover:text-white bg-[#0b1424] border border-white/10 hover:border-sky-400/40 transition-all"
-                    >
-                      <span>Open Complete Course Directory</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
                   </div>
                 </div>
               ))}

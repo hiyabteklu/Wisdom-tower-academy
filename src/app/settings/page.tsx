@@ -52,17 +52,11 @@ import {
   Crown,
   Volume2,
   VolumeX,
-  Vibrate,
+  Gamepad2,
   Sparkles,
   AlertTriangle,
 } from "lucide-react";
-import {
-  playCorrectSound,
-  playWrongSound,
-  playFiftyPercentSound,
-  playCelebrationSound,
-  triggerHaptic,
-} from "@/lib/sound-haptics";
+import { triggerHaptic, playCelebrationSound } from "@/lib/sound-haptics";
 
 function Toggle({
   on,
@@ -1259,7 +1253,7 @@ function SettingsContent() {
           </div>
 
           {/* ======================================================= */}
-          {/* SECTION 4: ACOUSTIC & HAPTIC FEEDBACK CONSOLE           */}
+          {/* SECTION 4: GAME SOUND PREFERENCES                       */}
           {/* ======================================================= */}
           <div className="rounded-3xl border border-white/15 bg-wisdom-card overflow-hidden shadow-xl transition-all">
             <button
@@ -1269,19 +1263,19 @@ function SettingsContent() {
             >
               <div className="flex items-center gap-3.5 min-w-0">
                 <div className="p-3 rounded-2xl bg-amber-400/15 border border-amber-400/40 text-amber-300 shrink-0">
-                  <Volume2 className="w-5 h-5" />
+                  <Gamepad2 className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2.5">
                     <h2 className="font-display text-lg sm:text-xl font-bold text-white">
-                      Sound Effects & Haptic Feedback
+                      Game Sound
                     </h2>
                     <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30">
                       {prefs.soundEffects ? `${Math.round((prefs.soundVolume ?? 0.5) * 100)}% Volume` : "Muted"}
                     </span>
                   </div>
                   <p className="text-xs text-slate-300 mt-0.5 truncate">
-                    Acoustic feedback for questions (right, wrong, 50%), volume slider, and vibration
+                    Audio effects and volume levels for educational games and study challenges
                   </p>
                 </div>
               </div>
@@ -1295,50 +1289,24 @@ function SettingsContent() {
 
             {openSections.audio && (
               <div className="p-5 sm:p-7 border-t border-white/10 space-y-6 animate-in fade-in duration-200">
-                {/* Master Sound & Haptic Controls */}
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {/* Master Sound Toggle */}
-                  <div className="p-4 rounded-2xl border border-white/15 bg-slate-950/60 flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-xl bg-cyan-400/15 text-cyan-300">
-                        {prefs.soundEffects ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-white">Interactive Sound Effects</p>
-                        <p className="text-[11px] text-slate-400">
-                          Chimes for correct, wrong, and 50% answers
-                        </p>
-                      </div>
+                {/* Game Sound Switch */}
+                <div className="p-4 rounded-2xl border border-white/15 bg-slate-950/60 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-amber-400/15 text-amber-300">
+                      {prefs.soundEffects ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
                     </div>
-                    <Toggle
-                      on={prefs.soundEffects}
-                      onChange={(v) => handleSavePrefs({ ...prefs, soundEffects: v })}
-                      label="Sound Effects"
-                    />
-                  </div>
-
-                  {/* Haptic Vibration Toggle */}
-                  <div className="p-4 rounded-2xl border border-white/15 bg-slate-950/60 flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-xl bg-purple-400/15 text-purple-300">
-                        <Vibrate className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-white">Haptic Vibration</p>
-                        <p className="text-[11px] text-slate-400">
-                          Tactile pulse response on mobile devices
-                        </p>
-                      </div>
+                    <div>
+                      <p className="text-sm font-bold text-white">Game Sound Effects</p>
+                      <p className="text-[11px] text-slate-400">
+                        Sound effects and chimes for interactive learning minigames and challenges
+                      </p>
                     </div>
-                    <Toggle
-                      on={prefs.hapticFeedback}
-                      onChange={(v) => {
-                        handleSavePrefs({ ...prefs, hapticFeedback: v });
-                        if (v) triggerHaptic("light");
-                      }}
-                      label="Haptic Feedback"
-                    />
                   </div>
+                  <Toggle
+                    on={prefs.soundEffects}
+                    onChange={(v) => handleSavePrefs({ ...prefs, soundEffects: v })}
+                    label="Game Sound Effects"
+                  />
                 </div>
 
                 {/* Volume Slider (Defaults to 50% sound) */}
@@ -1346,21 +1314,18 @@ function SettingsContent() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-bold text-white flex items-center gap-2">
-                        <span>Master Sound Volume</span>
+                        <span>Game Audio Volume</span>
                         <span className="text-xs font-mono font-bold text-amber-300 px-2 py-0.5 rounded bg-amber-400/15 border border-amber-400/30">
                           {Math.round((prefs.soundVolume ?? 0.5) * 100)}%
                         </span>
                       </p>
                       <p className="text-[11px] text-slate-400">
-                        Calibrated synthesizer output level (default: 50% sound)
+                        Master sound level calibrated for upcoming educational games
                       </p>
                     </div>
                     <button
                       type="button"
-                      onClick={() => {
-                        handleSavePrefs({ ...prefs, soundVolume: 0.5 });
-                        playCorrectSound(0.5);
-                      }}
+                      onClick={() => handleSavePrefs({ ...prefs, soundVolume: 0.5 })}
                       className="text-xs text-cyan-300 hover:underline cursor-pointer"
                     >
                       Reset to 50%
@@ -1384,91 +1349,12 @@ function SettingsContent() {
                     <Volume2 className="w-4 h-4 text-amber-300 shrink-0" />
                   </div>
                 </div>
-
-                {/* Interactive Sound Audition Studio */}
-                <div className="p-4 sm:p-5 rounded-2xl border border-white/15 bg-slate-950/60 space-y-3">
-                  <div>
-                    <h4 className="font-display text-sm font-bold text-white flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-amber-300" />
-                      Audition Sound Effects & Haptics
-                    </h4>
-                    <p className="text-[11px] text-slate-400">
-                      Tap any button below to audition the exact feedback sound and vibration.
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                    {/* Right Answer */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        playCorrectSound(prefs.soundVolume ?? 0.5);
-                        triggerHaptic("correct");
-                      }}
-                      className="p-3 rounded-xl border border-emerald-500/40 bg-emerald-500/15 text-emerald-200 hover:bg-emerald-500/25 transition-all text-left space-y-1 cursor-pointer"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-black">Right Answer</span>
-                        <span className="text-xs">🟢</span>
-                      </div>
-                      <p className="text-[10px] text-emerald-300/80">Harmonic Bell Chime</p>
-                    </button>
-
-                    {/* Wrong Answer */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        playWrongSound(prefs.soundVolume ?? 0.5);
-                        triggerHaptic("wrong");
-                      }}
-                      className="p-3 rounded-xl border border-rose-500/40 bg-rose-500/15 text-rose-200 hover:bg-rose-500/25 transition-all text-left space-y-1 cursor-pointer"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-black">Wrong Answer</span>
-                        <span className="text-xs">🔴</span>
-                      </div>
-                      <p className="text-[10px] text-rose-300/80">Soft Bass Pulse</p>
-                    </button>
-
-                    {/* 50% Sound / Lifeline */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        playFiftyPercentSound(prefs.soundVolume ?? 0.5);
-                        triggerHaptic("light");
-                      }}
-                      className="p-3 rounded-xl border border-amber-400/40 bg-amber-500/15 text-amber-200 hover:bg-amber-500/25 transition-all text-left space-y-1 cursor-pointer"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-black">50% Lifeline</span>
-                        <span className="text-xs">🟡</span>
-                      </div>
-                      <p className="text-[10px] text-amber-300/80">Dual Crystal Chime</p>
-                    </button>
-
-                    {/* Celebration Fanfare */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        playCelebrationSound(prefs.soundVolume ?? 0.5);
-                        triggerHaptic("celebrate");
-                      }}
-                      className="p-3 rounded-xl border border-purple-400/40 bg-purple-500/15 text-purple-200 hover:bg-purple-500/25 transition-all text-left space-y-1 cursor-pointer"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-black">Fanfare</span>
-                        <span className="text-xs">👑</span>
-                      </div>
-                      <p className="text-[10px] text-purple-300/80">Victory Grand Chord</p>
-                    </button>
-                  </div>
-                </div>
               </div>
             )}
           </div>
 
           {/* ======================================================= */}
-          {/* SECTION 4: READING & DISPLAY PREFERENCES                */}
+          {/* SECTION 5: READING & DISPLAY PREFERENCES                */}
           {/* ======================================================= */}
           <div className="rounded-3xl border border-white/15 bg-wisdom-card overflow-hidden shadow-xl transition-all">
             <button
@@ -1485,7 +1371,7 @@ function SettingsContent() {
                     Reading & Display
                   </h2>
                   <p className="text-xs text-slate-300 mt-0.5 truncate">
-                    Font size, font style (Default vs Times New Roman), and live text sample preview
+                    Font size and stylized bold typography preview
                   </p>
                 </div>
               </div>
@@ -1506,7 +1392,7 @@ function SettingsContent() {
                   </label>
                   <div className="grid grid-cols-3 gap-3">
                     {[
-                      { id: "compact", label: "Compact", sample: "14px text" },
+                      { id: "compact", label: "Compact", sample: "15.5px text" },
                       { id: "normal", label: "Default / Standard", sample: "16px text" },
                       { id: "large", label: "Large Reading", sample: "18px text" },
                     ].map((sz) => {
@@ -1535,55 +1421,15 @@ function SettingsContent() {
                 {/* 2. Font Style */}
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-200 mb-2.5">
-                    2. Font Style
+                    2. Typography Style
                   </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {[
-                      {
-                        id: "default",
-                        label: "Default",
-                        desc: "Modern Clean Sans-Serif",
-                        fontFamily: "var(--font-body), system-ui, sans-serif",
-                      },
-                      {
-                        id: "times",
-                        label: "Times New Roman",
-                        desc: "Academic Serif Typeface",
-                        fontFamily: "'Times New Roman', Times, Georgia, serif",
-                      },
-                    ].map((st) => {
-                      const isCurrent =
-                        st.id === "times"
-                          ? prefs.readingFont === "times" || prefs.readingFont === "serif"
-                          : prefs.readingFont !== "times" && prefs.readingFont !== "serif";
-                      return (
-                        <button
-                          key={st.id}
-                          type="button"
-                          onClick={() =>
-                            handleSavePrefs({
-                              ...prefs,
-                              readingFont: st.id as "default" | "times",
-                            })
-                          }
-                          className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
-                            isCurrent
-                              ? "bg-cyan-400 text-slate-950 border-cyan-400 shadow-md shadow-cyan-400/30"
-                              : "bg-slate-950/60 border-white/20 text-white hover:bg-white/10"
-                          }`}
-                        >
-                          <p
-                            className={`text-base font-bold ${isCurrent ? "text-slate-950" : "text-white"}`}
-                            style={{ fontFamily: st.fontFamily }}
-                          >
-                            {st.label}
-                          </p>
-                          <p className={`text-xs mt-0.5 ${isCurrent ? "text-slate-900 font-semibold" : "text-slate-400"}`}>
-                            {st.desc}
-                          </p>
-                        </button>
-                      );
-                    })}
+                  <div className="p-4 rounded-xl border border-cyan-400/50 bg-cyan-500/10 text-left">
+                    <p className="text-base font-extrabold text-white tracking-tight">
+                      Wisdom Tower Signature Bold
+                    </p>
+                    <p className="text-xs text-cyan-200/90 mt-1 leading-relaxed">
+                      Stylized high-contrast geometric sans-serif (Plus Jakarta Sans) with rich weights, punchy headers, and crystal-clear math and equation readability across notes, flashcards, and question banks.
+                    </p>
                   </div>
                 </div>
 
@@ -1595,13 +1441,10 @@ function SettingsContent() {
                   <div
                     className="p-5 sm:p-6 rounded-2xl border border-white/15 bg-slate-950/80 transition-all shadow-inner"
                     style={{
-                      fontFamily:
-                        prefs.readingFont === "times" || prefs.readingFont === "serif"
-                          ? "'Times New Roman', Times, Georgia, serif"
-                          : "var(--font-body), system-ui, sans-serif",
+                      fontFamily: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif",
                       fontSize:
                         prefs.fontSize === "compact"
-                          ? "14px"
+                          ? "15.5px"
                           : prefs.fontSize === "large"
                           ? "18px"
                           : "16px",
@@ -1610,13 +1453,13 @@ function SettingsContent() {
                   >
                     <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-3">
                       <span className="text-xs font-mono font-bold text-cyan-300">
-                        {prefs.readingFont === "times" || prefs.readingFont === "serif" ? "Times New Roman" : "Default Modern Sans"} ·{" "}
-                        {prefs.fontSize === "compact" ? "Compact (14px)" : prefs.fontSize === "large" ? "Large (18px)" : "Standard (16px)"}
+                        Wisdom Tower Signature Bold ·{" "}
+                        {prefs.fontSize === "compact" ? "Compact (15.5px)" : prefs.fontSize === "large" ? "Large (18px)" : "Standard (16px)"}
                       </span>
                       <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Sample Preview</span>
                     </div>
-                    <p className="text-slate-200">
-                      Typography directly shapes how smoothly our minds absorb and retain complex knowledge during study. The Default font is a modern, geometric sans-serif engineered for clean pixel alignment and effortless scanning on smartphone screens and digital displays. In contrast, Times New Roman is a distinguished, time-honored academic serif typeface crafted with tapered stroke contrasts and formal bracketed serifs that guide the eye horizontally along lines of scholarly print. Pairing the right font style with a comfortable font size reduces cognitive strain, alleviates eye fatigue during intense multi-hour exam drills, and elevates your overall reading comprehension.
+                    <p className="text-white font-medium">
+                      Wisdom Tower Academy features a bold, stylized typography system engineered for effortless scanning and long-term concept retention. Headers stand out with rich visual hierarchy, formula callouts remain crisp and punchy, and study notes maintain comfortable optical breathing room across mobile and desktop displays.
                     </p>
                   </div>
                 </div>

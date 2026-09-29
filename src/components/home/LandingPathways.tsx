@@ -249,69 +249,49 @@ function PathwayCard({ program }: { program: ProgramCard }) {
         />
       </Link>
 
-      <div className="p-5 sm:p-6 flex flex-col flex-1 border-t border-white/8">
-        <div className="flex items-center justify-between gap-2 mb-2">
-          <span className="text-xs font-semibold text-wisdom-muted tracking-wide">
-            {program.category}
-          </span>
-        </div>
-
-        <h3 className={`font-display text-xl font-bold tracking-tight mb-2.5 ${program.accent}`}>
+      <div className="p-4 sm:p-5 flex flex-col flex-1 border-t border-white/8 space-y-3">
+        {/* Title (out of the card/image) */}
+        <h3 className={`font-display text-lg sm:text-xl font-bold tracking-tight text-white`}>
           {program.name}
         </h3>
 
-        <p
-          className={`text-sm text-slate-300/90 leading-relaxed mb-2 ${
-            expanded ? "" : "line-clamp-2"
-          }`}
-          suppressHydrationWarning
-        >
-          {program.description}
-        </p>
+        {/* Two clean buttons side by side (mobile and desktop) */}
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <button
+            type="button"
+            onClick={() => setExpanded(!expanded)}
+            className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold border border-white/15 bg-white/5 text-cyan-300 hover:bg-white/10 hover:border-cyan-400/40 transition-colors cursor-pointer"
+          >
+            <span>What&apos;s included</span>
+            <ChevronDown
+              className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                expanded ? "rotate-180 text-cyan-400" : ""
+              }`}
+            />
+          </button>
 
-        {/* Collapsible Trigger: About & What's Included */}
-        <button
-          type="button"
-          onClick={() => setExpanded(!expanded)}
-          className="w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-bold border border-white/10 bg-white/5 text-cyan-300 hover:bg-white/10 hover:border-cyan-400/40 transition-colors my-2.5 cursor-pointer"
-        >
-          <span className="flex items-center gap-1.5">
-            <Info className="w-3.5 h-3.5" />
-            {expanded ? "Hide Details" : "About & What's Included"}
-          </span>
-          <ChevronDown
-            className={`w-4 h-4 transition-transform duration-200 ${
-              expanded ? "rotate-180 text-cyan-400" : ""
-            }`}
-          />
-        </button>
+          <Link
+            href={program.href}
+            className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-sky-500 hover:bg-sky-400 text-white shadow-md transition-colors text-center"
+          >
+            <span>Open</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
 
-        {/* Collapsible Detailed Bullets */}
+        {/* Collapsed bullets only */}
         {expanded && program.includes.length > 0 && (
-          <div className="space-y-2 mb-4 pt-3 border-t border-white/6 animate-in fade-in duration-200">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">
-              Everything Included:
-            </p>
-            <ul className="space-y-2">
+          <div className="pt-3 border-t border-white/10 space-y-2 animate-in fade-in duration-200">
+            <ul className="space-y-1.5">
               {program.includes.map((line) => (
-                <li key={line} className="flex items-start gap-2 text-xs sm:text-sm text-slate-300/90 leading-snug">
-                  <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                <li key={line} className="flex items-start gap-2 text-xs text-slate-300 leading-snug">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5" />
                   <span>{line}</span>
                 </li>
               ))}
             </ul>
           </div>
         )}
-
-        <div className="mt-auto pt-2">
-          <Link
-            href={program.href}
-            className="btn-primary w-full text-center"
-          >
-            <span>Explore {program.name}</span>
-            <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
-          </Link>
-        </div>
       </div>
     </article>
   );

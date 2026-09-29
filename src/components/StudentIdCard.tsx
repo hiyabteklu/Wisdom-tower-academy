@@ -318,13 +318,13 @@ export default function StudentIdCard({
                   <span className="text-wisdom-muted block uppercase text-[8px]">
                     Official Support
                   </span>
-                  <span className="text-cyan-300 font-mono">support@wisdomtower.et</span>
+                  <span className="text-cyan-300 font-mono">support@wisdomtower.tech</span>
                 </div>
                 <div>
                   <span className="text-wisdom-muted block uppercase text-[8px]">
                     Credential Verification
                   </span>
-                  <span className="text-white font-mono">wisdomtower.et/verify</span>
+                  <span className="text-white font-mono">wisdomtower.tech/verify</span>
                 </div>
               </div>
             </div>

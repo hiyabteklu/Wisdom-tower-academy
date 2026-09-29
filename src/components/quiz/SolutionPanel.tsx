@@ -129,7 +129,7 @@ export default function SolutionPanel({
               Official solution
             </span>
           </div>
-          <div className="text-sm text-white/85 leading-relaxed">
+          <div className="text-sm sm:text-base font-medium text-white leading-relaxed">
             <MathText text={solution || ""} />
           </div>
         </div>
@@ -145,7 +145,7 @@ export default function SolutionPanel({
               AI explanation
             </span>
           </div>
-          <div className="text-sm text-white/85 leading-relaxed">
+          <div className="text-sm sm:text-base font-medium text-white leading-relaxed">
             <MathText text={aiText} />
           </div>
         </div>
