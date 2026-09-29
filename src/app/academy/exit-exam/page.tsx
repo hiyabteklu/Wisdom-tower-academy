@@ -1,6 +1,7 @@
+import Link from "next/link";
 import CategoryBackButton from "@/components/CategoryBackButton";
 import PackageOfferBanner from "@/components/PackageOfferBanner";
-import { FileCheck2, Clock } from "lucide-react";
+import { FileCheck2, Shield, Play, Sparkles } from "lucide-react";
 
 export default function ExitExamPage() {
   return (
@@ -20,20 +21,53 @@ export default function ExitExamPage() {
           <h1 className="font-display text-4xl md:text-5xl font-extrabold tracking-tight mb-3">
             <span className="text-fuchsia-400">Exit Exam</span>
           </h1>
+          <p className="text-wisdom-muted text-sm leading-relaxed max-w-lg">
+            University exit exam revision tracks and academic wave defense drills.
+          </p>
+        </div>
+
+        {/* Featured Interactive Game: Tower Defense of Knowledge */}
+        <div className="mb-8 overflow-hidden rounded-3xl border border-cyan-400/30 bg-gradient-to-br from-slate-900 via-slate-900 to-cyan-950/40 p-6 sm:p-8 shadow-2xl relative">
+          <div className="absolute top-0 right-0 p-6 opacity-10 pointer-events-none">
+            <Shield className="w-32 h-32 text-cyan-400" />
+          </div>
+
+          <div className="relative z-10">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-400/25 text-cyan-300 text-xs font-semibold uppercase tracking-wider mb-3">
+              <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Interactive Study Game · Now Live</span>
+            </div>
+
+            <h2 className="text-2xl sm:text-3xl font-display font-extrabold text-white tracking-tight mb-2">
+              Tower Defense of Knowledge
+            </h2>
+
+            <p className="text-sm text-slate-300 leading-relaxed mb-6 max-w-xl">
+              Authentic exit exam questions march as incoming adversaries against your Knowledge Citadel.
+              Deploy precision calculations, maintain combo streaks, and earn tactical power-ups.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                href="/academy/exit-exam/tower-defense"
+                className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-500 to-emerald-500 px-6 py-3 font-semibold text-slate-950 shadow-lg shadow-cyan-950/50 hover:brightness-110 active:scale-95 transition-all text-sm font-display"
+              >
+                <Play className="w-4 h-4 fill-current" />
+                <span>Launch Exit Exam Defense</span>
+              </Link>
+
+              <Link
+                href="/games/tower-defense"
+                className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-800/80 px-5 py-3 font-semibold text-slate-200 hover:bg-slate-700 transition-all text-sm"
+              >
+                <span>Browse All Exam Citadels</span>
+              </Link>
+            </div>
+          </div>
         </div>
 
         <div className="mb-8">
           <PackageOfferBanner packageId="exit-exam" />
-        </div>
-
-        <div className="rounded-3xl border border-fuchsia-400/25 bg-wisdom-card p-8 sm:p-10 text-center shadow-card-3d">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-fuchsia-400/30 bg-fuchsia-500/10 text-fuchsia-300">
-            <Clock className="w-7 h-7" />
-          </div>
-          <h2 className="font-display text-xl font-bold text-white mb-2">Coming soon</h2>
-          <p className="text-sm text-wisdom-muted leading-relaxed max-w-md mx-auto">
-            Materials for this section are not available yet.
-          </p>
         </div>
       </div>
     </div>

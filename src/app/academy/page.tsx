@@ -7,6 +7,7 @@ import {
   Library,
   GraduationCap as GradCap,
   Trees,
+  Shield,
 } from "lucide-react";
 import VoiceMessageCard from "@/components/VoiceMessageCard";
 import TestimonialMarquee from "@/components/TestimonialMarquee";
@@ -113,6 +114,16 @@ const programs: ProgramCard[] = [
 ];
 
 const freeResources = [
+  {
+    href: "/games/tower-defense",
+    name: "Tower Defense",
+    blurb: "Survive exam problem waves and defend your Knowledge Citadel",
+    icon: Shield,
+    accent: "text-emerald-300",
+    border: "border-white/12 hover:border-emerald-400/40",
+    iconBg: "border-emerald-400/30 bg-emerald-500/15 text-emerald-300",
+    glow: "group-hover:shadow-[0_12px_40px_-16px_rgba(52,211,153,0.3)]",
+  },
   {
     href: "/academy/success-stories",
     name: "Success Stories",
