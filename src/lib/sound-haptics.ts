@@ -299,6 +299,83 @@ export function triggerAnswerFeedback(isCorrect: boolean, isExam: boolean = fals
 }
 
 /**
+ * Arcade Machine Gun / Arrow Launch Sound
+ * Sharp laser/pneumatic launch whoosh
+ */
+export function playShotSound(customVolume?: number) {
+  const prefs = loadPreferences();
+  if (prefs.soundEffects === false) {
+    triggerHaptic("light");
+    return;
+  }
+  const ctx = getAudioContext();
+  if (!ctx) {
+    triggerHaptic("light");
+    return;
+  }
+  try {
+    triggerHaptic("light");
+    const baseVol = customVolume !== undefined ? customVolume : prefs.soundVolume ?? 0.5;
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(880, now);
+    osc.frequency.exponentialRampToValueAtTime(220, now + 0.12);
+
+    gain.gain.setValueAtTime(baseVol * 0.35, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.12);
+  } catch (err) {
+    console.warn("[SoundHaptics] Error playing shot sound:", err);
+  }
+}
+
+/**
+ * Metallic Ricochet / Shield Deflection Sound
+ * High-pitched metallic clang followed by ping
+ */
+export function playRicochetSound(customVolume?: number) {
+  const prefs = loadPreferences();
+  if (prefs.soundEffects === false) {
+    triggerHaptic("wrong");
+    return;
+  }
+  const ctx = getAudioContext();
+  if (!ctx) {
+    triggerHaptic("wrong");
+    return;
+  }
+  try {
+    triggerHaptic("wrong");
+    const baseVol = customVolume !== undefined ? customVolume : prefs.soundVolume ?? 0.5;
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(1400, now);
+    osc.frequency.exponentialRampToValueAtTime(2400, now + 0.04);
+    osc.frequency.exponentialRampToValueAtTime(400, now + 0.22);
+
+    gain.gain.setValueAtTime(baseVol * 0.45, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.22);
+  } catch (err) {
+    console.warn("[SoundHaptics] Error playing ricochet sound:", err);
+  }
+}
+
+/**
  * 50% Lifeline / Hint Feedback Trigger
  * Suppressed in exam mode.
  */

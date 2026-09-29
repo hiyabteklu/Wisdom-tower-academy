@@ -20,6 +20,7 @@ import {
   Info,
   Mail,
   Gamepad2,
+  Compass,
 } from "lucide-react";
 import { supabase, recoverSession } from "@/lib/supabase";
 import { isAdminEmail } from "@/lib/admin";
@@ -384,6 +385,7 @@ export default function Header() {
                   { href: "/academy", label: "Academy", icon: GraduationCap },
                   { href: "/packages", label: "Packages", icon: ShoppingBag },
                   { href: "/learning", label: "My Learning", icon: BookOpen },
+                  { href: "/games/tower-climb", label: "Tower Climb", icon: Compass },
                   { href: "/games/tower-defense", label: "Tower Defense", icon: Gamepad2 },
                   { href: "/cart", label: "Cart & Checkout", icon: ShoppingBag },
                   { href: "/account", label: "Student Profile & ID", icon: User },

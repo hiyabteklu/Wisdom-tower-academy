@@ -26,6 +26,9 @@ import {
   ChevronRight,
   ArrowLeft,
   LogIn,
+  Gamepad2,
+  Crosshair,
+  Trophy,
 } from "lucide-react";
 import NotesViewer from "@/components/learning/NotesViewer";
 import QuizExamViewer from "@/components/learning/QuizExamViewer";
@@ -436,7 +439,69 @@ export default function HubContentView({
   const titleAccent = accent || hubAccentClass(hub);
 
   return (
-    <ul className="space-y-3 w-full max-w-full">
+    <div className="space-y-4 w-full max-w-full">
+      {/* Featured Game Banners in Learning Hubs */}
+      {hub === "exams" && (
+        <div className="rounded-2xl border border-cyan-400/30 bg-gradient-to-r from-cyan-950/40 via-slate-900/60 to-slate-950/80 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-cyan-500/20 border border-cyan-400/30 text-cyan-300">
+              <Crosshair className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-display text-sm sm:text-base font-bold text-white">
+                  Wisdom Defense: Exam Battle Arcade
+                </h3>
+                <span className="px-2 py-0.5 rounded-full bg-cyan-500/20 text-[10px] font-mono text-cyan-300 font-bold border border-cyan-400/30">
+                  Game
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 mt-0.5">
+                Defend the Knowledge Tower! Shoot down real exam questions with your machine-gun answers.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/games/tower-defense"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-500 px-4 py-2.5 text-xs font-bold text-slate-950 hover:bg-cyan-400 transition-colors shadow-md shadow-cyan-500/20 shrink-0 self-start sm:self-auto"
+          >
+            <Gamepad2 className="w-4 h-4" />
+            <span>Play Defense</span>
+          </Link>
+        </div>
+      )}
+
+      {hub === "question-banks" && (
+        <div className="rounded-2xl border border-amber-400/30 bg-gradient-to-r from-amber-950/40 via-slate-900/60 to-slate-950/80 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 border border-amber-400/30 text-amber-300">
+              <Trophy className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-display text-sm sm:text-base font-bold text-white">
+                  Tower Climb: The Scholar&apos;s Ascent
+                </h3>
+                <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-[10px] font-mono text-amber-300 font-bold border border-amber-400/30">
+                  Game
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 mt-0.5">
+                Climb floor by floor with your lantern owl mascot by conquering chapter question banks!
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/games/tower-climb"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-xs font-bold text-slate-950 hover:bg-amber-400 transition-colors shadow-md shadow-amber-500/20 shrink-0 self-start sm:self-auto"
+          >
+            <Gamepad2 className="w-4 h-4" />
+            <span>Play Tower Climb</span>
+          </Link>
+        </div>
+      )}
+
+      <ul className="space-y-3 w-full max-w-full">
       {items.map((item) => {
         const isNew = !seenIds.has(item.id);
         return (
@@ -477,6 +542,7 @@ export default function HubContentView({
         );
       })}
     </ul>
+    </div>
   );
 }
 

@@ -8,6 +8,7 @@ import {
   GraduationCap as GradCap,
   Trees,
   Shield,
+  Compass,
 } from "lucide-react";
 import VoiceMessageCard from "@/components/VoiceMessageCard";
 import TestimonialMarquee from "@/components/TestimonialMarquee";
@@ -114,6 +115,16 @@ const programs: ProgramCard[] = [
 ];
 
 const freeResources = [
+  {
+    href: "/games/tower-climb",
+    name: "Tower Climb",
+    blurb: "Ascend course chapters floor by floor with your scholarly owl",
+    icon: Compass,
+    accent: "text-amber-300",
+    border: "border-white/12 hover:border-amber-400/40",
+    iconBg: "border-amber-400/30 bg-amber-500/15 text-amber-300",
+    glow: "group-hover:shadow-[0_12px_40px_-16px_rgba(251,191,36,0.35)]",
+  },
   {
     href: "/games/tower-defense",
     name: "Tower Defense",

@@ -22,12 +22,20 @@ import {
   TrendingUp,
   Settings2,
   X,
+  Gamepad2,
+  Crosshair,
+  Trophy,
+  Swords,
+  Maximize2,
+  Sparkles,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { packageImages } from "@/data/packages";
 import PomodoroTimer from "@/components/learning/PomodoroTimer";
 import StudyPlanner from "@/components/learning/StudyPlanner";
 import StudentAnalyticsDashboard from "@/components/StudentAnalyticsDashboard";
+import TowerDefenseGame from "@/components/games/tower-defense/TowerDefenseGame";
+import TowerClimbApp from "@/components/games/tower-climb/TowerClimbApp";
 
 // ── Types ───────────────────────────────────────────────────────
 export interface NoteSheet {
@@ -60,7 +68,7 @@ export interface AcademicResultItem {
   created_at: string;
 }
 
-type LearningTab = "courses" | "timer" | "planner" | "goals" | "notes" | "analytics";
+type LearningTab = "courses" | "games" | "timer" | "planner" | "goals" | "notes" | "analytics";
 
 const STORAGE_ENROLLED_COURSES = "wt_enrolled_courses_v2";
 const STORAGE_NOTEBOOK_KEY = "wt_student_notebook_v5";
@@ -152,6 +160,7 @@ const AVAILABLE_COURSES = [
 
 export default function MyLearningPage() {
   const [activeTab, setActiveTab] = useState<LearningTab>("courses");
+  const [selectedGame, setSelectedGame] = useState<"defense" | "climb">("defense");
 
   // Immediate optimistic states — ZERO delay or blank screen when switching!
   const [userId, setUserId] = useState<string>("");
@@ -535,7 +544,7 @@ export default function MyLearningPage() {
 
         {/* ── Separate High-Contrast Mode Navigation Buttons ── */}
         <nav aria-label="Learning Modes" className="mb-8">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 sm:gap-3">
             {/* 1. My Courses */}
             <button
               onClick={() => setActiveTab("courses")}
@@ -549,7 +558,23 @@ export default function MyLearningPage() {
               <span>My Courses</span>
             </button>
 
-            {/* 2. Focus Timer */}
+            {/* 2. Study Games (Wisdom Defense & Tower Climb) */}
+            <button
+              onClick={() => setActiveTab("games")}
+              className={`flex items-center justify-center gap-1.5 px-3 py-3 rounded-2xl text-xs sm:text-sm tracking-wide transition-all shadow-md relative ${
+                activeTab === "games"
+                  ? "bg-gradient-to-r from-amber-400 via-cyan-400 to-sky-400 text-slate-950 font-black shadow-lg shadow-cyan-400/30 ring-2 ring-cyan-300 scale-[1.02]"
+                  : "bg-[#0b1526] text-amber-300 hover:text-white hover:bg-[#12223d] border border-amber-400/30 font-bold"
+              }`}
+            >
+              <Gamepad2 className="w-4 h-4 shrink-0 text-amber-400" />
+              <span>Study Games</span>
+              <span className="px-1.5 py-0.5 rounded-full bg-amber-500/20 text-[9px] font-mono font-bold border border-amber-400/30 text-amber-300">
+                2
+              </span>
+            </button>
+
+            {/* 3. Focus Timer */}
             <button
               onClick={() => setActiveTab("timer")}
               className={`flex items-center justify-center gap-2 px-3.5 py-3 rounded-2xl text-xs sm:text-sm tracking-wide transition-all shadow-md ${
@@ -562,7 +587,7 @@ export default function MyLearningPage() {
               <span>Focus Timer</span>
             </button>
 
-            {/* 3. Study Planner */}
+            {/* 4. Study Planner */}
             <button
               onClick={() => setActiveTab("planner")}
               className={`flex items-center justify-center gap-2 px-3.5 py-3 rounded-2xl text-xs sm:text-sm tracking-wide transition-all shadow-md ${
@@ -575,7 +600,7 @@ export default function MyLearningPage() {
               <span>Study Planner</span>
             </button>
 
-            {/* 4. Daily Goals */}
+            {/* 5. Daily Goals */}
             <button
               onClick={() => setActiveTab("goals")}
               className={`flex items-center justify-center gap-2 px-3.5 py-3 rounded-2xl text-xs sm:text-sm tracking-wide transition-all shadow-md ${
@@ -588,7 +613,7 @@ export default function MyLearningPage() {
               <span>Daily Goals</span>
             </button>
 
-            {/* 5. Notes */}
+            {/* 6. Notes */}
             <button
               onClick={() => setActiveTab("notes")}
               className={`flex items-center justify-center gap-2 px-3.5 py-3 rounded-2xl text-xs sm:text-sm tracking-wide transition-all shadow-md ${
@@ -601,7 +626,7 @@ export default function MyLearningPage() {
               <span>Notes</span>
             </button>
 
-            {/* 6. Performance */}
+            {/* 7. Performance */}
             <button
               onClick={() => setActiveTab("analytics")}
               className={`flex items-center justify-center gap-2 px-3.5 py-3 rounded-2xl text-xs sm:text-sm tracking-wide transition-all shadow-md ${
@@ -621,6 +646,47 @@ export default function MyLearningPage() {
         {/* ═════════════════════════════════════════════════════════════ */}
         {activeTab === "courses" && (
           <section className="space-y-6 animate-fade-up">
+            {/* Featured Study Games Showcase in Learning Section */}
+            <div className="rounded-3xl border border-cyan-400/30 bg-gradient-to-r from-[#0c182c] via-[#091424] to-[#160f26] p-5 sm:p-6 shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
+                <div>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-400/20 text-cyan-300 text-xs font-mono font-bold mb-2">
+                    <Gamepad2 className="w-3.5 h-3.5" />
+                    <span>Wisdom Arcade · Study Games Hub</span>
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                    Study Through Action: Tower Defense & Tower Climb
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl">
+                    Reinforce official exam questions in <span className="text-cyan-300 font-bold">Wisdom Defense</span> with machine-gun arrow answers, or scale chapter question banks in <span className="text-amber-300 font-bold">Tower Climb</span> alongside your lantern owl companion.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                  <button
+                    onClick={() => {
+                      setSelectedGame("defense");
+                      setActiveTab("games");
+                    }}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition-all shadow-lg shadow-cyan-500/25 active:scale-95"
+                  >
+                    <Crosshair className="w-4 h-4" />
+                    <span>Play Wisdom Defense</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedGame("climb");
+                      setActiveTab("games");
+                    }}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all shadow-lg shadow-amber-500/25 active:scale-95"
+                  >
+                    <Trophy className="w-4 h-4" />
+                    <span>Play Tower Climb</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
             {/* Top Bar with Add/Remove Toggle */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/10">
               <div>
@@ -801,7 +867,63 @@ export default function MyLearningPage() {
         )}
 
         {/* ═════════════════════════════════════════════════════════════ */}
-        {/* TAB 2: STANDALONE FOCUS TIMER (WITH CUSTOM DURATION BUTTON)   */}
+        {/* TAB 2: STUDY GAMES (WISDOM DEFENSE & TOWER CLIMB)             */}
+        {/* ═════════════════════════════════════════════════════════════ */}
+        {activeTab === "games" && (
+          <section className="space-y-6 animate-fade-up">
+            {/* Top Game Mode Selector Bar */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-3xl border border-white/10 bg-slate-950/80 backdrop-blur-xl shadow-xl">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => setSelectedGame("defense")}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs transition-all shadow-md ${
+                    selectedGame === "defense"
+                      ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-black shadow-cyan-500/25 ring-2 ring-cyan-300"
+                      : "bg-[#101d33] text-slate-300 hover:text-white border border-white/10"
+                  }`}
+                >
+                  <Crosshair className="w-4 h-4 text-slate-950" />
+                  <span>Wisdom Defense (Exam Questions)</span>
+                </button>
+
+                <button
+                  onClick={() => setSelectedGame("climb")}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs transition-all shadow-md ${
+                    selectedGame === "climb"
+                      ? "bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 font-black shadow-amber-500/25 ring-2 ring-amber-300"
+                      : "bg-[#101d33] text-slate-300 hover:text-white border border-white/10"
+                  }`}
+                >
+                  <Trophy className="w-4 h-4 text-slate-950" />
+                  <span>Tower Climb (Chapter Quizzes)</span>
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2 self-end sm:self-auto">
+                <Link
+                  href={selectedGame === "defense" ? "/games/tower-defense" : "/games/tower-climb"}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-mono font-bold text-slate-300 hover:text-white bg-slate-900 border border-white/10 hover:border-white/20 transition-all shadow-sm"
+                  title="Open dedicated full page"
+                >
+                  <Maximize2 className="w-3.5 h-3.5" />
+                  <span>Open Fullscreen</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Active Embedded Game Canvas */}
+            <div className="rounded-3xl border border-white/15 bg-gradient-to-b from-[#091120] to-[#040812] p-2 sm:p-6 shadow-2xl relative overflow-hidden">
+              {selectedGame === "defense" ? (
+                <TowerDefenseGame />
+              ) : (
+                <TowerClimbApp />
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* ═════════════════════════════════════════════════════════════ */}
+        {/* TAB 3: STANDALONE FOCUS TIMER (WITH CUSTOM DURATION BUTTON)   */}
         {/* ═════════════════════════════════════════════════════════════ */}
         {activeTab === "timer" && (
           <section className="space-y-6 animate-fade-up max-w-4xl mx-auto">

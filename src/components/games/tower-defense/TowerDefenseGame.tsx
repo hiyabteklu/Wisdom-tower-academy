@@ -23,8 +23,7 @@ import {
 } from "@/lib/games/tower-defense/config";
 import { fairShuffleChoices } from "@/lib/games/tower-defense/fair-shuffle";
 import { saveDefenseRun } from "@/lib/games/tower-defense/high-scores";
-import BattlefieldRadar from "./BattlefieldRadar";
-import QuestionCard from "./QuestionCard";
+import ArcadeMobileBattlefield from "./ArcadeMobileBattlefield";
 import BreachResolutionModal from "./BreachResolutionModal";
 import WaveClearedModal from "./WaveClearedModal";
 import ResultsModal from "./ResultsModal";
@@ -105,6 +104,9 @@ export default function TowerDefenseGame({ initialTowerId, onExit }: Props) {
     solution?: string;
     isTimeout: boolean;
   } | null>(null);
+
+  // Staged choice selection ref for flying arrow
+  const pendingChoiceRef = useRef<number | null>(null);
 
   // Question pool cycling index
   const questionPoolIndexRef = useRef(0);
@@ -358,13 +360,21 @@ export default function TowerDefenseGame({ initialTowerId, onExit }: Props) {
     return () => clearInterval(interval);
   }, [phase, isPaused, isFrozen, currentEnemy, handleTimeout]);
 
-  // Player clicks choice
+  // Player clicks choice / fires machine gun arrow
   const handleSelectChoice = useCallback(
     (choiceIndex: number) => {
       if (!currentEnemy || phase !== "playing" || isPaused) return;
-
+      pendingChoiceRef.current = choiceIndex;
       setAttemptedCount((a) => a + 1);
-      const isCorrect = choiceIndex === currentEnemy.shuffledCorrectIndex;
+    },
+    [currentEnemy, phase, isPaused]
+  );
+
+  // Arrow impacts target enemy (or deflects and bounces back if wrong)
+  const handleArrowImpactResolved = useCallback(
+    (isCorrect: boolean) => {
+      if (!currentEnemy) return;
+      const choiceIndex = pendingChoiceRef.current ?? 0;
 
       if (isCorrect) {
         // Correct answer!
@@ -417,21 +427,21 @@ export default function TowerDefenseGame({ initialTowerId, onExit }: Props) {
         };
         setMissedQuestions((prev) => [...prev, missedItem]);
 
-        setBreachInfo({
-          prompt: currentEnemy.question.prompt,
-          selectedText,
-          correctText: correctChoiceText,
-          solution: currentEnemy.question.solution,
-          isTimeout: false,
-        });
-
-        setPhase("breach-modal");
+        // Small delay so student sees the arrow ricochet off the shield and tumble down
+        setTimeout(() => {
+          setBreachInfo({
+            prompt: currentEnemy.question.prompt,
+            selectedText,
+            correctText: correctChoiceText,
+            solution: currentEnemy.question.solution,
+            isTimeout: false,
+          });
+          setPhase("breach-modal");
+        }, 500);
       }
     },
     [
       currentEnemy,
-      phase,
-      isPaused,
       combo,
       maxCombo,
       tower.hp,
@@ -546,225 +556,62 @@ export default function TowerDefenseGame({ initialTowerId, onExit }: Props) {
   }
 
   return (
-    <div className="relative min-h-[85vh] py-6 sm:py-10">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6">
-        {/* Top HUD Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 p-4 sm:p-5 rounded-3xl border border-white/10 bg-slate-950/80 shadow-2xl backdrop-blur-xl mb-6">
-          {/* Left: Citadel Health & Wave */}
-          <div className="flex items-center gap-4">
-            {/* Health Hearts */}
-            <div className="flex items-center gap-1.5">
-              {Array.from({ length: tower.maxHp }).map((_, i) => (
-                <Heart
-                  key={i}
-                  className={`w-5 h-5 transition-transform ${
-                    i < tower.hp
-                      ? "text-rose-400 fill-rose-400 scale-100 drop-shadow-[0_0_8px_rgba(244,63,94,0.5)]"
-                      : "text-slate-700 opacity-40 scale-90"
-                  }`}
-                />
-              ))}
-              <span className="text-xs font-mono font-bold text-slate-300 ml-1">
-                {tower.hp}/{tower.maxHp}
-              </span>
-            </div>
-
-            <div className="h-4 w-px bg-white/10 hidden sm:block" />
-
-            {/* Wave Badge */}
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-400/20 text-cyan-300 text-xs font-mono font-bold">
-              <span>Wave {currentWave}</span>
-            </div>
-          </div>
-
-          {/* Center: Combo Multiplier Banner */}
-          <div className="flex items-center gap-2">
-            {combo >= 2 && (
-              <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/20 to-fuchsia-500/20 border border-amber-400/40 text-amber-300 text-xs font-bold font-mono animate-pulse">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                <span>{comboMultiplier}x Multiplier ({combo} Streak)</span>
-              </div>
-            )}
-          </div>
-
-          {/* Right: Score, Audio Toggle, Pause */}
-          <div className="flex items-center gap-3">
-            <div className="text-right">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">
-                Score
-              </span>
-              <span className="text-lg font-bold font-mono text-white">
-                {score.toLocaleString()}
-              </span>
-            </div>
-
-            <button
-              onClick={() => setSoundMuted(!soundMuted)}
-              title={soundMuted ? "Unmute Game Audio" : "Mute Game Audio"}
-              className="p-2 rounded-xl border border-white/5 bg-slate-900 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
-            >
-              {soundMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-            </button>
-
-            <button
-              onClick={() => setIsPaused(!isPaused)}
-              title={isPaused ? "Resume" : "Pause"}
-              className="p-2 rounded-xl border border-white/5 bg-slate-900 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
-            >
-              {isPaused ? <Play className="w-4 h-4 text-emerald-400" /> : <Pause className="w-4 h-4" />}
-            </button>
-          </div>
-        </div>
-
-        {/* Battlefield Radar Visualizer */}
-        <div className="mb-6">
-          <BattlefieldRadar
-            currentEnemy={currentEnemy}
-            tower={tower}
-            isFrozen={isFrozen}
-            freezeSecondsRemaining={Math.ceil(freezeRemainingSec)}
-            marchProgressPct={marchProgressPct}
-            waveNumber={currentWave}
-          />
-        </div>
-
-        {/* Tactical Power-Up Quick Bar */}
-        <div className="grid grid-cols-4 gap-2 sm:gap-3 mb-6">
-          {/* Freeze */}
-          <button
-            onClick={activateFreeze}
-            disabled={inventory.freeze <= 0 || isFrozen || isPaused}
-            className={`flex items-center justify-between p-2.5 sm:p-3 rounded-2xl border text-xs transition-all ${
-              inventory.freeze > 0 && !isFrozen
-                ? "border-cyan-500/40 bg-cyan-950/30 text-cyan-200 hover:bg-cyan-950/60 active:scale-95 shadow-md shadow-cyan-950/20"
-                : "border-slate-800 bg-slate-950/30 text-slate-600 opacity-50 cursor-not-allowed"
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <Snowflake className="w-4 h-4 text-cyan-400" />
-              <span className="font-semibold hidden sm:inline">Stasis</span>
-            </div>
-            <span className="font-mono font-bold bg-slate-900 px-2 py-0.5 rounded text-[11px]">
-              {inventory.freeze}
-            </span>
-          </button>
-
-          {/* 50/50 */}
-          <button
-            onClick={activateFiftyFifty}
-            disabled={
-              inventory.fiftyFifty <= 0 ||
-              (currentEnemy?.eliminatedChoiceIndices.length ?? 0) > 0 ||
-              isPaused
-            }
-            className={`flex items-center justify-between p-2.5 sm:p-3 rounded-2xl border text-xs transition-all ${
-              inventory.fiftyFifty > 0 && (currentEnemy?.eliminatedChoiceIndices.length ?? 0) === 0
-                ? "border-emerald-500/40 bg-emerald-950/30 text-emerald-200 hover:bg-emerald-950/60 active:scale-95 shadow-md shadow-emerald-950/20"
-                : "border-slate-800 bg-slate-950/30 text-slate-600 opacity-50 cursor-not-allowed"
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <SplitSquareVertical className="w-4 h-4 text-emerald-400" />
-              <span className="font-semibold hidden sm:inline">50 / 50</span>
-            </div>
-            <span className="font-mono font-bold bg-slate-900 px-2 py-0.5 rounded text-[11px]">
-              {inventory.fiftyFifty}
-            </span>
-          </button>
-
-          {/* Fortify Core (+1 HP) */}
-          <button
-            onClick={activateExtraHeart}
-            disabled={inventory.extraHeart <= 0 || tower.hp >= tower.maxHp || isPaused}
-            className={`flex items-center justify-between p-2.5 sm:p-3 rounded-2xl border text-xs transition-all ${
-              inventory.extraHeart > 0 && tower.hp < tower.maxHp
-                ? "border-rose-500/40 bg-rose-950/30 text-rose-200 hover:bg-rose-950/60 active:scale-95 shadow-md shadow-rose-950/20"
-                : "border-slate-800 bg-slate-950/30 text-slate-600 opacity-50 cursor-not-allowed"
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <Heart className="w-4 h-4 text-rose-400" />
-              <span className="font-semibold hidden sm:inline">Fortify</span>
-            </div>
-            <span className="font-mono font-bold bg-slate-900 px-2 py-0.5 rounded text-[11px]">
-              {inventory.extraHeart}
-            </span>
-          </button>
-
-          {/* Skip */}
-          <button
-            onClick={activateSkip}
-            disabled={inventory.skip <= 0 || isPaused}
-            className={`flex items-center justify-between p-2.5 sm:p-3 rounded-2xl border text-xs transition-all ${
-              inventory.skip > 0
-                ? "border-amber-500/40 bg-amber-950/30 text-amber-200 hover:bg-amber-950/60 active:scale-95 shadow-md shadow-amber-950/20"
-                : "border-slate-800 bg-slate-950/30 text-slate-600 opacity-50 cursor-not-allowed"
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <FastForward className="w-4 h-4 text-amber-400" />
-              <span className="font-semibold hidden sm:inline">Deflect</span>
-            </div>
-            <span className="font-mono font-bold bg-slate-900 px-2 py-0.5 rounded text-[11px]">
-              {inventory.skip}
-            </span>
-          </button>
-        </div>
-
-        {/* Active Question Defense Card */}
-        {currentEnemy && (
-          <div className="relative">
-            {isPaused && (
-              <div className="absolute inset-0 z-20 flex flex-col items-center justify-center rounded-3xl bg-slate-950/90 backdrop-blur-md">
-                <p className="text-xl font-display font-bold text-white mb-4">
-                  Defense Tactical Pause
-                </p>
-                <button
-                  onClick={() => setIsPaused(false)}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-cyan-500 px-6 py-2.5 text-sm font-bold text-slate-950 hover:bg-cyan-400 transition-colors"
-                >
-                  <Play className="w-4 h-4 fill-current" />
-                  <span>Resume Engagement</span>
-                </button>
-              </div>
-            )}
-
-            <QuestionCard
-              enemy={currentEnemy}
-              timeRemainingSec={timeRemainingSec}
-              totalTimeSec={totalQuestionTimeSec}
-              onSelectChoice={handleSelectChoice}
-              disabled={phase !== "playing" || isPaused}
-            />
-          </div>
-        )}
-
-        {/* Educational Breach Breakdown Modal */}
-        {breachInfo && (
-          <BreachResolutionModal
-            isOpen={phase === "breach-modal"}
-            questionPrompt={breachInfo.prompt}
-            selectedChoiceText={breachInfo.selectedText}
-            correctChoiceText={breachInfo.correctText}
-            solution={breachInfo.solution}
-            isTimeout={breachInfo.isTimeout}
-            towerHpRemaining={tower.hp}
-            onContinue={handleAcknowledgeBreach}
-          />
-        )}
-
-        {/* Wave Cleared Reward Modal */}
-        <WaveClearedModal
-          isOpen={phase === "wave-clear"}
-          waveNumber={currentWave}
-          waveScore={score - waveStartScore}
-          currentCombo={combo}
-          accuracyPct={
-            attemptedCount > 0 ? Math.round((correctCount / attemptedCount) * 100) : 100
-          }
-          onDeployNextWave={handleDeployNextWave}
-        />
+    <div className="relative min-h-[85vh] py-3 sm:py-6 flex flex-col items-center justify-center">
+      {/* Background ambient glow */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10">
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[34rem] h-[34rem] rounded-full blur-[140px] opacity-15 bg-sky-500" />
       </div>
+
+      <ArcadeMobileBattlefield
+        currentEnemy={currentEnemy}
+        upcomingEnemies={enemiesQueue}
+        tower={tower}
+        score={score}
+        combo={combo}
+        waveNumber={currentWave}
+        timeRemainingSec={timeRemainingSec}
+        totalTimeSec={totalQuestionTimeSec}
+        isFrozen={isFrozen}
+        freezeRemainingSec={freezeRemainingSec}
+        inventory={inventory}
+        soundMuted={soundMuted}
+        isPaused={isPaused}
+        onSelectChoice={handleSelectChoice}
+        onToggleMute={() => setSoundMuted(!soundMuted)}
+        onTogglePause={() => setIsPaused(!isPaused)}
+        onActivateFreeze={activateFreeze}
+        onActivateFiftyFifty={activateFiftyFifty}
+        onActivateExtraHeart={activateExtraHeart}
+        onActivateSkip={activateSkip}
+        marchProgressPct={marchProgressPct}
+        onArrowImpactResolved={handleArrowImpactResolved}
+      />
+
+      {/* Educational Breach Breakdown Modal */}
+      {breachInfo && (
+        <BreachResolutionModal
+          isOpen={phase === "breach-modal"}
+          questionPrompt={breachInfo.prompt}
+          selectedChoiceText={breachInfo.selectedText}
+          correctChoiceText={breachInfo.correctText}
+          solution={breachInfo.solution}
+          isTimeout={breachInfo.isTimeout}
+          towerHpRemaining={tower.hp}
+          onContinue={handleAcknowledgeBreach}
+        />
+      )}
+
+      {/* Wave Cleared Reward Modal */}
+      <WaveClearedModal
+        isOpen={phase === "wave-clear"}
+        waveNumber={currentWave}
+        waveScore={score - waveStartScore}
+        currentCombo={combo}
+        accuracyPct={
+          attemptedCount > 0 ? Math.round((correctCount / attemptedCount) * 100) : 100
+        }
+        onDeployNextWave={handleDeployNextWave}
+      />
     </div>
   );
 }

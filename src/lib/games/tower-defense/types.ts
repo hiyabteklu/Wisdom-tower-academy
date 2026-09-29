@@ -33,6 +33,39 @@ export interface EnemyUnit {
   timeLimitSec: number;
   title: string;
   loreLabel: string;
+  x?: number; // 0 to 100% position on screen
+  y?: number; // 0 to 100% position on screen
+  isTargeted?: boolean;
+}
+
+export interface FlyingArrow {
+  id: string;
+  letter: string;
+  startX: number;
+  startY: number;
+  currentX: number;
+  currentY: number;
+  targetX: number;
+  targetY: number;
+  vx: number;
+  vy: number;
+  progress: number; // 0 to 1
+  isCorrect: boolean;
+  state: "flying" | "hit" | "bouncing" | "fallen";
+  rotation: number;
+  createdAt: number;
+}
+
+export interface ArcadeParticle {
+  id: string;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  color: string;
+  size: number;
+  alpha: number;
+  life: number;
 }
 
 export interface TowerState {
