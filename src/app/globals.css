@@ -493,13 +493,35 @@ html.font-scale-xlarge {
 }
 
 /* Reading Font Preferences */
+html.reading-font-default,
+html.reading-font-sans {
+  --font-reading: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+html.reading-font-times,
 html.reading-font-serif {
-  --font-reading: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --font-reading: 'Times New Roman', Times, Georgia, serif;
+  --font-body: 'Times New Roman', Times, Georgia, serif;
 }
 html.reading-font-mono {
   --font-reading: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
-html.reading-font-sans {
-  --font-reading: 'Plus Jakarta Sans', system-ui, sans-serif;
+
+/* Sharp horizontal shake animation for wrong answer card mistake signal */
+@keyframes wtaShakeHorizontal {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  20%, 60% {
+    transform: translateX(-6px);
+  }
+  40%, 80% {
+    transform: translateX(6px);
+  }
 }
+
+.animate-shake-wrong {
+  animation: wtaShakeHorizontal 0.38s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
 

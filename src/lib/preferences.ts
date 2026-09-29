@@ -17,7 +17,7 @@ export type UserPreferences = {
   soundPreset: "crystal" | "arcade" | "zen";
   hapticFeedback: boolean; // default true
   fontSize: "compact" | "normal" | "large" | "xlarge";
-  readingFont: "sans" | "serif" | "mono";
+  readingFont: "default" | "times" | "sans" | "serif" | "mono";
 
   // Study & Goals
   studyGoalMinutes: number;
@@ -45,7 +45,7 @@ export const DEFAULT_PREFS: UserPreferences = {
   soundPreset: "crystal",
   hapticFeedback: true,
   fontSize: "normal",
-  readingFont: "sans",
+  readingFont: "default",
 
   studyGoalMinutes: 45,
   focusSessionDuration: 25,
@@ -98,11 +98,13 @@ export function applyPreferenceClasses(prefs: UserPreferences) {
 
   // Reading font
   root.classList.remove(
+    "reading-font-default",
+    "reading-font-times",
     "reading-font-sans",
     "reading-font-serif",
     "reading-font-mono"
   );
-  root.classList.add(`reading-font-${prefs.readingFont || "sans"}`);
+  root.classList.add(`reading-font-${prefs.readingFont || "default"}`);
 }
 
 export function savePreferences(prefs: UserPreferences) {

@@ -7,6 +7,7 @@ import {
 import RichContent from "@/components/learning/RichContent";
 import { saveProgress, saveExamAttempt } from "@/lib/contentWithOffline";
 import { triggerAnswerFeedback, triggerFiftyFeedback } from "@/lib/sound-haptics";
+import { triggerCorrectConfetti } from "@/lib/confetti";
 
 type Q = { prompt: string; choices?: string[]; correct?: number; solution?: string };
 type Props = {
@@ -37,6 +38,17 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
   const [reviewAi, setReviewAi] = useState<Record<number, string>>({});
   const [reviewAiLoading, setReviewAiLoading] = useState<Record<number, boolean>>({});
   const [startedAt] = useState(() => Date.now());
+  const [feedbackMode, setFeedbackMode] = useState<"immediate" | "completion">("immediate");
+  const [wrongShakeOption, setWrongShakeOption] = useState<{ idx: number; choice: number } | null>(null);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("wta_qb_feedback_mode");
+      if (saved === "completion" || saved === "immediate") {
+        setFeedbackMode(saved);
+      }
+    } catch {}
+  }, []);
 
   useEffect(() => {
     if (!isExam || durationMin <= 0 || submitted) return;
@@ -141,7 +153,8 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
     setReviewAiLoading((m) => ({ ...m, [qi]: false }));
   }
 
-  const revealCorrectness = !isExam || submitted;
+  const isImmediate = !isExam && feedbackMode === "immediate";
+  const revealCorrectness = isExam ? submitted : (isImmediate ? true : submitted);
   const answersLocked = submitted || Boolean(lockedBySolution[idx]);
 
   function openOfficialSolution() {
@@ -173,6 +186,50 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
 
   return (
     <div className="space-y-2.5">
+      {/* Question Bank Practice Mode Switcher */}
+      {!isExam && (
+        <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-white/10 bg-wisdom-card/90 px-3.5 py-2 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-white">Answer Checking:</span>
+            <span className="text-[11px] text-wisdom-muted hidden sm:inline">
+              {feedbackMode === "immediate"
+                ? "Instant confetti check on tap"
+                : "Grade after completion"}
+            </span>
+          </div>
+          <div className="inline-flex rounded-lg p-0.5 bg-slate-950/80 border border-white/10">
+            <button
+              type="button"
+              onClick={() => {
+                setFeedbackMode("immediate");
+                if (typeof window !== "undefined") localStorage.setItem("wta_qb_feedback_mode", "immediate");
+              }}
+              className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${
+                feedbackMode === "immediate"
+                  ? "bg-cyan-400 text-slate-950 shadow-sm"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              Show Right Away
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setFeedbackMode("completion");
+                if (typeof window !== "undefined") localStorage.setItem("wta_qb_feedback_mode", "completion");
+              }}
+              className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${
+                feedbackMode === "completion"
+                  ? "bg-cyan-400 text-slate-950 shadow-sm"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              After Completion
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-2 rounded-lg border border-white/10 bg-wisdom-dark/40 px-3 py-1.5 text-[11px]">
         {!isExam && (
           <>
@@ -246,22 +303,50 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
             {(q.choices || []).map((c, ci) => {
               const selected = answers[idx] === ci;
               const isRight = q.correct === ci;
-              const showMark = isExam ? submitted : showSol || submitted;
+              const isAnswered = answers[idx] != null;
+              const showMark = isExam ? submitted : (isImmediate ? isAnswered : (showSol || submitted));
+              const isShaking = wrongShakeOption?.idx === idx && wrongShakeOption?.choice === ci;
+
+              let choiceCls = "border-white/12 text-white/85 hover:border-white/25 hover:bg-white/[0.04]";
+              if (showMark && isRight) {
+                choiceCls = "!border-emerald-400 !bg-emerald-500/20 !text-emerald-100 shadow-[0_0_15px_rgba(16,185,129,0.25)] font-semibold";
+              } else if (showMark && selected && !isRight) {
+                choiceCls = "!border-rose-500 !bg-rose-500/20 !text-rose-100 shadow-[0_0_15px_rgba(244,63,94,0.25)] font-semibold";
+              } else if (selected) {
+                choiceCls = "border-cyan-400 bg-cyan-500/15 text-white ring-1 ring-cyan-400/40 font-semibold";
+              }
+
+              if (isShaking) {
+                choiceCls += " animate-shake-wrong !ring-2 !ring-rose-500";
+              }
+
               return (
-                <button key={ci} type="button" disabled={answersLocked}
-                  onClick={() => {
+                <button
+                  key={ci}
+                  type="button"
+                  disabled={answersLocked}
+                  onClick={(e) => {
                     if (!answersLocked) {
                       setAnswers((a) => ({ ...a, [idx]: ci }));
                       if (!isExam && q.correct !== undefined) {
-                        triggerAnswerFeedback(ci === q.correct, Boolean(isExam));
+                        if (feedbackMode === "immediate") {
+                          if (ci === q.correct) {
+                            triggerCorrectConfetti(e.currentTarget);
+                            triggerAnswerFeedback(true, false);
+                          } else {
+                            // Sharp double-pulse vibration + horizontal shake
+                            triggerAnswerFeedback(false, false);
+                            setWrongShakeOption({ idx, choice: ci });
+                            setTimeout(() => setWrongShakeOption(null), 500);
+                          }
+                        }
                       }
                     }
                   }}
-                  className={`w-full text-left px-2.5 py-2 rounded-lg border text-[13px] leading-snug transition-colors ${
-                    selected ? "border-amber-400/50 bg-amber-500/15 text-white" : "border-white/12 text-white/85"
-                  } ${showMark && isRight ? "!border-emerald-400/50 !bg-emerald-500/10" : ""} ${
-                    showMark && selected && !isRight ? "!border-rose-400/40 !bg-rose-500/10" : ""
-                  } ${answersLocked ? "opacity-90 cursor-not-allowed" : ""}`}>
+                  className={`w-full text-left px-2.5 py-2 rounded-lg border text-[13px] leading-snug transition-all ${choiceCls} ${
+                    answersLocked ? "opacity-90 cursor-not-allowed" : ""
+                  }`}
+                >
                   <span className="font-semibold text-amber-200/90 mr-1">{String.fromCharCode(65 + ci)}.</span>
                   <span className="study-prose inline"><RichContent body={c} /></span>
                 </button>

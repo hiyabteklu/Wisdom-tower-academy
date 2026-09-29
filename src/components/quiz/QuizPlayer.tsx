@@ -6,6 +6,7 @@ import type { QuizQuestion } from "@/data/sample-questions";
 import SolutionPanel from "./SolutionPanel";
 import MathText from "@/components/MathText";
 import { triggerAnswerFeedback } from "@/lib/sound-haptics";
+import { triggerCorrectConfetti } from "@/lib/confetti";
 
 type Props = {
   questions: QuizQuestion[];
@@ -28,6 +29,7 @@ export default function QuizPlayer({
   const [revealed, setRevealed] = useState(false);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
+  const [wrongShaking, setWrongShaking] = useState(false);
 
   if (!list.length) {
     return (
@@ -40,12 +42,19 @@ export default function QuizPlayer({
   const q = list[index];
   const correct = q.choices[q.correctIndex];
 
-  function submit() {
+  function submit(e?: React.MouseEvent<HTMLButtonElement> | HTMLElement) {
     if (selected === null || revealed) return;
     setRevealed(true);
     const isCorrect = selected === q.correctIndex;
     triggerAnswerFeedback(isCorrect, false);
-    if (isCorrect) setScore((s) => s + 1);
+    if (isCorrect) {
+      const el = e ? ("currentTarget" in e ? e.currentTarget : e) : undefined;
+      triggerCorrectConfetti(el);
+      setScore((s) => s + 1);
+    } else {
+      setWrongShaking(true);
+      setTimeout(() => setWrongShaking(false), 500);
+    }
   }
 
   function next() {
@@ -120,11 +129,11 @@ export default function QuizPlayer({
                   type="button"
                   disabled={revealed}
                   onClick={() => setSelected(i)}
-                  className={`w-full text-left px-4 py-3 rounded-xl border text-sm transition-colors ${
+                  className={`w-full text-left px-4 py-3 rounded-xl border text-sm transition-all ${
                     isCorrect
                       ? "border-emerald-400/50 bg-emerald-500/15 text-emerald-100"
                       : isWrong
-                        ? "border-rose-400/50 bg-rose-500/15 text-rose-100"
+                        ? `border-rose-400/50 bg-rose-500/15 text-rose-100 ${wrongShaking ? "animate-shake-wrong ring-2 ring-rose-500" : ""}`
                         : isSel
                           ? "border-cyan-400/40 bg-cyan-500/10 text-white"
                           : "border-white/10 bg-wisdom-dark/40 hover:border-white/20 text-white/90"

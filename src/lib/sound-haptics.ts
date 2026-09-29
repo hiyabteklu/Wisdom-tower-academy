@@ -45,7 +45,9 @@ export function triggerHaptic(type: "correct" | "wrong" | "celebrate" | "light")
           navigator.vibrate([45]);
           break;
         case "wrong":
-          navigator.vibrate([50, 35, 65]);
+          // Sharp double-pulse tactile vibration (similar to iOS UINotificationFeedbackType.error):
+          // Two quick, heavy vibrations in rapid succession to instantly signal a mistake
+          navigator.vibrate([70, 50, 90]);
           break;
         case "celebrate":
           navigator.vibrate([40, 40, 40, 40, 100]);
