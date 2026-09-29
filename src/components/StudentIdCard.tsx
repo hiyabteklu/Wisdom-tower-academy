@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import StudentAvatar from "@/components/StudentAvatar";
 import { type StudentIdData } from "@/lib/student-id";
-import { RotateCw, ShieldCheck } from "lucide-react";
+import { RotateCw, ShieldCheck, Sparkles } from "lucide-react";
+import { triggerHaptic } from "@/lib/sound-haptics";
 
 interface StudentIdCardProps {
   idData: StudentIdData;
@@ -15,6 +16,8 @@ interface StudentIdCardProps {
   stream?: string | null;
   schoolName?: string | null;
   region?: string | null;
+  hasCrown?: boolean;
+  autoFlipOnMount?: boolean;
   className?: string;
 }
 
@@ -27,9 +30,37 @@ export default function StudentIdCard({
   stream,
   schoolName,
   region,
+  hasCrown = false,
+  autoFlipOnMount = true,
   className = "",
 }: StudentIdCardProps) {
   const [flipped, setFlipped] = useState(false);
+  const [edgeGleam, setEdgeGleam] = useState(true);
+
+  // Auto flip in 3D golden effect when viewing account, then flips back after 3 seconds
+  useEffect(() => {
+    if (!autoFlipOnMount) return;
+    setEdgeGleam(true);
+
+    const flipToBackTimer = setTimeout(() => {
+      setFlipped(true);
+      triggerHaptic("light");
+    }, 500);
+
+    const flipBackToFrontTimer = setTimeout(() => {
+      setFlipped(false);
+      triggerHaptic("light");
+      const fadeGleamTimer = setTimeout(() => {
+        setEdgeGleam(false);
+      }, 2500);
+      return () => clearTimeout(fadeGleamTimer);
+    }, 3500); // Exactly 3 seconds after flipping to back
+
+    return () => {
+      clearTimeout(flipToBackTimer);
+      clearTimeout(flipBackToFrontTimer);
+    };
+  }, [autoFlipOnMount]);
 
   const academicTrackDisplay = educationLevel || idData.academicTrack;
   const schoolDisplay = schoolName || idData.institutionName;
@@ -38,7 +69,11 @@ export default function StudentIdCard({
     <div className={`space-y-3 ${className}`}>
       {/* Clickable / Tappable 3D Card Container */}
       <div
-        onClick={() => setFlipped((prev) => !prev)}
+        onClick={() => {
+          setFlipped((prev) => !prev);
+          setEdgeGleam(true);
+          triggerHaptic("light");
+        }}
         role="button"
         tabIndex={0}
         aria-label="Tap card to flip between front and back sides"
@@ -46,20 +81,49 @@ export default function StudentIdCard({
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             setFlipped((prev) => !prev);
+            setEdgeGleam(true);
+            triggerHaptic("light");
           }
         }}
-        className="relative mx-auto max-w-[430px] aspect-[1.586/1] [perspective:1200px] cursor-pointer group select-none outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded-2xl sm:rounded-3xl transition-transform duration-200 active:scale-[0.98]"
+        className="relative mx-auto max-w-[430px] aspect-[1.586/1] [perspective:1400px] cursor-pointer group select-none outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded-2xl sm:rounded-3xl transition-transform duration-200 active:scale-[0.98]"
         title="Tap anywhere to flip card"
       >
+        {/* Dynamic Revolving Golden Edge Light Reflection (Orbital Light Ray at edges) */}
         <div
-          className={`relative w-full h-full duration-700 [transform-style:preserve-3d] transition-transform ${
+          className={`absolute -inset-[3px] rounded-2xl sm:rounded-3xl overflow-hidden pointer-events-none transition-opacity duration-700 z-0 ${
+            edgeGleam ? "opacity-100" : "opacity-0 group-hover:opacity-75"
+          }`}
+          aria-hidden
+        >
+          <div className="golden-orbit-beam" />
+        </div>
+
+        {/* Golden Specular Edge Light Reflection Halo */}
+        <div
+          className={`absolute -inset-[2.5px] rounded-2xl sm:rounded-3xl pointer-events-none transition-opacity duration-700 z-0 ${
+            edgeGleam ? "opacity-100 golden-edge-reflection" : "opacity-0 group-hover:opacity-70"
+          }`}
+          style={{
+            filter: "drop-shadow(0 0 14px rgba(245, 158, 11, 0.8))",
+          }}
+          aria-hidden
+        />
+
+        <div
+          className={`relative z-10 w-full h-full duration-700 [transform-style:preserve-3d] transition-transform ease-out ${
             flipped ? "[transform:rotateY(180deg)]" : ""
           }`}
         >
           {/* ========================================================= */}
           {/* FRONT FACE OF STUDENT ID CARD                            */}
           {/* ========================================================= */}
-          <div className="absolute inset-0 w-full h-full rounded-2xl sm:rounded-3xl p-5 sm:p-6 [backface-visibility:hidden] overflow-hidden border border-amber-400/35 bg-gradient-to-br from-[#0c1427] via-[#09101f] to-[#040711] shadow-[0_20px_50px_rgba(0,0,0,0.6),0_0_20px_rgba(245,158,11,0.12)] flex flex-col justify-between text-white group-hover:border-amber-400/55 transition-colors">
+          <div className="absolute inset-0 w-full h-full rounded-2xl sm:rounded-3xl p-5 sm:p-6 [backface-visibility:hidden] overflow-hidden border border-amber-400/40 bg-gradient-to-br from-[#0c1427] via-[#09101f] to-[#040711] shadow-[0_20px_50px_rgba(0,0,0,0.6),0_0_20px_rgba(245,158,11,0.18)] flex flex-col justify-between text-white group-hover:border-amber-400/60 transition-colors">
+            {/* Specular Diagonal Sheen Reflection Ray that glides during flip */}
+            <div
+              className={`absolute -inset-full w-[40%] h-[300%] bg-gradient-to-r from-transparent via-amber-200/25 to-transparent pointer-events-none z-20 ${
+                edgeGleam ? "specular-shine-sweep" : "hidden"
+              }`}
+            />
             {/* Holographic Security Guilloche Texture */}
             <div
               className="absolute inset-0 opacity-[0.04] pointer-events-none"
@@ -119,6 +183,7 @@ export default function StudentIdCard({
                     size="xl"
                     className="rounded-xl shadow-inner"
                     showGlow={false}
+                    hasCrown={hasCrown}
                   />
                   <div className="absolute -bottom-2 inset-x-0 flex justify-center">
                     <span className="px-1.5 py-0.5 rounded text-[8px] font-mono font-black uppercase bg-black/85 text-amber-300 border border-amber-400/40 shadow-sm flex items-center gap-0.5">
@@ -214,7 +279,13 @@ export default function StudentIdCard({
           {/* ========================================================= */}
           {/* BACK FACE OF STUDENT ID CARD                             */}
           {/* ========================================================= */}
-          <div className="absolute inset-0 w-full h-full rounded-2xl sm:rounded-3xl p-5 sm:p-6 [backface-visibility:hidden] [transform:rotateY(180deg)] overflow-hidden border border-white/15 bg-gradient-to-br from-[#070c17] via-[#091122] to-[#04060c] shadow-2xl flex flex-col justify-between text-white group-hover:border-amber-400/40 transition-colors">
+          <div className="absolute inset-0 w-full h-full rounded-2xl sm:rounded-3xl p-5 sm:p-6 [backface-visibility:hidden] [transform:rotateY(180deg)] overflow-hidden border border-amber-400/35 bg-gradient-to-br from-[#070c17] via-[#091122] to-[#04060c] shadow-2xl flex flex-col justify-between text-white group-hover:border-amber-400/50 transition-colors">
+            {/* Specular Diagonal Sheen Reflection Ray that glides during flip */}
+            <div
+              className={`absolute -inset-full w-[40%] h-[300%] bg-gradient-to-r from-transparent via-amber-200/20 to-transparent pointer-events-none z-20 ${
+                edgeGleam ? "specular-shine-sweep" : "hidden"
+              }`}
+            />
             {/* Magnetic Tape Simulation */}
             <div className="absolute top-4 inset-x-0 h-9 bg-neutral-900 border-y border-white/10" />
 

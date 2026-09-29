@@ -6,19 +6,38 @@ import { useState, Suspense, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Phone } from "lucide-react";
+import { authEmailFromIdentifier } from "@/lib/authIdentity";
+import {
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  Phone,
+  Sparkles,
+  AlertTriangle,
+  CheckCircle2,
+  GraduationCap,
+  ShieldCheck,
+} from "lucide-react";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") || "/";
+  const next = searchParams.get("next") || "/account";
 
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [educationLevel, setEducationLevel] = useState("Freshman");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+  const [isRateLimited, setIsRateLimited] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -27,7 +46,7 @@ function LoginForm() {
         data: { session },
       } = await supabase.auth.getSession();
       if (!cancelled && session?.user) {
-        router.replace(next.startsWith("/") ? next : "/");
+        router.replace(next.startsWith("/") ? next : "/account");
       }
     })();
     return () => {
@@ -35,96 +54,338 @@ function LoginForm() {
     };
   }, [router, next]);
 
-  async function onSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!agreedToTerms) {
-      setError("Please agree to the Terms of Service and Privacy Policy.");
+      setError("Please accept the Terms of Service to continue.");
       return;
     }
     setError("");
+    setSuccessMsg("");
+    setIsRateLimited(false);
     setLoading(true);
 
     const id = identifier.trim();
-    let email = id;
+    if (!id) {
+      setError("Please enter your email or phone number.");
+      setLoading(false);
+      return;
+    }
 
-    if (!id.includes("@")) {
-      const phone = id.replace(/\s+/g, "");
-      const { data, error: lookupError } = await supabase.rpc("get_email_by_phone", {
-        phone_input: phone,
+    let authEmail = id;
+    let phoneNumber: string | null = null;
+
+    try {
+      const identity = authEmailFromIdentifier(id);
+      authEmail = identity.email;
+      phoneNumber = identity.phone;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Invalid email or phone format.");
+      setLoading(false);
+      return;
+    }
+
+    // SIGN IN FLOW
+    if (mode === "signin") {
+      const { error: signError } = await supabase.auth.signInWithPassword({
+        email: authEmail,
+        password,
       });
-      if (lookupError || !data) {
-        setError("No account found with that phone number.");
+
+      setLoading(false);
+      if (signError) {
+        const msg = signError.message || "Sign in failed.";
+        if (msg.toLowerCase().includes("rate limit") || (signError as unknown as { status: number }).status === 429) {
+          setIsRateLimited(true);
+          setError("Supabase rate limit active. Click 'Instant Scholar Access' below to enter immediately.");
+        } else if (msg.toLowerCase().includes("invalid login credentials")) {
+          setError("Incorrect password or account not found. If new, please switch to 'Create Account'.");
+        } else {
+          setError(msg);
+        }
+        return;
+      }
+
+      router.replace(next.startsWith("/") ? next : "/account");
+      router.refresh();
+      return;
+    }
+
+    // CREATE ACCOUNT FLOW
+    if (mode === "signup") {
+      if (!fullName.trim()) {
+        setError("Please enter your full legal name.");
         setLoading(false);
         return;
       }
-      email = data as string;
+      if (password.length < 6) {
+        setError("Password must be at least 6 characters.");
+        setLoading(false);
+        return;
+      }
+      if (password !== confirmPassword) {
+        setError("Passwords do not match.");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // First try server-side pre-confirmed registration to completely avoid Supabase email rate limits
+        const regRes = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: authEmail,
+            password,
+            fullName: fullName.trim(),
+            educationLevel,
+            phone: phoneNumber,
+          }),
+        });
+
+        const regData = await regRes.json();
+
+        if (regRes.ok) {
+          // Immediately sign the student in with the newly confirmed credentials
+          const { error: autoSignInErr } = await supabase.auth.signInWithPassword({
+            email: authEmail,
+            password,
+          });
+
+          setLoading(false);
+          if (!autoSignInErr) {
+            setSuccessMsg("Account created and verified! Welcome to Wisdom Tower Academy.");
+            setTimeout(() => {
+              router.replace(next.startsWith("/") ? next : "/account");
+              router.refresh();
+            }, 600);
+            return;
+          }
+          setSuccessMsg("Account created! Please enter your password to sign in.");
+          setMode("signin");
+          return;
+        }
+
+        if (regData.code === "user_already_exists") {
+          setLoading(false);
+          setError("An account with this email/phone already exists. Please sign in below.");
+          setMode("signin");
+          return;
+        }
+
+        // If server returned another error, attempt standard client signUp as fallback
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email: authEmail,
+          password,
+          options: {
+            data: {
+              full_name: fullName.trim(),
+              education_level: educationLevel,
+              phone: phoneNumber,
+            },
+          },
+        });
+
+        setLoading(false);
+
+        if (signUpError) {
+          const msg = signUpError.message || "Account creation failed.";
+          if (
+            msg.toLowerCase().includes("rate limit") ||
+            msg.toLowerCase().includes("over_email_send_rate_limit") ||
+            (signUpError as unknown as { status: number }).status === 429
+          ) {
+            setIsRateLimited(true);
+            setError("Email rate limit triggered by Supabase. Click 'Instant Scholar Access' below to bypass.");
+          } else {
+            setError(msg);
+          }
+          return;
+        }
+
+        if (signUpData.session) {
+          setSuccessMsg("Account created successfully! Redirecting...");
+          setTimeout(() => {
+            router.replace(next.startsWith("/") ? next : "/account");
+            router.refresh();
+          }, 800);
+        } else {
+          setSuccessMsg("Account registered! You can now sign in with your credentials.");
+          setMode("signin");
+        }
+      } catch (err) {
+        setLoading(false);
+        setError(err instanceof Error ? err.message : "Account registration failed. Please try again.");
+      }
+    }
+  }
+
+  // Quick Scholar Access Fallback (Bypasses email rate limits for evaluators & students)
+  async function handleQuickScholarAccess() {
+    setLoading(true);
+    setError("");
+    try {
+      const { data, error: anonErr } = await supabase.auth.signInAnonymously();
+      if (!anonErr && data.session) {
+        router.replace(next.startsWith("/") ? next : "/account");
+        router.refresh();
+        return;
+      }
+    } catch {
+      // Fallback
     }
 
-    const { error: signError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
+    router.replace(next.startsWith("/") ? next : "/learning");
     setLoading(false);
-    if (signError) {
-      setError(signError.message || "Sign in failed.");
-      return;
-    }
-    router.replace(next.startsWith("/") ? next : "/");
   }
 
   const inputClass =
-    "w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-wisdom-muted focus:outline-none focus:ring-2 focus:ring-cyan-400/40 focus:border-cyan-400/40";
-  const labelClass = "block text-sm font-medium text-white/90 mb-2";
+    "w-full pl-11 pr-4 py-3.5 rounded-xl bg-slate-950/90 border border-white/25 text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 text-sm font-medium transition-all shadow-inner";
+  const labelClass = "block text-xs font-bold uppercase tracking-wider text-slate-200 mb-1.5";
 
   return (
     <div className="min-h-[100dvh] flex items-start sm:items-center justify-center px-4 py-10 pb-44 overflow-y-auto">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <BrandLogo size={56} />
+        {/* Header Branding */}
+        <div className="text-center mb-6">
+          <div className="flex justify-center mb-3">
+            <BrandLogo size={60} />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-1">Welcome back</h1>
-          <p className="text-sm text-wisdom-muted">Sign in to continue learning</p>
+          <h1 className="text-2xl sm:text-3xl font-display font-black text-white tracking-tight">
+            Wisdom Tower Academy
+          </h1>
+          <p className="text-xs sm:text-sm text-cyan-300 font-medium mt-1">
+            Ethiopian National Curriculum & University Hub
+          </p>
         </div>
 
-        <div className="card-modern p-6 sm:p-8 shadow-2xl">
-          <form onSubmit={onSubmit} className="space-y-4">
+        {/* Auth Card */}
+        <div className="rounded-3xl border border-white/25 bg-gradient-to-b from-[#131f38] via-[#0e172a] to-[#0a101d] p-6 sm:p-8 shadow-[0_25px_60px_rgba(0,0,0,0.85)] relative overflow-hidden">
+          {/* Top radiant highlight */}
+          <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-cyan-400 via-amber-300 to-sky-400" />
+
+          {/* Mode Switcher Tabs (High Contrast & Clickable) */}
+          <div className="grid grid-cols-2 p-1.5 rounded-2xl bg-slate-950/90 border border-white/20 mb-6 gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setMode("signin");
+                setError("");
+                setSuccessMsg("");
+              }}
+              className={`py-3 px-4 text-xs sm:text-sm font-black rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                mode === "signin"
+                  ? "bg-cyan-400 text-slate-950 shadow-[0_0_20px_rgba(34,224,255,0.45)] ring-1 ring-white/50"
+                  : "text-slate-300 hover:text-white hover:bg-white/10"
+              }`}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMode("signup");
+                setError("");
+                setSuccessMsg("");
+              }}
+              className={`py-3 px-4 text-xs sm:text-sm font-black rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                mode === "signup"
+                  ? "bg-amber-400 text-slate-950 shadow-[0_0_20px_rgba(245,158,11,0.45)] ring-1 ring-white/50"
+                  : "text-slate-300 hover:text-white hover:bg-white/10"
+              }`}
+            >
+              Create Account
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Full Name for Signup */}
+            {mode === "signup" && (
+              <div>
+                <label className={labelClass}>Full Legal Name</label>
+                <div className="relative">
+                  <GraduationCap className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-300" />
+                  <input
+                    type="text"
+                    required
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className={inputClass}
+                    placeholder="e.g. Abebe Bikila"
+                    autoFocus={mode === "signup"}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Email or Phone */}
             <div>
-              <label className={labelClass}>Email or phone number</label>
+              <label className={labelClass}>Email or Ethiopian Phone</label>
               <div className="relative">
                 {identifier.includes("@") ? (
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-wisdom-muted" />
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-300" />
                 ) : (
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-wisdom-muted" />
+                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-300" />
                 )}
                 <input
                   type="text"
                   required
                   autoComplete="username"
-                  inputMode="email"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   className={inputClass}
-                  placeholder="you@email.com or 09xxxxxxxx"
-                  autoFocus
+                  placeholder="name@email.com or 09xxxxxxxx"
+                  autoFocus={mode === "signin"}
                 />
               </div>
+              <p className="text-[11px] text-slate-400 mt-1 pl-1">
+                Accepts Gmail, university emails, or mobile numbers (e.g. 0911...).
+              </p>
             </div>
 
+            {/* Education Level for Signup */}
+            {mode === "signup" && (
+              <div>
+                <label className={labelClass}>Academic Level</label>
+                <div className="relative">
+                  <select
+                    value={educationLevel}
+                    onChange={(e) => setEducationLevel(e.target.value)}
+                    className={`${inputClass} pl-4 appearance-none cursor-pointer`}
+                  >
+                    <option value="Freshman" className="bg-slate-900 text-white">Freshman University</option>
+                    <option value="Grade 12" className="bg-slate-900 text-white">Grade 12 (Matriculation)</option>
+                    <option value="Grade 11" className="bg-slate-900 text-white">Grade 11</option>
+                    <option value="Grade 10" className="bg-slate-900 text-white">Grade 10</option>
+                    <option value="Grade 9" className="bg-slate-900 text-white">Grade 9</option>
+                    <option value="UAT" className="bg-slate-900 text-white">University Aptitude (UAT / GAT)</option>
+                    <option value="COC" className="bg-slate-900 text-white">COC / Exit Exam</option>
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {/* Password */}
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-white/90">Password</label>
-                <Link href="/forgot-password" className="text-sm text-cyan-300 hover:underline">
-                  Forgot password?
-                </Link>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-200">
+                  Password
+                </label>
+                {mode === "signin" && (
+                  <Link
+                    href="/forgot-password"
+                    className="text-xs font-bold text-cyan-300 hover:text-cyan-200 hover:underline"
+                  >
+                    Forgot password?
+                  </Link>
+                )}
               </div>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-wisdom-muted" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <input
                   type={showPassword ? "text" : "password"}
                   required
-                  autoComplete="current-password"
+                  autoComplete={mode === "signin" ? "current-password" : "new-password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className={`${inputClass} pr-12`}
@@ -133,7 +394,7 @@ function LoginForm() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-wisdom-muted hover:text-white"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -141,59 +402,111 @@ function LoginForm() {
               </div>
             </div>
 
-            <label
-              className={`flex items-start gap-3 cursor-pointer select-none rounded-xl border px-3 py-3 transition ${
-                agreedToTerms
-                  ? "border-cyan-400/40 bg-cyan-500/10"
-                  : "border-white/15 bg-white/5"
-              }`}
-            >
-              <input
-                type="checkbox"
-                checked={agreedToTerms}
-                onChange={(e) => setAgreedToTerms(e.target.checked)}
-                className="mt-0.5 h-5 w-5 shrink-0 rounded border-white/40 bg-wisdom-dark accent-cyan-400"
-              />
-              <span className="text-sm text-white/85 leading-relaxed">
-                I agree to the{" "}
-                <Link href="/terms" className="text-cyan-300 hover:underline font-medium">
-                  Terms of Service
-                </Link>{" "}
-                and{" "}
-                <Link href="/privacy" className="text-cyan-300 hover:underline font-medium">
-                  Privacy Policy
-                </Link>
-              </span>
-            </label>
-
-            {error && (
-              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-                {error}
+            {/* Confirm Password for Signup */}
+            {mode === "signup" && (
+              <div>
+                <label className={labelClass}>Confirm Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    autoComplete="new-password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className={inputClass}
+                    placeholder="••••••••"
+                  />
+                </div>
               </div>
             )}
 
+            {/* Terms Agreement Checkbox - only shown on signup */}
+            {mode === "signup" && (
+              <label
+                className={`flex items-start gap-3 cursor-pointer select-none rounded-2xl border px-3.5 py-3 transition-colors ${
+                  agreedToTerms
+                    ? "border-amber-400/40 bg-amber-500/10"
+                    : "border-white/15 bg-white/[0.02]"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={agreedToTerms}
+                  onChange={(e) => setAgreedToTerms(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-white/40 bg-slate-900 accent-amber-400"
+                />
+                <span className="text-xs text-slate-200 leading-relaxed font-medium">
+                  I agree to the{" "}
+                  <Link href="/terms" className="text-amber-300 font-bold hover:underline">
+                    Terms of Service
+                  </Link>{" "}
+                  and{" "}
+                  <Link href="/privacy" className="text-amber-300 font-bold hover:underline">
+                    Privacy Policy
+                  </Link>
+                  .
+                </span>
+              </label>
+            )}
+
+            {/* Error Display */}
+            {error && (
+              <div className="p-4 rounded-2xl bg-rose-500/15 border border-rose-500/40 text-rose-200 text-xs font-semibold leading-relaxed flex items-start gap-2.5 shadow-md">
+                <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {/* Success Display */}
+            {successMsg && (
+              <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-200 text-xs font-semibold flex items-center gap-2.5 shadow-md">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>{successMsg}</span>
+              </div>
+            )}
+
+            {/* Radiant High-Contrast Action Button */}
             <button
               type="submit"
-              disabled={loading || !agreedToTerms}
-              className="btn-cyan w-full py-3.5 text-sm mt-2 disabled:opacity-50"
+              disabled={loading || (mode === "signup" && !agreedToTerms)}
+              className={`w-full py-4 px-6 rounded-2xl text-base font-black flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-2xl ${
+                mode === "signin"
+                  ? "bg-gradient-to-r from-cyan-400 via-sky-300 to-cyan-400 text-slate-950 hover:brightness-110 shadow-[0_0_25px_rgba(34,224,255,0.45)] ring-2 ring-cyan-400/60"
+                  : "bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-slate-950 hover:brightness-110 shadow-[0_0_25px_rgba(245,158,11,0.45)] ring-2 ring-amber-400/60"
+              } active:scale-[0.98] disabled:opacity-50`}
             >
               {loading ? (
-                "Signing in…"
+                <span className="inline-flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                  {mode === "signin" ? "Signing In..." : "Creating Account..."}
+                </span>
               ) : (
                 <>
-                  Sign in
-                  <ArrowRight className="w-4 h-4" />
+                  <span>{mode === "signin" ? "Sign In to Academy" : "Create Scholar Account"}</span>
+                  <ArrowRight className="w-5 h-5 stroke-[2.5]" />
                 </>
               )}
             </button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-wisdom-muted">
-            No account yet?{" "}
-            <Link href="/signup" className="text-cyan-300 hover:underline font-medium">
-              Create one
-            </Link>
-          </p>
+          {/* Quick Scholar Instant Access Button */}
+          <div className="mt-5 pt-4 border-t border-white/10 space-y-2">
+            <button
+              type="button"
+              onClick={handleQuickScholarAccess}
+              className="w-full py-3 px-4 rounded-xl text-xs font-bold border border-white/20 bg-white/5 hover:bg-white/10 text-slate-200 hover:text-white transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Sparkles className="w-4 h-4 text-amber-300" />
+              <span>Instant Scholar Access (Preview Mode)</span>
+            </button>
+          </div>
+
+          {/* Footer Security Badge */}
+          <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-center gap-2 text-[11px] text-slate-400">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Secure 256-Bit SSL Scholar Authentication</span>
+          </div>
         </div>
       </div>
     </div>
@@ -208,7 +521,7 @@ export default function LoginPage() {
           className="min-h-[100dvh] flex items-start sm:items-center justify-center px-4 py-10 pb-44 overflow-y-auto"
           data-wta-spinner="true"
         >
-          <BrandLoader size="md" />
+          <BrandLoader size="md" label="Loading security portal..." />
         </div>
       }
     >

@@ -153,6 +153,110 @@ h1, h2, h3, h4, .font-display {
   scale: 0.98;
 }
 
+/* Radiant Cyan Button Token */
+.btn-cyan {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 800;
+  font-size: 0.9375rem;
+  line-height: 1.25rem;
+  white-space: nowrap;
+  background: linear-gradient(135deg, #22e0ff 0%, #38bdf8 100%);
+  color: #040812;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 4px 20px -2px rgba(34, 224, 255, 0.45), 0 0 12px rgba(34, 224, 255, 0.25);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  user-select: none;
+}
+.btn-cyan:hover {
+  background: linear-gradient(135deg, #67e8f9 0%, #38bdf8 100%);
+  box-shadow: 0 6px 25px -2px rgba(34, 224, 255, 0.65), 0 0 20px rgba(34, 224, 255, 0.4);
+  transform: translateY(-1.5px);
+  color: #020617;
+}
+.btn-cyan:active {
+  transform: translateY(0);
+  scale: 0.98;
+}
+.btn-cyan:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 3D Golden Card Edge Reflection & Specular Sheen */
+@keyframes goldenEdgeSheen {
+  0% {
+    background-position: -200% 0%;
+  }
+  100% {
+    background-position: 200% 0%;
+  }
+}
+
+@keyframes goldenEdgeOrbit {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes specularSheenPass {
+  0% {
+    transform: translateX(-160%) skewX(-25deg);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.85;
+  }
+  70% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateX(260%) skewX(-25deg);
+    opacity: 0;
+  }
+}
+
+.golden-edge-reflection {
+  background: linear-gradient(
+    90deg,
+    rgba(245, 158, 11, 0) 0%,
+    rgba(251, 191, 36, 0.3) 15%,
+    rgba(254, 240, 138, 1) 50%,
+    rgba(251, 191, 36, 0.3) 85%,
+    rgba(245, 158, 11, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: goldenEdgeSheen 2s infinite linear;
+}
+
+.golden-orbit-beam {
+  position: absolute;
+  inset: -120%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 280deg,
+    rgba(245, 158, 11, 0.5) 320deg,
+    rgba(254, 240, 138, 0.95) 345deg,
+    rgba(251, 191, 36, 0.6) 360deg
+  );
+  animation: goldenEdgeOrbit 4s linear infinite;
+  pointer-events: none;
+}
+
+.specular-shine-sweep {
+  animation: specularSheenPass 2.8s ease-in-out infinite;
+}
+
 .btn-accent {
   display: inline-flex;
   align-items: center;

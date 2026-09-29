@@ -267,21 +267,34 @@ function SignupForm() {
             </label>
 
             {error && (
-              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+              <div className="p-4 rounded-2xl bg-rose-500/15 border border-rose-500/35 text-rose-200 text-xs font-semibold leading-relaxed">
                 {error}
+                {error.toLowerCase().includes("rate limit") && (
+                  <div className="mt-2 pt-2 border-t border-rose-500/20">
+                    <Link
+                      href="/login"
+                      className="text-amber-300 font-bold hover:underline inline-flex items-center gap-1"
+                    >
+                      Rate limit active. Try signing in directly →
+                    </Link>
+                  </div>
+                )}
               </div>
             )}
 
             <button
               type="submit"
               disabled={loading || !agreedToTerms}
-              className="btn-cyan w-full py-3.5 text-sm mt-2 disabled:opacity-50"
+              className="w-full py-3.5 px-6 rounded-xl text-sm sm:text-base font-black bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-slate-950 hover:brightness-110 active:scale-[0.98] transition-all shadow-xl shadow-amber-500/30 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {loading ? (
-                "Creating account…"
+                <span className="inline-flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                  Creating Account...
+                </span>
               ) : (
                 <>
-                  Create account
+                  <span>Create Scholar Account</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}

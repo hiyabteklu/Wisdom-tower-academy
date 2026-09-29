@@ -5,6 +5,7 @@ import { CheckCircle2, XCircle, ChevronRight, RotateCcw } from "lucide-react";
 import type { QuizQuestion } from "@/data/sample-questions";
 import SolutionPanel from "./SolutionPanel";
 import MathText from "@/components/MathText";
+import { triggerAnswerFeedback } from "@/lib/sound-haptics";
 
 type Props = {
   questions: QuizQuestion[];
@@ -42,7 +43,9 @@ export default function QuizPlayer({
   function submit() {
     if (selected === null || revealed) return;
     setRevealed(true);
-    if (selected === q.correctIndex) setScore((s) => s + 1);
+    const isCorrect = selected === q.correctIndex;
+    triggerAnswerFeedback(isCorrect, false);
+    if (isCorrect) setScore((s) => s + 1);
   }
 
   function next() {

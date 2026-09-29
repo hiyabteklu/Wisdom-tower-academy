@@ -13,6 +13,9 @@ export type UserPreferences = {
   reducedMotion: boolean;
   dataSaver: boolean;
   soundEffects: boolean;
+  soundVolume: number; // 0 to 1, default 0.5 (50% sound)
+  soundPreset: "crystal" | "arcade" | "zen";
+  hapticFeedback: boolean; // default true
   fontSize: "compact" | "normal" | "large" | "xlarge";
   readingFont: "sans" | "serif" | "mono";
 
@@ -38,6 +41,9 @@ export const DEFAULT_PREFS: UserPreferences = {
   reducedMotion: false,
   dataSaver: false,
   soundEffects: true,
+  soundVolume: 0.5,
+  soundPreset: "crystal",
+  hapticFeedback: true,
   fontSize: "normal",
   readingFont: "sans",
 

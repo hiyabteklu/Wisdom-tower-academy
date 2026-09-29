@@ -22,12 +22,9 @@ import {
   Timer,
   TrendingUp,
   Zap,
-  FileDown,
-  Download,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import CustomSelect from "@/components/ui/CustomSelect";
-import { generateWeeklyReportPdf } from "@/lib/pdf-report-generator";
 import {
   computeStudentAnalytics,
   type StudentAnalyticsResult,
@@ -58,8 +55,6 @@ export default function StudentAnalyticsDashboard({
 }: StudentAnalyticsProps) {
   const [loading, setLoading] = useState(false);
   const [selectedTrackKey, setSelectedTrackKey] = useState<string>("");
-  const [generatingPdf, setGeneratingPdf] = useState(false);
-  const [pdfDownloaded, setPdfDownloaded] = useState(false);
 
   // Raw progress records from Supabase learning_progress
   const [rawProgress, setRawProgress] = useState<
@@ -126,29 +121,6 @@ export default function StudentAnalyticsDashboard({
 
   const isAutoDetected = selectedTrackKey === defaultResolvedTrack.trackId;
 
-  const handleDownloadReport = () => {
-    setGeneratingPdf(true);
-    try {
-      const doc = generateWeeklyReportPdf({
-        analytics,
-        profile: {
-          full_name: studentName,
-          education_level: educationLevel,
-          stream,
-        },
-        referenceId: `WTA-${userId.slice(0, 6).toUpperCase()}-2026`,
-      });
-      doc.save(`WTA-Weekly-Report-${studentName.replace(/\s+/g, "_")}.pdf`);
-      setPdfDownloaded(true);
-      setTimeout(() => setPdfDownloaded(false), 4000);
-    } catch (err) {
-      console.error("[Dashboard] Error generating report PDF:", err);
-      alert("Failed to generate PDF. Please try again.");
-    } finally {
-      setGeneratingPdf(false);
-    }
-  };
-
   const trackOptions = Object.values(ACADEMIC_KNOWLEDGE_BASE).map((t) => ({
     value: t.trackId,
     label: t.trackId === defaultResolvedTrack.trackId ? `${t.trackName} (Enrolled)` : t.trackName,
@@ -166,16 +138,16 @@ export default function StudentAnalyticsDashboard({
           <div className="flex items-center gap-2.5">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-sky-500/20 text-sky-300 border border-sky-400/40">
               <GraduationCap className="w-3.5 h-3.5 text-sky-400" />
-              Verified Scholar Performance Report
+              Verified Academic Analytics & Progress
             </span>
             <span className="text-xs font-mono font-bold text-slate-300">
               Standing: <strong className="text-cyan-300">{analytics.masteryTier}</strong>
             </span>
           </div>
 
-          {/* Quick Actions: Track Selector & Download Color PDF */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            <div className="w-48 sm:w-56">
+          {/* Academic Track Benchmark Selector */}
+          <div className="flex items-center gap-2.5">
+            <div className="w-56 sm:w-64">
               <CustomSelect
                 value={selectedTrackKey || defaultResolvedTrack.trackId}
                 onChange={(val) => setSelectedTrackKey(val)}
@@ -183,17 +155,6 @@ export default function StudentAnalyticsDashboard({
                 searchable={false}
               />
             </div>
-
-            <button
-              type="button"
-              onClick={handleDownloadReport}
-              disabled={generatingPdf}
-              className="px-3.5 py-2 rounded-xl text-xs font-bold border border-cyan-400/40 bg-cyan-500/15 text-cyan-200 hover:bg-cyan-500/25 hover:border-cyan-300 flex items-center gap-1.5 transition-all shadow-sm cursor-pointer disabled:opacity-50"
-              title="Download your weekly report with concise color summary"
-            >
-              <FileDown className={`w-3.5 h-3.5 ${generatingPdf ? "animate-bounce" : ""}`} />
-              {generatingPdf ? "Generating..." : pdfDownloaded ? "PDF Saved!" : "Download Report (Color PDF)"}
-            </button>
           </div>
         </div>
 

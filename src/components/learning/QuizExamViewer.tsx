@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import RichContent from "@/components/learning/RichContent";
 import { saveProgress, saveExamAttempt } from "@/lib/contentWithOffline";
+import { triggerAnswerFeedback, triggerFiftyFeedback } from "@/lib/sound-haptics";
 
 type Q = { prompt: string; choices?: string[]; correct?: number; solution?: string };
 type Props = {
@@ -146,7 +147,10 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
   function openOfficialSolution() {
     setShowSol((v) => {
       const next = !v;
-      if (next) setLockedBySolution((prev) => ({ ...prev, [idx]: true }));
+      if (next) {
+        setLockedBySolution((prev) => ({ ...prev, [idx]: true }));
+        triggerFiftyFeedback(Boolean(isExam));
+      }
       return next;
     });
   }
@@ -245,7 +249,14 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
               const showMark = isExam ? submitted : showSol || submitted;
               return (
                 <button key={ci} type="button" disabled={answersLocked}
-                  onClick={() => { if (!answersLocked) setAnswers((a) => ({ ...a, [idx]: ci })); }}
+                  onClick={() => {
+                    if (!answersLocked) {
+                      setAnswers((a) => ({ ...a, [idx]: ci }));
+                      if (!isExam && q.correct !== undefined) {
+                        triggerAnswerFeedback(ci === q.correct, Boolean(isExam));
+                      }
+                    }
+                  }}
                   className={`w-full text-left px-2.5 py-2 rounded-lg border text-[13px] leading-snug transition-colors ${
                     selected ? "border-amber-400/50 bg-amber-500/15 text-white" : "border-white/12 text-white/85"
                   } ${showMark && isRight ? "!border-emerald-400/50 !bg-emerald-500/10" : ""} ${
