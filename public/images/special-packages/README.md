@@ -25,20 +25,6 @@ Missing files show a dark placeholder until you upload them.
 
 | Exact filename | Course |
 |----------------|--------|
-| `meng3052.jpg` | MEng3052 · Engineering Thermodynamics |
-| `eceg3082.jpg` | ECEg3082 · Network Analysis and Synthesis |
-| `eceg3092.jpg` | ECEg3092 · Introduction to Electrical Machines |
-| `eceg3094.jpg` | ECEg3094 · Electrical Engineering Lab IV |
-| `eceg3102.jpg` | ECEg3102 · Digital Logic Design |
-| `eceg3052.jpg` | ECEg3052 · Electrical Materials and Technology |
-| `eceg3096.jpg` | ECEg3096 · Electrical Workshop Practice II |
-
----
-
-## Courses — Semester 2 (7 files) — put in `special-packages/courses/`
-
-| Exact filename | Course |
-|----------------|--------|
 | `eceg3071.jpg` | ECEg3071 · Applied Electronics II |
 | `econ1011.jpg` | Econ1011 · Economics |
 | `eceg3051.jpg` | ECEg3051 · Electromagnetic Fields |
@@ -46,6 +32,20 @@ Missing files show a dark placeholder until you upload them.
 | `eceg3073.jpg` | ECEg3073 · Electrical Engineering Laboratory III |
 | `eceg3101.jpg` | ECEg3101 · Object Oriented Programming |
 | `eceg3061.jpg` | ECEg3061 · Computational Methods |
+
+---
+
+## Courses — Semester 2 (7 files) — put in `special-packages/courses/`
+
+| Exact filename | Course |
+|----------------|--------|
+| `meng3052.jpg` | MEng3052 · Engineering Thermodynamics |
+| `eceg3082.jpg` | ECEg3082 · Network Analysis and Synthesis |
+| `eceg3092.jpg` | ECEg3092 · Introduction to Electrical Machines |
+| `eceg3094.jpg` | ECEg3094 · Electrical Engineering Lab IV |
+| `eceg3102.jpg` | ECEg3102 · Digital Logic Design |
+| `eceg3052.jpg` | ECEg3052 · Electrical Materials and Technology |
+| `eceg3096.jpg` | ECEg3096 · Electrical Workshop Practice II |
 
 ---
 

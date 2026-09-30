@@ -53,16 +53,6 @@ function course(code: string, title: string): SpecialCourse {
 }
 
 const eceY3Sem1: SpecialCourse[] = [
-  course("MEng3052", "Engineering Thermodynamics"),
-  course("ECEg3082", "Network Analysis and Synthesis"),
-  course("ECEg3092", "Introduction to Electrical Machines"),
-  course("ECEg3094", "Electrical Engineering Lab IV"),
-  course("ECEg3102", "Digital Logic Design"),
-  course("ECEg3052", "Electrical Materials and Technology"),
-  course("ECEg3096", "Electrical Workshop Practice II"),
-];
-
-const eceY3Sem2: SpecialCourse[] = [
   course("ECEg3071", "Applied Electronics II"),
   course("Econ1011", "Economics"),
   course("ECEg3051", "Electromagnetic Fields"),
@@ -70,6 +60,16 @@ const eceY3Sem2: SpecialCourse[] = [
   course("ECEg3073", "Electrical Engineering Laboratory III"),
   course("ECEg3101", "Object Oriented Programming"),
   course("ECEg3061", "Computational Methods"),
+];
+
+const eceY3Sem2: SpecialCourse[] = [
+  course("MEng3052", "Engineering Thermodynamics"),
+  course("ECEg3082", "Network Analysis and Synthesis"),
+  course("ECEg3092", "Introduction to Electrical Machines"),
+  course("ECEg3094", "Electrical Engineering Lab IV"),
+  course("ECEg3102", "Digital Logic Design"),
+  course("ECEg3052", "Electrical Materials and Technology"),
+  course("ECEg3096", "Electrical Workshop Practice II"),
 ];
 
 export const specialPackages: SpecialPackage[] = [
