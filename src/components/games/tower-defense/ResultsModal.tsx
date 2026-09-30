@@ -241,13 +241,15 @@ export default function ResultsModal({
                           </div>
                         </div>
 
-                        {/* Written Proof */}
+                        {/* Written Proof / Explanation */}
                         {item.solution && (
-                          <div className="p-4 rounded-xl border border-cyan-500/20 bg-cyan-950/15 text-slate-300 leading-relaxed text-xs sm:text-sm">
+                          <div className="p-4 rounded-xl border border-cyan-500/20 bg-cyan-950/15 text-slate-200 leading-relaxed text-xs sm:text-sm">
                             <span className="text-[11px] font-mono uppercase text-cyan-300 block mb-1 font-bold">
                               Step-by-step Solution:
                             </span>
-                            <MathText text={item.solution} />
+                            <div className="font-serif italic font-bold text-sm text-cyan-50/95 leading-relaxed explanation-text">
+                              <MathText text={item.solution} />
+                            </div>
                           </div>
                         )}
                       </div>

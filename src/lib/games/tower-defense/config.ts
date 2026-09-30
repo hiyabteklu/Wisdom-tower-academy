@@ -5,8 +5,20 @@
 
 import { PowerUpInventory, WaveConfig, DefenseRank } from "./types";
 
-export const STARTING_TOWER_HEALTH = 5;
-export const MAX_TOWER_HEALTH = 5;
+export type GameDifficulty = "easy" | "medium" | "hard";
+
+export const DIFFICULTY_MAX_MISSES: Record<GameDifficulty, number> = {
+  easy: 15,
+  medium: 10,
+  hard: 5,
+};
+
+export function getMaxMissesForDifficulty(difficulty: GameDifficulty): number {
+  return DIFFICULTY_MAX_MISSES[difficulty] || 10;
+}
+
+export const STARTING_TOWER_HEALTH = 10;
+export const MAX_TOWER_HEALTH = 15;
 
 export const BASE_TIME_PER_QUESTION_SEC = 25;
 

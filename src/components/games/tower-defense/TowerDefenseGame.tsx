@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   EnemyUnit,
@@ -13,8 +13,9 @@ import {
   EnemyType,
 } from "@/lib/games/tower-defense/types";
 import {
-  STARTING_TOWER_HEALTH,
-  MAX_TOWER_HEALTH,
+  GameDifficulty,
+  DIFFICULTY_MAX_MISSES,
+  getMaxMissesForDifficulty,
   INITIAL_POWER_UPS,
   CHRONOS_STASIS_DURATION_SEC,
   getComboMultiplier,
@@ -25,7 +26,6 @@ import {
 import { fairShuffleChoices } from "@/lib/games/tower-defense/fair-shuffle";
 import { saveDefenseRun } from "@/lib/games/tower-defense/high-scores";
 import ArcadeMobileBattlefield from "./ArcadeMobileBattlefield";
-import BreachResolutionModal from "./BreachResolutionModal";
 import WaveClearedModal from "./WaveClearedModal";
 import ResultsModal from "./ResultsModal";
 import TowerSelector from "./TowerSelector";
@@ -37,24 +37,10 @@ import {
   triggerHaptic,
 } from "@/lib/sound-haptics";
 import { triggerCorrectConfetti } from "@/lib/confetti";
-import {
-  Shield,
-  Heart,
-  Snowflake,
-  SplitSquareVertical,
-  FastForward,
-  Pause,
-  Volume2,
-  VolumeX,
-  Play,
-  RotateCcw,
-  Sparkles,
-} from "lucide-react";
 
 type GamePhase =
   | "select-tower"
   | "playing"
-  | "breach-modal"
   | "wave-clear"
   | "game-over";
 
@@ -77,12 +63,13 @@ export default function TowerDefenseGame({ initialTowerId, onExit }: Props) {
   // Navigation & High-level State
   const [phase, setPhase] = useState<GamePhase>("select-tower");
   const [selectedTrack, setSelectedTrack] = useState<TowerTrack | null>(null);
+  const [difficulty, setDifficulty] = useState<GameDifficulty>("medium");
 
   // Core Game Session State
   const [currentWave, setCurrentWave] = useState(1);
   const [tower, setTower] = useState<TowerState>({
-    maxHp: MAX_TOWER_HEALTH,
-    hp: STARTING_TOWER_HEALTH,
+    maxHp: 10,
+    hp: 10,
     isBreached: false,
   });
   const [inventory, setInventory] = useState<PowerUpInventory>(INITIAL_POWER_UPS);
@@ -107,15 +94,6 @@ export default function TowerDefenseGame({ initialTowerId, onExit }: Props) {
   const [missedQuestions, setMissedQuestions] = useState<MissedQuestionReview[]>([]);
   const [finalStats, setFinalStats] = useState<DefenseRunStats | null>(null);
 
-  // Educational Breach Modal State
-  const [breachInfo, setBreachInfo] = useState<{
-    prompt: string;
-    selectedText?: string;
-    correctText: string;
-    solution?: string;
-    isTimeout: boolean;
-  } | null>(null);
-
   // Staged choice selection ref for flying arrow
   const pendingChoiceRef = useRef<number | null>(null);
 
@@ -129,7 +107,6 @@ export default function TowerDefenseGame({ initialTowerId, onExit }: Props) {
         throw new Error("No exam questions available in track");
       }
 
-      // Pick next question from exam list (loops fairly with reshuffle)
       const qIndex = questionPoolIndexRef.current % selectedTrack.questions.length;
       questionPoolIndexRef.current += 1;
       const baseQuestion = selectedTrack.questions[qIndex];
@@ -158,94 +135,6 @@ export default function TowerDefenseGame({ initialTowerId, onExit }: Props) {
       };
     },
     [selectedTrack]
-  );
-
-  // Initialize Wave Enemies
-  const startWave = useCallback(
-    (waveNum: number) => {
-      if (!selectedTrack) return;
-      const config = getWaveConfig(waveNum);
-      const newEnemies: EnemyUnit[] = [];
-
-      for (let i = 0; i < config.enemyCount; i++) {
-        let type: EnemyType = "basic";
-        if (config.hasBoss && i === config.enemyCount - 1) {
-          type = "boss";
-        } else if (waveNum >= 2 && i % 3 === 1) {
-          type = "fast";
-        } else if (waveNum >= 3 && i === config.enemyCount - 2) {
-          type = "tank";
-        }
-        newEnemies.push(createEnemyUnit(type, config.timePerQuestionSec));
-      }
-
-      setWaveStartScore(score);
-      setEnemiesQueue(newEnemies.slice(1));
-      setCurrentEnemy(newEnemies[0]);
-      setTimeRemainingSec(config.timePerQuestionSec);
-      setTotalQuestionTimeSec(config.timePerQuestionSec);
-      setIsFrozen(false);
-      setFreezeRemainingSec(0);
-      setPhase("playing");
-    },
-    [selectedTrack, createEnemyUnit, score]
-  );
-
-  // Start a new Run with chosen Citadel
-  const handleSelectTrack = useCallback(
-    (track: TowerTrack) => {
-      setSelectedTrack(track);
-      questionPoolIndexRef.current = 0;
-      setCurrentWave(1);
-      setTower({ maxHp: MAX_TOWER_HEALTH, hp: STARTING_TOWER_HEALTH, isBreached: false });
-      setInventory(INITIAL_POWER_UPS);
-      setScore(0);
-      setCombo(0);
-      setMaxCombo(0);
-      setAttemptedCount(0);
-      setCorrectCount(0);
-      setMissedQuestions([]);
-      setFinalStats(null);
-      setIsPaused(false);
-
-      // Start wave 1
-      setTimeout(() => {
-        const config = getWaveConfig(1);
-        const enemies: EnemyUnit[] = [];
-        for (let i = 0; i < config.enemyCount; i++) {
-          let type: EnemyType = "basic";
-          if (i === 1) type = "fast";
-          // Pick question
-          const qIndex = i % track.questions.length;
-          const q = track.questions[qIndex];
-          const { shuffledChoices, shuffledCorrectIndex } = fairShuffleChoices(
-            q.choices,
-            q.correctIndex
-          );
-          enemies.push({
-            id: `enemy-${Date.now()}-${i}`,
-            question: q,
-            shuffledChoices,
-            shuffledCorrectIndex,
-            eliminatedChoiceIndices: [],
-            type,
-            maxHp: 1,
-            hp: 1,
-            speedMultiplier: type === "fast" ? 1.3 : 1.0,
-            timeLimitSec: config.timePerQuestionSec,
-            title: q.examTitle,
-            loreLabel: "Academic Adversary",
-          });
-        }
-        questionPoolIndexRef.current = config.enemyCount;
-        setEnemiesQueue(enemies.slice(1));
-        setCurrentEnemy(enemies[0]);
-        setTimeRemainingSec(config.timePerQuestionSec);
-        setTotalQuestionTimeSec(config.timePerQuestionSec);
-        setPhase("playing");
-      }, 50);
-    },
-    []
   );
 
   // End the game session and record local statistics
@@ -332,17 +221,18 @@ export default function TowerDefenseGame({ initialTowerId, onExit }: Props) {
     };
     setMissedQuestions((prev) => [...prev, missedItem]);
 
-    setBreachInfo({
-      prompt: currentEnemy.question.prompt,
-      correctText: correctChoiceText,
-      solution: currentEnemy.question.solution,
-      isTimeout: true,
-    });
+    // Check if player has run out of attempts (Game ends after 5 hard, 10 medium, 15 easy)
+    if (newHp <= 0) {
+      setTimeout(() => {
+        triggerGameOver(currentWave - 1);
+      }, 300);
+    } else {
+      // Answer does NOT pop up mid-game! Advance immediately
+      advanceToNextEnemy();
+    }
+  }, [currentEnemy, tower.hp, soundMuted, currentWave, triggerGameOver, advanceToNextEnemy]);
 
-    setPhase("breach-modal");
-  }, [currentEnemy, tower.hp, soundMuted]);
-
-  // Main countdown timer and march progress loop
+  // Main countdown timer
   useEffect(() => {
     if (phase !== "playing" || isPaused || !currentEnemy) return;
 
@@ -381,7 +271,7 @@ export default function TowerDefenseGame({ initialTowerId, onExit }: Props) {
     [currentEnemy, phase, isPaused]
   );
 
-  // Arrow impacts target enemy (or deflects and bounces back if wrong)
+  // Arrow impacts target enemy
   const handleArrowImpactResolved = useCallback(
     (isCorrect: boolean) => {
       if (!currentEnemy) return;
@@ -390,7 +280,6 @@ export default function TowerDefenseGame({ initialTowerId, onExit }: Props) {
       if (isCorrect) {
         // Correct answer!
         if (currentEnemy.hp > 1) {
-          // Multi-hit tank/boss enemy
           setCurrentEnemy((prev) => (prev ? { ...prev, hp: prev.hp - 1 } : null));
           if (!soundMuted) playFiftyPercentSound();
           triggerHaptic("light");
@@ -416,7 +305,7 @@ export default function TowerDefenseGame({ initialTowerId, onExit }: Props) {
           advanceToNextEnemy();
         }
       } else {
-        // Wrong answer: Tower damage + Educational breakdown
+        // Wrong answer: deduct attempt, NO mid-game popup, answer reviewed at the end!
         const newHp = Math.max(0, tower.hp - 1);
         setTower((prev) => ({ ...prev, hp: newHp }));
         setCombo(0);
@@ -438,141 +327,205 @@ export default function TowerDefenseGame({ initialTowerId, onExit }: Props) {
         };
         setMissedQuestions((prev) => [...prev, missedItem]);
 
-        // Small delay so student sees the arrow ricochet off the shield and tumble down
-        setTimeout(() => {
-          setBreachInfo({
-            prompt: currentEnemy.question.prompt,
-            selectedText,
-            correctText: correctChoiceText,
-            solution: currentEnemy.question.solution,
-            isTimeout: false,
-          });
-          setPhase("breach-modal");
-        }, 500);
+        // Check if game over threshold reached (5 hard, 10 medium, 15 easy)
+        if (newHp <= 0) {
+          setTimeout(() => {
+            triggerGameOver(currentWave - 1);
+          }, 350);
+        } else {
+          // Advance immediately to next question without interrupting popup!
+          setTimeout(() => {
+            advanceToNextEnemy();
+          }, 200);
+        }
       }
     },
     [
       currentEnemy,
       combo,
       maxCombo,
-      tower.hp,
       soundMuted,
+      tower.hp,
+      currentWave,
       advanceToNextEnemy,
+      triggerGameOver,
     ]
   );
 
-  // Resume after learning from breach modal
-  const handleAcknowledgeBreach = useCallback(() => {
-    setBreachInfo(null);
-    if (tower.hp <= 0) {
-      // Citadel health depleted
-      triggerGameOver(currentWave - 1);
-    } else {
-      advanceToNextEnemy();
-    }
-  }, [tower.hp, currentWave, triggerGameOver, advanceToNextEnemy]);
+  // Initialize Wave Enemies
+  const startWave = useCallback(
+    (waveNum: number) => {
+      if (!selectedTrack) return;
+      const config = getWaveConfig(waveNum);
+      const newEnemies: EnemyUnit[] = [];
 
-  // Deploy next wave after choosing reward
-  const handleDeployNextWave = useCallback(
-    (chosenPowerUp: PowerUpType) => {
-      // Add selected supply to inventory
-      setInventory((prev) => ({
-        ...prev,
-        [chosenPowerUp]: prev[chosenPowerUp] + 1,
-      }));
-
-      // If heart chosen, immediately repair 1 HP if damaged
-      if (chosenPowerUp === "extraHeart") {
-        setTower((t) => ({ ...t, hp: Math.min(t.maxHp, t.hp + 1) }));
+      for (let i = 0; i < config.enemyCount; i++) {
+        let type: EnemyType = "basic";
+        if (config.hasBoss && i === config.enemyCount - 1) {
+          type = "boss";
+        } else if (waveNum >= 2 && i % 3 === 1) {
+          type = "fast";
+        } else if (waveNum >= 3 && i === config.enemyCount - 2) {
+          type = "tank";
+        }
+        newEnemies.push(createEnemyUnit(type, config.timePerQuestionSec));
       }
 
-      const nextWave = currentWave + 1;
-      setCurrentWave(nextWave);
-      startWave(nextWave);
+      setWaveStartScore(score);
+      setEnemiesQueue(newEnemies.slice(1));
+      setCurrentEnemy(newEnemies[0]);
+      setTimeRemainingSec(config.timePerQuestionSec);
+      setTotalQuestionTimeSec(config.timePerQuestionSec);
+      setIsFrozen(false);
+      setFreezeRemainingSec(0);
+      setPhase("playing");
     },
-    [currentWave, startWave]
+    [selectedTrack, createEnemyUnit, score]
   );
 
-  // Power-up triggers
+  // Start a new Run with chosen Citadel & chosen difficulty
+  const handleSelectTrack = useCallback(
+    (track: TowerTrack, chosenDifficulty?: GameDifficulty) => {
+      const activeDiff = chosenDifficulty || difficulty;
+      const allowedMisses = getMaxMissesForDifficulty(activeDiff);
+
+      setSelectedTrack(track);
+      setDifficulty(activeDiff);
+      questionPoolIndexRef.current = 0;
+      setCurrentWave(1);
+      setTower({ maxHp: allowedMisses, hp: allowedMisses, isBreached: false });
+      setInventory(INITIAL_POWER_UPS);
+      setScore(0);
+      setCombo(0);
+      setMaxCombo(0);
+      setAttemptedCount(0);
+      setCorrectCount(0);
+      setMissedQuestions([]);
+      setFinalStats(null);
+      setIsPaused(false);
+
+      // Start wave 1
+      setTimeout(() => {
+        const config = getWaveConfig(1);
+        const enemies: EnemyUnit[] = [];
+        for (let i = 0; i < config.enemyCount; i++) {
+          let type: EnemyType = "basic";
+          if (i === 1) type = "fast";
+          const qIndex = i % track.questions.length;
+          const q = track.questions[qIndex];
+          const { shuffledChoices, shuffledCorrectIndex } = fairShuffleChoices(
+            q.choices,
+            q.correctIndex
+          );
+          enemies.push({
+            id: `enemy-${Date.now()}-${i}`,
+            question: q,
+            shuffledChoices,
+            shuffledCorrectIndex,
+            eliminatedChoiceIndices: [],
+            type,
+            maxHp: 1,
+            hp: 1,
+            speedMultiplier: type === "fast" ? 1.3 : 1.0,
+            timeLimitSec: config.timePerQuestionSec,
+            title: q.examTitle,
+            loreLabel: "Academic Adversary",
+          });
+        }
+        questionPoolIndexRef.current = config.enemyCount;
+        setEnemiesQueue(enemies.slice(1));
+        setCurrentEnemy(enemies[0]);
+        setTimeRemainingSec(config.timePerQuestionSec);
+        setTotalQuestionTimeSec(config.timePerQuestionSec);
+        setPhase("playing");
+      }, 50);
+    },
+    [difficulty]
+  );
+
+  // Next Wave deploy
+  const handleDeployNextWave = useCallback(() => {
+    const nextWaveNum = currentWave + 1;
+    setCurrentWave(nextWaveNum);
+    startWave(nextWaveNum);
+  }, [currentWave, startWave]);
+
+  // Power-up activation handlers
   const activateFreeze = useCallback(() => {
-    if (inventory.freeze <= 0 || isFrozen || phase !== "playing") return;
+    if (inventory.freeze <= 0 || isFrozen || isPaused) return;
     setInventory((inv) => ({ ...inv, freeze: inv.freeze - 1 }));
     setIsFrozen(true);
     setFreezeRemainingSec(CHRONOS_STASIS_DURATION_SEC);
     if (!soundMuted) playFiftyPercentSound();
     triggerHaptic("light");
-  }, [inventory.freeze, isFrozen, phase, soundMuted]);
+  }, [inventory.freeze, isFrozen, isPaused, soundMuted]);
 
   const activateFiftyFifty = useCallback(() => {
-    if (!currentEnemy || inventory.fiftyFifty <= 0 || phase !== "playing") return;
-    if (currentEnemy.eliminatedChoiceIndices.length > 0) return; // Already used on this enemy
+    if (!currentEnemy || inventory.fiftyFifty <= 0 || isPaused) return;
+    if (currentEnemy.eliminatedChoiceIndices.length > 0) return;
 
-    const choicesCount = currentEnemy.shuffledChoices.length;
-    if (choicesCount <= 2) return;
+    const wrongIndices = currentEnemy.shuffledChoices
+      .map((_, idx) => idx)
+      .filter((idx) => idx !== currentEnemy.shuffledCorrectIndex);
 
-    // Pick 2 wrong choice indices to eliminate
-    const wrongIndices = Array.from({ length: choicesCount })
-      .map((_, i) => i)
-      .filter((i) => i !== currentEnemy.shuffledCorrectIndex);
-
-    const shuffledWrongs = [...wrongIndices].sort(() => Math.random() - 0.5);
-    const toEliminate = shuffledWrongs.slice(0, 2);
+    // Shuffle and pick 2 to eliminate
+    const shuffledWrong = [...wrongIndices].sort(() => 0.5 - Math.random());
+    const eliminated = shuffledWrong.slice(0, 2);
 
     setCurrentEnemy((prev) =>
-      prev ? { ...prev, eliminatedChoiceIndices: toEliminate } : null
+      prev ? { ...prev, eliminatedChoiceIndices: eliminated } : null
     );
     setInventory((inv) => ({ ...inv, fiftyFifty: inv.fiftyFifty - 1 }));
-
     if (!soundMuted) playFiftyPercentSound();
     triggerHaptic("light");
-  }, [currentEnemy, inventory.fiftyFifty, phase, soundMuted]);
+  }, [currentEnemy, inventory.fiftyFifty, isPaused, soundMuted]);
 
   const activateExtraHeart = useCallback(() => {
-    if (inventory.extraHeart <= 0 || tower.hp >= tower.maxHp || phase !== "playing") return;
+    if (inventory.extraHeart <= 0 || tower.hp >= tower.maxHp || isPaused) return;
     setInventory((inv) => ({ ...inv, extraHeart: inv.extraHeart - 1 }));
-    setTower((t) => ({ ...t, hp: Math.min(t.maxHp, t.hp + 1) }));
-    if (!soundMuted) playCelebrationSound();
-    triggerHaptic("celebrate");
-  }, [inventory.extraHeart, tower.hp, tower.maxHp, phase, soundMuted]);
+    setTower((prev) => ({ ...prev, hp: Math.min(prev.maxHp, prev.hp + 1) }));
+    if (!soundMuted) playCorrectSound();
+    triggerHaptic("light");
+  }, [inventory.extraHeart, tower.hp, tower.maxHp, isPaused, soundMuted]);
 
   const activateSkip = useCallback(() => {
-    if (!currentEnemy || inventory.skip <= 0 || phase !== "playing") return;
+    if (inventory.skip <= 0 || isPaused) return;
     setInventory((inv) => ({ ...inv, skip: inv.skip - 1 }));
     if (!soundMuted) playFiftyPercentSound();
     triggerHaptic("light");
     advanceToNextEnemy();
-  }, [currentEnemy, inventory.skip, phase, soundMuted, advanceToNextEnemy]);
+  }, [inventory.skip, isPaused, soundMuted, advanceToNextEnemy]);
 
-  const marchProgressPct = useMemo(() => {
-    if (totalQuestionTimeSec <= 0) return 0;
-    return Math.max(0, Math.min(100, ((totalQuestionTimeSec - timeRemainingSec) / totalQuestionTimeSec) * 100));
-  }, [timeRemainingSec, totalQuestionTimeSec]);
+  const marchProgressPct = totalQuestionTimeSec > 0
+    ? Math.max(0, Math.min(100, ((totalQuestionTimeSec - timeRemainingSec) / totalQuestionTimeSec) * 100))
+    : 0;
 
-  const comboMultiplier = getComboMultiplier(combo);
-
-  // If in tower selection mode, render selector
-  if (phase === "select-tower" || !selectedTrack) {
-    return <TowerSelector onSelectTower={handleSelectTrack} />;
+  // View: Tower Selection Screen
+  if (phase === "select-tower") {
+    return (
+      <TowerSelector
+        onSelectTower={handleSelectTrack}
+        selectedDifficulty={difficulty}
+        onDifficultyChange={setDifficulty}
+      />
+    );
   }
 
-  // If game over, render results debrief
+  // View: Game Over & Full Review Screen
   if (phase === "game-over" && finalStats) {
     return (
       <ResultsModal
         stats={finalStats}
-        onRetry={() => handleSelectTrack(selectedTrack)}
+        onRetry={() => {
+          if (selectedTrack) handleSelectTrack(selectedTrack, difficulty);
+        }}
         onSelectAnotherTower={() => setPhase("select-tower")}
       />
     );
   }
 
   return (
-    <div className="relative min-h-[85vh] py-3 sm:py-6 flex flex-col items-center justify-center">
-      {/* Background ambient glow */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[34rem] h-[34rem] rounded-full blur-[140px] opacity-15 bg-sky-500" />
-      </div>
-
+    <div className="relative w-full h-full">
       <ArcadeMobileBattlefield
         currentEnemy={currentEnemy}
         upcomingEnemies={enemiesQueue}
@@ -587,6 +540,7 @@ export default function TowerDefenseGame({ initialTowerId, onExit }: Props) {
         inventory={inventory}
         soundMuted={soundMuted}
         isPaused={isPaused}
+        difficulty={difficulty}
         onSelectChoice={handleSelectChoice}
         onToggleMute={() => setSoundMuted(!soundMuted)}
         onTogglePause={() => setIsPaused(!isPaused)}
@@ -598,20 +552,6 @@ export default function TowerDefenseGame({ initialTowerId, onExit }: Props) {
         onArrowImpactResolved={handleArrowImpactResolved}
         onExit={handleExit}
       />
-
-      {/* Educational Breach Breakdown Modal */}
-      {breachInfo && (
-        <BreachResolutionModal
-          isOpen={phase === "breach-modal"}
-          questionPrompt={breachInfo.prompt}
-          selectedChoiceText={breachInfo.selectedText}
-          correctChoiceText={breachInfo.correctText}
-          solution={breachInfo.solution}
-          isTimeout={breachInfo.isTimeout}
-          towerHpRemaining={tower.hp}
-          onContinue={handleAcknowledgeBreach}
-        />
-      )}
 
       {/* Wave Cleared Reward Modal */}
       <WaveClearedModal

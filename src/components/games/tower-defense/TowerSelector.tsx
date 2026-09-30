@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { TowerTrack } from "@/lib/games/tower-defense/types";
+import { GameDifficulty, DIFFICULTY_MAX_MISSES } from "@/lib/games/tower-defense/config";
 import { getPlayableExamTowers } from "@/lib/games/tower-defense/curated-exam-tracks";
 import { getTowerPersonalBest } from "@/lib/games/tower-defense/high-scores";
 import {
@@ -13,16 +14,31 @@ import {
   Sparkles,
   ArrowRight,
   HelpCircle,
+  Zap,
+  Target,
+  Flame,
 } from "lucide-react";
 import Link from "next/link";
 
 interface Props {
-  onSelectTower: (track: TowerTrack) => void;
+  onSelectTower: (track: TowerTrack, difficulty: GameDifficulty) => void;
+  selectedDifficulty?: GameDifficulty;
+  onDifficultyChange?: (difficulty: GameDifficulty) => void;
 }
 
-export default function TowerSelector({ onSelectTower }: Props) {
+export default function TowerSelector({
+  onSelectTower,
+  selectedDifficulty = "medium",
+  onDifficultyChange,
+}: Props) {
   const [tracks, setTracks] = useState<TowerTrack[]>([]);
   const [loading, setLoading] = useState(true);
+  const [difficulty, setDifficulty] = useState<GameDifficulty>(selectedDifficulty);
+
+  const handleDifficultySelect = (diff: GameDifficulty) => {
+    setDifficulty(diff);
+    onDifficultyChange?.(diff);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -77,6 +93,70 @@ export default function TowerSelector({ onSelectTower }: Props) {
               <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
               KaTeX LaTeX Formats
             </span>
+          </div>
+
+          {/* Difficulty Selection Bar */}
+          <div className="mt-8 max-w-xl mx-auto rounded-2xl border border-white/10 bg-slate-950/80 p-3 backdrop-blur-md shadow-xl">
+            <div className="text-center mb-2.5">
+              <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                Choose Survival Difficulty:
+              </span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => handleDifficultySelect("easy")}
+                className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all ${
+                  difficulty === "easy"
+                    ? "bg-emerald-500/20 border-emerald-400 text-emerald-200 shadow-md shadow-emerald-500/20 ring-1 ring-emerald-400"
+                    : "border-white/5 bg-slate-900/60 text-slate-400 hover:text-white hover:bg-slate-900"
+                }`}
+              >
+                <div className="flex items-center gap-1 text-xs font-black uppercase">
+                  <Shield className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Easy</span>
+                </div>
+                <span className="text-[10px] font-mono text-slate-400 mt-0.5">
+                  15 Wrong Attempts
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleDifficultySelect("medium")}
+                className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all ${
+                  difficulty === "medium"
+                    ? "bg-amber-500/20 border-amber-400 text-amber-200 shadow-md shadow-amber-500/20 ring-1 ring-amber-400"
+                    : "border-white/5 bg-slate-900/60 text-slate-400 hover:text-white hover:bg-slate-900"
+                }`}
+              >
+                <div className="flex items-center gap-1 text-xs font-black uppercase">
+                  <Target className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Medium</span>
+                </div>
+                <span className="text-[10px] font-mono text-slate-400 mt-0.5">
+                  10 Wrong Attempts
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleDifficultySelect("hard")}
+                className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all ${
+                  difficulty === "hard"
+                    ? "bg-rose-500/20 border-rose-400 text-rose-200 shadow-md shadow-rose-500/20 ring-1 ring-rose-400"
+                    : "border-white/5 bg-slate-900/60 text-slate-400 hover:text-white hover:bg-slate-900"
+                }`}
+              >
+                <div className="flex items-center gap-1 text-xs font-black uppercase">
+                  <Flame className="w-3.5 h-3.5 text-rose-400" />
+                  <span>Hard</span>
+                </div>
+                <span className="text-[10px] font-mono text-slate-400 mt-0.5">
+                  5 Wrong Attempts
+                </span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -161,11 +241,11 @@ export default function TowerSelector({ onSelectTower }: Props) {
                       </Link>
                     ) : (
                       <button
-                        onClick={() => onSelectTower(track)}
+                        onClick={() => onSelectTower(track, difficulty)}
                         className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 px-4 py-2 text-xs font-bold text-slate-950 shadow-md hover:brightness-110 active:scale-95 transition-all"
                       >
                         <Play className="w-3.5 h-3.5 fill-current" />
-                        <span>Initiate Defense</span>
+                        <span>Initiate Defense ({difficulty.toUpperCase()})</span>
                       </button>
                     )}
                   </div>

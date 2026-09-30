@@ -28,6 +28,8 @@ import {
   Swords,
   Maximize2,
   Sparkles,
+  ArrowLeft,
+  LayoutGrid,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { packageImages } from "@/data/packages";
@@ -68,7 +70,15 @@ export interface AcademicResultItem {
   created_at: string;
 }
 
-type LearningTab = "courses" | "games" | "timer" | "planner" | "goals" | "notes" | "analytics";
+type LearningTab =
+  | "overview"
+  | "courses"
+  | "games"
+  | "timer"
+  | "planner"
+  | "goals"
+  | "notes"
+  | "analytics";
 
 const STORAGE_ENROLLED_COURSES = "wt_enrolled_courses_v2";
 const STORAGE_NOTEBOOK_KEY = "wt_student_notebook_v5";
@@ -138,77 +148,63 @@ const AVAILABLE_COURSES = [
     level: "Postgraduate",
     path: "/academy/gat",
     image: packageImages["gat"],
-    desc: "Postgraduate verbal, quantitative & analytical entrance exam preparation.",
-  },
-  {
-    id: "coc",
-    title: "COC Competency Assessment",
-    level: "Professional Certification",
-    path: "/academy/coc",
-    image: packageImages["coc"],
-    desc: "Occupational competency exams, practice drills & skill assessment questions.",
-  },
-  {
-    id: "exit-exam",
-    title: "National Exit Exam",
-    level: "Graduation Assessment",
-    path: "/academy/exit-exam",
-    image: packageImages["exit-exam"],
-    desc: "Departmental exit exam question banks & university graduation mock tests.",
+    desc: "Graduate Aptitude Test analytics, logical reasoning, and verbal drill questions.",
   },
 ];
 
-export default function MyLearningPage() {
-  const [activeTab, setActiveTab] = useState<LearningTab>("courses");
+export default function LearningPage() {
+  const [activeTab, setActiveTab] = useState<LearningTab>("overview");
   const [selectedGame, setSelectedGame] = useState<"defense" | "climb">("defense");
 
-  // Immediate optimistic states — ZERO delay or blank screen when switching!
-  const [userId, setUserId] = useState<string>("");
+  // User details
+  const [userId, setUserId] = useState<string | null>(null);
   const [userName, setUserName] = useState("Scholar");
   const [userEmail, setUserEmail] = useState("");
-  const [studentId, setStudentId] = useState("WT-2026");
-  const [streakDays, setStreakDays] = useState(5);
-  const [results, setResults] = useState<AcademicResultItem[]>([]);
+  const [studentId, setStudentId] = useState("WTA-7749");
+  const [streakDays, setStreakDays] = useState(1);
 
-  // Enrolled / Pinned Courses (Student adds/removes only relevant packages)
-  const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>(["grade-12", "freshman"]);
+  // Enrolled courses state
+  const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>([
+    "freshman",
+    "grade-12",
+    "uat",
+  ]);
   const [showCourseManager, setShowCourseManager] = useState(false);
 
-  // Daily Goals State
-  const [goals, setGoals] = useState<StudyGoalItem[]>([
-    { id: "g-1", text: "Review Chapter 1 summary notes", completed: true, priority: "high" },
-    { id: "g-2", text: "Solve 15 practice questions in Question Bank", completed: false, priority: "high" },
-    { id: "g-3", text: "Review active recall flashcards for 15 minutes", completed: false, priority: "medium" },
-  ]);
+  // Daily goals state
+  const [goals, setGoals] = useState<StudyGoalItem[]>([]);
   const [newGoalText, setNewGoalText] = useState("");
-  const [newGoalPriority, setNewGoalPriority] = useState<"high" | "medium" | "low">("medium");
+  const [newGoalPriority, setNewGoalPriority] = useState<"high" | "medium" | "low">("high");
 
-  // Notes State: Simple, clean
-  const [folders, setFolders] = useState<NoteFolder[]>([
-    {
-      id: "f-1",
-      name: "General Notes",
-      sheets: [
-        {
-          id: "s-1",
-          title: "Study Notes",
-          content: "Click here to start typing your notes, formulas, or summaries...",
-          updatedAt: new Date().toISOString(),
-        },
-      ],
-    },
-  ]);
-  const [selectedFolderId, setSelectedFolderId] = useState<string>("f-1");
-  const [selectedSheetId, setSelectedSheetId] = useState<string>("s-1");
+  // Notes state
+  const [folders, setFolders] = useState<NoteFolder[]>([]);
+  const [selectedFolderId, setSelectedFolderId] = useState<string>("");
+  const [selectedSheetId, setSelectedSheetId] = useState<string>("");
   const [copiedNotice, setCopiedNotice] = useState(false);
 
-  // Initialize data asynchronously in background (no blank loading screen)
+  // Results analytics state
+  const [results, setResults] = useState<AcademicResultItem[]>([]);
+
+  // 1. Initial Load: User Auth & LocalStorage
   useEffect(() => {
-    // 1. Sync enrolled courses from localStorage immediately
+    // Auth profile
+    supabase.auth.getSession().then(({ data }) => {
+      const user = data.session?.user;
+      if (user) {
+        setUserId(user.id);
+        const nameMeta = user.user_metadata?.name || user.user_metadata?.full_name;
+        if (nameMeta) setUserName(nameMeta);
+        if (user.email) setUserEmail(user.email);
+        const code = user.id.replace(/-/g, "").slice(0, 4).toUpperCase();
+        setStudentId(`WTA-${code}`);
+      }
+    });
+
+    // Enrolled courses
     try {
-      const rawEnrolled = localStorage.getItem(STORAGE_ENROLLED_COURSES);
-      if (rawEnrolled) {
-        const parsed = JSON.parse(rawEnrolled);
+      const savedEnrolled = localStorage.getItem(STORAGE_ENROLLED_COURSES);
+      if (savedEnrolled) {
+        const parsed = JSON.parse(savedEnrolled);
         if (Array.isArray(parsed) && parsed.length > 0) {
           setEnrolledCourseIds(parsed);
         }
@@ -217,21 +213,31 @@ export default function MyLearningPage() {
       /* ignore */
     }
 
-    // 2. Sync goals from localStorage
+    // Daily Goals
     try {
-      const rawGoals = localStorage.getItem(STORAGE_GOALS_KEY);
-      if (rawGoals) {
-        setGoals(JSON.parse(rawGoals));
+      const savedGoals = localStorage.getItem(STORAGE_GOALS_KEY);
+      if (savedGoals) {
+        const parsed = JSON.parse(savedGoals);
+        if (Array.isArray(parsed)) setGoals(parsed);
+      } else {
+        // Starter goals
+        const defaultGoals: StudyGoalItem[] = [
+          { id: "g1", text: "Complete 15 Model Exam Questions", completed: true, priority: "high" },
+          { id: "g2", text: "Review Freshman Physics Lecture Notes", completed: false, priority: "high" },
+          { id: "g3", text: "Practice 10 Quantitative Aptitude Problems", completed: false, priority: "medium" },
+        ];
+        setGoals(defaultGoals);
+        localStorage.setItem(STORAGE_GOALS_KEY, JSON.stringify(defaultGoals));
       }
     } catch {
       /* ignore */
     }
 
-    // 3. Sync notes from localStorage
+    // Notebook
     try {
-      const rawNotes = localStorage.getItem(STORAGE_NOTEBOOK_KEY);
-      if (rawNotes) {
-        const parsed = JSON.parse(rawNotes) as NoteFolder[];
+      const savedNotes = localStorage.getItem(STORAGE_NOTEBOOK_KEY);
+      if (savedNotes) {
+        const parsed = JSON.parse(savedNotes);
         if (Array.isArray(parsed) && parsed.length > 0) {
           setFolders(parsed);
           setSelectedFolderId(parsed[0].id);
@@ -239,85 +245,99 @@ export default function MyLearningPage() {
             setSelectedSheetId(parsed[0].sheets[0].id);
           }
         }
+      } else {
+        const defaultFolders: NoteFolder[] = [
+          {
+            id: "f-freshman",
+            name: "Freshman Year",
+            sheets: [
+              {
+                id: "s-math",
+                title: "Applied Mathematics Formulas",
+                content: "Derivative shortcuts:\n- d/dx(x^n) = n*x^(n-1)\n- d/dx(sin x) = cos x\n- d/dx(e^x) = e^x\n\nIntegrals:\n- ∫ x^n dx = (x^(n+1))/(n+1) + C\n- ∫ 1/x dx = ln|x| + C",
+                updatedAt: new Date().toISOString(),
+              },
+              {
+                id: "s-phys",
+                title: "General Physics Mechanics Summary",
+                content: "Newton's Laws:\n1. Inertia: An object remains at rest or constant velocity unless acted upon.\n2. F = ma (Force = Mass × Acceleration)\n3. Action & Reaction: Equal and opposite forces.",
+                updatedAt: new Date().toISOString(),
+              },
+            ],
+          },
+          {
+            id: "f-exams",
+            name: "Entrance & Exit Notes",
+            sheets: [
+              {
+                id: "s-uat",
+                title: "UAT Aptitude Shortcuts",
+                content: "Percentage calculations:\n- 15% of X = (10% of X) + (half of 10% of X)\n- Speed = Distance / Time\n- Work = Rate × Time",
+                updatedAt: new Date().toISOString(),
+              },
+            ],
+          },
+        ];
+        setFolders(defaultFolders);
+        setSelectedFolderId(defaultFolders[0].id);
+        setSelectedSheetId(defaultFolders[0].sheets[0].id);
+        localStorage.setItem(STORAGE_NOTEBOOK_KEY, JSON.stringify(defaultFolders));
       }
     } catch {
       /* ignore */
     }
 
-    // 4. Fetch Supabase user profile in background
-    async function fetchUserBackground() {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-
-        if (session?.user) {
-          const u = session.user;
-          setUserId(u.id);
-          setUserEmail(u.email || "");
-          const metaName =
-            u.user_metadata?.full_name ||
-            u.user_metadata?.name ||
-            (u.email ? u.email.split("@")[0] : "Scholar");
-          setUserName(metaName);
-
-          const { data: prof } = await supabase
-            .from("profiles")
-            .select("student_id, full_name, streak_count")
-            .eq("id", u.id)
-            .maybeSingle();
-
-          if (prof?.student_id) setStudentId(prof.student_id);
-          if (prof?.full_name) setUserName(prof.full_name);
-          if (prof?.streak_count) setStreakDays(prof.streak_count);
-
-          const { data: myResults } = await supabase
-            .from("academic_results")
-            .select("id, title, total, correct, missed, percent, created_at")
-            .eq("user_id", u.id)
-            .order("created_at", { ascending: false })
-            .limit(10);
-
-          if (myResults) {
-            setResults(myResults.map((r) => ({ ...r, percent: Number(r.percent) })));
-          }
-        }
-      } catch (err) {
-        console.warn("[learning/fetchUserBackground]", err);
+    // Results history
+    try {
+      const savedResults = localStorage.getItem("wt_academic_results_v2");
+      if (savedResults) {
+        const parsed = JSON.parse(savedResults);
+        if (Array.isArray(parsed)) setResults(parsed);
       }
+    } catch {
+      /* ignore */
     }
 
-    void fetchUserBackground();
+    // Streak tracker
+    try {
+      const todayStr = new Date().toISOString().split("T")[0];
+      const lastVisit = localStorage.getItem("wt_last_study_date");
+      const savedStreak = parseInt(localStorage.getItem("wt_study_streak") || "1", 10);
+      if (lastVisit === todayStr) {
+        setStreakDays(savedStreak);
+      } else {
+        const newStreak = savedStreak + 1;
+        setStreakDays(newStreak);
+        localStorage.setItem("wt_study_streak", String(newStreak));
+        localStorage.setItem("wt_last_study_date", todayStr);
+      }
+    } catch {
+      /* ignore */
+    }
   }, []);
 
-  // Course selection helpers
-  const saveEnrolledCourses = (ids: string[]) => {
-    setEnrolledCourseIds(ids);
+  // Course Enrollment Helpers
+  const toggleCourseEnrollment = (courseId: string) => {
+    let next: string[];
+    if (enrolledCourseIds.includes(courseId)) {
+      if (enrolledCourseIds.length <= 1) {
+        alert("You must keep at least one active course on your board.");
+        return;
+      }
+      next = enrolledCourseIds.filter((id) => id !== courseId);
+    } else {
+      next = [...enrolledCourseIds, courseId];
+    }
+    setEnrolledCourseIds(next);
     try {
-      localStorage.setItem(STORAGE_ENROLLED_COURSES, JSON.stringify(ids));
+      localStorage.setItem(STORAGE_ENROLLED_COURSES, JSON.stringify(next));
     } catch {
       /* ignore */
     }
   };
 
-  const toggleCourseEnrollment = (id: string) => {
-    if (enrolledCourseIds.includes(id)) {
-      if (enrolledCourseIds.length <= 1) {
-        alert("Please keep at least one active course in your learning deck.");
-        return;
-      }
-      saveEnrolledCourses(enrolledCourseIds.filter((cid) => cid !== id));
-    } else {
-      saveEnrolledCourses([...enrolledCourseIds, id]);
-    }
-  };
-
-  const removeCourse = (id: string) => {
-    if (enrolledCourseIds.length <= 1) {
-      alert("Please keep at least one active course in your learning deck.");
-      return;
-    }
-    saveEnrolledCourses(enrolledCourseIds.filter((cid) => cid !== id));
+  const removeCourse = (courseId: string) => {
+    toggleCourseEnrollment(courseId);
   };
 
   // Goals Helpers
@@ -328,10 +348,6 @@ export default function MyLearningPage() {
     } catch {
       /* ignore */
     }
-  };
-
-  const toggleGoal = (id: string) => {
-    persistGoals(goals.map((g) => (g.id === id ? { ...g, completed: !g.completed } : g)));
   };
 
   const addGoal = (e: React.FormEvent) => {
@@ -345,6 +361,12 @@ export default function MyLearningPage() {
     };
     persistGoals([item, ...goals]);
     setNewGoalText("");
+  };
+
+  const toggleGoal = (id: string) => {
+    persistGoals(
+      goals.map((g) => (g.id === id ? { ...g, completed: !g.completed } : g))
+    );
   };
 
   const deleteGoal = (id: string) => {
@@ -367,7 +389,11 @@ export default function MyLearningPage() {
 
   const currentSheet = useMemo(() => {
     if (!currentFolder) return null;
-    return currentFolder.sheets.find((s) => s.id === selectedSheetId) || currentFolder.sheets[0] || null;
+    return (
+      currentFolder.sheets.find((s) => s.id === selectedSheetId) ||
+      currentFolder.sheets[0] ||
+      null
+    );
   }, [currentFolder, selectedSheetId]);
 
   const handleAddFolder = () => {
@@ -474,35 +500,34 @@ export default function MyLearningPage() {
   }, [enrolledCourseIds]);
 
   const completedGoalsCount = goals.filter((g) => g.completed).length;
-  const goalProgressPercent = goals.length > 0 ? Math.round((completedGoalsCount / goals.length) * 100) : 0;
+  const goalProgressPercent =
+    goals.length > 0 ? Math.round((completedGoalsCount / goals.length) * 100) : 0;
 
   return (
     <div className="relative min-h-[85vh] pb-16 bg-[#050811] text-[#f4f7fb]">
-      {/* Premium ambient backdrop light */}
+      {/* Ambient background glow */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10">
         <div className="absolute -top-32 right-10 w-[35rem] h-[35rem] rounded-full blur-[110px] opacity-20 bg-sky-500" />
         <div className="absolute top-1/2 left-0 w-[30rem] h-[30rem] rounded-full blur-[120px] opacity-15 bg-blue-600" />
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-10">
-        {/* Top Scholar Header Card (Rich High Contrast) */}
-        <header className="mb-7 rounded-3xl border border-sky-400/25 bg-gradient-to-br from-[#0e1b30] via-[#091322] to-[#060c18] p-5 sm:p-6 shadow-2xl backdrop-blur-xl">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8">
+        {/* Top Scholar Header Card */}
+        <header className="mb-6 rounded-3xl border border-sky-400/25 bg-gradient-to-br from-[#0e1b30] via-[#091322] to-[#060c18] p-5 sm:p-6 shadow-2xl backdrop-blur-xl">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
             <div className="flex items-center gap-4">
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-400 to-blue-600 text-slate-950 font-black text-2xl shadow-lg shadow-sky-500/25 ring-2 ring-sky-300">
                 {userName.charAt(0).toUpperCase()}
               </div>
               <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight truncate">
-                    Welcome back, {userName}
-                  </h1>
-                </div>
+                <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight truncate">
+                  Welcome back, {userName}
+                </h1>
                 <p className="text-xs sm:text-sm text-slate-300 flex items-center gap-2 mt-0.5">
                   <span className="font-mono text-sky-400 font-bold tracking-wide">{studentId}</span>
                   {userEmail && <span className="hidden sm:inline text-slate-400">• {userEmail}</span>}
                   <span className="text-slate-500">•</span>
-                  <span className="text-slate-300 font-medium">Scholar Learning Hub</span>
+                  <span className="text-slate-300 font-medium">Academic Command Center</span>
                 </p>
               </div>
             </div>
@@ -542,151 +567,332 @@ export default function MyLearningPage() {
           </div>
         </header>
 
-        {/* ── Separate High-Contrast Mode Navigation Buttons ── */}
+        {/* ── REDESIGNED LEARNING SECTION: VALUABLE FEATURE SPOTLIGHT DECK ── */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-3.5">
+            <div>
+              <h2 className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-cyan-400" />
+                Scholar Learning Suite & Core Features
+              </h2>
+              <p className="text-xs text-slate-400">
+                Direct access to high-impact productivity tools, battle games, and curriculum pathways.
+              </p>
+            </div>
+            {activeTab !== "overview" && (
+              <button
+                type="button"
+                onClick={() => setActiveTab("overview")}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-white/15 text-xs font-bold text-cyan-300 hover:text-white hover:bg-slate-800 transition-colors shadow-sm"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span>View All Features</span>
+              </button>
+            )}
+          </div>
+
+          {/* High-Impact Feature Showcase Cards Grid (Visible, Clean, Valuable) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
+            {/* Card 1: Study Games Arena */}
+            <div
+              onClick={() => {
+                setSelectedGame("defense");
+                setActiveTab("games");
+              }}
+              className={`group relative overflow-hidden rounded-3xl border p-4 sm:p-5 transition-all cursor-pointer flex flex-col justify-between ${
+                activeTab === "games"
+                  ? "bg-gradient-to-br from-amber-500/20 via-cyan-500/20 to-[#0e1f36] border-cyan-400 shadow-xl ring-2 ring-cyan-400/40"
+                  : "bg-gradient-to-br from-[#121c2e] to-[#0a1220] border-white/15 hover:border-cyan-400/50 hover:bg-[#15233b]"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-slate-950 font-black shadow-lg">
+                  <Gamepad2 className="w-6 h-6 text-slate-950" />
+                </div>
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-400/10 text-amber-300 border border-amber-400/20">
+                  2 Battle Games
+                </span>
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white group-hover:text-cyan-300 transition-colors">
+                  Wisdom Defense & Tower Climb
+                </h3>
+                <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                  Turn exam questions into ballistic defense battles or climb chapter question banks.
+                </p>
+              </div>
+              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs font-bold text-cyan-300 group-hover:text-cyan-200">
+                <span>Launch Arcade</span>
+                <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+              </div>
+            </div>
+
+            {/* Card 2: Weekly Study Planner */}
+            <div
+              onClick={() => setActiveTab("planner")}
+              className={`group relative overflow-hidden rounded-3xl border p-4 sm:p-5 transition-all cursor-pointer flex flex-col justify-between ${
+                activeTab === "planner"
+                  ? "bg-gradient-to-br from-cyan-500/20 via-sky-500/20 to-[#0e1f36] border-cyan-400 shadow-xl ring-2 ring-cyan-400/40"
+                  : "bg-gradient-to-br from-[#121c2e] to-[#0a1220] border-white/15 hover:border-cyan-400/50 hover:bg-[#15233b]"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-600 text-slate-950 font-black shadow-lg">
+                  <Calendar className="w-6 h-6 text-slate-950" />
+                </div>
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-cyan-400/10 text-cyan-300 border border-cyan-400/20">
+                  24h Timetable
+                </span>
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white group-hover:text-cyan-300 transition-colors">
+                  Visual Study Planner
+                </h3>
+                <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                  Clean mobile timetable board without messy numbers. Aligns cleanly with vertical clock.
+                </p>
+              </div>
+              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs font-bold text-cyan-300 group-hover:text-cyan-200">
+                <span>Open Timetable</span>
+                <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+              </div>
+            </div>
+
+            {/* Card 3: Focus Pomodoro Timer */}
+            <div
+              onClick={() => setActiveTab("timer")}
+              className={`group relative overflow-hidden rounded-3xl border p-4 sm:p-5 transition-all cursor-pointer flex flex-col justify-between ${
+                activeTab === "timer"
+                  ? "bg-gradient-to-br from-sky-500/20 via-blue-500/20 to-[#0e1f36] border-sky-400 shadow-xl ring-2 ring-sky-400/40"
+                  : "bg-gradient-to-br from-[#121c2e] to-[#0a1220] border-white/15 hover:border-sky-400/50 hover:bg-[#15233b]"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-400 to-indigo-600 text-slate-950 font-black shadow-lg">
+                  <Timer className="w-6 h-6 text-slate-950" />
+                </div>
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-sky-400/10 text-sky-300 border border-sky-400/20">
+                  25 Min Sprints
+                </span>
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white group-hover:text-sky-300 transition-colors">
+                  Focus Pomodoro Station
+                </h3>
+                <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                  Deep-work sprint intervals, break intervals, and audio-backed focus environment.
+                </p>
+              </div>
+              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs font-bold text-sky-300 group-hover:text-sky-200">
+                <span>Start Focus Session</span>
+                <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+              </div>
+            </div>
+
+            {/* Card 4: Daily Action Goals */}
+            <div
+              onClick={() => setActiveTab("goals")}
+              className={`group relative overflow-hidden rounded-3xl border p-4 sm:p-5 transition-all cursor-pointer flex flex-col justify-between ${
+                activeTab === "goals"
+                  ? "bg-gradient-to-br from-emerald-500/20 via-teal-500/20 to-[#0e1f36] border-emerald-400 shadow-xl ring-2 ring-emerald-400/40"
+                  : "bg-gradient-to-br from-[#121c2e] to-[#0a1220] border-white/15 hover:border-emerald-400/50 hover:bg-[#15233b]"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 text-slate-950 font-black shadow-lg">
+                  <CheckSquare className="w-6 h-6 text-slate-950" />
+                </div>
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-400/10 text-emerald-300 border border-emerald-400/20">
+                  {completedGoalsCount}/{goals.length} Done
+                </span>
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white group-hover:text-emerald-300 transition-colors">
+                  Daily Targets & Accountability
+                </h3>
+                <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                  Track high-priority daily study milestones and maintain consistent academic streaks.
+                </p>
+              </div>
+              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs font-bold text-emerald-300 group-hover:text-emerald-200">
+                <span>Manage Targets</span>
+                <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+              </div>
+            </div>
+
+            {/* Card 5: Scholar Notes & Summaries */}
+            <div
+              onClick={() => setActiveTab("notes")}
+              className={`group relative overflow-hidden rounded-3xl border p-4 sm:p-5 transition-all cursor-pointer flex flex-col justify-between ${
+                activeTab === "notes"
+                  ? "bg-gradient-to-br from-violet-500/20 via-purple-500/20 to-[#0e1f36] border-violet-400 shadow-xl ring-2 ring-violet-400/40"
+                  : "bg-gradient-to-br from-[#121c2e] to-[#0a1220] border-white/15 hover:border-violet-400/50 hover:bg-[#15233b]"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-400 to-purple-600 text-slate-950 font-black shadow-lg">
+                  <Folder className="w-6 h-6 text-slate-950" />
+                </div>
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-violet-400/10 text-violet-300 border border-violet-400/20">
+                  {folders.length} Folders
+                </span>
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white group-hover:text-violet-300 transition-colors">
+                  Scholar Notebook
+                </h3>
+                <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                  Multi-sheet rich notebook with Times New Roman formatting, autosave, and copy tools.
+                </p>
+              </div>
+              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs font-bold text-violet-300 group-hover:text-violet-200">
+                <span>Open Notebook</span>
+                <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+              </div>
+            </div>
+
+            {/* Card 6: Academic Performance Radar */}
+            <div
+              onClick={() => setActiveTab("analytics")}
+              className={`group relative overflow-hidden rounded-3xl border p-4 sm:p-5 transition-all cursor-pointer flex flex-col justify-between ${
+                activeTab === "analytics"
+                  ? "bg-gradient-to-br from-pink-500/20 via-rose-500/20 to-[#0e1f36] border-pink-400 shadow-xl ring-2 ring-pink-400/40"
+                  : "bg-gradient-to-br from-[#121c2e] to-[#0a1220] border-white/15 hover:border-pink-400/50 hover:bg-[#15233b]"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-pink-400 to-rose-600 text-slate-950 font-black shadow-lg">
+                  <TrendingUp className="w-6 h-6 text-slate-950" />
+                </div>
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-pink-400/10 text-pink-300 border border-pink-400/20">
+                  {results.length} Tests
+                </span>
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white group-hover:text-pink-300 transition-colors">
+                  Performance & Quiz Radar
+                </h3>
+                <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                  Speed benchmarks, score distributions, and Green / Yellow / Red mastery ratings.
+                </p>
+              </div>
+              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs font-bold text-pink-300 group-hover:text-pink-200">
+                <span>View Analytics</span>
+                <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── CLEAN SEGMENTED NAVIGATION BAR ── */}
         <nav aria-label="Learning Modes" className="mb-8">
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 sm:gap-3">
-            {/* 1. My Courses */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-thin">
+            <button
+              onClick={() => setActiveTab("overview")}
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 border ${
+                activeTab === "overview"
+                  ? "bg-sky-400 text-slate-950 border-sky-400 shadow-md font-black"
+                  : "bg-[#0b1526] text-slate-300 hover:text-white border-white/10 hover:bg-[#12223d]"
+              }`}
+            >
+              <LayoutGrid className="w-3.5 h-3.5 shrink-0" />
+              <span>Dashboard Hub</span>
+            </button>
+
             <button
               onClick={() => setActiveTab("courses")}
-              className={`flex items-center justify-center gap-2 px-3.5 py-3 rounded-2xl text-xs sm:text-sm tracking-wide transition-all shadow-md ${
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 border ${
                 activeTab === "courses"
-                  ? "bg-sky-400 text-slate-950 font-black shadow-lg shadow-sky-400/30 ring-2 ring-sky-300 scale-[1.02]"
-                  : "bg-[#0b1526] text-slate-200 hover:text-white hover:bg-[#12223d] border border-white/15 font-bold"
+                  ? "bg-sky-400 text-slate-950 border-sky-400 shadow-md font-black"
+                  : "bg-[#0b1526] text-slate-300 hover:text-white border-white/10 hover:bg-[#12223d]"
               }`}
             >
-              <BookOpen className="w-4 h-4 shrink-0" />
-              <span>My Courses</span>
+              <BookOpen className="w-3.5 h-3.5 shrink-0" />
+              <span>Active Courses ({activeEnrolledList.length})</span>
             </button>
 
-            {/* 2. Study Games (Wisdom Defense & Tower Climb) */}
             <button
-              onClick={() => setActiveTab("games")}
-              className={`flex items-center justify-center gap-1.5 px-3 py-3 rounded-2xl text-xs sm:text-sm tracking-wide transition-all shadow-md relative ${
+              onClick={() => {
+                setSelectedGame("defense");
+                setActiveTab("games");
+              }}
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 border ${
                 activeTab === "games"
-                  ? "bg-gradient-to-r from-amber-400 via-cyan-400 to-sky-400 text-slate-950 font-black shadow-lg shadow-cyan-400/30 ring-2 ring-cyan-300 scale-[1.02]"
-                  : "bg-[#0b1526] text-amber-300 hover:text-white hover:bg-[#12223d] border border-amber-400/30 font-bold"
+                  ? "bg-amber-400 text-slate-950 border-amber-400 shadow-md font-black"
+                  : "bg-[#0b1526] text-amber-300 hover:text-white border-amber-400/30 hover:bg-[#12223d]"
               }`}
             >
-              <Gamepad2 className="w-4 h-4 shrink-0 text-amber-400" />
+              <Gamepad2 className="w-3.5 h-3.5 shrink-0 text-amber-400" />
               <span>Study Games</span>
-              <span className="px-1.5 py-0.5 rounded-full bg-amber-500/20 text-[9px] font-mono font-bold border border-amber-400/30 text-amber-300">
-                2
-              </span>
             </button>
 
-            {/* 3. Focus Timer */}
-            <button
-              onClick={() => setActiveTab("timer")}
-              className={`flex items-center justify-center gap-2 px-3.5 py-3 rounded-2xl text-xs sm:text-sm tracking-wide transition-all shadow-md ${
-                activeTab === "timer"
-                  ? "bg-sky-400 text-slate-950 font-black shadow-lg shadow-sky-400/30 ring-2 ring-sky-300 scale-[1.02]"
-                  : "bg-[#0b1526] text-slate-200 hover:text-white hover:bg-[#12223d] border border-white/15 font-bold"
-              }`}
-            >
-              <Timer className="w-4 h-4 shrink-0" />
-              <span>Focus Timer</span>
-            </button>
-
-            {/* 4. Study Planner */}
             <button
               onClick={() => setActiveTab("planner")}
-              className={`flex items-center justify-center gap-2 px-3.5 py-3 rounded-2xl text-xs sm:text-sm tracking-wide transition-all shadow-md ${
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 border ${
                 activeTab === "planner"
-                  ? "bg-sky-400 text-slate-950 font-black shadow-lg shadow-sky-400/30 ring-2 ring-sky-300 scale-[1.02]"
-                  : "bg-[#0b1526] text-slate-200 hover:text-white hover:bg-[#12223d] border border-white/15 font-bold"
+                  ? "bg-cyan-400 text-slate-950 border-cyan-400 shadow-md font-black"
+                  : "bg-[#0b1526] text-slate-300 hover:text-white border-white/10 hover:bg-[#12223d]"
               }`}
             >
-              <Calendar className="w-4 h-4 shrink-0" />
+              <Calendar className="w-3.5 h-3.5 shrink-0" />
               <span>Study Planner</span>
             </button>
 
-            {/* 5. Daily Goals */}
             <button
-              onClick={() => setActiveTab("goals")}
-              className={`flex items-center justify-center gap-2 px-3.5 py-3 rounded-2xl text-xs sm:text-sm tracking-wide transition-all shadow-md ${
-                activeTab === "goals"
-                  ? "bg-sky-400 text-slate-950 font-black shadow-lg shadow-sky-400/30 ring-2 ring-sky-300 scale-[1.02]"
-                  : "bg-[#0b1526] text-slate-200 hover:text-white hover:bg-[#12223d] border border-white/15 font-bold"
+              onClick={() => setActiveTab("timer")}
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 border ${
+                activeTab === "timer"
+                  ? "bg-sky-400 text-slate-950 border-sky-400 shadow-md font-black"
+                  : "bg-[#0b1526] text-slate-300 hover:text-white border-white/10 hover:bg-[#12223d]"
               }`}
             >
-              <CheckSquare className="w-4 h-4 shrink-0" />
+              <Timer className="w-3.5 h-3.5 shrink-0" />
+              <span>Focus Timer</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("goals")}
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 border ${
+                activeTab === "goals"
+                  ? "bg-emerald-400 text-slate-950 border-emerald-400 shadow-md font-black"
+                  : "bg-[#0b1526] text-slate-300 hover:text-white border-white/10 hover:bg-[#12223d]"
+              }`}
+            >
+              <CheckSquare className="w-3.5 h-3.5 shrink-0" />
               <span>Daily Goals</span>
             </button>
 
-            {/* 6. Notes */}
             <button
               onClick={() => setActiveTab("notes")}
-              className={`flex items-center justify-center gap-2 px-3.5 py-3 rounded-2xl text-xs sm:text-sm tracking-wide transition-all shadow-md ${
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 border ${
                 activeTab === "notes"
-                  ? "bg-sky-400 text-slate-950 font-black shadow-lg shadow-sky-400/30 ring-2 ring-sky-300 scale-[1.02]"
-                  : "bg-[#0b1526] text-slate-200 hover:text-white hover:bg-[#12223d] border border-white/15 font-bold"
+                  ? "bg-violet-400 text-slate-950 border-violet-400 shadow-md font-black"
+                  : "bg-[#0b1526] text-slate-300 hover:text-white border-white/10 hover:bg-[#12223d]"
               }`}
             >
-              <Folder className="w-4 h-4 shrink-0" />
+              <Folder className="w-3.5 h-3.5 shrink-0" />
               <span>Notes</span>
             </button>
 
-            {/* 7. Performance */}
             <button
               onClick={() => setActiveTab("analytics")}
-              className={`flex items-center justify-center gap-2 px-3.5 py-3 rounded-2xl text-xs sm:text-sm tracking-wide transition-all shadow-md ${
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 border ${
                 activeTab === "analytics"
-                  ? "bg-sky-400 text-slate-950 font-black shadow-lg shadow-sky-400/30 ring-2 ring-sky-300 scale-[1.02]"
-                  : "bg-[#0b1526] text-slate-200 hover:text-white hover:bg-[#12223d] border border-white/15 font-bold"
+                  ? "bg-pink-400 text-slate-950 border-pink-400 shadow-md font-black"
+                  : "bg-[#0b1526] text-slate-300 hover:text-white border-white/10 hover:bg-[#12223d]"
               }`}
             >
-              <TrendingUp className="w-4 h-4 shrink-0" />
+              <TrendingUp className="w-3.5 h-3.5 shrink-0" />
               <span>Performance</span>
             </button>
           </div>
         </nav>
 
         {/* ═════════════════════════════════════════════════════════════ */}
-        {/* TAB 1: MY COURSES & HUBS (VISUAL CARDS WITH PROPER IMAGERY)  */}
+        {/* OVERVIEW / COURSES SECTION                                    */}
         {/* ═════════════════════════════════════════════════════════════ */}
-        {activeTab === "courses" && (
+        {(activeTab === "overview" || activeTab === "courses") && (
           <section className="space-y-6 animate-fade-up">
-            {/* Featured Study Games Showcase in Learning Section */}
-            <div className="rounded-3xl border border-cyan-400/30 bg-gradient-to-r from-[#0c182c] via-[#091424] to-[#160f26] p-5 sm:p-6 shadow-2xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
-              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
-                <div>
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-400/20 text-cyan-300 text-xs font-mono font-bold mb-2">
-                    <Gamepad2 className="w-3.5 h-3.5" />
-                    <span>Wisdom Arcade · Study Games Hub</span>
-                  </div>
-                  <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                    Study Through Action: Tower Defense & Tower Climb
-                  </h3>
-                  <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl">
-                    Reinforce official exam questions in <span className="text-cyan-300 font-bold">Wisdom Defense</span> with machine-gun arrow answers, or scale chapter question banks in <span className="text-amber-300 font-bold">Tower Climb</span> alongside your lantern owl companion.
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-                  <button
-                    onClick={() => {
-                      setSelectedGame("defense");
-                      setActiveTab("games");
-                    }}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition-all shadow-lg shadow-cyan-500/25 active:scale-95"
-                  >
-                    <Crosshair className="w-4 h-4" />
-                    <span>Play Wisdom Defense</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setSelectedGame("climb");
-                      setActiveTab("games");
-                    }}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all shadow-lg shadow-amber-500/25 active:scale-95"
-                  >
-                    <Trophy className="w-4 h-4" />
-                    <span>Play Tower Climb</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
             {/* Top Bar with Add/Remove Toggle */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/10">
               <div>
@@ -707,7 +913,7 @@ export default function MyLearningPage() {
               </button>
             </div>
 
-            {/* In-Page Native Course Manager (Drawer / Selector) */}
+            {/* In-Page Native Course Manager */}
             {showCourseManager && (
               <div className="rounded-3xl border border-sky-400/40 bg-gradient-to-b from-[#101d33] to-[#091120] p-5 sm:p-6 space-y-4 shadow-2xl">
                 <div className="flex items-center justify-between">
@@ -739,7 +945,6 @@ export default function MyLearningPage() {
                             : "bg-[#060b16] border-white/10 text-slate-300 hover:border-white/25 hover:bg-[#0c1626]"
                         }`}
                       >
-                        {/* Course Miniature Image */}
                         <div className="relative h-12 w-16 shrink-0 overflow-hidden rounded-xl bg-[#091322] border border-white/10">
                           <Image
                             src={course.image}
@@ -772,7 +977,7 @@ export default function MyLearningPage() {
               </div>
             )}
 
-            {/* Active Enrolled Course Cards (Real Images, High Contrast, No Blank Text) */}
+            {/* Active Enrolled Course Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {activeEnrolledList.map((course) => (
                 <div
@@ -780,7 +985,6 @@ export default function MyLearningPage() {
                   className="group rounded-3xl border border-white/15 bg-gradient-to-b from-[#101c33] to-[#08101e] p-5 sm:p-6 flex flex-col justify-between hover:border-sky-400/50 transition-all shadow-2xl"
                 >
                   <div>
-                    {/* Visual Card Image Header */}
                     <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl mb-4 border border-white/12 bg-[#060b16] shadow-lg">
                       <Image
                         src={course.image}
@@ -791,7 +995,6 @@ export default function MyLearningPage() {
                         priority
                         referrerPolicy="no-referrer"
                       />
-                      {/* Only the package title at the bottom of the card with subtle background for readability */}
                       <div className="absolute inset-x-0 bottom-0 px-4 py-2.5 bg-slate-950/75 backdrop-blur-sm border-t border-white/10">
                         <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
                           {course.title}
@@ -804,7 +1007,7 @@ export default function MyLearningPage() {
                     </p>
                   </div>
 
-                  {/* 5 Distinct High-Contrast Hub Action Buttons */}
+                  {/* 5 Distinct Hub Action Buttons */}
                   <div className="mt-5 pt-4 border-t border-white/10 space-y-3">
                     <div className="flex items-center justify-between">
                       <p className="text-[11px] font-bold uppercase tracking-wider text-sky-300">
@@ -867,11 +1070,10 @@ export default function MyLearningPage() {
         )}
 
         {/* ═════════════════════════════════════════════════════════════ */}
-        {/* TAB 2: STUDY GAMES (WISDOM DEFENSE & TOWER CLIMB)             */}
+        {/* TAB: STUDY GAMES                                              */}
         {/* ═════════════════════════════════════════════════════════════ */}
         {activeTab === "games" && (
           <section className="space-y-6 animate-fade-up">
-            {/* Top Game Mode Selector Bar */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-3xl border border-white/10 bg-slate-950/80 backdrop-blur-xl shadow-xl">
               <div className="flex flex-wrap items-center gap-2">
                 <button
@@ -911,7 +1113,6 @@ export default function MyLearningPage() {
               </div>
             </div>
 
-            {/* Active Embedded Game Canvas */}
             <div className="rounded-3xl border border-white/15 bg-gradient-to-b from-[#091120] to-[#040812] p-2 sm:p-6 shadow-2xl relative overflow-hidden">
               {selectedGame === "defense" ? (
                 <TowerDefenseGame />
@@ -923,7 +1124,7 @@ export default function MyLearningPage() {
         )}
 
         {/* ═════════════════════════════════════════════════════════════ */}
-        {/* TAB 3: STANDALONE FOCUS TIMER (WITH CUSTOM DURATION BUTTON)   */}
+        {/* TAB: FOCUS TIMER                                              */}
         {/* ═════════════════════════════════════════════════════════════ */}
         {activeTab === "timer" && (
           <section className="space-y-6 animate-fade-up max-w-4xl mx-auto">
@@ -944,7 +1145,7 @@ export default function MyLearningPage() {
         )}
 
         {/* ═════════════════════════════════════════════════════════════ */}
-        {/* TAB 3: STANDALONE STUDY PLANNER (24-HOUR TIMETABLE)           */}
+        {/* TAB: STUDY PLANNER                                            */}
         {/* ═════════════════════════════════════════════════════════════ */}
         {activeTab === "planner" && (
           <section className="space-y-4 animate-fade-up max-w-5xl mx-auto">
@@ -954,18 +1155,18 @@ export default function MyLearningPage() {
                 Weekly Study Timetable
               </h2>
               <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-md mx-auto">
-                Vertical 24-hour AM/PM timeline with horizontal days of the week and minute-accurate blocks.
+                Compact 24-hour visual timetable fitting cleanly on mobile screens with uncluttered title blocks.
               </p>
             </div>
 
-            <div className="rounded-3xl border border-white/15 bg-gradient-to-b from-[#0b1528] to-[#070e1c] p-3 sm:p-5 md:p-6 shadow-2xl">
+            <div className="rounded-3xl border border-white/15 bg-gradient-to-b from-[#0b1528] to-[#070e1c] p-2 sm:p-5 md:p-6 shadow-2xl">
               <StudyPlanner />
             </div>
           </section>
         )}
 
         {/* ═════════════════════════════════════════════════════════════ */}
-        {/* TAB 4: STANDALONE DAILY GOALS                                 */}
+        {/* TAB: DAILY GOALS                                              */}
         {/* ═════════════════════════════════════════════════════════════ */}
         {activeTab === "goals" && (
           <section className="space-y-6 animate-fade-up max-w-4xl mx-auto">
@@ -992,7 +1193,6 @@ export default function MyLearningPage() {
               </div>
             </div>
 
-            {/* Add Goal Form */}
             <form
               onSubmit={addGoal}
               className="flex flex-col sm:flex-row items-center gap-2.5 p-3.5 rounded-2xl bg-[#0e1b30] border border-white/15 shadow-xl"
@@ -1024,7 +1224,6 @@ export default function MyLearningPage() {
               </div>
             </form>
 
-            {/* Goals List */}
             <div className="space-y-2.5">
               {goals.length === 0 ? (
                 <div className="p-8 text-center rounded-2xl border border-dashed border-white/10 bg-[#060b16]">
@@ -1080,7 +1279,7 @@ export default function MyLearningPage() {
         )}
 
         {/* ═════════════════════════════════════════════════════════════ */}
-        {/* TAB 5: SIMPLE, CLEAN NOTEBOOK                                 */}
+        {/* TAB: SCHOLAR NOTEBOOK                                         */}
         {/* ═════════════════════════════════════════════════════════════ */}
         {activeTab === "notes" && (
           <section className="space-y-6 animate-fade-up">
@@ -1153,7 +1352,7 @@ export default function MyLearningPage() {
 
             {/* Notebook 2-Column Workspace */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-              {/* Sheets List in Current Folder (4 cols) */}
+              {/* Sheets List in Current Folder */}
               <div className="lg:col-span-4 rounded-3xl border border-white/15 bg-gradient-to-b from-[#0f1d33] to-[#08101e] p-4 space-y-3 shadow-xl">
                 <div className="flex items-center justify-between pb-2 border-b border-white/10">
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
@@ -1207,7 +1406,7 @@ export default function MyLearningPage() {
                 </div>
               </div>
 
-              {/* Active Sheet Editor (8 cols) */}
+              {/* Active Sheet Editor with Times New Roman Bold Italic */}
               <div className="lg:col-span-8 rounded-3xl border border-white/15 bg-gradient-to-b from-[#0f1d33] to-[#08101e] p-5 sm:p-6 space-y-4 shadow-xl">
                 {currentSheet ? (
                   <>
@@ -1232,7 +1431,7 @@ export default function MyLearningPage() {
                       value={currentSheet.content}
                       onChange={(e) => handleUpdateSheet({ content: e.target.value })}
                       placeholder="Start typing your study notes, formulas, or summaries here..."
-                      className="w-full h-[380px] bg-[#060b16] border border-white/10 rounded-2xl p-4 text-sm text-slate-100 font-mono leading-relaxed focus:outline-none focus:border-sky-400/50 resize-y transition-colors"
+                      className="w-full h-[380px] bg-[#060b16] border border-white/10 rounded-2xl p-4 text-base text-slate-100 font-serif italic font-bold leading-relaxed focus:outline-none focus:border-sky-400/50 resize-y transition-colors"
                     />
 
                     <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-white/10">
@@ -1254,7 +1453,7 @@ export default function MyLearningPage() {
         )}
 
         {/* ═════════════════════════════════════════════════════════════ */}
-        {/* TAB 6: STANDALONE PERFORMANCE & QUIZ ANALYTICS                */}
+        {/* TAB: ACADEMIC ANALYTICS                                       */}
         {/* ═════════════════════════════════════════════════════════════ */}
         {activeTab === "analytics" && (
           <section className="space-y-6 animate-fade-up max-w-5xl mx-auto">

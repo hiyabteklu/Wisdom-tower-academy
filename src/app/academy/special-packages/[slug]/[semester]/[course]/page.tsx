@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCourse, specialPackages } from "@/data/special-packages";
 import CategoryBackButton from "@/components/CategoryBackButton";
-import SubjectHeroImage from "@/components/SubjectHeroImage";
 import AcademicResultSaver from "@/components/AcademicResultSaver";
 import ResourceHubGrid from "@/components/ResourceHubGrid";
 import { eceScope } from "@/lib/content";
@@ -51,21 +50,14 @@ export default async function CoursePage({
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
         <CategoryBackButton fallback={`/academy/special-packages/${pkg.slug}/${sem.id}`} />
 
-        <div className="max-w-2xl mx-auto mb-8 animate-fade-up">
-          <div className="card-modern shadow-xl shadow-black/30">
-            <div className="relative aspect-video w-full bg-wisdom-navy">
-              <SubjectHeroImage src={course.image} alt={course.title} />
-            </div>
-            <div className="p-5 sm:p-6 text-center border-t border-white/8">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-300/90 mb-1.5">
-                {pkg.name} · {sem.shortLabel}
-              </p>
-              <p className="font-mono text-xs text-wisdom-muted mb-1">{course.code}</p>
-              <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-                {course.title}
-              </h1>
-            </div>
-          </div>
+        <div className="max-w-2xl mx-auto mb-8 text-center animate-fade-up">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-300/90 mb-1.5">
+            {pkg.name} · {sem.shortLabel}
+          </p>
+          <p className="font-mono text-xs text-wisdom-muted mb-1">{course.code}</p>
+          <h1 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+            {course.title}
+          </h1>
         </div>
 
         <div className="max-w-2xl mx-auto mb-10">

@@ -29,7 +29,7 @@ export type StudyBlock = {
 };
 
 const STORAGE_KEY = "wt_study_planner_v3";
-const HOUR_HEIGHT = 54; // px per hour (allows minute-precise placement: 1 min = 0.9px)
+const HOUR_HEIGHT = 38; // Compact px per hour (fits comfortably in mobile view)
 
 const DAYS = [
   { short: "Mon", full: "Monday" },
@@ -445,14 +445,14 @@ export default function StudyPlanner() {
         <div
           className="relative grid"
           style={{
-            minWidth: mobileDayFilter === "all" ? "740px" : "100%",
-            gridTemplateColumns: `56px repeat(${visibleDays.length}, minmax(${
-              mobileDayFilter === "all" ? "95px" : "160px"
+            minWidth: mobileDayFilter === "all" ? "100%" : "100%",
+            gridTemplateColumns: `38px repeat(${visibleDays.length}, minmax(${
+              mobileDayFilter === "all" ? "42px" : "120px"
             }, 1fr))`,
           }}
         >
           {/* Top-Left Corner: Time Label (Sticky Top & Left) */}
-          <div className="sticky top-0 left-0 z-30 bg-[#0b1528] border-b border-r border-white/15 p-2 text-center text-[10px] font-mono font-bold text-slate-400 flex items-center justify-center">
+          <div className="sticky top-0 left-0 z-30 bg-[#0b1528] border-b border-r border-white/15 p-1 text-center text-[9px] font-mono font-bold text-slate-400 flex items-center justify-center">
             GMT+3
           </div>
 
@@ -463,22 +463,22 @@ export default function StudyPlanner() {
             return (
               <div
                 key={d.short}
-                className={`sticky top-0 z-20 py-2.5 px-2 text-center border-b border-r border-white/15 backdrop-blur-md transition-colors ${
+                className={`sticky top-0 z-20 py-1.5 px-1 text-center border-b border-r border-white/15 backdrop-blur-md transition-colors ${
                   isToday ? "bg-[#0e213d] text-cyan-300" : "bg-[#0b1528]/95 text-white"
                 }`}
               >
-                <div className="flex items-center justify-center gap-1.5">
-                  <span className="font-display font-bold text-xs sm:text-sm">
+                <div className="flex items-center justify-center gap-1">
+                  <span className="font-display font-bold text-xs">
                     {d.short}
                   </span>
                   {isToday && (
-                    <span className="px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider bg-cyan-400 text-slate-950">
+                    <span className="hidden sm:inline px-1 py-0.2 rounded text-[8px] font-black uppercase tracking-wider bg-cyan-400 text-slate-950">
                       Today
                     </span>
                   )}
                 </div>
-                <p className="text-[10px] text-slate-400 font-mono mt-0.5">
-                  {dayBlocks.length} session{dayBlocks.length === 1 ? "" : "s"}
+                <p className="text-[9px] text-slate-400 font-mono mt-0.2">
+                  {dayBlocks.length}
                 </p>
               </div>
             );
@@ -490,13 +490,10 @@ export default function StudyPlanner() {
               <div
                 key={h.hour}
                 style={{ height: `${HOUR_HEIGHT}px` }}
-                className="relative border-b border-white/8 px-1.5 text-right flex flex-col justify-start pt-1"
+                className="relative border-b border-white/8 px-1 text-right flex items-center justify-end"
               >
-                <span className="font-mono text-[10px] font-bold text-slate-400 leading-none">
+                <span className="font-mono text-[9px] font-bold text-slate-400 leading-none">
                   {h.label}
-                </span>
-                <span className="font-mono text-[9px] text-slate-500 leading-none mt-1">
-                  {String(h.hour).padStart(2, "0")}:00
                 </span>
               </div>
             ))}
@@ -528,9 +525,8 @@ export default function StudyPlanner() {
                     <div className="absolute top-1/2 left-0 right-0 border-t border-white/[0.04] border-dashed pointer-events-none" />
 
                     {/* Faint hover add cue */}
-                    <div className="hidden group-hover:flex items-center gap-1 absolute top-2 left-2 text-[10px] text-cyan-400 font-bold opacity-70 pointer-events-none">
-                      <Plus className="w-3 h-3" />
-                      <span>{h.label}</span>
+                    <div className="hidden group-hover:flex items-center gap-1 absolute top-1 left-1 text-[9px] text-cyan-400 font-bold opacity-70 pointer-events-none">
+                      <Plus className="w-2.5 h-2.5" />
                     </div>
                   </div>
                 ))}
@@ -543,20 +539,18 @@ export default function StudyPlanner() {
                     }}
                     className="absolute left-0 right-0 z-10 pointer-events-none flex items-center"
                   >
-                    <span className="w-2 h-2 rounded-full bg-rose-400 -ml-1 ring-4 ring-rose-500/20" />
-                    <div className="h-[2px] w-full bg-rose-400/80 shadow-[0_0_8px_rgba(244,63,94,0.8)]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-400 -ml-0.5 ring-2 ring-rose-500/20" />
+                    <div className="h-[1.5px] w-full bg-rose-400/80 shadow-[0_0_6px_rgba(244,63,94,0.8)]" />
                   </div>
                 )}
 
-                {/* Minute-Accurate Study Block Pills */}
+                {/* Clean Study Blocks: ONLY the title given for the task is visible */}
                 {dayBlocks.map((b) => {
                   const startM = timeToMinutes(b.startTime);
                   const endM = timeToMinutes(b.endTime);
-                  const durationM = Math.max(20, endM - startM);
+                  const durationM = Math.max(15, endM - startM);
                   const topPx = (startM / 60) * HOUR_HEIGHT;
-                  const heightPx = Math.max(24, (durationM / 60) * HOUR_HEIGHT);
-
-                  const isSmall = heightPx < 44;
+                  const heightPx = Math.max(18, (durationM / 60) * HOUR_HEIGHT);
 
                   return (
                     <div
@@ -569,36 +563,12 @@ export default function StudyPlanner() {
                         top: `${topPx}px`,
                         height: `${heightPx}px`,
                       }}
-                      className={`absolute left-1 right-1 rounded-xl border p-1.5 sm:p-2 overflow-hidden shadow-lg transition-all duration-150 hover:scale-[1.01] hover:z-20 cursor-pointer flex flex-col justify-between ${b.color}`}
+                      className={`absolute left-0.5 right-0.5 rounded-md border px-1 py-0.5 overflow-hidden shadow-sm transition-all duration-150 hover:scale-[1.01] hover:z-20 cursor-pointer flex items-center justify-start ${b.color}`}
                       title={`${b.title} (${format12Hour(b.startTime)} – ${format12Hour(b.endTime)})`}
                     >
-                      <div className="min-w-0">
-                        <div className="flex items-center justify-between gap-1">
-                          <p className="font-bold text-[11px] sm:text-xs truncate text-white leading-tight">
-                            {b.title}
-                          </p>
-                          <Edit2 className="w-3 h-3 opacity-60 hover:opacity-100 shrink-0" />
-                        </div>
-
-                        {!isSmall && (
-                          <div className="flex items-center gap-1 font-mono text-[9px] sm:text-[10px] opacity-90 mt-0.5">
-                            <Clock className="w-2.5 h-2.5 shrink-0" />
-                            <span>
-                              {format12Hour(b.startTime)} – {format12Hour(b.endTime)}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Duration Pill at bottom if space permits */}
-                      {!isSmall && (
-                        <div className="flex items-center justify-between text-[9px] opacity-75 pt-1 border-t border-white/10 mt-1 font-mono">
-                          <span>{durationM} mins</span>
-                          <span className="font-sans text-[8px] uppercase tracking-wider">
-                            Tap to edit
-                          </span>
-                        </div>
-                      )}
+                      <p className="font-bold text-[10px] sm:text-xs truncate text-white leading-tight w-full pointer-events-none">
+                        {b.title}
+                      </p>
                     </div>
                   );
                 })}

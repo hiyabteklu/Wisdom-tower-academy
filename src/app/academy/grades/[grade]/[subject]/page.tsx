@@ -103,23 +103,13 @@ export default async function GradeSubjectPage({
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
         <CategoryBackButton fallback={`/academy/grades/${grade.id}`} />
 
-        <div className="max-w-2xl mx-auto mb-8 animate-fade-up">
-          <div className="card-modern shadow-xl shadow-black/30">
-            <div className="px-5 py-6 sm:px-8 sm:py-8 text-center">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-sky-400/30 bg-sky-400/10 text-sky-300">
-                <GradeSubjectIcon name={subject.icon} className="w-7 h-7" />
-              </div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-wisdom-muted mb-2">
-                {grade.label} Curriculum
-              </p>
-              <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-                {subject.name}
-              </h1>
-              {subject.hint ? (
-                <p className="mt-2.5 text-sm text-wisdom-muted max-w-md mx-auto">{subject.hint}</p>
-              ) : null}
-            </div>
-          </div>
+        <div className="max-w-2xl mx-auto mb-8 text-center animate-fade-up">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-wisdom-muted mb-2">
+            {grade.label} Curriculum · Subject
+          </p>
+          <h1 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+            {subject.name}
+          </h1>
         </div>
 
         <div className="max-w-2xl mx-auto mb-10">

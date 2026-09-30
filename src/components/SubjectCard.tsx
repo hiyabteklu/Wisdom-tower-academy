@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronRight, ChevronDown } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 type Props = {
   href: string;
@@ -13,9 +13,8 @@ type Props = {
   ready?: boolean;
 };
 
-export default function SubjectCard({ href, name, description, image, ready = false }: Props) {
+export default function SubjectCard({ href, name, image, ready = false }: Props) {
   const [imgFailed, setImgFailed] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
 
   return (
     <Link
@@ -53,32 +52,6 @@ export default function SubjectCard({ href, name, description, image, ready = fa
           {name}
         </h3>
 
-        {description && (
-          <div className="mt-2.5">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setShowDetails((v) => !v);
-              }}
-              className="inline-flex items-center gap-1 text-[11px] font-semibold text-wisdom-muted hover:text-white transition-colors"
-            >
-              <span>{showDetails ? "Hide course scope" : "Course scope & topics"}</span>
-              <ChevronDown
-                className={`w-3 h-3 transition-transform duration-200 ${
-                  showDetails ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-            {showDetails && (
-              <p className="mt-2 text-xs text-slate-300/90 leading-relaxed bg-white/[0.04] p-2.5 rounded-lg border border-white/8">
-                {description}
-              </p>
-            )}
-          </div>
-        )}
-
         <div className="mt-auto pt-4 flex items-center justify-between border-t border-white/5 text-xs font-semibold">
           <span
             className={
@@ -87,7 +60,7 @@ export default function SubjectCard({ href, name, description, image, ready = fa
                 : "text-purple-300 group-hover:text-purple-200"
             }
           >
-            Explore materials
+            Explore
           </span>
           <ChevronRight className="w-4 h-4 text-wisdom-muted transition-transform duration-200 group-hover:translate-x-1 group-hover:text-white" />
         </div>
