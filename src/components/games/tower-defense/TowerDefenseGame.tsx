@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import {
   EnemyUnit,
   TowerState,
@@ -63,6 +64,16 @@ interface Props {
 }
 
 export default function TowerDefenseGame({ initialTowerId, onExit }: Props) {
+  const router = useRouter();
+
+  const handleExit = useCallback(() => {
+    if (onExit) {
+      onExit();
+    } else {
+      router.push("/learning");
+    }
+  }, [onExit, router]);
+
   // Navigation & High-level State
   const [phase, setPhase] = useState<GamePhase>("select-tower");
   const [selectedTrack, setSelectedTrack] = useState<TowerTrack | null>(null);
@@ -585,6 +596,7 @@ export default function TowerDefenseGame({ initialTowerId, onExit }: Props) {
         onActivateSkip={activateSkip}
         marchProgressPct={marchProgressPct}
         onArrowImpactResolved={handleArrowImpactResolved}
+        onExit={handleExit}
       />
 
       {/* Educational Breach Breakdown Modal */}

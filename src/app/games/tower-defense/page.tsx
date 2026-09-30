@@ -1,5 +1,4 @@
 import { Metadata } from "next";
-import CategoryBackButton from "@/components/CategoryBackButton";
 import TowerDefenseGame from "@/components/games/tower-defense/TowerDefenseGame";
 
 export const metadata: Metadata = {
@@ -10,11 +9,9 @@ export const metadata: Metadata = {
 
 export default function TowerDefensePage() {
   return (
-    <div className="relative min-h-[90vh]">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8">
-        <CategoryBackButton fallback="/academy" />
-      </div>
+    <div className="w-full h-full overflow-hidden">
       <TowerDefenseGame />
     </div>
   );
 }
+
