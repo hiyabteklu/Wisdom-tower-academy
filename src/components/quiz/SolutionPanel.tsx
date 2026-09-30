@@ -129,7 +129,7 @@ export default function SolutionPanel({
               Official solution
             </span>
           </div>
-          <div className="solution-text text-sm sm:text-base font-bold italic text-white leading-relaxed font-['Times_New_Roman',Times,serif]">
+          <div className="solution-text text-sm sm:text-base font-normal italic text-white leading-relaxed font-['Times_New_Roman',Times,serif]">
             <MathText text={solution || ""} />
           </div>
         </div>
@@ -145,7 +145,7 @@ export default function SolutionPanel({
               AI explanation
             </span>
           </div>
-          <div className="explanation-text text-sm sm:text-base font-bold italic text-white leading-relaxed font-['Times_New_Roman',Times,serif]">
+          <div className="explanation-text text-sm sm:text-base font-normal italic text-white leading-relaxed font-['Times_New_Roman',Times,serif]">
             <MathText text={aiText} />
           </div>
         </div>

@@ -516,7 +516,7 @@ html.reading-font-mono {
 }
 
 /* ========================================================================= */
-/* Bold Italic Times New Roman typography for Notes, Flashcards, Explanations */
+/* Times New Roman Italics typography for Notes, Flashcards, Explanations */
 /* ========================================================================= */
 .notes-reading-surface,
 .notes-reading-surface .study-prose,
@@ -534,8 +534,23 @@ html.reading-font-mono {
 [data-learning-content] li,
 .explanation-box {
   font-family: "Times New Roman", Times, Georgia, serif !important;
-  font-weight: 700 !important;
+  font-weight: 400 !important;
   font-style: italic !important;
+}
+
+.notes-reading-surface strong,
+.notes-reading-surface b,
+.fc-face strong,
+.fc-face b,
+.study-explanation strong,
+.study-explanation b,
+.explanation-text strong,
+.explanation-text b,
+.solution-text strong,
+.solution-text b,
+[data-learning-content] strong,
+[data-learning-content] b {
+  font-weight: 700 !important;
 }
 
 /* Sharp horizontal shake animation for wrong answer card mistake signal */

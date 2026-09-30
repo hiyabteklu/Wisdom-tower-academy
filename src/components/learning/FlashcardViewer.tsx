@@ -171,7 +171,7 @@ export default function FlashcardViewer({ meta, resourceId }: Props) {
             <p className="text-xs uppercase tracking-wider text-violet-300 font-extrabold mb-2.5">
               Question · tap to flip
             </p>
-            <div className="study-prose text-white text-lg sm:text-xl font-bold leading-snug">
+            <div className="study-prose text-white text-lg sm:text-xl font-normal italic font-serif leading-snug font-['Times_New_Roman',Times,serif]">
               <RichContent body={card.front} />
             </div>
           </div>
@@ -180,7 +180,7 @@ export default function FlashcardViewer({ meta, resourceId }: Props) {
             <p className="text-xs uppercase tracking-wider text-cyan-300 font-extrabold mb-2.5">
               Answer · tap to flip
             </p>
-            <div className="study-prose text-white text-lg sm:text-xl font-bold leading-snug">
+            <div className="study-prose text-white text-lg sm:text-xl font-normal italic font-serif leading-snug font-['Times_New_Roman',Times,serif]">
               <RichContent body={card.back} />
             </div>
           </div>

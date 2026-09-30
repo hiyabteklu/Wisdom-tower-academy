@@ -368,7 +368,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
               <p className="text-xs font-black uppercase tracking-wider text-emerald-300 mb-2 inline-flex items-center gap-1.5">
                 <BadgeCheck className="w-4 h-4" /> Official solution
               </p>
-              <div className="study-prose text-emerald-50 text-sm sm:text-base leading-relaxed font-bold italic font-serif explanation-text">
+              <div className="study-prose text-emerald-50 text-sm sm:text-base leading-relaxed italic font-serif font-normal explanation-text font-['Times_New_Roman',Times,serif]">
                 <RichContent body={q.solution} />
               </div>
             </div>
@@ -386,7 +386,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                   <p className="text-xs font-black uppercase tracking-wider text-violet-300 mb-2 inline-flex items-center gap-1.5">
                     <Lightbulb className="w-4 h-4" /> AI explanation
                   </p>
-                  <div className="study-prose text-white/95 text-sm sm:text-base leading-relaxed font-bold italic font-serif explanation-text">
+                  <div className="study-prose text-white/95 text-sm sm:text-base leading-relaxed italic font-serif font-normal explanation-text font-['Times_New_Roman',Times,serif]">
                     <RichContent body={ai} />
                   </div>
                 </div>
@@ -520,7 +520,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                         </button>
                         {solOpen && (
                           <div className="mt-2.5 rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-4 text-sm sm:text-base">
-                            <div className="study-prose text-emerald-50 text-sm sm:text-base leading-relaxed font-bold italic font-serif explanation-text">
+                            <div className="study-prose text-emerald-50 text-sm sm:text-base leading-relaxed italic font-serif font-normal explanation-text font-['Times_New_Roman',Times,serif]">
                               <RichContent body={qq.solution} />
                             </div>
                           </div>
@@ -535,7 +535,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                       </button>
                       {reviewAi[i] && (
                         <div className="mt-2.5 rounded-xl border border-violet-400/30 bg-violet-500/10 p-4 text-sm sm:text-base">
-                          <div className="study-prose text-white/95 text-sm sm:text-base leading-relaxed font-bold italic font-serif explanation-text">
+                          <div className="study-prose text-white/95 text-sm sm:text-base leading-relaxed italic font-serif font-normal explanation-text font-['Times_New_Roman',Times,serif]">
                             <RichContent body={reviewAi[i]} />
                           </div>
                         </div>

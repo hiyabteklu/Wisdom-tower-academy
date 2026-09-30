@@ -247,7 +247,7 @@ export default function ResultsModal({
                             <span className="text-[11px] font-mono uppercase text-cyan-300 block mb-1 font-bold">
                               Step-by-step Solution:
                             </span>
-                            <div className="font-serif italic font-bold text-sm text-cyan-50/95 leading-relaxed explanation-text">
+                            <div className="font-serif italic font-normal text-sm text-cyan-50/95 leading-relaxed explanation-text font-['Times_New_Roman',Times,serif]">
                               <MathText text={item.solution} />
                             </div>
                           </div>

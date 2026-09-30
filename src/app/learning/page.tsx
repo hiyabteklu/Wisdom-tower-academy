@@ -1406,7 +1406,7 @@ export default function LearningPage() {
                 </div>
               </div>
 
-              {/* Active Sheet Editor with Times New Roman Bold Italic */}
+              {/* Active Sheet Editor with Times New Roman Italic */}
               <div className="lg:col-span-8 rounded-3xl border border-white/15 bg-gradient-to-b from-[#0f1d33] to-[#08101e] p-5 sm:p-6 space-y-4 shadow-xl">
                 {currentSheet ? (
                   <>
@@ -1431,7 +1431,7 @@ export default function LearningPage() {
                       value={currentSheet.content}
                       onChange={(e) => handleUpdateSheet({ content: e.target.value })}
                       placeholder="Start typing your study notes, formulas, or summaries here..."
-                      className="w-full h-[380px] bg-[#060b16] border border-white/10 rounded-2xl p-4 text-base text-slate-100 font-serif italic font-bold leading-relaxed focus:outline-none focus:border-sky-400/50 resize-y transition-colors"
+                      className="w-full h-[380px] bg-[#060b16] border border-white/10 rounded-2xl p-4 text-base text-slate-100 font-serif italic font-normal font-['Times_New_Roman',Times,serif] leading-relaxed focus:outline-none focus:border-sky-400/50 resize-y transition-colors"
                     />
 
                     <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-white/10">
