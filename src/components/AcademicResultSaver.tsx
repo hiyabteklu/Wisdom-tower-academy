@@ -128,11 +128,23 @@ export default function AcademicResultSaver({
   const load = useCallback(async (uid: string) => {
     setLoading(true);
     try {
-      const { data, error: qErr } = await supabase
+      const semMatch = scopeId.match(/^special-([^-]+(?:-[^-]+)*)-(sem-[12])-(.+)$/);
+      let query = supabase
         .from("academic_results")
         .select("id, title, total, correct, missed, percent, notes, created_at")
-        .eq("user_id", uid).eq("scope_id", scopeId)
-        .order("created_at", { ascending: false }).limit(50);
+        .eq("user_id", uid);
+
+      if (semMatch) {
+        const otherSem = semMatch[2] === "sem-1" ? "sem-2" : "sem-1";
+        const altScopeId = `special-${semMatch[1]}-${otherSem}-${semMatch[3]}`;
+        query = query.in("scope_id", [scopeId, altScopeId]);
+      } else {
+        query = query.eq("scope_id", scopeId);
+      }
+
+      const { data, error: qErr } = await query
+        .order("created_at", { ascending: false })
+        .limit(50);
       if (qErr) { console.warn("academic_results:", qErr.message); setResults([]); }
       else {
         setResults((data || []).map((row) => ({

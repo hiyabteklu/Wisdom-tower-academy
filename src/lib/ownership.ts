@@ -16,6 +16,7 @@ export type OwnershipMap = Set<string>;
 /** Packages unlocked automatically for every signed-in user (no payment). */
 export const FREE_FOR_REGISTERED_PACKAGE_IDS = [
   "ece-y3-sem-1",
+  "ece-y3-sem-2",
   "freshman",
   "grade-9",
   "grade-10",
@@ -107,6 +108,9 @@ export async function getOwnedPackageIds(force = false): Promise<OwnershipMap> {
 export async function isPackageOwned(packageId: string): Promise<boolean> {
   const ids = await getOwnedPackageIds();
   if (ids.has(ALL_PACKAGES_ID)) return true;
+  if (packageId === "ece-y3-sem-1" || packageId === "ece-y3-sem-2") {
+    if (ids.has("ece-y3-sem-1") || ids.has("ece-y3-sem-2")) return true;
+  }
   return ids.has(packageId);
 }
 

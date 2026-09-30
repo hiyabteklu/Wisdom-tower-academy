@@ -59,7 +59,20 @@ export async function listResources(opts: {
 
   try {
     const res = await listResourcesOnline(opts);
-    if (res.items.length) cacheResources(key, res.items);
+    if (res.items.length) {
+      cacheResources(key, res.items);
+      if (opts.scopePath) {
+        const eceMatch = opts.scopePath.match(/^ece\/(sem-[12])\/([^/]+)$/);
+        if (eceMatch) {
+          const otherSem = eceMatch[1] === "sem-1" ? "sem-2" : "sem-1";
+          const altKey = resourceCacheKey({
+            ...opts,
+            scopePath: `ece/${otherSem}/${eceMatch[2]}`,
+          });
+          cacheResources(altKey, res.items);
+        }
+      }
+    }
     return res;
   } catch {
     const cached = readCachedResources<LearningResource>(key);

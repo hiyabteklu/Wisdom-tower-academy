@@ -64,7 +64,27 @@ export function readCachedResources<T>(cacheKey: string): T[] {
     localStorage.getItem(RESOURCES_KEY),
     {}
   );
-  return all[cacheKey] || [];
+  if (all[cacheKey]?.length) return all[cacheKey];
+
+  // If this key is for an ECE course, check swapped semester or course slug in localStorage
+  const parts = cacheKey.split("|");
+  const scopePath = parts[0] || "";
+  const hub = parts[1] || "";
+  const eceMatch = scopePath.match(/^ece\/(sem-[12])\/([^/]+)$/);
+  if (eceMatch) {
+    const otherSem = eceMatch[1] === "sem-1" ? "sem-2" : "sem-1";
+    const courseSlug = eceMatch[2];
+    const swappedKey = [`ece/${otherSem}/${courseSlug}`, ...parts.slice(1)].join("|");
+    if (all[swappedKey]?.length) return all[swappedKey];
+
+    for (const [k, val] of Object.entries(all)) {
+      if (k.includes(courseSlug) && (!hub || k.includes(`|${hub}|`)) && val?.length) {
+        return val;
+      }
+    }
+  }
+
+  return [];
 }
 
 export function cacheProgress(

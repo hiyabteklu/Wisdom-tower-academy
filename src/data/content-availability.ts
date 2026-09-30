@@ -40,9 +40,7 @@ export function unlockPackageIdsForPath(basePath: string): string[] {
   if (basePath.includes("/academy/uat")) return ["uat"];
   if (basePath.includes("/academy/coc")) return ["coc"];
   if (basePath.includes("/special-packages/electrical-computer-engineering")) {
-    if (basePath.includes("/sem-1")) return ["ece-y3-sem-1"];
-    if (basePath.includes("/sem-2")) return ["ece-y3-sem-2"];
-    return [];
+    return ["ece-y3-sem-1", "ece-y3-sem-2"];
   }
   return [];
 }

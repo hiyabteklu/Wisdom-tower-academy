@@ -145,19 +145,86 @@ export async function listResources(opts: {
     let q = supabase.from("learning_resources").select("*").order("sort_order", {
       ascending: true,
     });
-    if (opts.scopePath) q = q.eq("scope_path", opts.scopePath);
+
+    const eceMatch = opts.scopePath?.match(/^ece\/(sem-[12])\/([^/]+)$/);
+    if (opts.scopePath) {
+      if (eceMatch) {
+        const otherSem = eceMatch[1] === "sem-1" ? "sem-2" : "sem-1";
+        const swappedPath = `ece/${otherSem}/${eceMatch[2]}`;
+        q = q.in("scope_path", [opts.scopePath, swappedPath]);
+      } else {
+        q = q.eq("scope_path", opts.scopePath);
+      }
+    }
     if (opts.hub === "short-notes") {
       q = q.in("hub", ["short-notes", "references"]);
     } else if (opts.hub) {
       q = q.eq("hub", opts.hub);
     }
-    if (opts.packageId) q = q.eq("package_id", opts.packageId);
+    if (opts.packageId) {
+      if (opts.packageId === "ece-y3-sem-1" || opts.packageId === "ece-y3-sem-2") {
+        q = q.in("package_id", ["ece-y3-sem-1", "ece-y3-sem-2"]);
+      } else {
+        q = q.eq("package_id", opts.packageId);
+      }
+    }
     if (opts.publishedOnly) q = q.eq("published", true);
 
-    const { data, error } = await q;
+    let { data, error } = await q;
+
+    // Fallback: If no items found for an ECE course, search by course slug
+    if ((!data || data.length === 0) && eceMatch) {
+      const courseSlug = eceMatch[2];
+      let fallbackQ = supabase
+        .from("learning_resources")
+        .select("*")
+        .ilike("scope_path", `%${courseSlug}%`)
+        .order("sort_order", { ascending: true });
+
+      if (opts.hub === "short-notes") {
+        fallbackQ = fallbackQ.in("hub", ["short-notes", "references"]);
+      } else if (opts.hub) {
+        fallbackQ = fallbackQ.eq("hub", opts.hub);
+      }
+      if (opts.publishedOnly) fallbackQ = fallbackQ.eq("published", true);
+
+      const fallbackRes = await fallbackQ;
+      if (fallbackRes.data && fallbackRes.data.length > 0) {
+        data = fallbackRes.data;
+        error = null;
+      }
+    }
+
     if (error) return { items: [], error: error.message };
+
+    // Auto-heal in background: if any ECE items still had the old scope_path or package_id, normalize them
+    if (data && data.length > 0 && eceMatch && opts.scopePath) {
+      const targetScope = opts.scopePath;
+      const targetPackage = eceMatch[1] === "sem-1" ? "ece-y3-sem-1" : "ece-y3-sem-2";
+      for (const row of data) {
+        const r = row as Record<string, unknown>;
+        if (r.scope_path !== targetScope || r.package_id !== targetPackage) {
+          void supabase
+            .from("learning_resources")
+            .update({
+              scope_path: targetScope,
+              package_id: targetPackage,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", r.id);
+        }
+      }
+    }
+
     return {
-      items: (data || []).map((r) => rowToResource(r as Record<string, unknown>)),
+      items: (data || []).map((r) => {
+        const item = rowToResource(r as Record<string, unknown>);
+        if (eceMatch && opts.scopePath) {
+          item.scopePath = opts.scopePath;
+          item.packageId = eceMatch[1] === "sem-1" ? "ece-y3-sem-1" : "ece-y3-sem-2";
+        }
+        return item;
+      }),
     };
   } catch (e) {
     return { items: [], error: e instanceof Error ? e.message : "Failed" };
@@ -497,17 +564,44 @@ export async function getScopeStats(opts: {
   } = await supabase.auth.getSession();
   if (!session?.user) return { stats: empty };
 
+  const eceMatch = opts.scopePath?.match(/^ece\/(sem-[12])\/([^/]+)$/);
   let rq = supabase
     .from("learning_resources")
-    .select("id, title, hub, content_type, scope_path")
-    .eq("scope_path", opts.scopePath);
+    .select("id, title, hub, content_type, scope_path");
+
+  if (eceMatch) {
+    const otherSem = eceMatch[1] === "sem-1" ? "sem-2" : "sem-1";
+    rq = rq.in("scope_path", [opts.scopePath, `ece/${otherSem}/${eceMatch[2]}`]);
+  } else {
+    rq = rq.eq("scope_path", opts.scopePath);
+  }
+
   if (opts.hub === "short-notes") {
     rq = rq.in("hub", ["short-notes", "references"]);
   } else if (opts.hub) {
     rq = rq.eq("hub", opts.hub);
   }
 
-  const { data: resources, error: rErr } = await rq;
+  let { data: resources, error: rErr } = await rq;
+
+  if ((!resources || resources.length === 0) && eceMatch) {
+    const courseSlug = eceMatch[2];
+    let fallbackRq = supabase
+      .from("learning_resources")
+      .select("id, title, hub, content_type, scope_path")
+      .ilike("scope_path", `%${courseSlug}%`);
+
+    if (opts.hub === "short-notes") {
+      fallbackRq = fallbackRq.in("hub", ["short-notes", "references"]);
+    } else if (opts.hub) {
+      fallbackRq = fallbackRq.eq("hub", opts.hub);
+    }
+    const fb = await fallbackRq;
+    if (fb.data?.length) {
+      resources = fb.data;
+      rErr = null;
+    }
+  }
   if (rErr) return { stats: empty, error: rErr.message };
   if (!resources?.length) return { stats: empty };
 
