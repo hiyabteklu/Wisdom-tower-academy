@@ -1,56 +1,37 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import Link from "next/link";
-import { Bell, CheckCircle2, Clock, XCircle, ArrowLeft } from "lucide-react";
+import {
+  Bell,
+  CheckCircle2,
+  Clock,
+  XCircle,
+  ArrowLeft,
+  BookOpen,
+  Sparkles,
+  Info,
+  Layers,
+  CheckCheck,
+  ChevronRight,
+  Filter,
+} from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { listMyOrders, type ManualOrder } from "@/lib/orders";
+import type { NotificationItem } from "@/lib/notifications";
 import BrandLoader from "@/components/BrandLoader";
 
-type Notice = {
+type UnifiedNotice = {
   id: string;
   title: string;
   body: string;
   href: string;
   createdAt: string;
-  kind: "verified" | "pending" | "rejected";
+  category: "material" | "admin" | "order" | "general";
+  statusKind?: "verified" | "pending" | "rejected";
 };
 
-function orderToNotice(o: ManualOrder): Notice | null {
-  if (o.status === "verified") {
-    return {
-      id: `ord-${o.id}-ok`,
-      title: "Package unlocked",
-      body: `${o.packageName || o.packageId} is ready in My Learning.`,
-      href: "/learning",
-      createdAt: o.verifiedAt || o.createdAt,
-      kind: "verified",
-    };
-  }
-  if (o.status === "pending_verification" || o.status === "pending_payment") {
-    return {
-      id: `ord-${o.id}-wait`,
-      title: "Payment pending",
-      body: `${o.packageName || o.packageId} — waiting for verification.`,
-      href: "/orders",
-      createdAt: o.createdAt,
-      kind: "pending",
-    };
-  }
-  if (o.status === "rejected") {
-    return {
-      id: `ord-${o.id}-no`,
-      title: "Payment needs attention",
-      body: `${o.packageName || o.packageId} could not be verified.`,
-      href: "/orders",
-      createdAt: o.verifiedAt || o.createdAt,
-      kind: "rejected",
-    };
-  }
-  return null;
-}
-
-const READ_KEY = "wt_notice_read_v1";
+const READ_KEY = "wt_notice_read_v2";
 
 function readReadIds(): Set<string> {
   if (typeof window === "undefined") return new Set();
@@ -69,37 +50,101 @@ function writeReadIds(ids: Set<string>) {
   localStorage.setItem(READ_KEY, JSON.stringify([...ids]));
 }
 
+function orderToNotice(o: ManualOrder): UnifiedNotice | null {
+  if (o.status === "verified") {
+    return {
+      id: `ord-${o.id}-ok`,
+      title: "Enrollment Confirmed",
+      body: `${o.packageName || o.packageId} is unlocked and ready in My Learning.`,
+      href: "/learning",
+      createdAt: o.verifiedAt || o.createdAt,
+      category: "order",
+      statusKind: "verified",
+    };
+  }
+  if (o.status === "pending_verification" || o.status === "pending_payment") {
+    return {
+      id: `ord-${o.id}-wait`,
+      title: "Order Pending Verification",
+      body: `${o.packageName || o.packageId} — receipt under review.`,
+      href: "/orders",
+      createdAt: o.createdAt,
+      category: "order",
+      statusKind: "pending",
+    };
+  }
+  if (o.status === "rejected") {
+    return {
+      id: `ord-${o.id}-no`,
+      title: "Payment Needs Attention",
+      body: `${o.packageName || o.packageId} could not be verified.`,
+      href: "/orders",
+      createdAt: o.verifiedAt || o.createdAt,
+      category: "order",
+      statusKind: "rejected",
+    };
+  }
+  return null;
+}
+
 export default function NotificationsPage() {
-  const [notices, setNotices] = useState<Notice[]>([]);
+  const [notices, setNotices] = useState<UnifiedNotice[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(() => new Set());
   const [loading, setLoading] = useState(true);
   const [loggedIn, setLoggedIn] = useState(false);
+  const [filter, setFilter] = useState<"all" | "material" | "admin" | "order">("all");
 
   const load = useCallback(async () => {
     setLoading(true);
     const {
       data: { session },
     } = await supabase.auth.getSession();
-    setLoggedIn(Boolean(session?.user));
-    if (!session?.user) {
-      setNotices([]);
-      setLoading(false);
-      return;
+    const user = session?.user;
+    setLoggedIn(Boolean(user));
+
+    const combined: UnifiedNotice[] = [];
+
+    // 1. Fetch system & push notifications from API
+    try {
+      const q = new URLSearchParams();
+      if (user?.id) q.set("userId", user.id);
+      if (user?.email) q.set("email", user.email);
+
+      const res = await fetch(`/api/notifications?${q.toString()}`);
+      const data = await res.json();
+      if (data.ok && Array.isArray(data.notifications)) {
+        data.notifications.forEach((n: NotificationItem) => {
+          combined.push({
+            id: n.id,
+            title: n.title,
+            body: n.body,
+            href: n.url || "/learning",
+            createdAt: n.createdAt,
+            category: n.type === "material" ? "material" : n.type === "admin" ? "admin" : "general",
+          });
+        });
+      }
+    } catch {
+      /* ignore */
     }
-    const orders = await listMyOrders();
-    const list = orders
-      .map(orderToNotice)
-      .filter((n): n is Notice => Boolean(n))
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-      .slice(0, 30);
-    setNotices(list);
-    const ids = readReadIds();
-    setReadIds(ids);
-    // Mark all visible as read when opening the page
-    const next = new Set(ids);
-    list.forEach((n) => next.add(n.id));
-    setReadIds(next);
-    writeReadIds(next);
+
+    // 2. Fetch order notices if signed in
+    if (user) {
+      try {
+        const orders = await listMyOrders();
+        orders.forEach((o) => {
+          const n = orderToNotice(o);
+          if (n) combined.push(n);
+        });
+      } catch {
+        /* ignore */
+      }
+    }
+
+    // Sort newest first
+    combined.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    setNotices(combined);
+    setReadIds(readReadIds());
     setLoading(false);
   }, []);
 
@@ -107,77 +152,241 @@ export default function NotificationsPage() {
     void load();
   }, [load]);
 
+  const markAllRead = () => {
+    const all = new Set(readIds);
+    notices.forEach((n) => all.add(n.id));
+    setReadIds(all);
+    writeReadIds(all);
+  };
+
+  const markItemRead = (id: string) => {
+    const next = new Set(readIds);
+    next.add(id);
+    setReadIds(next);
+    writeReadIds(next);
+  };
+
+  const filteredNotices = useMemo(() => {
+    if (filter === "all") return notices;
+    return notices.filter((n) => n.category === filter);
+  }, [notices, filter]);
+
+  const unreadCount = useMemo(() => {
+    return notices.filter((n) => !readIds.has(n.id)).length;
+  }, [notices, readIds]);
+
   return (
-    <div className="min-h-[70vh] max-w-lg mx-auto px-4 py-8 sm:py-12" data-scroll-zoom-skip>
-      <Link
-        href="/"
-        className="inline-flex items-center gap-1.5 text-sm text-wisdom-muted hover:text-cyan-300 mb-6"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Home
-      </Link>
+    <div className="min-h-[75vh] max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12" data-scroll-zoom-skip>
+      <div className="flex items-center justify-between gap-4 mb-6">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-wisdom-muted hover:text-white transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Home</span>
+        </Link>
 
-      <div className="flex items-center gap-3 mb-2">
-        <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-cyan-400/30 bg-cyan-500/10 text-cyan-300">
-          <Bell className="w-5 h-5" />
-        </span>
-        <h1 className="font-display text-3xl font-extrabold text-white">Notifications</h1>
-      </div>
-      <p className="text-wisdom-muted text-sm mb-8">
-        Package status and account alerts only.
-      </p>
-
-      {!loggedIn && !loading && (
-        <div className="rounded-2xl border border-white/10 bg-wisdom-card/80 p-6 text-center">
-          <p className="text-sm text-wisdom-muted mb-4">Sign in to see your notifications.</p>
-          <Link
-            href="/login"
-            className="inline-flex rounded-xl bg-cyan-400 px-5 py-2.5 text-sm font-bold text-wisdom-dark"
+        {unreadCount > 0 && (
+          <button
+            type="button"
+            onClick={markAllRead}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-400 hover:text-sky-300 transition-colors cursor-pointer"
           >
-            Sign in
+            <CheckCheck className="w-4 h-4" />
+            <span>Mark all read</span>
+          </button>
+        )}
+      </div>
+
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4 mb-6">
+        <div className="flex items-center gap-3.5">
+          <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl border border-sky-400/30 bg-gradient-to-br from-sky-500/20 to-blue-600/10 text-sky-300 shadow-lg shadow-sky-500/10">
+            <Bell className="w-6 h-6" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white ring-2 ring-wisdom-dark">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </div>
+          <div>
+            <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+              Notifications
+            </h1>
+            <p className="text-xs sm:text-sm text-wisdom-muted mt-0.5">
+              Material updates, academic announcements, and study alerts.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Filter Tabs */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-6 scrollbar-none">
+        <button
+          type="button"
+          onClick={() => setFilter("all")}
+          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            filter === "all"
+              ? "bg-sky-500 text-slate-950 shadow-md"
+              : "border border-white/10 bg-white/5 text-slate-300 hover:text-white"
+          }`}
+        >
+          All ({notices.length})
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setFilter("material")}
+          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            filter === "material"
+              ? "bg-sky-500 text-slate-950 shadow-md"
+              : "border border-white/10 bg-white/5 text-slate-300 hover:text-white"
+          }`}
+        >
+          Material Releases
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setFilter("admin")}
+          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            filter === "admin"
+              ? "bg-sky-500 text-slate-950 shadow-md"
+              : "border border-white/10 bg-white/5 text-slate-300 hover:text-white"
+          }`}
+        >
+          Announcements
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setFilter("order")}
+          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            filter === "order"
+              ? "bg-sky-500 text-slate-950 shadow-md"
+              : "border border-white/10 bg-white/5 text-slate-300 hover:text-white"
+          }`}
+        >
+          Orders & Access
+        </button>
+      </div>
+
+      {/* Guest Notice */}
+      {!loggedIn && !loading && (
+        <div className="mb-6 rounded-2xl border border-sky-400/30 bg-gradient-to-r from-sky-950/40 to-[#070e1c] p-5 text-center">
+          <p className="text-sm font-bold text-white mb-1">Scholar Notifications</p>
+          <p className="text-xs text-wisdom-muted mb-4">
+            Sign in to receive targeted study reminders and see your enrollment updates.
+          </p>
+          <Link
+            href="/login?next=/notifications"
+            className="inline-flex rounded-xl bg-sky-400 px-5 py-2 text-xs font-bold text-slate-950 hover:bg-sky-300 shadow-md"
+          >
+            Sign In to Account
           </Link>
         </div>
       )}
 
       {loading && (
         <div className="flex justify-center py-16" data-wta-spinner="true">
-          <BrandLoader size="md" />
+          <BrandLoader size="md" label="Loading alerts..." />
         </div>
       )}
 
-      {loggedIn && !loading && notices.length === 0 && (
-        <div className="rounded-2xl border border-white/10 bg-wisdom-card/80 px-4 py-12 text-center text-sm text-wisdom-muted">
-          No notifications yet
+      {!loading && filteredNotices.length === 0 && (
+        <div className="rounded-2xl border border-white/10 bg-[#091120] px-4 py-16 text-center">
+          <Bell className="w-8 h-8 text-white/20 mx-auto mb-3" />
+          <p className="text-sm font-semibold text-white mb-1">No notifications</p>
+          <p className="text-xs text-wisdom-muted">
+            {filter === "all"
+              ? "You're all caught up! New content alerts will appear here."
+              : `No alerts found for category "${filter}".`}
+          </p>
         </div>
       )}
 
-      {loggedIn && !loading && notices.length > 0 && (
-        <ul className="rounded-2xl border border-white/12 bg-[#0a0f1a] overflow-hidden divide-y divide-white/5">
-          {notices.map((n) => {
-            const Icon =
-              n.kind === "verified" ? CheckCircle2 : n.kind === "rejected" ? XCircle : Clock;
-            const color =
-              n.kind === "verified"
-                ? "text-emerald-400"
-                : n.kind === "rejected"
-                  ? "text-rose-400"
-                  : "text-amber-400";
+      {!loading && filteredNotices.length > 0 && (
+        <div className="rounded-2xl border border-white/10 bg-[#070d18] divide-y divide-white/6 overflow-hidden shadow-xl">
+          {filteredNotices.map((n) => {
+            const isRead = readIds.has(n.id);
+
+            // Icon & accent
+            let Icon = Sparkles;
+            let iconColor = "text-sky-400 bg-sky-500/10 border-sky-400/25";
+            let categoryLabel = "General";
+
+            if (n.category === "material") {
+              Icon = BookOpen;
+              iconColor = "text-sky-300 bg-sky-500/15 border-sky-400/30";
+              categoryLabel = "Material Release";
+            } else if (n.category === "admin") {
+              Icon = Info;
+              iconColor = "text-amber-300 bg-amber-500/15 border-amber-400/30";
+              categoryLabel = "Announcement";
+            } else if (n.category === "order") {
+              if (n.statusKind === "verified") {
+                Icon = CheckCircle2;
+                iconColor = "text-emerald-400 bg-emerald-500/15 border-emerald-400/30";
+                categoryLabel = "Unlocked";
+              } else if (n.statusKind === "rejected") {
+                Icon = XCircle;
+                iconColor = "text-rose-400 bg-rose-500/15 border-rose-400/30";
+                categoryLabel = "Action Required";
+              } else {
+                Icon = Clock;
+                iconColor = "text-amber-300 bg-amber-500/15 border-amber-400/30";
+                categoryLabel = "Pending";
+              }
+            }
+
             return (
-              <li key={n.id}>
-                <Link
-                  href={n.href}
-                  className="flex gap-3 px-4 py-3.5 hover:bg-white/5 transition"
+              <Link
+                key={n.id}
+                href={n.href}
+                onClick={() => markItemRead(n.id)}
+                className={`flex items-start gap-3.5 p-4 sm:p-5 transition-colors group ${
+                  isRead ? "hover:bg-white/[0.03]" : "bg-sky-500/[0.04] hover:bg-sky-500/[0.08]"
+                }`}
+              >
+                <div
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${iconColor} mt-0.5`}
                 >
-                  <Icon className={`w-4 h-4 shrink-0 mt-0.5 ${color}`} />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-white">{n.title}</p>
-                    <p className="text-xs text-wisdom-muted leading-relaxed">{n.body}</p>
+                  <Icon className="w-5 h-5" />
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      {categoryLabel}
+                    </span>
+                    <span className="text-[10px] text-slate-500">
+                      • {new Date(n.createdAt).toLocaleDateString()}
+                    </span>
+                    {!isRead && (
+                      <span className="h-1.5 w-1.5 rounded-full bg-sky-400 animate-pulse" />
+                    )}
                   </div>
-                </Link>
-              </li>
+
+                  <h3
+                    className={`text-sm font-bold transition-colors leading-snug ${
+                      isRead ? "text-slate-200" : "text-white group-hover:text-sky-300"
+                    }`}
+                  >
+                    {n.title}
+                  </h3>
+
+                  <p className="text-xs text-wisdom-muted mt-1 leading-relaxed">
+                    {n.body}
+                  </p>
+                </div>
+
+                <div className="shrink-0 self-center">
+                  <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white transition-colors" />
+                </div>
+              </Link>
             );
           })}
-        </ul>
+        </div>
       )}
     </div>
   );

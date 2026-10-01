@@ -17,6 +17,7 @@ import FreeResourcesPanel from "@/components/admin/FreeResourcesPanel";
 import LocksPanel from "@/components/admin/LocksPanel";
 import AccessGrantsPanel from "@/components/admin/AccessGrantsPanel";
 import DatabaseHubPanel from "@/components/admin/DatabaseHubPanel";
+import NotificationsPanel from "@/components/admin/NotificationsPanel";
 import BrandLoader from "@/components/BrandLoader";
 import {
   LogOut,
@@ -38,10 +39,12 @@ import {
   Eye,
   Sliders,
   CheckCircle2,
+  Bell,
 } from "lucide-react";
 
 type AcademyTab =
   | "overview"
+  | "notifications"
   | "users"
   | "payments"
   | "grants"
@@ -54,6 +57,7 @@ type AcademyTab =
 
 const VALID_TABS: AcademyTab[] = [
   "overview",
+  "notifications",
   "users",
   "payments",
   "grants",
@@ -140,6 +144,12 @@ function AdminDashboardInner() {
   }[] = useMemo(
     () => [
       { id: "overview", label: "Overview", icon: LayoutDashboard },
+      {
+        id: "notifications",
+        label: "Push Broadcasts",
+        icon: Bell,
+        badgeColor: "bg-sky-500/20 text-sky-300 border-sky-400/40",
+      },
       {
         id: "users",
         label: "Scholars & Users",
@@ -314,6 +324,7 @@ function AdminDashboardInner() {
         {/* Dynamic Admin Panel Container */}
         <section className="rounded-3xl border border-white/10 bg-wisdom-card/40 p-4 sm:p-6 lg:p-7 shadow-2xl min-h-[60vh] backdrop-blur-sm">
           {academyTab === "overview" && <AnalyticsPanel />}
+          {academyTab === "notifications" && <NotificationsPanel />}
           {academyTab === "users" && <UsersPanel adminEmail={user.email || undefined} />}
           {academyTab === "payments" && user.email && <PaymentsPanel adminEmail={user.email} />}
           {academyTab === "grants" && user.email && <AccessGrantsPanel adminEmail={user.email} />}

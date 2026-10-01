@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BookOpen, ShoppingBag } from "lucide-react";
 import { cartCount, CART_EVENT } from "@/lib/cart";
+import { IS_FREE_MODE } from "@/lib/ownership";
 import NotificationBell from "@/components/NotificationBell";
 
 export default function HeaderLibraryLinks({
@@ -49,24 +50,26 @@ export default function HeaderLibraryLinks({
       >
         <BookOpen style={{ width: icon, height: icon }} />
       </Link>
-      <Link
-        href="/cart"
-        onClick={onNavigate}
-        aria-label={count ? `Cart, ${count} items` : "Cart"}
-        title="Cart"
-        className={`relative ${pad} rounded-full border transition-all duration-200 ${
-          cartActive
-            ? "border-cyan-400/40 bg-cyan-500/10 text-cyan-300"
-            : "border-transparent text-wisdom-muted hover:text-white hover:bg-white/5 hover:border-white/10"
-        }`}
-      >
-        <ShoppingBag style={{ width: icon, height: icon }} />
-        {count > 0 && (
-          <span className="absolute top-1 right-1 min-w-[14px] h-3.5 px-0.5 rounded-full bg-wisdom-cyan text-[9px] font-bold text-wisdom-dark flex items-center justify-center leading-none ring-2 ring-wisdom-dark">
-            {count > 9 ? "9+" : count}
-          </span>
-        )}
-      </Link>
+      {!IS_FREE_MODE && (
+        <Link
+          href="/cart"
+          onClick={onNavigate}
+          aria-label={count ? `Cart, ${count} items` : "Cart"}
+          title="Cart"
+          className={`relative ${pad} rounded-full border transition-all duration-200 ${
+            cartActive
+              ? "border-cyan-400/40 bg-cyan-500/10 text-cyan-300"
+              : "border-transparent text-wisdom-muted hover:text-white hover:bg-white/5 hover:border-white/10"
+          }`}
+        >
+          <ShoppingBag style={{ width: icon, height: icon }} />
+          {count > 0 && (
+            <span className="absolute top-1 right-1 min-w-[14px] h-3.5 px-0.5 rounded-full bg-wisdom-cyan text-[9px] font-bold text-wisdom-dark flex items-center justify-center leading-none ring-2 ring-wisdom-dark">
+              {count > 9 ? "9+" : count}
+            </span>
+          )}
+        </Link>
+      )}
     </div>
   );
 }

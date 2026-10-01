@@ -26,6 +26,7 @@ import { supabase, recoverSession } from "@/lib/supabase";
 import { isAdminEmail } from "@/lib/admin";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import HeaderLibraryLinks from "@/components/HeaderLibraryLinks";
+import { IS_FREE_MODE } from "@/lib/ownership";
 import RefreshButton from "@/components/RefreshButton";
 import StudentAvatar from "@/components/StudentAvatar";
 import { DIGITAL_URL } from "@/lib/digital-url";
@@ -226,10 +227,12 @@ export default function Header() {
                               <ShoppingBag className="w-4 h-4 text-wisdom-muted" />
                               Packages
                             </Link>
-                            <Link href="/cart" role="menuitem" className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/90 hover:bg-white/5" onClick={() => setProfileOpen(false)}>
-                              <ShoppingBag className="w-4 h-4 text-wisdom-muted" />
-                              Cart
-                            </Link>
+                            {!IS_FREE_MODE && (
+                              <Link href="/cart" role="menuitem" className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/90 hover:bg-white/5" onClick={() => setProfileOpen(false)}>
+                                <ShoppingBag className="w-4 h-4 text-wisdom-muted" />
+                                Cart
+                              </Link>
+                            )}
                             <Link href="/account" role="menuitem" className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/90 hover:bg-white/5" onClick={() => setProfileOpen(false)}>
                               <User className="w-4 h-4 text-wisdom-muted" />
                               My Account
@@ -389,7 +392,7 @@ export default function Header() {
                   { href: "/games/tower-climb", label: "Tower Climb", icon: Compass },
                   { href: "/games/tower-defense", label: "Tower Defense", icon: Gamepad2 },
                   */
-                  { href: "/cart", label: "Cart & Checkout", icon: ShoppingBag },
+                  ...(!IS_FREE_MODE ? [{ href: "/cart", label: "Cart & Checkout", icon: ShoppingBag }] : []),
                   { href: "/account", label: "Student Profile & ID", icon: User },
                   { href: "/settings", label: "Settings", icon: Settings },
                   { href: "/about", label: "About Academy", icon: Info },

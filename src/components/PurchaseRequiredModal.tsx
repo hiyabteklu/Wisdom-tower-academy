@@ -7,9 +7,7 @@ import { usePathname } from "next/navigation";
 import { Lock, ShoppingBag, X, LogIn, UserPlus } from "lucide-react";
 import { formatEtb, getPackage } from "@/data/packages";
 import { PURCHASE_TITLE, PURCHASE_BODY_FRESHMAN } from "@/data/content-availability";
-import { FREE_FOR_REGISTERED_PACKAGE_IDS } from "@/lib/ownership";
-
-const FREE_SET = new Set<string>(FREE_FOR_REGISTERED_PACKAGE_IDS);
+import { isFreeForRegistered as checkFreeForRegistered, IS_FREE_MODE } from "@/lib/ownership";
 
 type Props = {
   open: boolean;
@@ -63,7 +61,7 @@ export default function PurchaseRequiredModal({
   const price = pkg?.priceEtb ?? 300;
   const name = pkg?.name ?? "this package";
   const checkoutHref = `/checkout/${packageId}`;
-  const isFreeForRegistered = FREE_SET.has(packageId);
+  const isFreeForRegistered = IS_FREE_MODE || checkFreeForRegistered(packageId);
 
   useEffect(() => {
     setMounted(true);

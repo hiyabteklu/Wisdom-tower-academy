@@ -10,6 +10,8 @@ import { getPackageResolved } from "@/lib/catalog";
 import {
   isPackageOwned,
   clearOwnershipCache,
+  isFreeForRegistered,
+  IS_FREE_MODE,
   FREE_FOR_REGISTERED_PACKAGE_IDS,
 } from "@/lib/ownership";
 import { isPackagePurchasable } from "@/data/content-availability";
@@ -39,7 +41,7 @@ export default function AddToCartButton({
   const price = pkg?.priceEtb ?? PACKAGE_PRICE_ETB;
   const openHref = pkg?.href || "/learning";
   const purchasable = isPackagePurchasable(packageId);
-  const freeForRegistered = FREE_SET.has(packageId);
+  const freeForRegistered = IS_FREE_MODE || isFreeForRegistered(packageId);
 
   useEffect(() => {
     const syncCart = () => setInCart(isInCart(packageId));

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Users, Gift } from "lucide-react";
 import { getPackage, formatEtb } from "@/data/packages";
-import { FREE_FOR_REGISTERED_PACKAGE_IDS } from "@/lib/ownership";
+import { isFreeForRegistered, IS_FREE_MODE, FREE_FOR_REGISTERED_PACKAGE_IDS } from "@/lib/ownership";
 import { supabase } from "@/lib/supabase";
 import AddToCartButton from "@/components/AddToCartButton";
 import Link from "next/link";
@@ -15,7 +15,7 @@ const FREE_SET = new Set<string>(FREE_FOR_REGISTERED_PACKAGE_IDS);
 export default function PackageOfferBanner({ packageId }: { packageId: string }) {
   const pathname = usePathname();
   const pkg = getPackage(packageId);
-  const isFreeForRegistered = FREE_SET.has(packageId);
+  const isFree = IS_FREE_MODE || isFreeForRegistered(packageId);
   const [signedIn, setSignedIn] = useState(false);
 
   useEffect(() => {
@@ -39,7 +39,7 @@ export default function PackageOfferBanner({ packageId }: { packageId: string })
 
   if (!pkg) return null;
 
-  if (isFreeForRegistered && signedIn) {
+  if (isFree && signedIn) {
     return (
       <div className="card-modern border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 via-wisdom-card to-wisdom-card p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
         <div className="flex-1 min-w-0">
@@ -68,7 +68,7 @@ export default function PackageOfferBanner({ packageId }: { packageId: string })
     );
   }
 
-  if (isFreeForRegistered && !signedIn) {
+  if (isFree && !signedIn) {
     return (
       <div className="card-modern border-cyan-500/30 bg-gradient-to-r from-cyan-500/10 via-wisdom-card to-wisdom-card p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
         <div className="flex-1 min-w-0">

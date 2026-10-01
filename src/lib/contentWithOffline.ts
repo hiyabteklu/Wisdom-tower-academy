@@ -48,6 +48,7 @@ export async function listResources(opts: {
   hub?: HubId;
   packageId?: string;
   publishedOnly?: boolean;
+  skipAuthCheck?: boolean;
 }): Promise<{ items: LearningResource[]; error?: string }> {
   const key = resourceCacheKey(opts);
 

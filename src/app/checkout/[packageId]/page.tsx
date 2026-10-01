@@ -5,7 +5,8 @@ import Link from "next/link";
 import { getPackage, formatEtb } from "@/data/packages";
 import { getPackageResolved } from "@/lib/catalog";
 import { isPackagePurchasable } from "@/data/content-availability";
-import { CloudUpload, ArrowLeft } from "lucide-react";
+import { CloudUpload, ArrowLeft, Gift, BookOpen } from "lucide-react";
+import { IS_FREE_MODE } from "@/lib/ownership";
 import CheckoutForm from "@/components/CheckoutForm";
 
 /** Gate: only purchasable packages reach CheckoutForm. */
@@ -37,6 +38,44 @@ export default function CheckoutPage({
         <Link href="/packages" className="text-amber-300 text-sm hover:underline">
           Back to packages
         </Link>
+      </div>
+    );
+  }
+
+  if (IS_FREE_MODE) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-16 text-center">
+        <div className="rounded-3xl border border-emerald-500/30 bg-wisdom-card p-8 sm:p-10 shadow-2xl backdrop-blur-xl">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-emerald-400/40 bg-emerald-500/15 text-emerald-300">
+            <Gift className="w-8 h-8" />
+          </div>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-300 border border-emerald-400/30 mb-3">
+            Complimentary Scholar Access
+          </span>
+          <h1 className="font-display text-2xl font-black text-white mb-2">
+            {pkg.name} is 100% Free
+          </h1>
+          <p className="text-sm text-wisdom-muted leading-relaxed mb-6">
+            All materials for this pathway are completely unlocked for all registered students.
+            No checkout, payment, or verification is required.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              href={pkg.href || "/learning"}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 py-3 text-sm font-bold text-slate-950 hover:bg-emerald-300 shadow-lg shadow-emerald-500/20 transition-all"
+            >
+              <BookOpen className="w-4 h-4" />
+              <span>Start Learning Now</span>
+            </Link>
+            <Link
+              href="/packages"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-bold text-white hover:bg-white/10 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>All Tracks</span>
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }

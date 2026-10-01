@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Bell, CheckCircle2, Clock, XCircle } from "lucide-react";
+import { Bell, CheckCircle2, Clock, XCircle, BookOpen, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { listMyOrders, type ManualOrder } from "@/lib/orders";
 
@@ -12,7 +12,7 @@ type Notice = {
   body: string;
   href: string;
   createdAt: string;
-  kind: "verified" | "pending" | "rejected";
+  kind: "verified" | "pending" | "rejected" | "material" | "admin";
 };
 
 function orderToNotice(o: ManualOrder): Notice | null {
@@ -83,18 +83,49 @@ export default function NotificationBell({
     const {
       data: { session },
     } = await supabase.auth.getSession();
-    setLoggedIn(Boolean(session?.user));
-    if (!session?.user) {
-      setNotices([]);
-      return;
+    const user = session?.user;
+    setLoggedIn(Boolean(user));
+
+    const combined: Notice[] = [];
+
+    // 1. System announcements & material notifications
+    try {
+      const q = new URLSearchParams();
+      if (user?.id) q.set("userId", user.id);
+      if (user?.email) q.set("email", user.email);
+      const res = await fetch(`/api/notifications?${q.toString()}`);
+      const data = await res.json();
+      if (data.ok && Array.isArray(data.notifications)) {
+        data.notifications.slice(0, 10).forEach((n: { id: string; title: string; body: string; url?: string; createdAt: string; type?: string }) => {
+          combined.push({
+            id: n.id,
+            title: n.title,
+            body: n.body,
+            href: n.url || "/learning",
+            createdAt: n.createdAt,
+            kind: n.type === "material" ? "material" : "admin",
+          });
+        });
+      }
+    } catch {
+      /* ignore */
     }
-    const orders = await listMyOrders();
-    const list = orders
-      .map(orderToNotice)
-      .filter((n): n is Notice => Boolean(n))
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-      .slice(0, 12);
-    setNotices(list);
+
+    // 2. Orders
+    if (user) {
+      try {
+        const orders = await listMyOrders();
+        orders.forEach((o) => {
+          const n = orderToNotice(o);
+          if (n) combined.push(n);
+        });
+      } catch {
+        /* ignore */
+      }
+    }
+
+    combined.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    setNotices(combined.slice(0, 12));
     setReadIds(readReadIds());
   }, []);
 
@@ -190,17 +221,25 @@ export default function NotificationBell({
             <ul className="max-h-[min(20rem,50vh)] overflow-y-auto">
               {notices.map((n) => {
                 const Icon =
-                  n.kind === "verified"
-                    ? CheckCircle2
-                    : n.kind === "rejected"
-                      ? XCircle
-                      : Clock;
+                  n.kind === "material"
+                    ? BookOpen
+                    : n.kind === "admin"
+                      ? Sparkles
+                      : n.kind === "verified"
+                        ? CheckCircle2
+                        : n.kind === "rejected"
+                          ? XCircle
+                          : Clock;
                 const color =
-                  n.kind === "verified"
-                    ? "text-emerald-400"
-                    : n.kind === "rejected"
-                      ? "text-rose-400"
-                      : "text-amber-400";
+                  n.kind === "material"
+                    ? "text-sky-400"
+                    : n.kind === "admin"
+                      ? "text-cyan-300"
+                      : n.kind === "verified"
+                        ? "text-emerald-400"
+                        : n.kind === "rejected"
+                          ? "text-rose-400"
+                          : "text-amber-400";
                 return (
                   <li key={n.id} className="border-b border-white/5 last:border-0">
                     <Link

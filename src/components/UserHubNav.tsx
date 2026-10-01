@@ -3,17 +3,19 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BookOpen, ShoppingBag, User, GraduationCap, Package } from "lucide-react";
+import { IS_FREE_MODE } from "@/lib/ownership";
 
-const quick = [
+const allQuick = [
   { href: "/learning", label: "My Learning", icon: GraduationCap },
   { href: "/packages", label: "Packages", icon: Package },
-  { href: "/cart", label: "Cart", icon: ShoppingBag },
+  { href: "/cart", label: "Cart", icon: ShoppingBag, isCart: true },
   { href: "/account", label: "Account", icon: User },
   { href: "/academy", label: "Pathways", icon: BookOpen },
 ];
 
 export default function UserHubNav() {
   const pathname = usePathname() || "/";
+  const quick = allQuick.filter((q) => !q.isCart || !IS_FREE_MODE);
 
   return (
     <div className="mb-8">

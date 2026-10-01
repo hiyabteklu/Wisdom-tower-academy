@@ -17,6 +17,8 @@ import {
   CART_EVENT,
 } from "@/lib/cart";
 import { formatEtb, type AcademyPackage } from "@/data/packages";
+import { IS_FREE_MODE } from "@/lib/ownership";
+import { Gift, LogIn } from "lucide-react";
 
 const SELECT_KEY = "wt_cart_checkout_ids";
 
@@ -96,6 +98,46 @@ export default function CartPage() {
       return;
     }
     router.push(`/checkout/multi?ids=${encodeURIComponent(ids.join(","))}`);
+  }
+
+  if (IS_FREE_MODE) {
+    return (
+      <div className="relative min-h-[70vh] flex items-center justify-center">
+        <div className="relative max-w-lg mx-auto px-4 py-16 text-center">
+          <div className="rounded-3xl border border-emerald-500/30 bg-wisdom-card p-8 sm:p-10 shadow-2xl backdrop-blur-xl">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-emerald-400/40 bg-emerald-500/15 text-emerald-300">
+              <Gift className="w-8 h-8" />
+            </div>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-300 border border-emerald-400/30 mb-3">
+              Full Scholar Access Active
+            </span>
+            <h1 className="font-display text-2xl sm:text-3xl font-black text-white mb-3">
+              All Content is 100% Free
+            </h1>
+            <p className="text-sm text-wisdom-muted leading-relaxed mb-6">
+              During this period, all learning tracks, books, notes, questions, and model exams
+              are completely unlocked for registered students. No cart, checkout, or payment is required.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link
+                href="/learning"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 py-3 text-sm font-bold text-slate-950 hover:bg-emerald-300 shadow-lg shadow-emerald-500/20 transition-all"
+              >
+                <BookOpen className="w-4 h-4" />
+                <span>Go to My Learning</span>
+              </Link>
+              <Link
+                href="/packages"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-bold text-white hover:bg-white/10 transition-colors"
+              >
+                <span>Browse Tracks</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

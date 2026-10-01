@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Shield, ChevronDown, Check } from "lucide-react";
+import { CheckCircle2, Shield, ChevronDown, Check, BookOpen, LogIn } from "lucide-react";
 import { formatEtb, type AcademyPackage } from "@/data/packages";
 import { listSellablePackages } from "@/lib/catalog";
-import { isPackageOwned } from "@/lib/ownership";
+import { isPackageOwned, IS_FREE_MODE } from "@/lib/ownership";
 import { addToCart } from "@/lib/cart";
 
 function PackageCatalogCard({ pkg }: { pkg: AcademyPackage }) {
@@ -42,14 +42,20 @@ function PackageCatalogCard({ pkg }: { pkg: AcademyPackage }) {
       </div>
 
       <div className="p-4 sm:p-5 flex flex-col flex-1 border-t border-white/8 space-y-3">
-        {/* Title with price next to title */}
+        {/* Title with price / free badge next to title */}
         <div className="flex items-baseline justify-between gap-3">
           <h2 className="font-display text-lg font-bold text-white leading-snug truncate">
             {pkg.name}
           </h2>
-          <span className="shrink-0 font-display font-black text-amber-300 text-base">
-            {formatEtb(pkg.priceEtb)}
-          </span>
+          {IS_FREE_MODE ? (
+            <span className="shrink-0 text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-400/30">
+              Free Access
+            </span>
+          ) : (
+            <span className="shrink-0 font-display font-black text-amber-300 text-base">
+              {formatEtb(pkg.priceEtb)}
+            </span>
+          )}
         </div>
 
         {/* Two clean buttons side by side (mobile view and desktop) */}
@@ -67,7 +73,25 @@ function PackageCatalogCard({ pkg }: { pkg: AcademyPackage }) {
             />
           </button>
 
-          {owned ? (
+          {IS_FREE_MODE ? (
+            owned ? (
+              <Link
+                href={pkg.href || "/learning"}
+                className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-emerald-400 hover:bg-emerald-300 text-slate-950 shadow-md transition-colors text-center"
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>Start Learning</span>
+              </Link>
+            ) : (
+              <Link
+                href={`/login?next=${encodeURIComponent(pkg.href || "/packages")}`}
+                className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-cyan-400 hover:bg-cyan-300 text-slate-950 shadow-md transition-colors text-center"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Sign In Free</span>
+              </Link>
+            )
+          ) : owned ? (
             <Link
               href={pkg.href || "/learning"}
               className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 hover:bg-emerald-500/30 transition-colors text-center"

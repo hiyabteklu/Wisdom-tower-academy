@@ -140,8 +140,21 @@ export async function listResources(opts: {
   hub?: HubId;
   packageId?: string;
   publishedOnly?: boolean;
+  skipAuthCheck?: boolean;
 }): Promise<{ items: LearningResource[]; error?: string }> {
   try {
+    if (!opts.skipAuthCheck) {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.user) {
+        return {
+          items: [],
+          error: "Sign in required to access learning content.",
+        };
+      }
+    }
+
     let q = supabase.from("learning_resources").select("*").order("sort_order", {
       ascending: true,
     });

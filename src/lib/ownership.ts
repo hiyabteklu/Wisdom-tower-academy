@@ -13,6 +13,18 @@ import { supabase } from "@/lib/supabase";
 
 export type OwnershipMap = Set<string>;
 
+/**
+ * MASTER FEATURE FLAG: FREE MODE (for Play Store review)
+ * When true:
+ * - All authenticated/signed-in users receive 100% full content access to all learning hubs,
+ *   books, notes, questions, and exams without payment walls or ownership requirements.
+ * - Guest users MUST sign in to access protected content (navigation/previews remain public).
+ * - All payment, purchase, price (ETB), checkout, and cart UI elements are hidden.
+ * When false:
+ * - Original paid ownership and manual order verification logic resumes seamlessly.
+ */
+export const IS_FREE_MODE = true;
+
 /** Packages unlocked automatically for every signed-in user (no payment). */
 export const FREE_FOR_REGISTERED_PACKAGE_IDS = [
   "ece-y3-sem-1",
@@ -61,6 +73,14 @@ export async function getOwnedPackageIds(force = false): Promise<OwnershipMap> {
       Date.now() - cache.at < TTL_MS
     ) {
       return cache.ids;
+    }
+
+    // When FREE_MODE is active: Authenticated users have immediate full access to all curriculum packages
+    if (IS_FREE_MODE) {
+      const allIds = new Set<string>(allCatalogIds());
+      allIds.add(ALL_PACKAGES_ID);
+      cache = { at: Date.now(), ids: allIds, userId };
+      return allIds;
     }
 
     // Always grant free packages first — never blocked by enroll/order errors
@@ -116,5 +136,6 @@ export async function isPackageOwned(packageId: string): Promise<boolean> {
 
 /** True when this package unlocks for any signed-in user (no payment). */
 export function isFreeForRegistered(packageId: string): boolean {
+  if (IS_FREE_MODE) return true;
   return (FREE_FOR_REGISTERED_PACKAGE_IDS as readonly string[]).includes(packageId);
 }

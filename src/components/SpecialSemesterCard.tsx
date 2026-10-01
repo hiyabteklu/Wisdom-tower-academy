@@ -6,6 +6,7 @@ import { ArrowRight, BookOpen, CheckCircle2, ChevronDown, Info } from "lucide-re
 import SafeCoverImage from "@/components/SafeCoverImage";
 import AddToCartButton from "@/components/AddToCartButton";
 import { getPackage, formatEtb } from "@/data/packages";
+import { IS_FREE_MODE } from "@/lib/ownership";
 import type { SpecialPackage, SpecialSemester } from "@/data/special-packages";
 
 export default function SpecialSemesterCard({
@@ -49,9 +50,15 @@ export default function SpecialSemesterCard({
             <BookOpen className="w-3.5 h-3.5" />
             <span>{sem.courses.length} courses</span>
           </div>
-          <span className="font-display font-black text-amber-300 text-sm sm:text-base">
-            {formatEtb(sem.priceEtb)}
-          </span>
+          {IS_FREE_MODE ? (
+            <span className="text-xs font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 rounded-full">
+              Free Access
+            </span>
+          ) : (
+            <span className="font-display font-black text-amber-300 text-sm sm:text-base">
+              {formatEtb(sem.priceEtb)}
+            </span>
+          )}
         </div>
 
         <h2 className="font-display text-lg sm:text-xl font-bold text-white mb-2">
