@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   listResources,
   saveProgress,
@@ -26,6 +27,7 @@ import {
   ChevronRight,
   ArrowLeft,
   LogIn,
+  UserPlus,
   Gamepad2,
   Crosshair,
   Trophy,
@@ -96,6 +98,7 @@ export default function HubContentView({
   trackerScopeId,
 }: Props) {
   const [items, setItems] = useState<LearningResource[]>([]);
+  const pathname = usePathname();
   const [owned, setOwned] = useState(false);
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState<LearningResource | null>(null);
@@ -212,13 +215,22 @@ export default function HubContentView({
             Create a free account to unlock books, notes, questions, and exams. No payment required for
             registered students.
           </p>
-          <Link
-            href="/auth"
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-500 px-5 py-2.5 text-sm font-bold text-wisdom-dark hover:bg-cyan-400"
-          >
-            <LogIn className="w-4 h-4" />
-            Sign in free
-          </Link>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href={`/login?next=${encodeURIComponent(pathname || "/learning")}`}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-500 px-5 py-2.5 text-sm font-bold text-wisdom-dark hover:bg-cyan-400 shadow-md"
+            >
+              <LogIn className="w-4 h-4" />
+              Sign In Free
+            </Link>
+            <Link
+              href={`/signup?next=${encodeURIComponent(pathname || "/learning")}`}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 px-5 py-2.5 text-sm font-bold text-white hover:bg-white/10 transition-colors"
+            >
+              <UserPlus className="w-4 h-4 text-amber-300" />
+              Create Free Account
+            </Link>
+          </div>
         </div>
       );
     }
@@ -440,7 +452,8 @@ export default function HubContentView({
 
   return (
     <div className="space-y-4 w-full max-w-full">
-      {/* Featured Game Banners in Learning Hubs */}
+      {/* Featured Game Banners in Learning Hubs (Hidden/Commented per preference) */}
+      {/*
       {hub === "exams" && (
         <div className="rounded-2xl border border-cyan-400/30 bg-gradient-to-r from-cyan-950/40 via-slate-900/60 to-slate-950/80 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
           <div className="flex items-center gap-3">
@@ -500,6 +513,7 @@ export default function HubContentView({
           </Link>
         </div>
       )}
+      */}
 
       <ul className="space-y-3 w-full max-w-full">
       {items.map((item) => {

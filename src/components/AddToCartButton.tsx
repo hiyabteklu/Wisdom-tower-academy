@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ShoppingBag, Check, BookOpen, CloudUpload, Gift } from "lucide-react";
 import { addToCart, isInCart, CART_EVENT } from "@/lib/cart";
 import { formatEtb, PACKAGE_PRICE_ETB, getPackage } from "@/data/packages";
@@ -28,6 +29,7 @@ export default function AddToCartButton({
   variant = "primary",
   className = "",
 }: Props) {
+  const pathname = usePathname();
   const [inCart, setInCart] = useState(false);
   const [owned, setOwned] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
@@ -121,7 +123,7 @@ export default function AddToCartButton({
 
     return (
       <Link
-        href="/auth"
+        href={`/login?next=${encodeURIComponent(pathname || "/learning")}`}
         className={`inline-flex items-center justify-center gap-2 w-full py-2.5 sm:py-3 rounded-xl border border-cyan-400/40 bg-cyan-500/10 text-cyan-200 text-sm font-semibold hover:bg-cyan-500/15 ${className}`}
       >
         <Gift className="w-4 h-4" />

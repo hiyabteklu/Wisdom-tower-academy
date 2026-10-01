@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { Lock, ShoppingBag, X, LogIn } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Lock, ShoppingBag, X, LogIn, UserPlus } from "lucide-react";
 import { formatEtb, getPackage } from "@/data/packages";
 import { PURCHASE_TITLE, PURCHASE_BODY_FRESHMAN } from "@/data/content-availability";
 import { FREE_FOR_REGISTERED_PACKAGE_IDS } from "@/lib/ownership";
@@ -57,6 +58,7 @@ export default function PurchaseRequiredModal({
   hubName,
 }: Props) {
   const [mounted, setMounted] = useState(false);
+  const pathname = usePathname();
   const pkg = getPackage(packageId);
   const price = pkg?.priceEtb ?? 300;
   const name = pkg?.name ?? "this package";
@@ -124,12 +126,20 @@ export default function PurchaseRequiredModal({
 
           <div className="flex flex-col gap-2.5">
             <Link
-              href="/login"
+              href={`/login?next=${encodeURIComponent(pathname || "/learning")}`}
               onClick={onClose}
               className="btn-cyan min-h-[44px] w-full px-6 py-2.5 text-sm"
             >
               <LogIn className="w-4 h-4" />
               Sign In
+            </Link>
+            <Link
+              href={`/login?mode=signup&next=${encodeURIComponent(pathname || "/learning")}`}
+              onClick={onClose}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 min-h-[44px] w-full px-6 py-2.5 text-sm font-semibold text-white hover:bg-white/10 transition-colors"
+            >
+              <UserPlus className="w-4 h-4 text-amber-300" />
+              Create Free Account
             </Link>
             <button
               type="button"

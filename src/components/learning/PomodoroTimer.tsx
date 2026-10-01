@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Play, Pause, RotateCcw, Timer } from "lucide-react";
-import CollapsibleSection from "@/components/CollapsibleSection";
+import { Play, Pause, RotateCcw, Timer, SlidersHorizontal, Check } from "lucide-react";
 import {
   FOCUS_EVENT,
   formatFocusClock,
@@ -21,6 +20,7 @@ const PRESETS = [
   { label: "Focus 25", minutes: 25 },
   { label: "Short 5", minutes: 5 },
   { label: "Long 15", minutes: 15 },
+  { label: "Sprint 45", minutes: 45 },
 ] as const;
 
 export default function PomodoroTimer() {
@@ -29,6 +29,8 @@ export default function PomodoroTimer() {
   const [startLine, setStartLine] = useState<string | null>(null);
   const [nudge, setNudge] = useState<ReturnType<typeof pickNudge> | null>(null);
   const [pendingAction, setPendingAction] = useState<"pause" | "reset" | null>(null);
+  const [customInputOpen, setCustomInputOpen] = useState(false);
+  const [customMinutes, setCustomMinutes] = useState(30);
 
   const sync = useCallback(() => {
     const s = readFocusState();
@@ -119,136 +121,154 @@ export default function PomodoroTimer() {
 
   return (
     <>
-      <CollapsibleSection
-        title="Focus timer"
-        subtitle={running ? "Running · stays on while you study" : left < state.totalSec && left > 0 ? "Paused" : "Pomodoro"}
-        icon={<Timer className="w-5 h-5 text-amber-300" />}
-        defaultOpen={false}
-      >
-        <div className="rounded-3xl border border-white/12 bg-wisdom-card p-6 sm:p-8 text-center shadow-card-3d">
-          <div className="flex flex-wrap justify-center gap-2 mb-6">
-            {PRESETS.map((p) => (
+      <div className="rounded-3xl border border-white/12 bg-wisdom-card p-6 sm:p-8 text-center shadow-card-3d">
+        <div className="flex flex-wrap justify-center items-center gap-2 mb-6">
+          {PRESETS.map((p) => (
+            <button
+              key={p.label}
+              type="button"
+              disabled={running}
+              onClick={() => {
+                setPreset(p.minutes * 60);
+                setStartLine(null);
+                setCustomInputOpen(false);
+                sync();
+                if (typeof window !== "undefined") {
+                  window.dispatchEvent(new CustomEvent("wt-focus-timer"));
+                }
+              }}
+              className={`rounded-xl px-3.5 py-2 text-xs font-bold border transition-colors cursor-pointer ${
+                state.totalSec === p.minutes * 60
+                  ? "border-cyan-400 bg-cyan-500/20 text-cyan-200 shadow-sm"
+                  : "border-white/10 text-slate-300 hover:border-white/25 hover:bg-white/5"
+              } disabled:opacity-50`}
+            >
+              {p.label}
+            </button>
+          ))}
+
+          <button
+            type="button"
+            disabled={running}
+            onClick={() => setCustomInputOpen((prev) => !prev)}
+            className={`rounded-xl px-3.5 py-2 text-xs font-bold border transition-colors cursor-pointer flex items-center gap-1.5 ${
+              customInputOpen || !PRESETS.some((p) => p.minutes * 60 === state.totalSec)
+                ? "border-amber-400 bg-amber-500/20 text-amber-200 font-bold"
+                : "border-white/10 text-slate-300 hover:border-cyan-400/40 hover:text-cyan-200 hover:bg-white/5"
+            } disabled:opacity-50`}
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            <span>
+              {!PRESETS.some((p) => p.minutes * 60 === state.totalSec)
+                ? `Custom (${Math.round(state.totalSec / 60)}m)`
+                : "Custom..."}
+            </span>
+          </button>
+        </div>
+
+        {/* Inline Custom Minutes Selector */}
+        {customInputOpen && !running && (
+          <div className="mb-6 p-4 rounded-2xl border border-amber-400/30 bg-amber-500/10 max-w-xs mx-auto animate-in fade-in duration-200">
+            <p className="text-xs font-bold text-amber-300 mb-2 uppercase tracking-wider">
+              Set Custom Duration
+            </p>
+            <div className="flex items-center justify-center gap-2">
+              <input
+                type="number"
+                min={1}
+                max={360}
+                value={customMinutes}
+                onChange={(e) => setCustomMinutes(Math.max(1, Math.min(360, Number(e.target.value) || 1)))}
+                className="w-20 px-3 py-1.5 rounded-xl bg-slate-900 border border-white/20 text-white font-mono text-center font-bold text-sm focus:outline-none focus:border-amber-400"
+              />
+              <span className="text-xs text-slate-300 font-medium">minutes</span>
               <button
-                key={p.label}
                 type="button"
-                disabled={running}
                 onClick={() => {
-                  setPreset(p.minutes * 60);
+                  setPreset(customMinutes * 60);
                   setStartLine(null);
+                  setCustomInputOpen(false);
                   sync();
                   if (typeof window !== "undefined") {
                     window.dispatchEvent(new CustomEvent("wt-focus-timer"));
                   }
                 }}
-                className={`rounded-xl px-3 py-1.5 text-xs font-semibold border transition-colors ${
-                  state.totalSec === p.minutes * 60
-                    ? "border-cyan-400 bg-cyan-500/20 text-cyan-200"
-                    : "border-white/10 text-slate-300 hover:border-white/25"
-                } disabled:opacity-50`}
+                className="px-3 py-1.5 rounded-xl bg-amber-400 text-slate-950 font-bold text-xs hover:bg-amber-300 cursor-pointer flex items-center gap-1 shadow-sm"
               >
-                {p.label}
+                <Check className="w-3.5 h-3.5" />
+                <span>Set</span>
               </button>
-            ))}
-
-            <button
-              type="button"
-              disabled={running}
-              onClick={() => {
-                const input = prompt("Enter custom focus duration in minutes (e.g. 45 or 90):", "45");
-                if (input) {
-                  const mins = parseInt(input, 10);
-                  if (!isNaN(mins) && mins > 0 && mins <= 360) {
-                    setPreset(mins * 60);
-                    setStartLine(null);
-                    sync();
-                    if (typeof window !== "undefined") {
-                      window.dispatchEvent(new CustomEvent("wt-focus-timer"));
-                    }
-                  } else {
-                    alert("Please enter a valid duration between 1 and 360 minutes.");
-                  }
-                }
-              }}
-              className={`rounded-xl px-3 py-1.5 text-xs font-semibold border transition-colors ${
-                !PRESETS.some((p) => p.minutes * 60 === state.totalSec)
-                  ? "border-amber-400 bg-amber-500/20 text-amber-200 font-bold"
-                  : "border-white/10 text-slate-300 hover:border-cyan-400/40 hover:text-cyan-200"
-              } disabled:opacity-50`}
-            >
-              {!PRESETS.some((p) => p.minutes * 60 === state.totalSec)
-                ? `Custom ${Math.round(state.totalSec / 60)}m`
-                : "Custom..."}
-            </button>
-          </div>
-
-          <div className="relative mx-auto w-40 h-40 sm:w-48 sm:h-48 mb-4">
-            <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-              <circle cx="60" cy="60" r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="8" />
-              <circle
-                cx="60"
-                cy="60"
-                r={r}
-                fill="none"
-                stroke="#fbbf24"
-                strokeWidth="8"
-                strokeLinecap="round"
-                strokeDasharray={c}
-                strokeDashoffset={offset}
-                className="transition-[stroke-dashoffset] duration-300"
-              />
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <p className="font-display text-4xl sm:text-5xl font-black tabular-nums text-white tracking-tight">
-                {formatFocusClock(left)}
-              </p>
-              <p className="text-[11px] uppercase tracking-wider text-wisdom-muted mt-1">
-                {running ? "Focus" : left === 0 ? "Done" : "Ready"}
-              </p>
             </div>
           </div>
+        )}
 
-          {startLine && running ? (
-            <p className="mb-5 text-sm text-amber-100/90 leading-relaxed max-w-sm mx-auto font-medium">
-              {startLine}
+        <div className="relative mx-auto w-40 h-40 sm:w-48 sm:h-48 mb-4">
+          <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="8" />
+            <circle
+              cx="60"
+              cy="60"
+              r={r}
+              fill="none"
+              stroke="#fbbf24"
+              strokeWidth="8"
+              strokeLinecap="round"
+              strokeDasharray={c}
+              strokeDashoffset={offset}
+              className="transition-[stroke-dashoffset] duration-300"
+            />
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <p className="font-display text-4xl sm:text-5xl font-black tabular-nums text-white tracking-tight">
+              {formatFocusClock(left)}
             </p>
-          ) : null}
+            <p className="text-[11px] uppercase tracking-wider text-wisdom-muted mt-1 font-bold">
+              {running ? "Focus" : left === 0 ? "Done" : "Ready"}
+            </p>
+          </div>
+        </div>
 
-          <div className="flex items-center justify-center gap-3">
-            {running ? (
-              <button
-                type="button"
-                onClick={() => requestStop("pause")}
-                className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-5 py-2.5 text-sm font-bold text-white hover:bg-white/10"
-              >
-                <Pause className="w-4 h-4" />
-                Pause
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={onStart}
-                disabled={left <= 0}
-                className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-bold text-wisdom-dark hover:bg-amber-400 disabled:opacity-40"
-              >
-                <Play className="w-4 h-4" />
-                Start
-              </button>
-            )}
+        {startLine && running ? (
+          <p className="mb-5 text-sm text-amber-100/90 leading-relaxed max-w-sm mx-auto font-medium">
+            {startLine}
+          </p>
+        ) : null}
+
+        <div className="flex items-center justify-center gap-3">
+          {running ? (
             <button
               type="button"
-              onClick={() => requestStop("reset")}
-              className="inline-flex items-center gap-2 rounded-xl border border-white/15 px-4 py-2.5 text-sm font-semibold text-wisdom-muted hover:text-white"
+              onClick={() => requestStop("pause")}
+              className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-bold text-white hover:bg-white/10 cursor-pointer shadow-md"
             >
-              <RotateCcw className="w-4 h-4" />
-              Reset
+              <Pause className="w-4 h-4" />
+              Pause
             </button>
-          </div>
-
-          <p className="mt-4 text-[11px] text-wisdom-muted">
-            Timer keeps running when you open books, notes, or other pages.
-          </p>
+          ) : (
+            <button
+              type="button"
+              onClick={onStart}
+              disabled={left <= 0}
+              className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-6 py-3 text-sm font-bold text-wisdom-dark hover:bg-amber-400 disabled:opacity-40 cursor-pointer shadow-md"
+            >
+              <Play className="w-4 h-4" />
+              Start
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => requestStop("reset")}
+            className="inline-flex items-center gap-2 rounded-xl border border-white/15 px-5 py-3 text-sm font-semibold text-wisdom-muted hover:text-white cursor-pointer"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Reset
+          </button>
         </div>
-      </CollapsibleSection>
+
+        <p className="mt-4 text-[11px] text-wisdom-muted">
+          Timer keeps running when you open books, notes, or other pages.
+        </p>
+      </div>
 
       {nudge && (
         <div

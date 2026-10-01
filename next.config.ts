@@ -12,6 +12,56 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        source: "/sign-in",
+        destination: "/login",
+        permanent: false,
+      },
+      {
+        source: "/sign-up",
+        destination: "/signup",
+        permanent: false,
+      },
+      {
+        source: "/log-in",
+        destination: "/login",
+        permanent: false,
+      },
+      {
+        source: "/sign_in",
+        destination: "/login",
+        permanent: false,
+      },
+      {
+        source: "/sign_up",
+        destination: "/signup",
+        permanent: false,
+      },
+      {
+        source: "/auth/login",
+        destination: "/login",
+        permanent: false,
+      },
+      {
+        source: "/auth/signin",
+        destination: "/login",
+        permanent: false,
+      },
+      {
+        source: "/auth/signup",
+        destination: "/signup",
+        permanent: false,
+      },
+      {
+        source: "/auth/register",
+        destination: "/signup",
+        permanent: false,
+      },
+      {
+        source: "/academy/packages",
+        destination: "/packages",
+        permanent: false,
+      },
+      {
         source: "/digital",
         destination: DIGITAL,
         permanent: false,

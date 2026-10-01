@@ -26,7 +26,8 @@ export default function ExitExamPage() {
           </p>
         </div>
 
-        {/* Featured Interactive Game: Tower Defense of Knowledge */}
+        {/* Featured Interactive Game: Tower Defense of Knowledge (commented out per request) */}
+        {/*
         <div className="mb-8 overflow-hidden rounded-3xl border border-cyan-400/30 bg-gradient-to-br from-slate-900 via-slate-900 to-cyan-950/40 p-6 sm:p-8 shadow-2xl relative">
           <div className="absolute top-0 right-0 p-6 opacity-10 pointer-events-none">
             <Shield className="w-32 h-32 text-cyan-400" />
@@ -65,6 +66,7 @@ export default function ExitExamPage() {
             </div>
           </div>
         </div>
+        */}
 
         <div className="mb-8">
           <PackageOfferBanner packageId="exit-exam" />

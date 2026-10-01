@@ -115,6 +115,7 @@ const programs: ProgramCard[] = [
 ];
 
 const freeResources = [
+  /* Games commented out per request
   {
     href: "/games/tower-climb",
     name: "Tower Climb",
@@ -135,6 +136,7 @@ const freeResources = [
     iconBg: "border-emerald-400/30 bg-emerald-500/15 text-emerald-300",
     glow: "group-hover:shadow-[0_12px_40px_-16px_rgba(52,211,153,0.3)]",
   },
+  */
   {
     href: "/academy/success-stories",
     name: "Success Stories",

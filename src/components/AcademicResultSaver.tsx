@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type ComponentType } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Target, CheckCircle2, XCircle, Activity, Calendar, LogIn, Gauge, Clock,
   Layers, Flame, BookOpen, SkipForward, Eye, ChevronDown, ChevronRight,
@@ -118,6 +119,7 @@ function CircularGauge({
 export default function AcademicResultSaver({
   scopeId, scopeLabel, accent = "text-wisdom-cyan", scopePath, hub,
 }: AcademicResultSaverProps) {
+  const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [results, setResults] = useState<ResultEntry[]>([]);
   const [study, setStudy] = useState<ScopeStats | null>(null);
@@ -253,7 +255,7 @@ export default function AcademicResultSaver({
           <p className="text-sm text-wisdom-muted max-w-sm mx-auto mb-5 leading-relaxed">
             Sign in to see reading time, flashcard stats, exam scores, and streaks.
           </p>
-          <Link href="/login" className="btn-cyan px-5 py-2.5 text-sm">
+          <Link href={`/login?next=${encodeURIComponent(pathname || "/learning")}`} className="btn-cyan px-5 py-2.5 text-sm">
             <LogIn className="w-4 h-4" /> Sign In
           </Link>
         </div>

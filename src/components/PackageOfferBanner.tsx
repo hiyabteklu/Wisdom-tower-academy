@@ -7,11 +7,13 @@ import { FREE_FOR_REGISTERED_PACKAGE_IDS } from "@/lib/ownership";
 import { supabase } from "@/lib/supabase";
 import AddToCartButton from "@/components/AddToCartButton";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const FREE_SET = new Set<string>(FREE_FOR_REGISTERED_PACKAGE_IDS);
 
 /** Compact purchase strip for section / grade pages */
 export default function PackageOfferBanner({ packageId }: { packageId: string }) {
+  const pathname = usePathname();
   const pkg = getPackage(packageId);
   const isFreeForRegistered = FREE_SET.has(packageId);
   const [signedIn, setSignedIn] = useState(false);
@@ -87,7 +89,7 @@ export default function PackageOfferBanner({ packageId }: { packageId: string })
         </div>
         <div className="shrink-0 flex items-center">
           <Link
-            href="/login"
+            href={`/login?next=${encodeURIComponent(pathname || "/learning")}`}
             className="btn-cyan px-5 py-2.5 text-xs sm:text-sm"
           >
             Sign In to Unlock

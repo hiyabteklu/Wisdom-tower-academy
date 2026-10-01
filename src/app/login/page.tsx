@@ -14,23 +14,49 @@ import {
   EyeOff,
   ArrowRight,
   Phone,
-  Sparkles,
   AlertTriangle,
   CheckCircle2,
   GraduationCap,
   ShieldCheck,
+  ChevronDown,
+  Check,
 } from "lucide-react";
+
+const EDUCATION_LEVEL_OPTIONS = [
+  "Freshman University",
+  "Grade 12 (Matriculation)",
+  "Grade 11",
+  "Grade 10",
+  "Grade 9",
+  "University Aptitude (UAT / GAT)",
+  "COC / Exit Exam",
+  "University (Senior / Advanced)",
+  "Other",
+];
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") || "/account";
+  const rawNext = searchParams.get("next");
+  const next =
+    rawNext &&
+    rawNext.startsWith("/") &&
+    !rawNext.startsWith("//") &&
+    !rawNext.startsWith("/login") &&
+    !rawNext.startsWith("/signup")
+      ? rawNext
+      : "/account";
 
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const requestedMode = searchParams.get("mode");
+  const [mode, setMode] = useState<"signin" | "signup">(
+    requestedMode === "signup" ? "signup" : "signin"
+  );
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [educationLevel, setEducationLevel] = useState("Freshman");
+  const [educationLevel, setEducationLevel] = useState("Freshman University");
+  const [customEducationLevel, setCustomEducationLevel] = useState("");
+  const [levelPickerOpen, setLevelPickerOpen] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(true);
@@ -97,7 +123,7 @@ function LoginForm() {
         const msg = signError.message || "Sign in failed.";
         if (msg.toLowerCase().includes("rate limit") || (signError as unknown as { status: number }).status === 429) {
           setIsRateLimited(true);
-          setError("Supabase rate limit active. Click 'Instant Scholar Access' below to enter immediately.");
+          setError("Sign in is temporarily busy. Please wait a moment and try again.");
         } else if (msg.toLowerCase().includes("invalid login credentials")) {
           setError("Incorrect password or account not found. If new, please switch to 'Create Account'.");
         } else {
@@ -129,6 +155,11 @@ function LoginForm() {
         return;
       }
 
+      const finalEducationLevel =
+        educationLevel === "Other"
+          ? customEducationLevel.trim() || "Other"
+          : educationLevel;
+
       try {
         // First try server-side pre-confirmed registration to completely avoid Supabase email rate limits
         const regRes = await fetch("/api/auth/register", {
@@ -138,7 +169,7 @@ function LoginForm() {
             email: authEmail,
             password,
             fullName: fullName.trim(),
-            educationLevel,
+            educationLevel: finalEducationLevel,
             phone: phoneNumber,
           }),
         });
@@ -180,7 +211,7 @@ function LoginForm() {
           options: {
             data: {
               full_name: fullName.trim(),
-              education_level: educationLevel,
+              education_level: finalEducationLevel,
               phone: phoneNumber,
             },
           },
@@ -196,7 +227,7 @@ function LoginForm() {
             (signUpError as unknown as { status: number }).status === 429
           ) {
             setIsRateLimited(true);
-            setError("Email rate limit triggered by Supabase. Click 'Instant Scholar Access' below to bypass.");
+            setError("Account registration is temporarily busy. Please wait a minute or try signing in.");
           } else {
             setError(msg);
           }
@@ -218,25 +249,6 @@ function LoginForm() {
         setError(err instanceof Error ? err.message : "Account registration failed. Please try again.");
       }
     }
-  }
-
-  // Quick Scholar Access Fallback (Bypasses email rate limits for evaluators & students)
-  async function handleQuickScholarAccess() {
-    setLoading(true);
-    setError("");
-    try {
-      const { data, error: anonErr } = await supabase.auth.signInAnonymously();
-      if (!anonErr && data.session) {
-        router.replace(next.startsWith("/") ? next : "/account");
-        router.refresh();
-        return;
-      }
-    } catch {
-      // Fallback
-    }
-
-    router.replace(next.startsWith("/") ? next : "/learning");
-    setLoading(false);
   }
 
   const inputClass =
@@ -345,23 +357,70 @@ function LoginForm() {
 
             {/* Education Level for Signup */}
             {mode === "signup" && (
-              <div>
-                <label className={labelClass}>Academic Level</label>
-                <div className="relative">
-                  <select
-                    value={educationLevel}
-                    onChange={(e) => setEducationLevel(e.target.value)}
-                    className={`${inputClass} pl-4 appearance-none cursor-pointer`}
-                  >
-                    <option value="Freshman" className="bg-slate-900 text-white">Freshman University</option>
-                    <option value="Grade 12" className="bg-slate-900 text-white">Grade 12 (Matriculation)</option>
-                    <option value="Grade 11" className="bg-slate-900 text-white">Grade 11</option>
-                    <option value="Grade 10" className="bg-slate-900 text-white">Grade 10</option>
-                    <option value="Grade 9" className="bg-slate-900 text-white">Grade 9</option>
-                    <option value="UAT" className="bg-slate-900 text-white">University Aptitude (UAT / GAT)</option>
-                    <option value="COC" className="bg-slate-900 text-white">COC / Exit Exam</option>
-                  </select>
+              <div className="space-y-3">
+                <div>
+                  <label className={labelClass}>Academic Level</label>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setLevelPickerOpen((prev) => !prev)}
+                      className="w-full pl-11 pr-10 py-3.5 rounded-xl bg-slate-950/90 border border-white/25 text-white text-left text-sm font-medium transition-all shadow-inner hover:border-cyan-400/60 focus:outline-none focus:ring-2 focus:ring-cyan-400 flex items-center justify-between cursor-pointer"
+                    >
+                      <span className="truncate">{educationLevel || "Select Academic Level"}</span>
+                      <ChevronDown
+                        className={`w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 ${
+                          levelPickerOpen ? "rotate-180 text-cyan-300" : ""
+                        }`}
+                      />
+                    </button>
+                    <GraduationCap className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-300 pointer-events-none" />
+
+                    {levelPickerOpen && (
+                      <div className="absolute z-30 mt-1.5 w-full rounded-2xl border border-white/20 bg-[#0c1527] shadow-[0_15px_35px_rgba(0,0,0,0.85)] py-1.5 max-h-60 overflow-y-auto backdrop-blur-xl">
+                        {EDUCATION_LEVEL_OPTIONS.map((opt) => {
+                          const isSelected = educationLevel === opt;
+                          return (
+                            <button
+                              key={opt}
+                              type="button"
+                              onClick={() => {
+                                setEducationLevel(opt);
+                                setLevelPickerOpen(false);
+                              }}
+                              className={`w-full px-4 py-2.5 text-left text-xs sm:text-sm font-semibold flex items-center justify-between transition-colors ${
+                                isSelected
+                                  ? "bg-cyan-500/20 text-cyan-300"
+                                  : "text-slate-200 hover:bg-white/10 hover:text-white"
+                              }`}
+                            >
+                              <span>{opt}</span>
+                              {isSelected && <Check className="w-4 h-4 text-cyan-300 shrink-0" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
+
+                {/* If 'Other' is selected, ask them to write it */}
+                {educationLevel === "Other" && (
+                  <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+                    <label className={labelClass}>Please specify your academic level</label>
+                    <div className="relative">
+                      <GraduationCap className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-300 pointer-events-none" />
+                      <input
+                        type="text"
+                        required
+                        value={customEducationLevel}
+                        onChange={(e) => setCustomEducationLevel(e.target.value)}
+                        className={inputClass}
+                        placeholder="e.g. Master's, College Diploma, Self-learner..."
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -489,18 +548,6 @@ function LoginForm() {
               )}
             </button>
           </form>
-
-          {/* Quick Scholar Instant Access Button */}
-          <div className="mt-5 pt-4 border-t border-white/10 space-y-2">
-            <button
-              type="button"
-              onClick={handleQuickScholarAccess}
-              className="w-full py-3 px-4 rounded-xl text-xs font-bold border border-white/20 bg-white/5 hover:bg-white/10 text-slate-200 hover:text-white transition-all flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Sparkles className="w-4 h-4 text-amber-300" />
-              <span>Instant Scholar Access (Preview Mode)</span>
-            </button>
-          </div>
 
           {/* Footer Security Badge */}
           <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-center gap-2 text-[11px] text-slate-400">

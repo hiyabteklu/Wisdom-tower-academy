@@ -2,6 +2,7 @@
 
 import { useState, Suspense } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import BrandLoader from "@/components/BrandLoader";
 import { supabase } from "@/lib/supabase";
 import {
@@ -18,26 +19,40 @@ import {
   GraduationCap,
   Phone,
   ChevronDown,
+  Check,
 } from "lucide-react";
 
 const EDUCATION_LEVELS = [
-  "Grade 9",
-  "Grade 10",
+  "Freshman University",
+  "Grade 12 (Matriculation)",
   "Grade 11",
-  "Grade 12",
-  "Freshman",
-  "University",
-  "COC",
-  "UAT",
+  "Grade 10",
+  "Grade 9",
+  "University Aptitude (UAT / GAT)",
+  "COC / Exit Exam",
+  "University (Senior / Advanced)",
   "Other",
 ];
 
 function SignupForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const rawNext = searchParams.get("next");
+  const next =
+    rawNext &&
+    rawNext.startsWith("/") &&
+    !rawNext.startsWith("//") &&
+    !rawNext.startsWith("/login") &&
+    !rawNext.startsWith("/signup")
+      ? rawNext
+      : "/account";
+
   const [fullName, setFullName] = useState("");
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [educationLevel, setEducationLevel] = useState("");
+  const [educationLevel, setEducationLevel] = useState("Freshman University");
+  const [customEducationLevel, setCustomEducationLevel] = useState("");
   const [levelOpen, setLevelOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -67,17 +82,60 @@ function SignupForm() {
     }
     setLoading(true);
 
+    const finalEducationLevel =
+      educationLevel === "Other"
+        ? customEducationLevel.trim() || "Other"
+        : educationLevel;
+
     try {
       const identity = authEmailFromIdentifier(identifier);
       const { email, phone } = identity;
 
-      const { error: signError } = await supabase.auth.signUp({
+      // First try server-side pre-confirmed registration
+      const regRes = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          password,
+          fullName: fullName.trim(),
+          educationLevel: finalEducationLevel,
+          phone: phone || null,
+        }),
+      });
+
+      if (regRes.ok) {
+        // Auto sign in
+        const { error: autoSignInErr } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        setLoading(false);
+        if (!autoSignInErr) {
+          router.replace(next);
+          router.refresh();
+          return;
+        }
+        setDone(true);
+        return;
+      }
+
+      const regData = await regRes.json();
+      if (regData.code === "user_already_exists") {
+        setLoading(false);
+        setError("An account with this email/phone already exists. Please sign in below.");
+        return;
+      }
+
+      // Fallback to client signUp
+      const { data: signUpData, error: signError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: fullName.trim(),
-            education_level: educationLevel,
+            education_level: finalEducationLevel,
             phone: phone || null,
           },
         },
@@ -88,7 +146,13 @@ function SignupForm() {
         setError(signError.message || "Could not create account.");
         return;
       }
-      setDone(true);
+
+      if (signUpData.session) {
+        router.replace(next);
+        router.refresh();
+      } else {
+        setDone(true);
+      }
     } catch (err) {
       setLoading(false);
       setError(err instanceof Error ? err.message : "Could not create account.");
@@ -108,7 +172,7 @@ function SignupForm() {
             We sent a confirmation link if required. You can also try signing in.
           </p>
           <Link
-            href="/login"
+            href={`/login?next=${encodeURIComponent(next)}`}
             className="inline-flex rounded-xl bg-cyan-400 px-5 py-2.5 text-sm font-bold text-wisdom-dark"
           >
             Go to sign in
@@ -204,41 +268,65 @@ function SignupForm() {
               </div>
             </div>
 
-            <div>
-              <label className={labelClass}>Education level</label>
-              <div className="relative">
-                <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-wisdom-muted z-10" />
-                <button
-                  type="button"
-                  onClick={() => setLevelOpen((o) => !o)}
-                  className={`${inputClass} pr-10 text-left`}
-                >
-                  {educationLevel || "Select level"}
-                </button>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-wisdom-muted" />
-                {levelOpen && (
-                  <ul className="absolute z-20 mt-1 w-full max-h-48 overflow-auto rounded-xl border border-white/12 bg-[#121c2e] shadow-2xl py-1">
-                    {EDUCATION_LEVELS.map((level) => (
-                      <li key={level}>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEducationLevel(level);
-                            setLevelOpen(false);
-                          }}
-                          className={`w-full text-left px-4 py-3 text-sm ${
-                            educationLevel === level
-                              ? "bg-cyan-500/15 text-cyan-300"
-                              : "text-white/90 hover:bg-white/5"
-                          }`}
-                        >
-                          {level}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+            <div className="space-y-3">
+              <div>
+                <label className={labelClass}>Education level</label>
+                <div className="relative">
+                  <GraduationCap className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-300 z-10" />
+                  <button
+                    type="button"
+                    onClick={() => setLevelOpen((o) => !o)}
+                    className={`${inputClass} pl-11 pr-10 text-left font-medium flex items-center justify-between cursor-pointer`}
+                  >
+                    <span className="truncate">{educationLevel || "Select level"}</span>
+                    <ChevronDown className={`w-4 h-4 text-wisdom-muted transition-transform duration-200 shrink-0 ${levelOpen ? "rotate-180 text-cyan-300" : ""}`} />
+                  </button>
+                  {levelOpen && (
+                    <ul className="absolute z-20 mt-1.5 w-full max-h-56 overflow-auto rounded-xl border border-white/15 bg-[#121c2e] shadow-2xl py-1 backdrop-blur-xl">
+                      {EDUCATION_LEVELS.map((level) => {
+                        const isSelected = educationLevel === level;
+                        return (
+                          <li key={level}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEducationLevel(level);
+                                setLevelOpen(false);
+                              }}
+                              className={`w-full text-left px-4 py-2.5 text-xs sm:text-sm font-semibold flex items-center justify-between transition-colors ${
+                                isSelected
+                                  ? "bg-cyan-500/20 text-cyan-300"
+                                  : "text-white/90 hover:bg-white/10"
+                              }`}
+                            >
+                              <span>{level}</span>
+                              {isSelected && <Check className="w-4 h-4 text-cyan-300 shrink-0" />}
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
               </div>
+
+              {educationLevel === "Other" && (
+                <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+                  <label className={labelClass}>Please specify your academic level</label>
+                  <div className="relative">
+                    <GraduationCap className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-300 pointer-events-none" />
+                    <input
+                      type="text"
+                      required
+                      value={customEducationLevel}
+                      onChange={(e) => setCustomEducationLevel(e.target.value)}
+                      className={inputClass}
+                      placeholder="e.g. Master's, College Diploma, Self-learner..."
+                      autoFocus
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <label
@@ -303,7 +391,7 @@ function SignupForm() {
 
           <p className="mt-6 text-center text-sm text-wisdom-muted">
             Already have an account?{" "}
-            <Link href="/login" className="text-cyan-300 hover:underline font-medium">
+            <Link href={`/login?next=${encodeURIComponent(next)}`} className="text-cyan-300 hover:underline font-medium">
               Sign in
             </Link>
           </p>

@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import {
   BookOpen,
   Layers,
   FileText,
-  HelpCircle,
   Award,
   Timer,
   Calendar,
@@ -22,22 +22,20 @@ import {
   TrendingUp,
   Settings2,
   X,
-  Gamepad2,
-  Crosshair,
-  Trophy,
-  Swords,
-  Maximize2,
-  Sparkles,
   ArrowLeft,
   LayoutGrid,
+  ChevronRight,
+  Sparkles,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { packageImages } from "@/data/packages";
 import PomodoroTimer from "@/components/learning/PomodoroTimer";
 import StudyPlanner from "@/components/learning/StudyPlanner";
 import StudentAnalyticsDashboard from "@/components/StudentAnalyticsDashboard";
-import TowerDefenseGame from "@/components/games/tower-defense/TowerDefenseGame";
-import TowerClimbApp from "@/components/games/tower-climb/TowerClimbApp";
+
+// Games commented out per request - code preserved in repository
+// import TowerDefenseGame from "@/components/games/tower-defense/TowerDefenseGame";
+// import TowerClimbApp from "@/components/games/tower-climb/TowerClimbApp";
 
 // ── Types ───────────────────────────────────────────────────────
 export interface NoteSheet {
@@ -70,15 +68,13 @@ export interface AcademicResultItem {
   created_at: string;
 }
 
-type LearningTab =
-  | "overview"
-  | "courses"
-  | "games"
+export type FeatureKey =
   | "timer"
   | "planner"
   | "goals"
   | "notes"
-  | "analytics";
+  | "analytics"
+  | "courses";
 
 const STORAGE_ENROLLED_COURSES = "wt_enrolled_courses_v2";
 const STORAGE_NOTEBOOK_KEY = "wt_student_notebook_v5";
@@ -87,20 +83,20 @@ const STORAGE_GOALS_KEY = "wt_student_goals_v5";
 // All available packages with verified official imagery and routes
 const AVAILABLE_COURSES = [
   {
-    id: "grade-12",
-    title: "Grade 12 Package",
-    level: "Secondary Matric",
-    path: "/academy/grades/12",
-    image: packageImages["grade-12"],
-    desc: "National matriculation past papers, chapter question drills & timed exam simulations.",
-  },
-  {
     id: "freshman",
     title: "Freshman University Courses",
     level: "Higher Education",
     path: "/academy/freshman",
     image: packageImages["freshman"],
     desc: "All 17 first-year university subjects with official textbooks, lecture notes & model exams.",
+  },
+  {
+    id: "grade-12",
+    title: "Grade 12 Package",
+    level: "Secondary Matric",
+    path: "/academy/grades/12",
+    image: packageImages["grade-12"],
+    desc: "National matriculation past papers, chapter question drills & timed exam simulations.",
   },
   {
     id: "grade-11",
@@ -152,9 +148,15 @@ const AVAILABLE_COURSES = [
   },
 ];
 
-export default function LearningPage() {
-  const [activeTab, setActiveTab] = useState<LearningTab>("overview");
-  const [selectedGame, setSelectedGame] = useState<"defense" | "climb">("defense");
+function LearningContent() {
+  const searchParams = useSearchParams();
+  const initialFeature = (searchParams.get("tool") || searchParams.get("tab")) as FeatureKey | null;
+
+  // Selected tool feature (null = Hub Cards Deck; string = Opened Tool View)
+  const [activeFeature, setActiveFeature] = useState<FeatureKey | null>(() => {
+    const valid: FeatureKey[] = ["timer", "planner", "goals", "notes", "analytics", "courses"];
+    return initialFeature && valid.includes(initialFeature) ? initialFeature : null;
+  });
 
   // User details
   const [userId, setUserId] = useState<string | null>(null);
@@ -220,7 +222,6 @@ export default function LearningPage() {
         const parsed = JSON.parse(savedGoals);
         if (Array.isArray(parsed)) setGoals(parsed);
       } else {
-        // Starter goals
         const defaultGoals: StudyGoalItem[] = [
           { id: "g1", text: "Complete 15 Model Exam Questions", completed: true, priority: "high" },
           { id: "g2", text: "Review Freshman Physics Lecture Notes", completed: false, priority: "high" },
@@ -254,13 +255,15 @@ export default function LearningPage() {
               {
                 id: "s-math",
                 title: "Applied Mathematics Formulas",
-                content: "Derivative shortcuts:\n- d/dx(x^n) = n*x^(n-1)\n- d/dx(sin x) = cos x\n- d/dx(e^x) = e^x\n\nIntegrals:\n- ∫ x^n dx = (x^(n+1))/(n+1) + C\n- ∫ 1/x dx = ln|x| + C",
+                content:
+                  "Derivative shortcuts:\n- d/dx(x^n) = n*x^(n-1)\n- d/dx(sin x) = cos x\n- d/dx(e^x) = e^x\n\nIntegrals:\n- ∫ x^n dx = (x^(n+1))/(n+1) + C\n- ∫ 1/x dx = ln|x| + C",
                 updatedAt: new Date().toISOString(),
               },
               {
                 id: "s-phys",
                 title: "General Physics Mechanics Summary",
-                content: "Newton's Laws:\n1. Inertia: An object remains at rest or constant velocity unless acted upon.\n2. F = ma (Force = Mass × Acceleration)\n3. Action & Reaction: Equal and opposite forces.",
+                content:
+                  "Newton's Laws:\n1. Inertia: An object remains at rest or constant velocity unless acted upon.\n2. F = ma (Force = Mass × Acceleration)\n3. Action & Reaction: Equal and opposite forces.",
                 updatedAt: new Date().toISOString(),
               },
             ],
@@ -272,7 +275,8 @@ export default function LearningPage() {
               {
                 id: "s-uat",
                 title: "UAT Aptitude Shortcuts",
-                content: "Percentage calculations:\n- 15% of X = (10% of X) + (half of 10% of X)\n- Speed = Distance / Time\n- Work = Rate × Time",
+                content:
+                  "Percentage calculations:\n- 15% of X = (10% of X) + (half of 10% of X)\n- Speed = Distance / Time\n- Work = Rate × Time",
                 updatedAt: new Date().toISOString(),
               },
             ],
@@ -321,7 +325,6 @@ export default function LearningPage() {
     let next: string[];
     if (enrolledCourseIds.includes(courseId)) {
       if (enrolledCourseIds.length <= 1) {
-        alert("You must keep at least one active course on your board.");
         return;
       }
       next = enrolledCourseIds.filter((id) => id !== courseId);
@@ -334,10 +337,6 @@ export default function LearningPage() {
     } catch {
       /* ignore */
     }
-  };
-
-  const removeCourse = (courseId: string) => {
-    toggleCourseEnrollment(courseId);
   };
 
   // Goals Helpers
@@ -503,6 +502,80 @@ export default function LearningPage() {
   const goalProgressPercent =
     goals.length > 0 ? Math.round((completedGoalsCount / goals.length) * 100) : 0;
 
+  // Features configuration list for 1-click launch cards
+  const FEATURES = [
+    {
+      key: "timer" as FeatureKey,
+      title: "Focus Pomodoro Station",
+      subtitle: "Sprint intervals & deep-work focus timer with audio cues",
+      badge: "25m Sprints",
+      badgeColor: "bg-sky-500/15 text-sky-300 border-sky-400/30",
+      icon: Timer,
+      iconBg: "from-sky-400 to-blue-600",
+      accentBorder: "hover:border-sky-400/60",
+      actionText: "Open Focus Station",
+    },
+    {
+      key: "planner" as FeatureKey,
+      title: "Weekly Study Planner",
+      subtitle: "24-hour visual timetable for daily revision blocks",
+      badge: "Timetable",
+      badgeColor: "bg-cyan-500/15 text-cyan-300 border-cyan-400/30",
+      icon: Calendar,
+      iconBg: "from-cyan-400 to-teal-600",
+      accentBorder: "hover:border-cyan-400/60",
+      actionText: "Open Study Planner",
+    },
+    {
+      key: "goals" as FeatureKey,
+      title: "Daily Targets & Goals",
+      subtitle: `${completedGoalsCount} of ${goals.length} milestones completed today`,
+      badge: `${goalProgressPercent}% Completed`,
+      badgeColor: "bg-emerald-500/15 text-emerald-300 border-emerald-400/30",
+      icon: CheckSquare,
+      iconBg: "from-emerald-400 to-teal-600",
+      accentBorder: "hover:border-emerald-400/60",
+      actionText: "Manage Targets",
+    },
+    {
+      key: "notes" as FeatureKey,
+      title: "Scholar Notebook",
+      subtitle: `${folders.length} folder${folders.length === 1 ? "" : "s"} with multi-sheet rich editor & autosave`,
+      badge: "Rich Notebook",
+      badgeColor: "bg-violet-500/15 text-violet-300 border-violet-400/30",
+      icon: Folder,
+      iconBg: "from-violet-400 to-purple-600",
+      accentBorder: "hover:border-violet-400/60",
+      actionText: "Open Notebook",
+    },
+    {
+      key: "analytics" as FeatureKey,
+      title: "Exam & Quiz Radar",
+      subtitle: `${results.length} assessment${results.length === 1 ? "" : "s"} logged with mastery ratings`,
+      badge: "Analytics",
+      badgeColor: "bg-pink-500/15 text-pink-300 border-pink-400/30",
+      icon: TrendingUp,
+      iconBg: "from-pink-400 to-rose-600",
+      accentBorder: "hover:border-pink-400/60",
+      actionText: "View Performance",
+    },
+    {
+      key: "courses" as FeatureKey,
+      title: "My Enrolled Courses",
+      subtitle: `${activeEnrolledList.length} course${activeEnrolledList.length === 1 ? "" : "s"} with official books, notes & exams`,
+      badge: `${activeEnrolledList.length} Active`,
+      badgeColor: "bg-amber-500/15 text-amber-300 border-amber-400/30",
+      icon: BookOpen,
+      iconBg: "from-amber-400 to-orange-500",
+      accentBorder: "hover:border-amber-400/60",
+      actionText: "Browse Courses",
+    },
+  ];
+
+  const currentFeatureMeta = activeFeature
+    ? FEATURES.find((f) => f.key === activeFeature)
+    : null;
+
   return (
     <div className="relative min-h-[85vh] pb-16 bg-[#050811] text-[#f4f7fb]">
       {/* Ambient background glow */}
@@ -511,691 +584,255 @@ export default function LearningPage() {
         <div className="absolute top-1/2 left-0 w-[30rem] h-[30rem] rounded-full blur-[120px] opacity-15 bg-blue-600" />
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8">
-        {/* Top Scholar Header Card */}
-        <header className="mb-6 rounded-3xl border border-sky-400/25 bg-gradient-to-br from-[#0e1b30] via-[#091322] to-[#060c18] p-5 sm:p-6 shadow-2xl backdrop-blur-xl">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
-            <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-400 to-blue-600 text-slate-950 font-black text-2xl shadow-lg shadow-sky-500/25 ring-2 ring-sky-300">
-                {userName.charAt(0).toUpperCase()}
+      <div className="max-w-6xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-4 sm:pt-6">
+        {/* ═════════════════════════════════════════════════════════════ */}
+        {/* NATIVE APP VIEW HEADER                                         */}
+        {/* ═════════════════════════════════════════════════════════════ */}
+        {activeFeature === null ? (
+          // Hub Header: Compact, clean, native mobile app look
+          <header className="mb-5 rounded-2xl sm:rounded-3xl border border-sky-400/20 bg-gradient-to-br from-[#0e1b30] via-[#091322] to-[#060c18] p-4 sm:p-6 shadow-xl backdrop-blur-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-400 to-blue-600 text-slate-950 font-black text-xl shadow-lg shadow-sky-500/25 ring-2 ring-sky-300">
+                  {userName.charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <h1 className="text-lg sm:text-2xl font-black text-white tracking-tight truncate">
+                    Welcome back, {userName}
+                  </h1>
+                  <p className="text-xs text-slate-300 flex items-center gap-2 mt-0.5">
+                    <span className="font-mono text-sky-400 font-bold tracking-wide">{studentId}</span>
+                    {userEmail && <span className="hidden sm:inline text-slate-400">• {userEmail}</span>}
+                    <span className="text-slate-500">•</span>
+                    <span className="text-slate-300 font-medium">Learning Command</span>
+                  </p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight truncate">
-                  Welcome back, {userName}
-                </h1>
-                <p className="text-xs sm:text-sm text-slate-300 flex items-center gap-2 mt-0.5">
-                  <span className="font-mono text-sky-400 font-bold tracking-wide">{studentId}</span>
-                  {userEmail && <span className="hidden sm:inline text-slate-400">• {userEmail}</span>}
-                  <span className="text-slate-500">•</span>
-                  <span className="text-slate-300 font-medium">Academic Command Center</span>
-                </p>
+
+              {/* Compact Quick Metrics Bar */}
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#060b16] border border-amber-400/25 shadow-inner">
+                  <Flame className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="text-xs font-bold text-amber-300">{streakDays}d Streak</span>
+                </div>
+
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#060b16] border border-sky-400/25 shadow-inner">
+                  <CheckSquare className="w-3.5 h-3.5 text-sky-400" />
+                  <span className="text-xs font-bold text-sky-300">{goalProgressPercent}% Goals</span>
+                </div>
+
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#060b16] border border-white/15 shadow-inner">
+                  <Award className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="text-xs font-bold text-white">{results.length} Tested</span>
+                </div>
               </div>
             </div>
+          </header>
+        ) : (
+          // Feature Screen Top Bar: Native Back Button + Breadcrumb + Quick Switcher
+          <div className="mb-5 p-3 sm:p-4 rounded-2xl sm:rounded-3xl border border-sky-400/25 bg-gradient-to-r from-[#0c182b] via-[#091322] to-[#070e1c] shadow-xl backdrop-blur-xl flex flex-wrap items-center justify-between gap-3 sticky top-2 z-20">
+            <button
+              type="button"
+              onClick={() => setActiveFeature(null)}
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-400/40 text-sky-300 hover:text-white font-bold text-xs sm:text-sm transition-all cursor-pointer shadow-sm active:scale-95"
+            >
+              <ArrowLeft className="w-4 h-4 stroke-[2.5]" />
+              <span>Back to Tools</span>
+            </button>
 
-            {/* Quick Metrics Bar */}
-            <div className="grid grid-cols-3 gap-2.5 sm:gap-3 shrink-0">
-              <div className="flex flex-col items-center justify-center px-3.5 py-2 rounded-2xl bg-[#060b16] border border-amber-400/25 min-w-[5.5rem] shadow-inner">
-                <div className="flex items-center gap-1 text-amber-300 text-xs font-bold">
-                  <Flame className="w-3.5 h-3.5" />
-                  <span>{streakDays} Days</span>
-                </div>
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold mt-0.5">
-                  Streak
+            {currentFeatureMeta && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs sm:text-sm font-extrabold text-white flex items-center gap-1.5">
+                  <currentFeatureMeta.icon className="w-4 h-4 text-sky-400" />
+                  <span>{currentFeatureMeta.title}</span>
+                </span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${currentFeatureMeta.badgeColor}`}>
+                  {currentFeatureMeta.badge}
                 </span>
               </div>
+            )}
 
-              <div className="flex flex-col items-center justify-center px-3.5 py-2 rounded-2xl bg-[#060b16] border border-sky-400/25 min-w-[5.5rem] shadow-inner">
-                <div className="flex items-center gap-1 text-sky-300 text-xs font-bold">
-                  <CheckSquare className="w-3.5 h-3.5" />
-                  <span>{goalProgressPercent}%</span>
-                </div>
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold mt-0.5">
-                  Goals Done
-                </span>
-              </div>
-
-              <div className="flex flex-col items-center justify-center px-3.5 py-2 rounded-2xl bg-[#060b16] border border-white/15 min-w-[5.5rem] shadow-inner">
-                <div className="flex items-center gap-1 text-white text-xs font-bold">
-                  <Award className="w-3.5 h-3.5 text-amber-400" />
-                  <span>{results.length} Quizzes</span>
-                </div>
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold mt-0.5">
-                  Tested
-                </span>
-              </div>
+            {/* Quick Feature Switcher Pills */}
+            <div className="flex items-center gap-1 overflow-x-auto max-w-full py-0.5">
+              {FEATURES.map((feat) => {
+                const isCurrent = feat.key === activeFeature;
+                const IconComponent = feat.icon;
+                return (
+                  <button
+                    key={feat.key}
+                    type="button"
+                    onClick={() => setActiveFeature(feat.key)}
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                      isCurrent
+                        ? "bg-sky-400 text-slate-950 font-black shadow-md"
+                        : "text-slate-400 hover:text-white hover:bg-white/5"
+                    }`}
+                    title={feat.title}
+                  >
+                    <IconComponent className="w-3.5 h-3.5" />
+                    <span className="hidden md:inline">{feat.badge}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
-        </header>
+        )}
 
-        {/* ── REDESIGNED LEARNING SECTION: VALUABLE FEATURE SPOTLIGHT DECK ── */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-3.5">
+        {/* ═════════════════════════════════════════════════════════════ */}
+        {/* VIEW 1: HUB FEATURE CARDS DECK (ONE-CLICK LAUNCH CARDS)        */}
+        {/* ═════════════════════════════════════════════════════════════ */}
+        {activeFeature === null && (
+          <div className="space-y-6 animate-fade-up">
             <div>
               <h2 className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-cyan-400" />
-                Scholar Learning Suite & Core Features
+                <Sparkles className="w-4 h-4 text-sky-400" />
+                Scholar Learning Suite
               </h2>
-              <p className="text-xs text-slate-400">
-                Direct access to high-impact productivity tools, battle games, and curriculum pathways.
+              <p className="text-xs text-slate-400 mt-0.5">
+                Tap any tool to launch it directly. Designed for snappy 1-click mobile access.
               </p>
             </div>
-            {activeTab !== "overview" && (
-              <button
-                type="button"
-                onClick={() => setActiveTab("overview")}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-white/15 text-xs font-bold text-cyan-300 hover:text-white hover:bg-slate-800 transition-colors shadow-sm"
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                <span>View All Features</span>
-              </button>
-            )}
-          </div>
 
-          {/* High-Impact Feature Showcase Cards Grid (Visible, Clean, Valuable) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
-            {/* Card 1: Study Games Arena */}
-            <div
-              onClick={() => {
-                setSelectedGame("defense");
-                setActiveTab("games");
-              }}
-              className={`group relative overflow-hidden rounded-3xl border p-4 sm:p-5 transition-all cursor-pointer flex flex-col justify-between ${
-                activeTab === "games"
-                  ? "bg-gradient-to-br from-amber-500/20 via-cyan-500/20 to-[#0e1f36] border-cyan-400 shadow-xl ring-2 ring-cyan-400/40"
-                  : "bg-gradient-to-br from-[#121c2e] to-[#0a1220] border-white/15 hover:border-cyan-400/50 hover:bg-[#15233b]"
-              }`}
-            >
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-slate-950 font-black shadow-lg">
-                  <Gamepad2 className="w-6 h-6 text-slate-950" />
-                </div>
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-400/10 text-amber-300 border border-amber-400/20">
-                  2 Battle Games
-                </span>
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-white group-hover:text-cyan-300 transition-colors">
-                  Wisdom Defense & Tower Climb
-                </h3>
-                <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                  Turn exam questions into ballistic defense battles or climb chapter question banks.
-                </p>
-              </div>
-              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs font-bold text-cyan-300 group-hover:text-cyan-200">
-                <span>Launch Arcade</span>
-                <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-              </div>
-            </div>
-
-            {/* Card 2: Weekly Study Planner */}
-            <div
-              onClick={() => setActiveTab("planner")}
-              className={`group relative overflow-hidden rounded-3xl border p-4 sm:p-5 transition-all cursor-pointer flex flex-col justify-between ${
-                activeTab === "planner"
-                  ? "bg-gradient-to-br from-cyan-500/20 via-sky-500/20 to-[#0e1f36] border-cyan-400 shadow-xl ring-2 ring-cyan-400/40"
-                  : "bg-gradient-to-br from-[#121c2e] to-[#0a1220] border-white/15 hover:border-cyan-400/50 hover:bg-[#15233b]"
-              }`}
-            >
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-600 text-slate-950 font-black shadow-lg">
-                  <Calendar className="w-6 h-6 text-slate-950" />
-                </div>
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-cyan-400/10 text-cyan-300 border border-cyan-400/20">
-                  24h Timetable
-                </span>
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-white group-hover:text-cyan-300 transition-colors">
-                  Visual Study Planner
-                </h3>
-                <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                  Clean mobile timetable board without messy numbers. Aligns cleanly with vertical clock.
-                </p>
-              </div>
-              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs font-bold text-cyan-300 group-hover:text-cyan-200">
-                <span>Open Timetable</span>
-                <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-              </div>
-            </div>
-
-            {/* Card 3: Focus Pomodoro Timer */}
-            <div
-              onClick={() => setActiveTab("timer")}
-              className={`group relative overflow-hidden rounded-3xl border p-4 sm:p-5 transition-all cursor-pointer flex flex-col justify-between ${
-                activeTab === "timer"
-                  ? "bg-gradient-to-br from-sky-500/20 via-blue-500/20 to-[#0e1f36] border-sky-400 shadow-xl ring-2 ring-sky-400/40"
-                  : "bg-gradient-to-br from-[#121c2e] to-[#0a1220] border-white/15 hover:border-sky-400/50 hover:bg-[#15233b]"
-              }`}
-            >
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-400 to-indigo-600 text-slate-950 font-black shadow-lg">
-                  <Timer className="w-6 h-6 text-slate-950" />
-                </div>
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-sky-400/10 text-sky-300 border border-sky-400/20">
-                  25 Min Sprints
-                </span>
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-white group-hover:text-sky-300 transition-colors">
-                  Focus Pomodoro Station
-                </h3>
-                <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                  Deep-work sprint intervals, break intervals, and audio-backed focus environment.
-                </p>
-              </div>
-              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs font-bold text-sky-300 group-hover:text-sky-200">
-                <span>Start Focus Session</span>
-                <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-              </div>
-            </div>
-
-            {/* Card 4: Daily Action Goals */}
-            <div
-              onClick={() => setActiveTab("goals")}
-              className={`group relative overflow-hidden rounded-3xl border p-4 sm:p-5 transition-all cursor-pointer flex flex-col justify-between ${
-                activeTab === "goals"
-                  ? "bg-gradient-to-br from-emerald-500/20 via-teal-500/20 to-[#0e1f36] border-emerald-400 shadow-xl ring-2 ring-emerald-400/40"
-                  : "bg-gradient-to-br from-[#121c2e] to-[#0a1220] border-white/15 hover:border-emerald-400/50 hover:bg-[#15233b]"
-              }`}
-            >
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 text-slate-950 font-black shadow-lg">
-                  <CheckSquare className="w-6 h-6 text-slate-950" />
-                </div>
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-400/10 text-emerald-300 border border-emerald-400/20">
-                  {completedGoalsCount}/{goals.length} Done
-                </span>
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-white group-hover:text-emerald-300 transition-colors">
-                  Daily Targets & Accountability
-                </h3>
-                <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                  Track high-priority daily study milestones and maintain consistent academic streaks.
-                </p>
-              </div>
-              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs font-bold text-emerald-300 group-hover:text-emerald-200">
-                <span>Manage Targets</span>
-                <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-              </div>
-            </div>
-
-            {/* Card 5: Scholar Notes & Summaries */}
-            <div
-              onClick={() => setActiveTab("notes")}
-              className={`group relative overflow-hidden rounded-3xl border p-4 sm:p-5 transition-all cursor-pointer flex flex-col justify-between ${
-                activeTab === "notes"
-                  ? "bg-gradient-to-br from-violet-500/20 via-purple-500/20 to-[#0e1f36] border-violet-400 shadow-xl ring-2 ring-violet-400/40"
-                  : "bg-gradient-to-br from-[#121c2e] to-[#0a1220] border-white/15 hover:border-violet-400/50 hover:bg-[#15233b]"
-              }`}
-            >
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-400 to-purple-600 text-slate-950 font-black shadow-lg">
-                  <Folder className="w-6 h-6 text-slate-950" />
-                </div>
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-violet-400/10 text-violet-300 border border-violet-400/20">
-                  {folders.length} Folders
-                </span>
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-white group-hover:text-violet-300 transition-colors">
-                  Scholar Notebook
-                </h3>
-                <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                  Multi-sheet rich notebook with Times New Roman formatting, autosave, and copy tools.
-                </p>
-              </div>
-              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs font-bold text-violet-300 group-hover:text-violet-200">
-                <span>Open Notebook</span>
-                <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-              </div>
-            </div>
-
-            {/* Card 6: Academic Performance Radar */}
-            <div
-              onClick={() => setActiveTab("analytics")}
-              className={`group relative overflow-hidden rounded-3xl border p-4 sm:p-5 transition-all cursor-pointer flex flex-col justify-between ${
-                activeTab === "analytics"
-                  ? "bg-gradient-to-br from-pink-500/20 via-rose-500/20 to-[#0e1f36] border-pink-400 shadow-xl ring-2 ring-pink-400/40"
-                  : "bg-gradient-to-br from-[#121c2e] to-[#0a1220] border-white/15 hover:border-pink-400/50 hover:bg-[#15233b]"
-              }`}
-            >
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-pink-400 to-rose-600 text-slate-950 font-black shadow-lg">
-                  <TrendingUp className="w-6 h-6 text-slate-950" />
-                </div>
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-pink-400/10 text-pink-300 border border-pink-400/20">
-                  {results.length} Tests
-                </span>
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-white group-hover:text-pink-300 transition-colors">
-                  Performance & Quiz Radar
-                </h3>
-                <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                  Speed benchmarks, score distributions, and Green / Yellow / Red mastery ratings.
-                </p>
-              </div>
-              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs font-bold text-pink-300 group-hover:text-pink-200">
-                <span>View Analytics</span>
-                <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ── CLEAN SEGMENTED NAVIGATION BAR ── */}
-        <nav aria-label="Learning Modes" className="mb-8">
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-thin">
-            <button
-              onClick={() => setActiveTab("overview")}
-              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 border ${
-                activeTab === "overview"
-                  ? "bg-sky-400 text-slate-950 border-sky-400 shadow-md font-black"
-                  : "bg-[#0b1526] text-slate-300 hover:text-white border-white/10 hover:bg-[#12223d]"
-              }`}
-            >
-              <LayoutGrid className="w-3.5 h-3.5 shrink-0" />
-              <span>Dashboard Hub</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab("courses")}
-              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 border ${
-                activeTab === "courses"
-                  ? "bg-sky-400 text-slate-950 border-sky-400 shadow-md font-black"
-                  : "bg-[#0b1526] text-slate-300 hover:text-white border-white/10 hover:bg-[#12223d]"
-              }`}
-            >
-              <BookOpen className="w-3.5 h-3.5 shrink-0" />
-              <span>Active Courses ({activeEnrolledList.length})</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setSelectedGame("defense");
-                setActiveTab("games");
-              }}
-              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 border ${
-                activeTab === "games"
-                  ? "bg-amber-400 text-slate-950 border-amber-400 shadow-md font-black"
-                  : "bg-[#0b1526] text-amber-300 hover:text-white border-amber-400/30 hover:bg-[#12223d]"
-              }`}
-            >
-              <Gamepad2 className="w-3.5 h-3.5 shrink-0 text-amber-400" />
-              <span>Study Games</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab("planner")}
-              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 border ${
-                activeTab === "planner"
-                  ? "bg-cyan-400 text-slate-950 border-cyan-400 shadow-md font-black"
-                  : "bg-[#0b1526] text-slate-300 hover:text-white border-white/10 hover:bg-[#12223d]"
-              }`}
-            >
-              <Calendar className="w-3.5 h-3.5 shrink-0" />
-              <span>Study Planner</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab("timer")}
-              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 border ${
-                activeTab === "timer"
-                  ? "bg-sky-400 text-slate-950 border-sky-400 shadow-md font-black"
-                  : "bg-[#0b1526] text-slate-300 hover:text-white border-white/10 hover:bg-[#12223d]"
-              }`}
-            >
-              <Timer className="w-3.5 h-3.5 shrink-0" />
-              <span>Focus Timer</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab("goals")}
-              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 border ${
-                activeTab === "goals"
-                  ? "bg-emerald-400 text-slate-950 border-emerald-400 shadow-md font-black"
-                  : "bg-[#0b1526] text-slate-300 hover:text-white border-white/10 hover:bg-[#12223d]"
-              }`}
-            >
-              <CheckSquare className="w-3.5 h-3.5 shrink-0" />
-              <span>Daily Goals</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab("notes")}
-              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 border ${
-                activeTab === "notes"
-                  ? "bg-violet-400 text-slate-950 border-violet-400 shadow-md font-black"
-                  : "bg-[#0b1526] text-slate-300 hover:text-white border-white/10 hover:bg-[#12223d]"
-              }`}
-            >
-              <Folder className="w-3.5 h-3.5 shrink-0" />
-              <span>Notes</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab("analytics")}
-              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 border ${
-                activeTab === "analytics"
-                  ? "bg-pink-400 text-slate-950 border-pink-400 shadow-md font-black"
-                  : "bg-[#0b1526] text-slate-300 hover:text-white border-white/10 hover:bg-[#12223d]"
-              }`}
-            >
-              <TrendingUp className="w-3.5 h-3.5 shrink-0" />
-              <span>Performance</span>
-            </button>
-          </div>
-        </nav>
-
-        {/* ═════════════════════════════════════════════════════════════ */}
-        {/* OVERVIEW / COURSES SECTION                                    */}
-        {/* ═════════════════════════════════════════════════════════════ */}
-        {(activeTab === "overview" || activeTab === "courses") && (
-          <section className="space-y-6 animate-fade-up">
-            {/* Top Bar with Add/Remove Toggle */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/10">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                  My Active Courses & Learning Hubs
-                </h2>
-                <p className="text-xs sm:text-sm text-slate-300 mt-0.5">
-                  Pinned learning paths with textbooks, flashcards, short notes, and practice exams.
-                </p>
-              </div>
-
-              <button
-                onClick={() => setShowCourseManager(!showCourseManager)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs bg-[#13223b] hover:bg-[#1a2f52] text-sky-300 border border-sky-400/40 transition-all self-start sm:self-auto shadow-lg"
-              >
-                <Settings2 className="w-4 h-4" />
-                <span>{showCourseManager ? "Done Customizing" : "Add / Remove Courses"}</span>
-              </button>
-            </div>
-
-            {/* In-Page Native Course Manager */}
-            {showCourseManager && (
-              <div className="rounded-3xl border border-sky-400/40 bg-gradient-to-b from-[#101d33] to-[#091120] p-5 sm:p-6 space-y-4 shadow-2xl">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-base font-extrabold text-white">Customize Your Active Courses</h3>
-                    <p className="text-xs text-slate-300 mt-0.5">
-                      Check packages you are currently preparing for to display them on your dashboard.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setShowCourseManager(false)}
-                    className="p-1.5 rounded-xl bg-white/5 text-slate-400 hover:text-white border border-white/10"
+            {/* Grid of 6 Amazing Feature Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
+              {FEATURES.map((feat) => {
+                const IconComponent = feat.icon;
+                return (
+                  <div
+                    key={feat.key}
+                    onClick={() => setActiveFeature(feat.key)}
+                    className={`group relative overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-gradient-to-br from-[#101b2f] via-[#0b1322] to-[#070d18] p-4 sm:p-5 transition-all cursor-pointer flex flex-col justify-between shadow-lg hover:shadow-2xl hover:scale-[1.01] active:scale-[0.99] ${feat.accentBorder}`}
                   >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {AVAILABLE_COURSES.map((course) => {
-                    const isSelected = enrolledCourseIds.includes(course.id);
-                    return (
-                      <button
-                        key={course.id}
-                        type="button"
-                        onClick={() => toggleCourseEnrollment(course.id)}
-                        className={`group flex items-center gap-3 p-3 rounded-2xl border text-left transition-all ${
-                          isSelected
-                            ? "bg-sky-500/15 border-sky-400 text-white shadow-md shadow-sky-500/15"
-                            : "bg-[#060b16] border-white/10 text-slate-300 hover:border-white/25 hover:bg-[#0c1626]"
-                        }`}
-                      >
-                        <div className="relative h-12 w-16 shrink-0 overflow-hidden rounded-xl bg-[#091322] border border-white/10">
-                          <Image
-                            src={course.image}
-                            alt={course.title}
-                            fill
-                            className="object-cover"
-                            sizes="64px"
-                            referrerPolicy="no-referrer"
-                          />
-                        </div>
-
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-extrabold truncate text-white">{course.title}</p>
-                          <span className="text-[10px] font-bold text-sky-400">{course.level}</span>
-                        </div>
-
+                    <div>
+                      <div className="flex items-start justify-between gap-3 mb-3">
                         <div
-                          className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-lg border text-xs font-bold ${
-                            isSelected
-                              ? "bg-sky-400 border-sky-300 text-slate-950"
-                              : "border-white/20 bg-white/5"
-                          }`}
+                          className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br ${feat.iconBg} text-slate-950 font-black shadow-md`}
                         >
-                          {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                          <IconComponent className="w-5 h-5 text-slate-950 stroke-[2.2]" />
                         </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+                        <span
+                          className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${feat.badgeColor}`}
+                        >
+                          {feat.badge}
+                        </span>
+                      </div>
 
-            {/* Active Enrolled Course Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {activeEnrolledList.map((course) => (
-                <div
-                  key={course.id}
-                  className="group rounded-3xl border border-white/15 bg-gradient-to-b from-[#101c33] to-[#08101e] p-5 sm:p-6 flex flex-col justify-between hover:border-sky-400/50 transition-all shadow-2xl"
+                      <h3 className="text-base font-bold text-white group-hover:text-sky-300 transition-colors">
+                        {feat.title}
+                      </h3>
+                      <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                        {feat.subtitle}
+                      </p>
+                    </div>
+
+                    <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs font-bold text-sky-300 group-hover:text-sky-200">
+                      <span>{feat.actionText}</span>
+                      <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Quick Enrolled Courses Preview Strip */}
+            <div className="pt-2">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-bold text-slate-200 flex items-center gap-1.5">
+                  <BookOpen className="w-4 h-4 text-amber-400" />
+                  <span>My Active Curriculum</span>
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setActiveFeature("courses")}
+                  className="text-xs font-bold text-sky-400 hover:text-sky-300 flex items-center gap-1"
                 >
-                  <div>
-                    <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl mb-4 border border-white/12 bg-[#060b16] shadow-lg">
+                  <span>Manage All Courses ({activeEnrolledList.length})</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {activeEnrolledList.slice(0, 3).map((course) => (
+                  <Link
+                    key={course.id}
+                    href={course.path}
+                    className="flex items-center gap-3 p-3 rounded-2xl border border-white/10 bg-[#091222]/80 hover:bg-[#0f1d35] hover:border-sky-400/40 transition-all shadow-md group"
+                  >
+                    <div className="relative h-12 w-14 shrink-0 overflow-hidden rounded-xl bg-slate-900 border border-white/10">
                       <Image
                         src={course.image}
                         alt={course.title}
                         fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
-                        sizes="(max-width: 768px) 100vw, 50vw"
-                        priority
+                        className="object-cover"
+                        sizes="56px"
                         referrerPolicy="no-referrer"
                       />
-                      <div className="absolute inset-x-0 bottom-0 px-4 py-2.5 bg-slate-950/75 backdrop-blur-sm border-t border-white/10">
-                        <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
-                          {course.title}
-                        </h3>
-                      </div>
                     </div>
-
-                    <p className="text-xs sm:text-sm text-slate-300 leading-relaxed px-1">
-                      {course.desc}
-                    </p>
-                  </div>
-
-                  {/* 5 Distinct Hub Action Buttons */}
-                  <div className="mt-5 pt-4 border-t border-white/10 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-sky-300">
-                        Learning Hubs
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-white truncate group-hover:text-sky-300 transition-colors">
+                        {course.title}
                       </p>
-                      <button
-                        onClick={() => removeCourse(course.id)}
-                        className="text-[11px] font-medium text-slate-400 hover:text-rose-400 transition-colors cursor-pointer"
-                        title="Remove from my learning"
-                      >
-                        Remove course
-                      </button>
+                      <span className="text-[10px] font-bold text-sky-400 block mt-0.5">
+                        {course.level}
+                      </span>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      <Link
-                        href={`${course.path}/books`}
-                        className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl font-bold text-xs bg-[#162744] hover:bg-sky-400 hover:text-slate-950 text-white border border-white/15 transition-all text-center shadow-md"
-                      >
-                        <BookOpen className="w-3.5 h-3.5 shrink-0" />
-                        <span>Books</span>
-                      </Link>
-
-                      <Link
-                        href={`${course.path}/short-notes`}
-                        className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl font-bold text-xs bg-[#162744] hover:bg-sky-400 hover:text-slate-950 text-white border border-white/15 transition-all text-center shadow-md"
-                      >
-                        <FileText className="w-3.5 h-3.5 shrink-0" />
-                        <span>Notes</span>
-                      </Link>
-
-                      <Link
-                        href={`${course.path}/flashcards`}
-                        className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl font-bold text-xs bg-[#162744] hover:bg-sky-400 hover:text-slate-950 text-white border border-white/15 transition-all text-center shadow-md"
-                      >
-                        <Layers className="w-3.5 h-3.5 shrink-0" />
-                        <span>Flashcards</span>
-                      </Link>
-
-                      <Link
-                        href={`${course.path}/question-banks`}
-                        className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl font-bold text-xs bg-[#162744] hover:bg-sky-400 hover:text-slate-950 text-white border border-white/15 transition-all text-center shadow-md"
-                      >
-                        <HelpCircle className="w-3.5 h-3.5 shrink-0" />
-                        <span>Questions</span>
-                      </Link>
-
-                      <Link
-                        href={`${course.path}/exams`}
-                        className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl font-bold text-xs bg-[#162744] hover:bg-sky-400 hover:text-slate-950 text-white border border-white/15 transition-all text-center shadow-md col-span-2 sm:col-span-1"
-                      >
-                        <Award className="w-3.5 h-3.5 shrink-0" />
-                        <span>Exams</span>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                    <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-sky-300 group-hover:translate-x-0.5 transition-all shrink-0" />
+                  </Link>
+                ))}
+              </div>
             </div>
-          </section>
+          </div>
         )}
 
         {/* ═════════════════════════════════════════════════════════════ */}
-        {/* TAB: STUDY GAMES                                              */}
+        {/* VIEW 2: FULL FEATURE STATION (ONE-CLICK OPENED VIEW)           */}
         {/* ═════════════════════════════════════════════════════════════ */}
-        {activeTab === "games" && (
-          <section className="space-y-6 animate-fade-up">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-3xl border border-white/10 bg-slate-950/80 backdrop-blur-xl shadow-xl">
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  onClick={() => setSelectedGame("defense")}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs transition-all shadow-md ${
-                    selectedGame === "defense"
-                      ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-black shadow-cyan-500/25 ring-2 ring-cyan-300"
-                      : "bg-[#101d33] text-slate-300 hover:text-white border border-white/10"
-                  }`}
-                >
-                  <Crosshair className="w-4 h-4 text-slate-950" />
-                  <span>Wisdom Defense (Exam Questions)</span>
-                </button>
 
-                <button
-                  onClick={() => setSelectedGame("climb")}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs transition-all shadow-md ${
-                    selectedGame === "climb"
-                      ? "bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 font-black shadow-amber-500/25 ring-2 ring-amber-300"
-                      : "bg-[#101d33] text-slate-300 hover:text-white border border-white/10"
-                  }`}
-                >
-                  <Trophy className="w-4 h-4 text-slate-950" />
-                  <span>Tower Climb (Chapter Quizzes)</span>
-                </button>
-              </div>
-
-              <div className="flex items-center gap-2 self-end sm:self-auto">
-                <Link
-                  href={selectedGame === "defense" ? "/games/tower-defense" : "/games/tower-climb"}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-mono font-bold text-slate-300 hover:text-white bg-slate-900 border border-white/10 hover:border-white/20 transition-all shadow-sm"
-                  title="Open dedicated full page"
-                >
-                  <Maximize2 className="w-3.5 h-3.5" />
-                  <span>Open Fullscreen</span>
-                </Link>
-              </div>
-            </div>
-
-            <div className="rounded-3xl border border-white/15 bg-gradient-to-b from-[#091120] to-[#040812] p-2 sm:p-6 shadow-2xl relative overflow-hidden">
-              {selectedGame === "defense" ? (
-                <TowerDefenseGame />
-              ) : (
-                <TowerClimbApp />
-              )}
-            </div>
-          </section>
-        )}
-
-        {/* ═════════════════════════════════════════════════════════════ */}
-        {/* TAB: FOCUS TIMER                                              */}
-        {/* ═════════════════════════════════════════════════════════════ */}
-        {activeTab === "timer" && (
-          <section className="space-y-6 animate-fade-up max-w-4xl mx-auto">
-            <div className="text-center mb-6">
-              <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center justify-center gap-2">
-                <Timer className="w-7 h-7 text-sky-400" />
-                Pomodoro Focus Station
-              </h2>
-              <p className="text-sm text-slate-300 mt-1 max-w-md mx-auto">
-                Set standard 25-minute sprints or configure your own custom focus duration.
-              </p>
-            </div>
-
-            <div className="rounded-3xl border border-sky-400/25 bg-gradient-to-b from-[#0f1d33] to-[#08101e] p-6 sm:p-8 shadow-2xl">
+        {/* ── 1. FOCUS POMODORO STATION ──────────────────────────────── */}
+        {activeFeature === "timer" && (
+          <section className="animate-fade-up max-w-4xl mx-auto space-y-4">
+            <div className="rounded-2xl sm:rounded-3xl border border-sky-400/30 bg-gradient-to-b from-[#0f1d33] to-[#08101e] p-4 sm:p-8 shadow-2xl">
               <PomodoroTimer />
             </div>
           </section>
         )}
 
-        {/* ═════════════════════════════════════════════════════════════ */}
-        {/* TAB: STUDY PLANNER                                            */}
-        {/* ═════════════════════════════════════════════════════════════ */}
-        {activeTab === "planner" && (
-          <section className="space-y-4 animate-fade-up max-w-5xl mx-auto">
-            <div className="text-center mb-3">
-              <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center justify-center gap-2">
-                <Calendar className="w-6 h-6 text-cyan-400" />
-                Weekly Study Timetable
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-md mx-auto">
-                Compact 24-hour visual timetable fitting cleanly on mobile screens with uncluttered title blocks.
-              </p>
-            </div>
-
-            <div className="rounded-3xl border border-white/15 bg-gradient-to-b from-[#0b1528] to-[#070e1c] p-2 sm:p-5 md:p-6 shadow-2xl">
+        {/* ── 2. WEEKLY STUDY PLANNER ────────────────────────────────── */}
+        {activeFeature === "planner" && (
+          <section className="animate-fade-up max-w-5xl mx-auto space-y-4">
+            <div className="rounded-2xl sm:rounded-3xl border border-white/15 bg-gradient-to-b from-[#0b1528] to-[#070e1c] p-2.5 sm:p-5 md:p-6 shadow-2xl">
               <StudyPlanner />
             </div>
           </section>
         )}
 
-        {/* ═════════════════════════════════════════════════════════════ */}
-        {/* TAB: DAILY GOALS                                              */}
-        {/* ═════════════════════════════════════════════════════════════ */}
-        {activeTab === "goals" && (
-          <section className="space-y-6 animate-fade-up max-w-4xl mx-auto">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/10">
+        {/* ── 3. DAILY TARGETS & ACCOUNTABILITY ──────────────────────── */}
+        {activeFeature === "goals" && (
+          <section className="animate-fade-up max-w-4xl mx-auto space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-[#091324] border border-white/10 shadow-lg">
               <div>
-                <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-2">
-                  <CheckSquare className="w-7 h-7 text-sky-400" />
-                  Daily Targets & Goals
+                <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
+                  <CheckSquare className="w-5 h-5 text-emerald-400" />
+                  Daily Targets & Accountability
                 </h2>
-                <p className="text-sm text-slate-300 mt-1">
+                <p className="text-xs text-slate-300 mt-0.5">
                   Keep yourself accountable every single day.
                 </p>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="text-right">
-                  <span className="text-xs text-slate-400">Completion</span>
-                  <p className="text-lg font-black text-sky-400">
-                    {completedGoalsCount} of {goals.length}
-                  </p>
-                </div>
-                <div className="h-12 w-12 flex items-center justify-center rounded-2xl bg-sky-500/10 border border-sky-400/40 text-sky-300 font-extrabold text-sm">
+              <div className="flex items-center gap-2 self-start sm:self-auto">
+                <span className="text-xs text-slate-400">
+                  {completedGoalsCount} of {goals.length} Done
+                </span>
+                <div className="h-8 px-2.5 flex items-center justify-center rounded-xl bg-emerald-500/15 border border-emerald-400/40 text-emerald-300 font-extrabold text-xs">
                   {goalProgressPercent}%
                 </div>
               </div>
             </div>
 
+            {/* Add Target Input Form */}
             <form
               onSubmit={addGoal}
-              className="flex flex-col sm:flex-row items-center gap-2.5 p-3.5 rounded-2xl bg-[#0e1b30] border border-white/15 shadow-xl"
+              className="flex flex-col sm:flex-row items-center gap-2.5 p-3 rounded-2xl bg-[#0e1b30] border border-white/15 shadow-xl"
             >
               <input
                 type="text"
@@ -1216,14 +853,15 @@ export default function LearningPage() {
                 </select>
                 <button
                   type="submit"
-                  className="flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl font-black text-xs bg-sky-400 hover:bg-sky-300 text-slate-950 shrink-0 transition-all shadow-md"
+                  className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-black text-xs bg-emerald-400 hover:bg-emerald-300 text-slate-950 shrink-0 transition-all shadow-md cursor-pointer"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-4 h-4 stroke-[3]" />
                   <span>Add Target</span>
                 </button>
               </div>
             </form>
 
+            {/* Goals List */}
             <div className="space-y-2.5">
               {goals.length === 0 ? (
                 <div className="p-8 text-center rounded-2xl border border-dashed border-white/10 bg-[#060b16]">
@@ -1233,19 +871,20 @@ export default function LearningPage() {
                 goals.map((goal) => (
                   <div
                     key={goal.id}
-                    className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${
+                    className={`flex items-center justify-between p-3.5 sm:p-4 rounded-2xl border transition-all ${
                       goal.completed
-                        ? "bg-[#060b16] border-sky-500/25 opacity-75"
+                        ? "bg-[#060b16] border-emerald-500/25 opacity-75"
                         : "bg-[#0f1d33] border-white/12 hover:border-white/25"
                     }`}
                   >
-                    <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
                       <button
+                        type="button"
                         onClick={() => toggleGoal(goal.id)}
-                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border transition-all ${
+                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border transition-all cursor-pointer ${
                           goal.completed
-                            ? "bg-sky-400 border-sky-300 text-slate-950 font-bold"
-                            : "border-white/30 hover:border-sky-400 bg-white/[0.04]"
+                            ? "bg-emerald-400 border-emerald-300 text-slate-950 font-bold"
+                            : "border-white/30 hover:border-emerald-400 bg-white/[0.04]"
                         }`}
                       >
                         {goal.completed && <Check className="w-4 h-4 stroke-[3]" />}
@@ -1264,8 +903,9 @@ export default function LearningPage() {
                         {goal.priority}
                       </span>
                       <button
+                        type="button"
                         onClick={() => deleteGoal(goal.id)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 transition-colors"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 transition-colors cursor-pointer"
                         title="Delete target"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -1278,56 +918,57 @@ export default function LearningPage() {
           </section>
         )}
 
-        {/* ═════════════════════════════════════════════════════════════ */}
-        {/* TAB: SCHOLAR NOTEBOOK                                         */}
-        {/* ═════════════════════════════════════════════════════════════ */}
-        {activeTab === "notes" && (
-          <section className="space-y-6 animate-fade-up">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/10">
+        {/* ── 4. SCHOLAR NOTEBOOK ────────────────────────────────────── */}
+        {activeFeature === "notes" && (
+          <section className="animate-fade-up space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-[#091324] border border-white/10 shadow-lg">
               <div>
-                <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-2">
-                  <Folder className="w-7 h-7 text-sky-400" />
-                  Study Notes
+                <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
+                  <Folder className="w-5 h-5 text-violet-400" />
+                  Scholar Notebook
                 </h2>
-                <p className="text-sm text-slate-300 mt-1">
-                  Organize your course notes into folders and add sheets. Auto-saves locally.
+                <p className="text-xs text-slate-300 mt-0.5">
+                  Organize lecture notes, formulas, and chapter summaries. Auto-saved locally.
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 self-start sm:self-auto">
                 <button
+                  type="button"
                   onClick={handleAddFolder}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#14233d] hover:bg-[#1a2e4f] border border-white/15 text-white transition-all shadow-md"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#14233d] hover:bg-[#1a2e4f] border border-white/15 text-white transition-all shadow-md cursor-pointer"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-3.5 h-3.5" />
                   <span>New Folder</span>
                 </button>
                 <button
+                  type="button"
                   onClick={handleAddSheet}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-black bg-sky-400 hover:bg-sky-300 text-slate-950 shadow-md transition-all"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-violet-400 hover:bg-violet-300 text-slate-950 shadow-md transition-all cursor-pointer"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-3.5 h-3.5 stroke-[3]" />
                   <span>Add Sheet</span>
                 </button>
               </div>
             </div>
 
             {/* Folder Tabs Bar */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
               {folders.map((folder) => {
                 const isActive = folder.id === currentFolder?.id;
                 return (
                   <div key={folder.id} className="flex items-center shrink-0">
                     <button
+                      type="button"
                       onClick={() => {
                         setSelectedFolderId(folder.id);
                         if (folder.sheets?.length > 0) {
                           setSelectedSheetId(folder.sheets[0].id);
                         }
                       }}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
+                      className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
                         isActive
-                          ? "bg-sky-500/20 border-sky-400 text-sky-200 shadow-md"
+                          ? "bg-violet-500/20 border-violet-400 text-violet-200 shadow-md"
                           : "bg-[#0b1526] border-white/12 text-slate-300 hover:text-white"
                       }`}
                     >
@@ -1338,11 +979,12 @@ export default function LearningPage() {
                     </button>
                     {folders.length > 1 && (
                       <button
+                        type="button"
                         onClick={() => handleDeleteFolder(folder.id)}
-                        className="ml-1 p-1 text-slate-500 hover:text-rose-400 transition-colors"
+                        className="ml-1 p-1 text-slate-500 hover:text-rose-400 transition-colors cursor-pointer"
                         title="Delete folder"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-3 h-3" />
                       </button>
                     )}
                   </div>
@@ -1351,32 +993,33 @@ export default function LearningPage() {
             </div>
 
             {/* Notebook 2-Column Workspace */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
               {/* Sheets List in Current Folder */}
-              <div className="lg:col-span-4 rounded-3xl border border-white/15 bg-gradient-to-b from-[#0f1d33] to-[#08101e] p-4 space-y-3 shadow-xl">
+              <div className="lg:col-span-4 rounded-2xl border border-white/15 bg-gradient-to-b from-[#0f1d33] to-[#08101e] p-3.5 space-y-2.5 shadow-xl">
                 <div className="flex items-center justify-between pb-2 border-b border-white/10">
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
                     Sheets in {currentFolder?.name}
                   </span>
                   <button
+                    type="button"
                     onClick={handleAddSheet}
-                    className="text-xs font-bold text-sky-400 hover:underline flex items-center gap-1"
+                    className="text-xs font-bold text-violet-400 hover:underline flex items-center gap-1 cursor-pointer"
                   >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Add Sheet</span>
+                    <Plus className="w-3 h-3" />
+                    <span>Add</span>
                   </button>
                 </div>
 
-                <div className="space-y-2 max-h-[460px] overflow-y-auto pr-1">
+                <div className="space-y-1.5 max-h-[360px] overflow-y-auto pr-1">
                   {currentFolder?.sheets.map((sheet) => {
                     const isSelected = sheet.id === currentSheet?.id;
                     return (
                       <div
                         key={sheet.id}
                         onClick={() => setSelectedSheetId(sheet.id)}
-                        className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                        className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
                           isSelected
-                            ? "bg-sky-500/20 border-sky-400 text-white shadow-md shadow-sky-500/10"
+                            ? "bg-violet-500/20 border-violet-400 text-white shadow-md shadow-violet-500/10"
                             : "bg-[#060b16] border-white/8 hover:border-white/20 text-slate-300"
                         }`}
                       >
@@ -1390,11 +1033,12 @@ export default function LearningPage() {
                         </div>
                         {currentFolder.sheets.length > 1 && (
                           <button
+                            type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDeleteSheet(sheet.id);
                             }}
-                            className="p-1 text-slate-500 hover:text-rose-400 transition-colors"
+                            className="p-1 text-slate-500 hover:text-rose-400 transition-colors cursor-pointer"
                             title="Delete sheet"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -1407,20 +1051,21 @@ export default function LearningPage() {
               </div>
 
               {/* Active Sheet Editor with Times New Roman Italic */}
-              <div className="lg:col-span-8 rounded-3xl border border-white/15 bg-gradient-to-b from-[#0f1d33] to-[#08101e] p-5 sm:p-6 space-y-4 shadow-xl">
+              <div className="lg:col-span-8 rounded-2xl border border-white/15 bg-gradient-to-b from-[#0f1d33] to-[#08101e] p-4 sm:p-5 space-y-3 shadow-xl">
                 {currentSheet ? (
                   <>
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-white/10">
                       <input
                         type="text"
                         value={currentSheet.title}
                         onChange={(e) => handleUpdateSheet({ title: e.target.value })}
-                        className="text-lg font-extrabold text-white bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-sky-400 rounded-lg px-1 flex-1"
+                        className="text-base sm:text-lg font-extrabold text-white bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-violet-400 rounded-lg px-1 flex-1"
                         placeholder="Sheet Title..."
                       />
                       <button
+                        type="button"
                         onClick={handleCopySheet}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#14233d] hover:bg-[#1a2e4f] border border-white/15 text-slate-200 hover:text-white transition-colors self-start sm:self-auto shadow-md"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#14233d] hover:bg-[#1a2e4f] border border-white/15 text-slate-200 hover:text-white transition-colors self-start sm:self-auto shadow-md cursor-pointer"
                       >
                         {copiedNotice ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                         <span>{copiedNotice ? "Copied" : "Copy Notes"}</span>
@@ -1431,7 +1076,7 @@ export default function LearningPage() {
                       value={currentSheet.content}
                       onChange={(e) => handleUpdateSheet({ content: e.target.value })}
                       placeholder="Start typing your study notes, formulas, or summaries here..."
-                      className="w-full h-[380px] bg-[#060b16] border border-white/10 rounded-2xl p-4 text-base text-slate-100 font-serif italic font-normal font-['Times_New_Roman',Times,serif] leading-relaxed focus:outline-none focus:border-sky-400/50 resize-y transition-colors"
+                      className="w-full h-[320px] bg-[#060b16] border border-white/10 rounded-xl p-3.5 text-sm text-slate-100 font-serif italic font-normal font-['Times_New_Roman',Times,serif] leading-relaxed focus:outline-none focus:border-violet-400/50 resize-y transition-colors"
                     />
 
                     <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-white/10">
@@ -1443,7 +1088,7 @@ export default function LearningPage() {
                     </div>
                   </>
                 ) : (
-                  <div className="p-16 text-center text-slate-400">
+                  <div className="p-12 text-center text-slate-400">
                     No sheet selected. Click &quot;Add Sheet&quot; to begin.
                   </div>
                 )}
@@ -1452,28 +1097,191 @@ export default function LearningPage() {
           </section>
         )}
 
-        {/* ═════════════════════════════════════════════════════════════ */}
-        {/* TAB: ACADEMIC ANALYTICS                                       */}
-        {/* ═════════════════════════════════════════════════════════════ */}
-        {activeTab === "analytics" && (
-          <section className="space-y-6 animate-fade-up max-w-5xl mx-auto">
-            <div className="text-center mb-6">
-              <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center justify-center gap-2">
-                <TrendingUp className="w-7 h-7 text-sky-400" />
-                Exam & Quiz Performance Radar
-              </h2>
-              <p className="text-sm text-slate-300 mt-1 max-w-md mx-auto">
-                Institutional grading history, speed benchmarks, and Green / Yellow / Red mastery levels.
-              </p>
-            </div>
-
+        {/* ── 5. ACADEMIC PERFORMANCE RADAR ──────────────────────────── */}
+        {activeFeature === "analytics" && (
+          <section className="animate-fade-up max-w-5xl mx-auto space-y-4">
             <StudentAnalyticsDashboard
               userId={userId || "guest"}
               studentName={userName}
             />
           </section>
         )}
+
+        {/* ── 6. MY ENROLLED COURSES & SYLLABUS ──────────────────────── */}
+        {activeFeature === "courses" && (
+          <section className="animate-fade-up space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-[#091324] border border-white/10 shadow-lg">
+              <div>
+                <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-amber-400" />
+                  My Active Courses & Learning Hubs
+                </h2>
+                <p className="text-xs text-slate-300 mt-0.5">
+                  Pinned learning paths with textbooks, flashcards, short notes, and practice exams.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowCourseManager(!showCourseManager)}
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold text-xs bg-[#13223b] hover:bg-[#1a2f52] text-amber-300 border border-amber-400/40 transition-all self-start sm:self-auto shadow-lg cursor-pointer"
+              >
+                <Settings2 className="w-4 h-4" />
+                <span>{showCourseManager ? "Done Customizing" : "Add / Remove Courses"}</span>
+              </button>
+            </div>
+
+            {/* Course Customizer Drawer */}
+            {showCourseManager && (
+              <div className="rounded-2xl border border-amber-400/40 bg-gradient-to-b from-[#101d33] to-[#091120] p-4 sm:p-5 space-y-3 shadow-2xl">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-extrabold text-white">Customize Your Active Courses</h3>
+                    <p className="text-xs text-slate-300 mt-0.5">
+                      Check packages you are currently preparing for to display them on your dashboard.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowCourseManager(false)}
+                    className="p-1 rounded-lg bg-white/5 text-slate-400 hover:text-white border border-white/10"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                  {AVAILABLE_COURSES.map((course) => {
+                    const isSelected = enrolledCourseIds.includes(course.id);
+                    return (
+                      <button
+                        key={course.id}
+                        type="button"
+                        onClick={() => toggleCourseEnrollment(course.id)}
+                        className={`group flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                          isSelected
+                            ? "bg-amber-500/15 border-amber-400 text-white shadow-md"
+                            : "bg-[#060b16] border-white/10 text-slate-300 hover:border-white/25 hover:bg-[#0c1626]"
+                        }`}
+                      >
+                        <div className="relative h-10 w-12 shrink-0 overflow-hidden rounded-lg bg-[#091322] border border-white/10">
+                          <Image
+                            src={course.image}
+                            alt={course.title}
+                            fill
+                            className="object-cover"
+                            sizes="48px"
+                            referrerPolicy="no-referrer"
+                          />
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-extrabold truncate text-white">{course.title}</p>
+                          <span className="text-[10px] font-bold text-amber-400">{course.level}</span>
+                        </div>
+
+                        <div
+                          className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border text-xs font-bold ${
+                            isSelected
+                              ? "bg-amber-400 border-amber-300 text-slate-950"
+                              : "border-white/20 bg-white/5"
+                          }`}
+                        >
+                          {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Active Enrolled Courses Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {activeEnrolledList.map((course) => (
+                <div
+                  key={course.id}
+                  className="group rounded-2xl sm:rounded-3xl border border-white/15 bg-gradient-to-b from-[#101c33] to-[#08101e] p-4 sm:p-5 flex flex-col justify-between hover:border-amber-400/50 transition-all shadow-xl"
+                >
+                  <div>
+                    <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl mb-3 border border-white/12 bg-[#060b16] shadow-lg">
+                      <Image
+                        src={course.image}
+                        alt={course.title}
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        priority
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute inset-x-0 bottom-0 px-3.5 py-2 bg-slate-950/80 backdrop-blur-sm border-t border-white/10">
+                        <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                          {course.title}
+                        </h3>
+                        <span className="text-[10px] font-mono text-amber-400 uppercase tracking-wider font-bold">
+                          {course.level}
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed mb-3">
+                      {course.desc}
+                    </p>
+                  </div>
+
+                  <div>
+                    {/* Fast Navigation Hub Links */}
+                    <div className="grid grid-cols-4 gap-1.5 pt-3 border-t border-white/10">
+                      <Link
+                        href={`${course.path}#textbooks`}
+                        className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg font-bold text-[11px] bg-[#162744] hover:bg-amber-400 hover:text-slate-950 text-white border border-white/15 transition-all text-center"
+                      >
+                        <BookOpen className="w-3 h-3 shrink-0" />
+                        <span>Books</span>
+                      </Link>
+                      <Link
+                        href={`${course.path}#notes`}
+                        className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg font-bold text-[11px] bg-[#162744] hover:bg-amber-400 hover:text-slate-950 text-white border border-white/15 transition-all text-center"
+                      >
+                        <FileText className="w-3 h-3 shrink-0" />
+                        <span>Notes</span>
+                      </Link>
+                      <Link
+                        href={`${course.path}#flashcards`}
+                        className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg font-bold text-[11px] bg-[#162744] hover:bg-amber-400 hover:text-slate-950 text-white border border-white/15 transition-all text-center"
+                      >
+                        <Layers className="w-3 h-3 shrink-0" />
+                        <span>Cards</span>
+                      </Link>
+                      <Link
+                        href={`${course.path}#exams`}
+                        className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg font-bold text-[11px] bg-[#162744] hover:bg-amber-400 hover:text-slate-950 text-white border border-white/15 transition-all text-center"
+                      >
+                        <Award className="w-3 h-3 shrink-0" />
+                        <span>Exams</span>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </div>
+  );
+}
+
+export default function LearningPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[85vh] flex items-center justify-center text-slate-400 text-sm">
+          Loading Scholar Learning Suite...
+        </div>
+      }
+    >
+      <LearningContent />
+    </Suspense>
   );
 }
