@@ -25,7 +25,6 @@ import {
   ArrowLeft,
   LayoutGrid,
   ChevronRight,
-  Sparkles,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { packageImages } from "@/data/packages";
@@ -502,73 +501,37 @@ function LearningContent() {
   const goalProgressPercent =
     goals.length > 0 ? Math.round((completedGoalsCount / goals.length) * 100) : 0;
 
-  // Features configuration list for 1-click launch cards
+  // Features configuration with clean iOS titles & unified styling (no rainbow colors)
   const FEATURES = [
     {
       key: "timer" as FeatureKey,
-      title: "Focus Pomodoro Station",
-      subtitle: "Sprint intervals & deep-work focus timer with audio cues",
-      badge: "25m Sprints",
-      badgeColor: "bg-sky-500/15 text-sky-300 border-sky-400/30",
+      title: "Timer",
       icon: Timer,
-      iconBg: "from-sky-400 to-blue-600",
-      accentBorder: "hover:border-sky-400/60",
-      actionText: "Open Focus Station",
     },
     {
       key: "planner" as FeatureKey,
-      title: "Weekly Study Planner",
-      subtitle: "24-hour visual timetable for daily revision blocks",
-      badge: "Timetable",
-      badgeColor: "bg-cyan-500/15 text-cyan-300 border-cyan-400/30",
+      title: "Planner",
       icon: Calendar,
-      iconBg: "from-cyan-400 to-teal-600",
-      accentBorder: "hover:border-cyan-400/60",
-      actionText: "Open Study Planner",
     },
     {
       key: "goals" as FeatureKey,
-      title: "Daily Targets & Goals",
-      subtitle: `${completedGoalsCount} of ${goals.length} milestones completed today`,
-      badge: `${goalProgressPercent}% Completed`,
-      badgeColor: "bg-emerald-500/15 text-emerald-300 border-emerald-400/30",
+      title: "Targets",
       icon: CheckSquare,
-      iconBg: "from-emerald-400 to-teal-600",
-      accentBorder: "hover:border-emerald-400/60",
-      actionText: "Manage Targets",
     },
     {
       key: "notes" as FeatureKey,
-      title: "Scholar Notebook",
-      subtitle: `${folders.length} folder${folders.length === 1 ? "" : "s"} with multi-sheet rich editor & autosave`,
-      badge: "Rich Notebook",
-      badgeColor: "bg-violet-500/15 text-violet-300 border-violet-400/30",
+      title: "Notebook",
       icon: Folder,
-      iconBg: "from-violet-400 to-purple-600",
-      accentBorder: "hover:border-violet-400/60",
-      actionText: "Open Notebook",
     },
     {
       key: "analytics" as FeatureKey,
-      title: "Exam & Quiz Radar",
-      subtitle: `${results.length} assessment${results.length === 1 ? "" : "s"} logged with mastery ratings`,
-      badge: "Analytics",
-      badgeColor: "bg-pink-500/15 text-pink-300 border-pink-400/30",
+      title: "Radar",
       icon: TrendingUp,
-      iconBg: "from-pink-400 to-rose-600",
-      accentBorder: "hover:border-pink-400/60",
-      actionText: "View Performance",
     },
     {
       key: "courses" as FeatureKey,
-      title: "My Enrolled Courses",
-      subtitle: `${activeEnrolledList.length} course${activeEnrolledList.length === 1 ? "" : "s"} with official books, notes & exams`,
-      badge: `${activeEnrolledList.length} Active`,
-      badgeColor: "bg-amber-500/15 text-amber-300 border-amber-400/30",
+      title: "Courses",
       icon: BookOpen,
-      iconBg: "from-amber-400 to-orange-500",
-      accentBorder: "hover:border-amber-400/60",
-      actionText: "Browse Courses",
     },
   ];
 
@@ -590,105 +553,86 @@ function LearningContent() {
         {/* ═════════════════════════════════════════════════════════════ */}
         {activeFeature === null ? (
           <>
-            {/* Hub Header: Compact, clean, native mobile app look */}
-            <header className="mb-5 rounded-2xl sm:rounded-3xl border border-sky-400/20 bg-gradient-to-br from-[#0e1b30] via-[#091322] to-[#060c18] p-4 sm:p-6 shadow-xl backdrop-blur-xl">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3.5">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-400 to-blue-600 text-slate-950 font-black text-xl shadow-lg shadow-sky-500/25 ring-2 ring-sky-300">
-                  {userName.charAt(0).toUpperCase()}
+            {/* Hub Header: Compact, clean, iOS-smooth rounded container */}
+            <header className="mb-5 rounded-3xl border border-white/[0.08] bg-[#0c1626]/80 backdrop-blur-2xl p-4 sm:p-6 shadow-xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/[0.08] border border-white/[0.12] text-white font-black text-xl shadow-md">
+                    {userName.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <h1 className="text-lg sm:text-2xl font-black text-white tracking-tight truncate">
+                      {userName}
+                    </h1>
+                    <p className="text-xs text-slate-300 flex items-center gap-2 mt-0.5">
+                      <span className="font-mono text-sky-400 font-bold tracking-wide">{studentId}</span>
+                      {userEmail && <span className="hidden sm:inline text-slate-400">• {userEmail}</span>}
+                    </p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <h1 className="text-lg sm:text-2xl font-black text-white tracking-tight truncate">
-                    Welcome back, {userName}
-                  </h1>
-                  <p className="text-xs text-slate-300 flex items-center gap-2 mt-0.5">
-                    <span className="font-mono text-sky-400 font-bold tracking-wide">{studentId}</span>
-                    {userEmail && <span className="hidden sm:inline text-slate-400">• {userEmail}</span>}
-                    <span className="text-slate-500">•</span>
-                    <span className="text-slate-300 font-medium">Learning Command</span>
-                  </p>
+
+                {/* Compact Quick Metrics Bar */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] shadow-sm">
+                    <Flame className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="text-xs font-semibold text-slate-200">{streakDays}d Streak</span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] shadow-sm">
+                    <CheckSquare className="w-3.5 h-3.5 text-sky-400" />
+                    <span className="text-xs font-semibold text-slate-200">{goalProgressPercent}% Goals</span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] shadow-sm">
+                    <Award className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="text-xs font-semibold text-slate-200">{results.length} Tested</span>
+                  </div>
                 </div>
               </div>
+            </header>
 
-              {/* Compact Quick Metrics Bar */}
-              <div className="flex items-center gap-2 shrink-0">
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#060b16] border border-amber-400/25 shadow-inner">
-                  <Flame className="w-3.5 h-3.5 text-amber-400" />
-                  <span className="text-xs font-bold text-amber-300">{streakDays}d Streak</span>
-                </div>
-
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#060b16] border border-sky-400/25 shadow-inner">
-                  <CheckSquare className="w-3.5 h-3.5 text-sky-400" />
-                  <span className="text-xs font-bold text-sky-300">{goalProgressPercent}% Goals</span>
-                </div>
-
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#060b16] border border-white/15 shadow-inner">
-                  <Award className="w-3.5 h-3.5 text-amber-400" />
-                  <span className="text-xs font-bold text-white">{results.length} Tested</span>
-                </div>
-              </div>
-            </div>
-          </header>
-
-          {/* Guest Scholar Banner */}
-          {!userId && (
-            <div className="mb-5 rounded-2xl border border-cyan-400/30 bg-gradient-to-r from-cyan-950/40 via-sky-950/30 to-[#070e1c] p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg backdrop-blur-md">
-              <div className="flex items-start sm:items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-cyan-500/15 border border-cyan-400/30 text-cyan-300 shrink-0">
-                  <Sparkles className="w-5 h-5" />
-                </div>
+            {/* Guest Scholar Banner */}
+            {!userId && (
+              <div className="mb-5 rounded-3xl border border-white/[0.08] bg-[#0c1626]/75 backdrop-blur-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
                 <div>
                   <p className="text-sm font-bold text-white">
-                    Free Scholar Access Active
+                    Scholar Access
                   </p>
                   <p className="text-xs text-slate-300 mt-0.5">
-                    Sign in or create a free account to unlock all books, lecture notes, official solved exams, and persistent sync.
+                    Sign in or create an account to sync your study notes, targets, and course progress.
                   </p>
                 </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Link
+                    href="/login?next=/learning"
+                    className="px-4 py-2 rounded-full text-xs font-semibold bg-white text-slate-950 hover:bg-slate-200 active:scale-95 shadow-md transition-all"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/signup?next=/learning"
+                    className="px-4 py-2 rounded-full text-xs font-semibold border border-white/20 bg-white/5 hover:bg-white/10 text-white active:scale-95 transition-all"
+                  >
+                    Create Account
+                  </Link>
+                </div>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <Link
-                  href="/login?next=/learning"
-                  className="px-4 py-2 rounded-xl text-xs font-bold bg-cyan-400 hover:bg-cyan-300 text-slate-950 shadow-md transition-colors"
-                >
-                  Sign In Free
-                </Link>
-                <Link
-                  href="/signup?next=/learning"
-                  className="px-4 py-2 rounded-xl text-xs font-bold border border-white/20 bg-white/5 hover:bg-white/10 text-white transition-colors"
-                >
-                  Create Account
-                </Link>
-              </div>
-            </div>
-          )}
-        </>
-      ) : (
-          // Feature Screen Top Bar: Native Back Button + Breadcrumb + Quick Switcher
-          <div className="mb-5 p-3 sm:p-4 rounded-2xl sm:rounded-3xl border border-sky-400/25 bg-gradient-to-r from-[#0c182b] via-[#091322] to-[#070e1c] shadow-xl backdrop-blur-xl flex flex-wrap items-center justify-between gap-3 sticky top-2 z-20">
+            )}
+          </>
+        ) : (
+          // Feature Screen Top Bar: iOS Segmented Toolbar + Back Button
+          <div className="mb-5 p-2 rounded-2xl sm:rounded-full border border-white/[0.08] bg-[#0c1626]/90 backdrop-blur-2xl shadow-xl flex flex-wrap items-center justify-between gap-2 sticky top-2 z-20">
             <button
               type="button"
               onClick={() => setActiveFeature(null)}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-400/40 text-sky-300 hover:text-white font-bold text-xs sm:text-sm transition-all cursor-pointer shadow-sm active:scale-95"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] active:scale-95 border border-white/[0.08] text-xs font-semibold text-slate-200 hover:text-white transition-all cursor-pointer shadow-sm"
             >
-              <ArrowLeft className="w-4 h-4 stroke-[2.5]" />
-              <span>Back to Tools</span>
+              <ArrowLeft className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>Tools</span>
             </button>
 
-            {currentFeatureMeta && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs sm:text-sm font-extrabold text-white flex items-center gap-1.5">
-                  <currentFeatureMeta.icon className="w-4 h-4 text-sky-400" />
-                  <span>{currentFeatureMeta.title}</span>
-                </span>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${currentFeatureMeta.badgeColor}`}>
-                  {currentFeatureMeta.badge}
-                </span>
-              </div>
-            )}
-
-            {/* Quick Feature Switcher Pills */}
-            <div className="flex items-center gap-1 overflow-x-auto max-w-full py-0.5">
+            {/* iOS Segmented Toolbar */}
+            <div className="flex items-center gap-1 overflow-x-auto max-w-full p-1 rounded-full bg-black/40 border border-white/[0.06]">
               {FEATURES.map((feat) => {
                 const isCurrent = feat.key === activeFeature;
                 const IconComponent = feat.icon;
@@ -697,15 +641,14 @@ function LearningContent() {
                     key={feat.key}
                     type="button"
                     onClick={() => setActiveFeature(feat.key)}
-                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 shrink-0 active:scale-95 cursor-pointer ${
                       isCurrent
-                        ? "bg-sky-400 text-slate-950 font-black shadow-md"
-                        : "text-slate-400 hover:text-white hover:bg-white/5"
+                        ? "bg-white text-slate-950 font-bold shadow-md"
+                        : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
                     }`}
-                    title={feat.title}
                   >
                     <IconComponent className="w-3.5 h-3.5" />
-                    <span className="hidden md:inline">{feat.badge}</span>
+                    <span>{feat.title}</span>
                   </button>
                 );
               })}
@@ -714,74 +657,57 @@ function LearningContent() {
         )}
 
         {/* ═════════════════════════════════════════════════════════════ */}
-        {/* VIEW 1: HUB FEATURE CARDS DECK (ONE-CLICK LAUNCH CARDS)        */}
+        {/* VIEW 1: PHONE NAV / TOOLBAR BUTTONS DOCK (NO BIG CARDS)        */}
         {/* ═════════════════════════════════════════════════════════════ */}
         {activeFeature === null && (
-          <div className="space-y-6 animate-fade-up">
-            <div>
-              <h2 className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-sky-400" />
-                Scholar Learning Suite
-              </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Tap any tool to launch it directly. Designed for snappy 1-click mobile access.
-              </p>
-            </div>
+          <div className="space-y-5 animate-fade-up">
+            {/* Phone Nav / Toolbar Buttons Dock */}
+            <div className="rounded-3xl border border-white/[0.08] bg-[#0c1626]/80 backdrop-blur-2xl p-4 sm:p-5 shadow-2xl">
+              <div className="flex items-center justify-between mb-3 px-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Study Tools
+                </span>
+                <span className="text-[11px] text-slate-500">
+                  1-Tap Launch
+                </span>
+              </div>
 
-            {/* Grid of 6 Amazing Feature Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
-              {FEATURES.map((feat) => {
-                const IconComponent = feat.icon;
-                return (
-                  <div
-                    key={feat.key}
-                    onClick={() => setActiveFeature(feat.key)}
-                    className={`group relative overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-gradient-to-br from-[#101b2f] via-[#0b1322] to-[#070d18] p-4 sm:p-5 transition-all cursor-pointer flex flex-col justify-between shadow-lg hover:shadow-2xl hover:scale-[1.01] active:scale-[0.99] ${feat.accentBorder}`}
-                  >
-                    <div>
-                      <div className="flex items-start justify-between gap-3 mb-3">
-                        <div
-                          className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br ${feat.iconBg} text-slate-950 font-black shadow-md`}
-                        >
-                          <IconComponent className="w-5 h-5 text-slate-950 stroke-[2.2]" />
-                        </div>
-                        <span
-                          className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${feat.badgeColor}`}
-                        >
-                          {feat.badge}
-                        </span>
+              {/* Phone-like Nav / Toolbar Grid */}
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5 sm:gap-3">
+                {FEATURES.map((feat) => {
+                  const IconComponent = feat.icon;
+                  return (
+                    <button
+                      key={feat.key}
+                      type="button"
+                      onClick={() => setActiveFeature(feat.key)}
+                      className="group relative flex flex-col items-center justify-center p-3 sm:p-4 rounded-2xl border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/20 active:scale-90 active:bg-white/[0.12] transition-all duration-200 cursor-pointer shadow-sm text-center"
+                    >
+                      <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-white/[0.06] border border-white/[0.08] text-sky-400 group-hover:text-white group-hover:bg-sky-500/20 group-hover:border-sky-400/40 group-active:scale-95 transition-all duration-200 shadow-inner mb-2">
+                        <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.2]" />
                       </div>
-
-                      <h3 className="text-base font-bold text-white group-hover:text-sky-300 transition-colors">
+                      <span className="text-xs font-semibold text-slate-200 group-hover:text-white tracking-tight">
                         {feat.title}
-                      </h3>
-                      <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                        {feat.subtitle}
-                      </p>
-                    </div>
-
-                    <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs font-bold text-sky-300 group-hover:text-sky-200">
-                      <span>{feat.actionText}</span>
-                      <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-                    </div>
-                  </div>
-                );
-              })}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Quick Enrolled Courses Preview Strip */}
             <div className="pt-2">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-bold text-slate-200 flex items-center gap-1.5">
-                  <BookOpen className="w-4 h-4 text-amber-400" />
-                  <span>My Active Curriculum</span>
+              <div className="flex items-center justify-between mb-3 px-1">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <BookOpen className="w-3.5 h-3.5 text-sky-400" />
+                  <span>Curriculum</span>
                 </h3>
                 <button
                   type="button"
                   onClick={() => setActiveFeature("courses")}
-                  className="text-xs font-bold text-sky-400 hover:text-sky-300 flex items-center gap-1"
+                  className="text-xs font-semibold text-sky-400 hover:text-sky-300 flex items-center gap-1 rounded-full px-3 py-1 bg-white/[0.04] border border-white/[0.08] active:scale-95 transition-all cursor-pointer"
                 >
-                  <span>Manage All Courses ({activeEnrolledList.length})</span>
+                  <span>All Courses ({activeEnrolledList.length})</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -791,7 +717,7 @@ function LearningContent() {
                   <Link
                     key={course.id}
                     href={course.path}
-                    className="flex items-center gap-3 p-3 rounded-2xl border border-white/10 bg-[#091222]/80 hover:bg-[#0f1d35] hover:border-sky-400/40 transition-all shadow-md group"
+                    className="flex items-center gap-3 p-3 rounded-2xl border border-white/[0.08] bg-[#091222]/80 hover:bg-[#0f1d35] hover:border-white/20 active:scale-95 transition-all duration-200 shadow-md group"
                   >
                     <div className="relative h-12 w-14 shrink-0 overflow-hidden rounded-xl bg-slate-900 border border-white/10">
                       <Image
@@ -807,11 +733,11 @@ function LearningContent() {
                       <p className="text-xs font-bold text-white truncate group-hover:text-sky-300 transition-colors">
                         {course.title}
                       </p>
-                      <span className="text-[10px] font-bold text-sky-400 block mt-0.5">
+                      <span className="text-[10px] font-semibold text-slate-400 block mt-0.5">
                         {course.level}
                       </span>
                     </div>
-                    <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-sky-300 group-hover:translate-x-0.5 transition-all shrink-0" />
+                    <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-white group-hover:translate-x-0.5 transition-all shrink-0" />
                   </Link>
                 ))}
               </div>
@@ -826,7 +752,7 @@ function LearningContent() {
         {/* ── 1. FOCUS POMODORO STATION ──────────────────────────────── */}
         {activeFeature === "timer" && (
           <section className="animate-fade-up max-w-4xl mx-auto space-y-4">
-            <div className="rounded-2xl sm:rounded-3xl border border-sky-400/30 bg-gradient-to-b from-[#0f1d33] to-[#08101e] p-4 sm:p-8 shadow-2xl">
+            <div className="rounded-3xl border border-white/[0.08] bg-[#0c1626]/80 backdrop-blur-2xl p-4 sm:p-8 shadow-2xl">
               <PomodoroTimer />
             </div>
           </section>
@@ -835,7 +761,7 @@ function LearningContent() {
         {/* ── 2. WEEKLY STUDY PLANNER ────────────────────────────────── */}
         {activeFeature === "planner" && (
           <section className="animate-fade-up max-w-5xl mx-auto space-y-4">
-            <div className="rounded-2xl sm:rounded-3xl border border-white/15 bg-gradient-to-b from-[#0b1528] to-[#070e1c] p-2.5 sm:p-5 md:p-6 shadow-2xl">
+            <div className="rounded-3xl border border-white/[0.08] bg-[#0c1626]/80 backdrop-blur-2xl p-2.5 sm:p-5 md:p-6 shadow-2xl">
               <StudyPlanner />
             </div>
           </section>
@@ -844,21 +770,21 @@ function LearningContent() {
         {/* ── 3. DAILY TARGETS & ACCOUNTABILITY ──────────────────────── */}
         {activeFeature === "goals" && (
           <section className="animate-fade-up max-w-4xl mx-auto space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-[#091324] border border-white/10 shadow-lg">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-5 rounded-3xl bg-[#0c1626]/80 border border-white/[0.08] backdrop-blur-2xl shadow-xl">
               <div>
-                <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
-                  <CheckSquare className="w-5 h-5 text-emerald-400" />
-                  Daily Targets & Accountability
+                <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                  <CheckSquare className="w-5 h-5 text-sky-400" />
+                  <span>Targets</span>
                 </h2>
-                <p className="text-xs text-slate-300 mt-0.5">
-                  Keep yourself accountable every single day.
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Track and complete your daily study milestones.
                 </p>
               </div>
               <div className="flex items-center gap-2 self-start sm:self-auto">
                 <span className="text-xs text-slate-400">
                   {completedGoalsCount} of {goals.length} Done
                 </span>
-                <div className="h-8 px-2.5 flex items-center justify-center rounded-xl bg-emerald-500/15 border border-emerald-400/40 text-emerald-300 font-extrabold text-xs">
+                <div className="h-8 px-3.5 flex items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.08] text-white font-bold text-xs shadow-sm">
                   {goalProgressPercent}%
                 </div>
               </div>
@@ -867,66 +793,66 @@ function LearningContent() {
             {/* Add Target Input Form */}
             <form
               onSubmit={addGoal}
-              className="flex flex-col sm:flex-row items-center gap-2.5 p-3 rounded-2xl bg-[#0e1b30] border border-white/15 shadow-xl"
+              className="flex flex-col sm:flex-row items-center gap-2.5 p-2.5 rounded-2xl sm:rounded-full bg-white/[0.04] border border-white/[0.08] backdrop-blur-xl shadow-lg"
             >
               <input
                 type="text"
                 value={newGoalText}
                 onChange={(e) => setNewGoalText(e.target.value)}
-                placeholder="What is your top study target today? (e.g. Solve 20 Physics questions)"
-                className="flex-1 w-full bg-[#060b16] border border-white/12 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-400 transition-colors"
+                placeholder="What is your study target? (e.g. Solve 20 Physics questions)"
+                className="flex-1 w-full bg-transparent border-none px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none"
               />
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <select
                   value={newGoalPriority}
                   onChange={(e) => setNewGoalPriority(e.target.value as "high" | "medium" | "low")}
-                  className="bg-[#060b16] border border-white/12 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none"
+                  className="bg-white/[0.06] border border-white/[0.08] rounded-full px-3.5 py-2 text-xs text-slate-200 focus:outline-none cursor-pointer"
                 >
-                  <option value="high">High Priority</option>
-                  <option value="medium">Medium Priority</option>
-                  <option value="low">Low Priority</option>
+                  <option value="high" className="bg-[#091222] text-white">High Priority</option>
+                  <option value="medium" className="bg-[#091222] text-white">Medium Priority</option>
+                  <option value="low" className="bg-[#091222] text-white">Low Priority</option>
                 </select>
                 <button
                   type="submit"
-                  className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-black text-xs bg-emerald-400 hover:bg-emerald-300 text-slate-950 shrink-0 transition-all shadow-md cursor-pointer"
+                  className="flex items-center justify-center gap-1.5 px-5 py-2 rounded-full font-semibold text-xs bg-white text-slate-950 hover:bg-slate-200 shrink-0 active:scale-95 transition-all shadow-md cursor-pointer"
                 >
-                  <Plus className="w-4 h-4 stroke-[3]" />
-                  <span>Add Target</span>
+                  <Plus className="w-4 h-4 stroke-[2.5]" />
+                  <span>Add</span>
                 </button>
               </div>
             </form>
 
             {/* Goals List */}
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               {goals.length === 0 ? (
-                <div className="p-8 text-center rounded-2xl border border-dashed border-white/10 bg-[#060b16]">
+                <div className="p-8 text-center rounded-3xl border border-dashed border-white/10 bg-white/[0.02]">
                   <p className="text-sm text-slate-400">No targets added yet. Add your first study goal above.</p>
                 </div>
               ) : (
                 goals.map((goal) => (
                   <div
                     key={goal.id}
-                    className={`flex items-center justify-between p-3.5 sm:p-4 rounded-2xl border transition-all ${
+                    className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all duration-150 ${
                       goal.completed
-                        ? "bg-[#060b16] border-emerald-500/25 opacity-75"
-                        : "bg-[#0f1d33] border-white/12 hover:border-white/25"
+                        ? "bg-white/[0.02] border-white/[0.04] opacity-70"
+                        : "bg-white/[0.04] border-white/[0.08] hover:border-white/20 shadow-sm"
                     }`}
                   >
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                       <button
                         type="button"
                         onClick={() => toggleGoal(goal.id)}
-                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border transition-all cursor-pointer ${
+                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition-all active:scale-90 cursor-pointer ${
                           goal.completed
-                            ? "bg-emerald-400 border-emerald-300 text-slate-950 font-bold"
-                            : "border-white/30 hover:border-emerald-400 bg-white/[0.04]"
+                            ? "bg-white border-white text-slate-950 font-bold"
+                            : "border-white/30 hover:border-white bg-white/[0.04]"
                         }`}
                       >
-                        {goal.completed && <Check className="w-4 h-4 stroke-[3]" />}
+                        {goal.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                       </button>
                       <span
                         className={`text-sm truncate ${
-                          goal.completed ? "line-through text-slate-400" : "text-white font-semibold"
+                          goal.completed ? "line-through text-slate-400" : "text-white font-medium"
                         }`}
                       >
                         {goal.text}
@@ -934,13 +860,13 @@ function LearningContent() {
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0 ml-3">
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#060b16] text-slate-300 border border-white/10">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/[0.06] text-slate-300 border border-white/[0.08]">
                         {goal.priority}
                       </span>
                       <button
                         type="button"
                         onClick={() => deleteGoal(goal.id)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 transition-colors cursor-pointer"
+                        className="p-1.5 rounded-full text-slate-400 hover:text-rose-400 hover:bg-white/5 active:scale-90 transition-all cursor-pointer"
                         title="Delete target"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -956,14 +882,14 @@ function LearningContent() {
         {/* ── 4. SCHOLAR NOTEBOOK ────────────────────────────────────── */}
         {activeFeature === "notes" && (
           <section className="animate-fade-up space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-[#091324] border border-white/10 shadow-lg">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-5 rounded-3xl bg-[#0c1626]/80 border border-white/[0.08] backdrop-blur-2xl shadow-xl">
               <div>
-                <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
-                  <Folder className="w-5 h-5 text-violet-400" />
-                  Scholar Notebook
+                <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                  <Folder className="w-5 h-5 text-sky-400" />
+                  <span>Notebook</span>
                 </h2>
-                <p className="text-xs text-slate-300 mt-0.5">
-                  Organize lecture notes, formulas, and chapter summaries. Auto-saved locally.
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Study notes, formulas, and chapter summaries.
                 </p>
               </div>
 
@@ -971,7 +897,7 @@ function LearningContent() {
                 <button
                   type="button"
                   onClick={handleAddFolder}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#14233d] hover:bg-[#1a2e4f] border border-white/15 text-white transition-all shadow-md cursor-pointer"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white/[0.06] hover:bg-white/[0.12] active:scale-95 border border-white/[0.08] text-slate-200 transition-all shadow-sm cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>New Folder</span>
@@ -979,9 +905,9 @@ function LearningContent() {
                 <button
                   type="button"
                   onClick={handleAddSheet}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-violet-400 hover:bg-violet-300 text-slate-950 shadow-md transition-all cursor-pointer"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white hover:bg-slate-200 active:scale-95 text-slate-950 shadow-md transition-all cursor-pointer"
                 >
-                  <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                  <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                   <span>Add Sheet</span>
                 </button>
               </div>
@@ -1001,14 +927,14 @@ function LearningContent() {
                           setSelectedSheetId(folder.sheets[0].id);
                         }
                       }}
-                      className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                      className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-all border active:scale-95 cursor-pointer ${
                         isActive
-                          ? "bg-violet-500/20 border-violet-400 text-violet-200 shadow-md"
-                          : "bg-[#0b1526] border-white/12 text-slate-300 hover:text-white"
+                          ? "bg-white text-slate-950 border-white shadow-md font-bold"
+                          : "bg-white/[0.04] border-white/[0.08] text-slate-300 hover:text-white hover:bg-white/[0.08]"
                       }`}
                     >
                       <span>{folder.name}</span>
-                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/40 text-slate-400">
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${isActive ? "bg-slate-200 text-slate-900" : "bg-black/40 text-slate-400"}`}>
                         {folder.sheets.length}
                       </span>
                     </button>
@@ -1016,7 +942,7 @@ function LearningContent() {
                       <button
                         type="button"
                         onClick={() => handleDeleteFolder(folder.id)}
-                        className="ml-1 p-1 text-slate-500 hover:text-rose-400 transition-colors cursor-pointer"
+                        className="ml-1 p-1 text-slate-500 hover:text-rose-400 active:scale-90 transition-all cursor-pointer"
                         title="Delete folder"
                       >
                         <Trash2 className="w-3 h-3" />
@@ -1030,15 +956,15 @@ function LearningContent() {
             {/* Notebook 2-Column Workspace */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
               {/* Sheets List in Current Folder */}
-              <div className="lg:col-span-4 rounded-2xl border border-white/15 bg-gradient-to-b from-[#0f1d33] to-[#08101e] p-3.5 space-y-2.5 shadow-xl">
-                <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                    Sheets in {currentFolder?.name}
+              <div className="lg:col-span-4 rounded-3xl border border-white/[0.08] bg-[#0c1626]/80 backdrop-blur-2xl p-4 space-y-2.5 shadow-xl">
+                <div className="flex items-center justify-between pb-2 border-b border-white/[0.08]">
+                  <span className="text-xs font-semibold text-slate-300">
+                    {currentFolder?.name} Sheets
                   </span>
                   <button
                     type="button"
                     onClick={handleAddSheet}
-                    className="text-xs font-bold text-violet-400 hover:underline flex items-center gap-1 cursor-pointer"
+                    className="text-xs font-semibold text-sky-400 hover:underline flex items-center gap-1 active:scale-95 cursor-pointer"
                   >
                     <Plus className="w-3 h-3" />
                     <span>Add</span>
@@ -1052,14 +978,14 @@ function LearningContent() {
                       <div
                         key={sheet.id}
                         onClick={() => setSelectedSheetId(sheet.id)}
-                        className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
+                        className={`p-3 rounded-2xl border transition-all duration-150 cursor-pointer flex items-center justify-between active:scale-[0.99] ${
                           isSelected
-                            ? "bg-violet-500/20 border-violet-400 text-white shadow-md shadow-violet-500/10"
-                            : "bg-[#060b16] border-white/8 hover:border-white/20 text-slate-300"
+                            ? "bg-white/[0.12] border-white/30 text-white shadow-sm"
+                            : "bg-white/[0.02] border-white/[0.06] hover:border-white/15 text-slate-300"
                         }`}
                       >
                         <div className="min-w-0 pr-2">
-                          <p className="text-xs font-bold truncate text-white">
+                          <p className="text-xs font-semibold truncate text-white">
                             {sheet.title || "Untitled Sheet"}
                           </p>
                           <span className="text-[10px] text-slate-400">
@@ -1073,7 +999,7 @@ function LearningContent() {
                               e.stopPropagation();
                               handleDeleteSheet(sheet.id);
                             }}
-                            className="p-1 text-slate-500 hover:text-rose-400 transition-colors cursor-pointer"
+                            className="p-1 text-slate-500 hover:text-rose-400 active:scale-90 transition-all cursor-pointer"
                             title="Delete sheet"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -1085,22 +1011,22 @@ function LearningContent() {
                 </div>
               </div>
 
-              {/* Active Sheet Editor with Times New Roman Italic */}
-              <div className="lg:col-span-8 rounded-2xl border border-white/15 bg-gradient-to-b from-[#0f1d33] to-[#08101e] p-4 sm:p-5 space-y-3 shadow-xl">
+              {/* Active Sheet Editor */}
+              <div className="lg:col-span-8 rounded-3xl border border-white/[0.08] bg-[#0c1626]/80 backdrop-blur-2xl p-4 sm:p-5 space-y-3 shadow-xl">
                 {currentSheet ? (
                   <>
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-white/10">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-white/[0.08]">
                       <input
                         type="text"
                         value={currentSheet.title}
                         onChange={(e) => handleUpdateSheet({ title: e.target.value })}
-                        className="text-base sm:text-lg font-extrabold text-white bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-violet-400 rounded-lg px-1 flex-1"
+                        className="text-base sm:text-lg font-bold text-white bg-transparent border-none focus:outline-none rounded-lg px-1 flex-1"
                         placeholder="Sheet Title..."
                       />
                       <button
                         type="button"
                         onClick={handleCopySheet}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#14233d] hover:bg-[#1a2e4f] border border-white/15 text-slate-200 hover:text-white transition-colors self-start sm:self-auto shadow-md cursor-pointer"
+                        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white/[0.06] hover:bg-white/[0.12] active:scale-95 border border-white/[0.08] text-slate-200 transition-all self-start sm:self-auto shadow-sm cursor-pointer"
                       >
                         {copiedNotice ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                         <span>{copiedNotice ? "Copied" : "Copy Notes"}</span>
@@ -1111,10 +1037,10 @@ function LearningContent() {
                       value={currentSheet.content}
                       onChange={(e) => handleUpdateSheet({ content: e.target.value })}
                       placeholder="Start typing your study notes, formulas, or summaries here..."
-                      className="w-full h-[320px] bg-[#060b16] border border-white/10 rounded-xl p-3.5 text-sm text-slate-100 font-serif italic font-normal font-['Times_New_Roman',Times,serif] leading-relaxed focus:outline-none focus:border-violet-400/50 resize-y transition-colors"
+                      className="w-full h-[320px] bg-black/40 border border-white/[0.08] rounded-2xl p-3.5 text-sm text-slate-100 font-serif italic font-normal font-['Times_New_Roman',Times,serif] leading-relaxed focus:outline-none focus:border-white/20 resize-y transition-colors"
                     />
 
-                    <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-white/10">
+                    <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-white/[0.08]">
                       <span className="flex items-center gap-1.5">
                         <span className="h-2 w-2 rounded-full bg-emerald-400 inline-block" />
                         <span>Auto-saved locally</span>
@@ -1145,41 +1071,41 @@ function LearningContent() {
         {/* ── 6. MY ENROLLED COURSES & SYLLABUS ──────────────────────── */}
         {activeFeature === "courses" && (
           <section className="animate-fade-up space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-[#091324] border border-white/10 shadow-lg">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-5 rounded-3xl bg-[#0c1626]/80 border border-white/[0.08] backdrop-blur-2xl shadow-xl">
               <div>
-                <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
-                  <BookOpen className="w-5 h-5 text-amber-400" />
-                  My Active Courses & Learning Hubs
+                <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-sky-400" />
+                  <span>Courses</span>
                 </h2>
-                <p className="text-xs text-slate-300 mt-0.5">
-                  Pinned learning paths with textbooks, flashcards, short notes, and practice exams.
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Curriculum with textbooks, notes, cards, and model exams.
                 </p>
               </div>
 
               <button
                 type="button"
                 onClick={() => setShowCourseManager(!showCourseManager)}
-                className="flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold text-xs bg-[#13223b] hover:bg-[#1a2f52] text-amber-300 border border-amber-400/40 transition-all self-start sm:self-auto shadow-lg cursor-pointer"
+                className="flex items-center gap-2 px-4 py-2 rounded-full font-semibold text-xs bg-white/[0.06] hover:bg-white/[0.12] active:scale-95 text-slate-200 border border-white/[0.08] transition-all self-start sm:self-auto shadow-sm cursor-pointer"
               >
                 <Settings2 className="w-4 h-4" />
-                <span>{showCourseManager ? "Done Customizing" : "Add / Remove Courses"}</span>
+                <span>{showCourseManager ? "Done" : "Manage"}</span>
               </button>
             </div>
 
             {/* Course Customizer Drawer */}
             {showCourseManager && (
-              <div className="rounded-2xl border border-amber-400/40 bg-gradient-to-b from-[#101d33] to-[#091120] p-4 sm:p-5 space-y-3 shadow-2xl">
+              <div className="rounded-3xl border border-white/[0.1] bg-[#0a1220]/95 backdrop-blur-2xl p-4 sm:p-5 space-y-3 shadow-2xl">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-extrabold text-white">Customize Your Active Courses</h3>
-                    <p className="text-xs text-slate-300 mt-0.5">
-                      Check packages you are currently preparing for to display them on your dashboard.
+                    <h3 className="text-sm font-bold text-white">Active Courses</h3>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Select courses to display on your learning dashboard.
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setShowCourseManager(false)}
-                    className="p-1 rounded-lg bg-white/5 text-slate-400 hover:text-white border border-white/10"
+                    className="p-1.5 rounded-full bg-white/5 text-slate-400 hover:text-white border border-white/10 active:scale-90 transition-all cursor-pointer"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -1193,13 +1119,13 @@ function LearningContent() {
                         key={course.id}
                         type="button"
                         onClick={() => toggleCourseEnrollment(course.id)}
-                        className={`group flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                        className={`group flex items-center gap-2.5 p-2.5 rounded-2xl border text-left transition-all active:scale-95 cursor-pointer ${
                           isSelected
-                            ? "bg-amber-500/15 border-amber-400 text-white shadow-md"
-                            : "bg-[#060b16] border-white/10 text-slate-300 hover:border-white/25 hover:bg-[#0c1626]"
+                            ? "bg-white/[0.12] border-white/30 text-white shadow-sm"
+                            : "bg-white/[0.02] border-white/[0.08] text-slate-300 hover:bg-white/[0.06]"
                         }`}
                       >
-                        <div className="relative h-10 w-12 shrink-0 overflow-hidden rounded-lg bg-[#091322] border border-white/10">
+                        <div className="relative h-10 w-12 shrink-0 overflow-hidden rounded-xl bg-slate-900 border border-white/10">
                           <Image
                             src={course.image}
                             alt={course.title}
@@ -1211,14 +1137,14 @@ function LearningContent() {
                         </div>
 
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs font-extrabold truncate text-white">{course.title}</p>
-                          <span className="text-[10px] font-bold text-amber-400">{course.level}</span>
+                          <p className="text-xs font-bold truncate text-white">{course.title}</p>
+                          <span className="text-[10px] font-semibold text-slate-400">{course.level}</span>
                         </div>
 
                         <div
-                          className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border text-xs font-bold ${
+                          className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border text-xs font-bold ${
                             isSelected
-                              ? "bg-amber-400 border-amber-300 text-slate-950"
+                              ? "bg-white border-white text-slate-950"
                               : "border-white/20 bg-white/5"
                           }`}
                         >
@@ -1236,10 +1162,10 @@ function LearningContent() {
               {activeEnrolledList.map((course) => (
                 <div
                   key={course.id}
-                  className="group rounded-2xl sm:rounded-3xl border border-white/15 bg-gradient-to-b from-[#101c33] to-[#08101e] p-4 sm:p-5 flex flex-col justify-between hover:border-amber-400/50 transition-all shadow-xl"
+                  className="group rounded-3xl border border-white/[0.08] bg-[#0c1626]/80 backdrop-blur-2xl p-4 sm:p-5 flex flex-col justify-between hover:border-white/20 transition-all duration-200 shadow-xl"
                 >
                   <div>
-                    <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl mb-3 border border-white/12 bg-[#060b16] shadow-lg">
+                    <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl mb-3 border border-white/10 bg-slate-900 shadow-lg">
                       <Image
                         src={course.image}
                         alt={course.title}
@@ -1253,7 +1179,7 @@ function LearningContent() {
                         <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
                           {course.title}
                         </h3>
-                        <span className="text-[10px] font-mono text-amber-400 uppercase tracking-wider font-bold">
+                        <span className="text-[10px] font-mono text-sky-400 uppercase tracking-wider font-semibold">
                           {course.level}
                         </span>
                       </div>
@@ -1266,31 +1192,31 @@ function LearningContent() {
 
                   <div>
                     {/* Fast Navigation Hub Links */}
-                    <div className="grid grid-cols-4 gap-1.5 pt-3 border-t border-white/10">
+                    <div className="grid grid-cols-4 gap-1.5 pt-3 border-t border-white/[0.08]">
                       <Link
                         href={`${course.path}#textbooks`}
-                        className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg font-bold text-[11px] bg-[#162744] hover:bg-amber-400 hover:text-slate-950 text-white border border-white/15 transition-all text-center"
+                        className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-full font-semibold text-[11px] bg-white/[0.06] hover:bg-white/[0.12] active:scale-95 text-slate-200 hover:text-white border border-white/[0.08] transition-all text-center"
                       >
                         <BookOpen className="w-3 h-3 shrink-0" />
                         <span>Books</span>
                       </Link>
                       <Link
                         href={`${course.path}#notes`}
-                        className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg font-bold text-[11px] bg-[#162744] hover:bg-amber-400 hover:text-slate-950 text-white border border-white/15 transition-all text-center"
+                        className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-full font-semibold text-[11px] bg-white/[0.06] hover:bg-white/[0.12] active:scale-95 text-slate-200 hover:text-white border border-white/[0.08] transition-all text-center"
                       >
                         <FileText className="w-3 h-3 shrink-0" />
                         <span>Notes</span>
                       </Link>
                       <Link
                         href={`${course.path}#flashcards`}
-                        className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg font-bold text-[11px] bg-[#162744] hover:bg-amber-400 hover:text-slate-950 text-white border border-white/15 transition-all text-center"
+                        className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-full font-semibold text-[11px] bg-white/[0.06] hover:bg-white/[0.12] active:scale-95 text-slate-200 hover:text-white border border-white/[0.08] transition-all text-center"
                       >
                         <Layers className="w-3 h-3 shrink-0" />
                         <span>Cards</span>
                       </Link>
                       <Link
                         href={`${course.path}#exams`}
-                        className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-lg font-bold text-[11px] bg-[#162744] hover:bg-amber-400 hover:text-slate-950 text-white border border-white/15 transition-all text-center"
+                        className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-full font-semibold text-[11px] bg-white/[0.06] hover:bg-white/[0.12] active:scale-95 text-slate-200 hover:text-white border border-white/[0.08] transition-all text-center"
                       >
                         <Award className="w-3 h-3 shrink-0" />
                         <span>Exams</span>

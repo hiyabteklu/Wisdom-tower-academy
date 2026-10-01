@@ -12,7 +12,6 @@ import {
   Sun,
   Sunset,
   Moon,
-  Sparkles,
   X,
   Edit2,
   Calendar,
@@ -328,11 +327,11 @@ export default function StudyPlanner() {
 
         <div className="flex flex-wrap items-center gap-2">
           {/* Quick Jump Buttons (Morning / Afternoon / Evening / Now) */}
-          <div className="flex items-center rounded-xl bg-slate-950/80 p-1 border border-white/10 text-xs">
+          <div className="flex items-center rounded-full bg-white/[0.04] p-1 border border-white/10 text-xs backdrop-blur-xl">
             <button
               type="button"
               onClick={() => scrollToHour(7)}
-              className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-300 hover:text-white hover:bg-white/10 transition-colors flex items-center gap-1"
+              className="px-3 py-1 rounded-full text-[11px] font-medium text-slate-300 hover:text-white hover:bg-white/10 active:scale-95 transition-all flex items-center gap-1 cursor-pointer"
               title="Jump to Morning (7 AM)"
             >
               <Sun className="w-3 h-3 text-amber-300" />
@@ -341,7 +340,7 @@ export default function StudyPlanner() {
             <button
               type="button"
               onClick={() => scrollToHour(13)}
-              className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-300 hover:text-white hover:bg-white/10 transition-colors flex items-center gap-1"
+              className="px-3 py-1 rounded-full text-[11px] font-medium text-slate-300 hover:text-white hover:bg-white/10 active:scale-95 transition-all flex items-center gap-1 cursor-pointer"
               title="Jump to Afternoon (1 PM)"
             >
               <Sunset className="w-3 h-3 text-orange-300" />
@@ -350,7 +349,7 @@ export default function StudyPlanner() {
             <button
               type="button"
               onClick={() => scrollToHour(19)}
-              className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-300 hover:text-white hover:bg-white/10 transition-colors flex items-center gap-1"
+              className="px-3 py-1 rounded-full text-[11px] font-medium text-slate-300 hover:text-white hover:bg-white/10 active:scale-95 transition-all flex items-center gap-1 cursor-pointer"
               title="Jump to Evening (7 PM)"
             >
               <Moon className="w-3 h-3 text-violet-300" />
@@ -359,7 +358,7 @@ export default function StudyPlanner() {
             <button
               type="button"
               onClick={() => scrollToHour(Math.floor(currentTimeMinutes / 60))}
-              className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-cyan-300 hover:bg-cyan-500/20 transition-colors"
+              className="px-3 py-1 rounded-full text-[11px] font-bold text-white hover:bg-white/15 active:scale-95 transition-all cursor-pointer"
               title="Jump to Current Time"
             >
               Now
@@ -370,7 +369,7 @@ export default function StudyPlanner() {
           <button
             type="button"
             onClick={() => handleOpenAdd(typeof mobileDayFilter === "number" ? mobileDayFilter : today)}
-            className="px-3.5 py-1.5 rounded-xl bg-cyan-400 text-slate-950 hover:bg-cyan-300 font-bold text-xs flex items-center gap-1.5 shadow-md shadow-cyan-500/20 active:scale-[0.98] transition-all cursor-pointer"
+            className="px-4 py-2 rounded-full bg-white text-slate-950 hover:bg-slate-200 font-semibold text-xs flex items-center gap-1.5 shadow-md active:scale-95 transition-all cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5 text-slate-950" />
             <span>Add Block</span>
@@ -385,13 +384,13 @@ export default function StudyPlanner() {
         <button
           type="button"
           onClick={() => setMobileDayFilter("all")}
-          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 border ${
+          className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all shrink-0 border active:scale-95 cursor-pointer ${
             mobileDayFilter === "all"
-              ? "bg-cyan-400 text-slate-950 border-cyan-400 shadow-sm"
-              : "bg-slate-950/60 border-white/10 text-slate-300 hover:text-white hover:bg-white/5"
+              ? "bg-white text-slate-950 border-white shadow-sm font-semibold"
+              : "bg-white/[0.04] border-white/10 text-slate-300 hover:text-white hover:bg-white/[0.08]"
           }`}
         >
-          Full Week (7 Days)
+          Full Week
         </button>
 
         {DAYS.map((d, i) => {
@@ -403,10 +402,10 @@ export default function StudyPlanner() {
               key={d.short}
               type="button"
               onClick={() => setMobileDayFilter(i)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 border ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all shrink-0 border active:scale-95 cursor-pointer ${
                 isSelected
-                  ? "bg-cyan-400 text-slate-950 border-cyan-400 shadow-sm"
-                  : "bg-slate-950/60 border-white/10 text-slate-300 hover:text-white hover:bg-white/5"
+                  ? "bg-white text-slate-950 border-white shadow-sm font-semibold"
+                  : "bg-white/[0.04] border-white/10 text-slate-300 hover:text-white hover:bg-white/[0.08]"
               }`}
             >
               <span>{d.short}</span>
@@ -419,7 +418,7 @@ export default function StudyPlanner() {
               )}
               {count > 0 && (
                 <span
-                  className={`text-[10px] px-1 rounded-full font-mono ${
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
                     isSelected ? "bg-slate-900/30 text-slate-950" : "bg-white/10 text-slate-300"
                   }`}
                 >
@@ -741,7 +740,7 @@ export default function StudyPlanner() {
                   <button
                     type="button"
                     onClick={() => handleDeleteBlock(editingBlock.id)}
-                    className="px-3.5 py-2 rounded-xl text-xs font-bold border border-rose-500/40 text-rose-300 hover:bg-rose-500/20 transition-colors flex items-center gap-1.5"
+                    className="px-4 py-2 rounded-full text-xs font-semibold border border-rose-500/40 text-rose-300 hover:bg-rose-500/20 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     <span>Delete</span>
@@ -754,15 +753,15 @@ export default function StudyPlanner() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-white/15 text-xs text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                    className="px-4 py-2 rounded-full border border-white/15 text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 active:scale-95 transition-all cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 rounded-xl bg-cyan-400 text-slate-950 font-black text-xs hover:bg-cyan-300 shadow-md shadow-cyan-500/25 active:scale-[0.98] transition-all cursor-pointer"
+                    className="px-5 py-2 rounded-full bg-white text-slate-950 font-semibold text-xs hover:bg-slate-200 shadow-md active:scale-95 transition-all cursor-pointer"
                   >
-                    {editingBlock ? "Save Changes" : "Create Session"}
+                    {editingBlock ? "Save" : "Create"}
                   </button>
                 </div>
               </div>

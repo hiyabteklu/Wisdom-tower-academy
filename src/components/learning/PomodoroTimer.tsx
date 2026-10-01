@@ -121,7 +121,7 @@ export default function PomodoroTimer() {
 
   return (
     <>
-      <div className="rounded-3xl border border-white/12 bg-wisdom-card p-6 sm:p-8 text-center shadow-card-3d">
+      <div className="rounded-3xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-2xl p-6 sm:p-8 text-center shadow-2xl">
         <div className="flex flex-wrap justify-center items-center gap-2 mb-6">
           {PRESETS.map((p) => (
             <button
@@ -137,10 +137,10 @@ export default function PomodoroTimer() {
                   window.dispatchEvent(new CustomEvent("wt-focus-timer"));
                 }
               }}
-              className={`rounded-xl px-3.5 py-2 text-xs font-bold border transition-colors cursor-pointer ${
+              className={`rounded-full px-4 py-2 text-xs font-semibold border transition-all duration-150 active:scale-95 cursor-pointer ${
                 state.totalSec === p.minutes * 60
-                  ? "border-cyan-400 bg-cyan-500/20 text-cyan-200 shadow-sm"
-                  : "border-white/10 text-slate-300 hover:border-white/25 hover:bg-white/5"
+                  ? "border-white/30 bg-white/20 text-white shadow-sm"
+                  : "border-white/[0.08] bg-white/[0.04] text-slate-300 hover:border-white/20 hover:bg-white/[0.08]"
               } disabled:opacity-50`}
             >
               {p.label}
@@ -151,26 +151,26 @@ export default function PomodoroTimer() {
             type="button"
             disabled={running}
             onClick={() => setCustomInputOpen((prev) => !prev)}
-            className={`rounded-xl px-3.5 py-2 text-xs font-bold border transition-colors cursor-pointer flex items-center gap-1.5 ${
+            className={`rounded-full px-4 py-2 text-xs font-semibold border transition-all duration-150 active:scale-95 cursor-pointer flex items-center gap-1.5 ${
               customInputOpen || !PRESETS.some((p) => p.minutes * 60 === state.totalSec)
-                ? "border-amber-400 bg-amber-500/20 text-amber-200 font-bold"
-                : "border-white/10 text-slate-300 hover:border-cyan-400/40 hover:text-cyan-200 hover:bg-white/5"
+                ? "border-white/30 bg-white/20 text-white shadow-sm"
+                : "border-white/[0.08] bg-white/[0.04] text-slate-300 hover:border-white/20 hover:bg-white/[0.08]"
             } disabled:opacity-50`}
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
             <span>
               {!PRESETS.some((p) => p.minutes * 60 === state.totalSec)
                 ? `Custom (${Math.round(state.totalSec / 60)}m)`
-                : "Custom..."}
+                : "Custom"}
             </span>
           </button>
         </div>
 
         {/* Inline Custom Minutes Selector */}
         {customInputOpen && !running && (
-          <div className="mb-6 p-4 rounded-2xl border border-amber-400/30 bg-amber-500/10 max-w-xs mx-auto animate-in fade-in duration-200">
-            <p className="text-xs font-bold text-amber-300 mb-2 uppercase tracking-wider">
-              Set Custom Duration
+          <div className="mb-6 p-4 rounded-3xl border border-white/10 bg-white/[0.05] backdrop-blur-xl max-w-xs mx-auto animate-in fade-in duration-200">
+            <p className="text-xs font-semibold text-slate-300 mb-2 tracking-wide">
+              Custom Duration
             </p>
             <div className="flex items-center justify-center gap-2">
               <input
@@ -179,9 +179,9 @@ export default function PomodoroTimer() {
                 max={360}
                 value={customMinutes}
                 onChange={(e) => setCustomMinutes(Math.max(1, Math.min(360, Number(e.target.value) || 1)))}
-                className="w-20 px-3 py-1.5 rounded-xl bg-slate-900 border border-white/20 text-white font-mono text-center font-bold text-sm focus:outline-none focus:border-amber-400"
+                className="w-20 px-3 py-1.5 rounded-full bg-slate-950/80 border border-white/15 text-white font-mono text-center font-bold text-sm focus:outline-none focus:border-white/40"
               />
-              <span className="text-xs text-slate-300 font-medium">minutes</span>
+              <span className="text-xs text-slate-300 font-medium">min</span>
               <button
                 type="button"
                 onClick={() => {
@@ -193,7 +193,7 @@ export default function PomodoroTimer() {
                     window.dispatchEvent(new CustomEvent("wt-focus-timer"));
                   }
                 }}
-                className="px-3 py-1.5 rounded-xl bg-amber-400 text-slate-950 font-bold text-xs hover:bg-amber-300 cursor-pointer flex items-center gap-1 shadow-sm"
+                className="px-4 py-1.5 rounded-full bg-white text-slate-950 font-bold text-xs hover:bg-slate-200 active:scale-95 transition-all cursor-pointer flex items-center gap-1 shadow-sm"
               >
                 <Check className="w-3.5 h-3.5" />
                 <span>Set</span>
@@ -204,32 +204,32 @@ export default function PomodoroTimer() {
 
         <div className="relative mx-auto w-40 h-40 sm:w-48 sm:h-48 mb-4">
           <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-            <circle cx="60" cy="60" r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="8" />
+            <circle cx="60" cy="60" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
             <circle
               cx="60"
               cy="60"
               r={r}
               fill="none"
-              stroke="#fbbf24"
+              stroke="currentColor"
               strokeWidth="8"
               strokeLinecap="round"
               strokeDasharray={c}
               strokeDashoffset={offset}
-              className="transition-[stroke-dashoffset] duration-300"
+              className="text-white transition-[stroke-dashoffset] duration-300"
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <p className="font-display text-4xl sm:text-5xl font-black tabular-nums text-white tracking-tight">
               {formatFocusClock(left)}
             </p>
-            <p className="text-[11px] uppercase tracking-wider text-wisdom-muted mt-1 font-bold">
+            <p className="text-[11px] uppercase tracking-wider text-slate-400 mt-1 font-semibold">
               {running ? "Focus" : left === 0 ? "Done" : "Ready"}
             </p>
           </div>
         </div>
 
         {startLine && running ? (
-          <p className="mb-5 text-sm text-amber-100/90 leading-relaxed max-w-sm mx-auto font-medium">
+          <p className="mb-5 text-sm text-slate-200 leading-relaxed max-w-sm mx-auto font-medium">
             {startLine}
           </p>
         ) : null}
@@ -239,61 +239,61 @@ export default function PomodoroTimer() {
             <button
               type="button"
               onClick={() => requestStop("pause")}
-              className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-bold text-white hover:bg-white/10 cursor-pointer shadow-md"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/10 px-8 py-3.5 text-sm font-semibold text-white hover:bg-white/15 active:scale-95 transition-all duration-150 cursor-pointer shadow-md"
             >
               <Pause className="w-4 h-4" />
-              Pause
+              <span>Pause</span>
             </button>
           ) : (
             <button
               type="button"
               onClick={onStart}
               disabled={left <= 0}
-              className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-6 py-3 text-sm font-bold text-wisdom-dark hover:bg-amber-400 disabled:opacity-40 cursor-pointer shadow-md"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-8 py-3.5 text-sm font-semibold text-slate-950 hover:bg-slate-200 disabled:opacity-40 active:scale-95 transition-all duration-150 cursor-pointer shadow-lg"
             >
-              <Play className="w-4 h-4" />
-              Start
+              <Play className="w-4 h-4 fill-current" />
+              <span>Start</span>
             </button>
           )}
           <button
             type="button"
             onClick={() => requestStop("reset")}
-            className="inline-flex items-center gap-2 rounded-xl border border-white/15 px-5 py-3 text-sm font-semibold text-wisdom-muted hover:text-white cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-6 py-3.5 text-sm font-semibold text-slate-300 hover:text-white hover:bg-white/[0.08] active:scale-95 transition-all duration-150 cursor-pointer"
           >
             <RotateCcw className="w-4 h-4" />
-            Reset
+            <span>Reset</span>
           </button>
         </div>
 
-        <p className="mt-4 text-[11px] text-wisdom-muted">
-          Timer keeps running when you open books, notes, or other pages.
+        <p className="mt-4 text-xs text-slate-400">
+          Timer continues running across all subjects and notes.
         </p>
       </div>
 
       {nudge && (
         <div
-          className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+          className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-4 bg-black/75 backdrop-blur-md"
           role="dialog"
           aria-modal
         >
-          <div className="w-full max-w-sm rounded-3xl border border-rose-400/30 bg-wisdom-card p-6 text-center shadow-card-3d">
-            <p className="text-5xl mb-3" aria-hidden>
+          <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-slate-900/95 backdrop-blur-2xl p-6 text-center shadow-2xl">
+            <p className="text-4xl mb-3" aria-hidden>
               {nudge.face}
             </p>
-            <h3 className="font-display text-xl font-bold text-white mb-2">{nudge.title}</h3>
-            <p className="text-sm text-wisdom-muted leading-relaxed mb-6">{nudge.body}</p>
-            <div className="flex flex-col gap-2">
+            <h3 className="text-lg font-bold text-white mb-1.5">{nudge.title}</h3>
+            <p className="text-xs text-slate-300 leading-relaxed mb-6">{nudge.body}</p>
+            <div className="flex flex-col gap-2.5">
               <button
                 type="button"
                 onClick={keepGoing}
-                className="w-full rounded-xl bg-amber-500 py-2.5 text-sm font-bold text-wisdom-dark hover:bg-amber-400"
+                className="w-full rounded-full bg-white py-3 text-sm font-semibold text-slate-950 hover:bg-slate-200 active:scale-95 transition-all duration-150 shadow-md cursor-pointer"
               >
                 Keep studying
               </button>
               <button
                 type="button"
                 onClick={confirmStop}
-                className="w-full rounded-xl border border-white/15 py-2.5 text-sm font-semibold text-wisdom-muted hover:text-white"
+                className="w-full rounded-full border border-white/15 bg-white/5 py-3 text-sm font-semibold text-slate-300 hover:text-white active:scale-95 transition-all duration-150 cursor-pointer"
               >
                 {pendingAction === "reset" ? "Reset anyway" : "Pause anyway"}
               </button>

@@ -119,15 +119,16 @@ export default function NotesViewer({ body, resourceId, onProgress }: Props) {
           type="button"
           onClick={() => void summarize()}
           disabled={loading}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-violet-400/40 bg-violet-500/10 text-violet-200 text-sm font-semibold disabled:opacity-60"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/[0.08] bg-white/[0.06] hover:bg-white/[0.12] active:scale-95 text-slate-200 text-xs font-semibold disabled:opacity-50 transition-all cursor-pointer shadow-sm"
         >
-          <Lightbulb className="w-4 h-4" />
-          {loading ? "Summarizing…" : "Summarize with AI"}
+          <Lightbulb className="w-3.5 h-3.5 text-sky-400" />
+          <span>{loading ? "Summarizing…" : "Summary"}</span>
         </button>
         {ai && (
-          <div className="mt-3 rounded-2xl border border-violet-400/25 bg-violet-500/10 p-4 text-sm text-white/90 leading-relaxed">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-violet-300 mb-2 inline-flex items-center gap-1">
-              <Lightbulb className="w-3.5 h-3.5" /> AI summary
+          <div className="mt-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 text-sm text-white/90 leading-relaxed shadow-inner">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2 inline-flex items-center gap-1">
+              <Lightbulb className="w-3.5 h-3.5 text-sky-400" />
+              <span>Summary</span>
             </p>
             <RichContent body={ai} />
           </div>
