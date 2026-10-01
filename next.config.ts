@@ -9,6 +9,10 @@ const DIGITAL =
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  devIndicators: false,
+  experimental: {
+    devtoolSegmentExplorer: false,
+  },
   async redirects() {
     return [
       {
