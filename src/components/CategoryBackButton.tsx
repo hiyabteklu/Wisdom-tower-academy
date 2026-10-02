@@ -32,7 +32,7 @@ export default function CategoryBackButton({
   return (
     <Link
       href={href}
-      className="inline-flex items-center gap-2 mb-6 sm:mb-8 rounded-xl border border-white/12 bg-white/[0.04] px-3.5 py-2.5 text-sm font-semibold text-white/85 hover:border-cyan-400/40 hover:bg-cyan-500/10 hover:text-cyan-200 transition-colors"
+      className="inline-flex items-center gap-2 mb-6 sm:mb-8 rounded-full border border-white/10 bg-[#0c1328]/70 hover:bg-[#0f1833]/85 backdrop-blur-md px-4 py-2 text-xs sm:text-sm font-semibold text-slate-300 hover:text-white hover:border-white/20 transition-all shadow-sm active:scale-95"
     >
       <ArrowLeft className="w-4 h-4" />
       {text}

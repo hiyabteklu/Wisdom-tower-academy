@@ -203,9 +203,8 @@ function ScholarshipCard({
           <div className="pt-2 mt-auto">
             <a
               href={item.externalUrl}
-              target="_blank"
               rel="noopener noreferrer"
-              className="btn-primary w-full sm:w-auto text-xs sm:text-sm px-5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white"
+              className="btn-primary w-full sm:w-auto text-xs sm:text-sm px-5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-full active:scale-95"
             >
               Apply / Official Page
               <ArrowUpRight className="w-4 h-4" />

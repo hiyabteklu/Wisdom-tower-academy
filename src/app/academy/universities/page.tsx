@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, Suspense } from "react";
 import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import {
   Search,
   MapPin,
@@ -12,6 +12,7 @@ import {
   GraduationCap,
   Lightbulb,
   ChevronDown,
+  ChevronUp,
   Filter,
   Star,
   ArrowRight,
@@ -20,11 +21,9 @@ import {
   Target,
   BookOpen,
   StickyNote,
-  X,
   Compass,
   CheckCircle2,
   Calendar,
-  Sparkles,
 } from "lucide-react";
 import CategoryBackButton from "@/components/CategoryBackButton";
 import {
@@ -44,26 +43,30 @@ function UniversityNbCard() {
   const [open, setOpen] = useState(false);
   return (
     <div
-      className="mt-5 max-w-2xl rounded-2xl border border-wisdom-cyan/25 bg-wisdom-card/90 shadow-card-3d overflow-hidden"
+      className="mt-6 max-w-2xl rounded-3xl border border-sky-400/25 bg-[#0c1328]/75 backdrop-blur-xl shadow-[0_8px_30px_rgb(0_0_0/0.18)] overflow-hidden"
       data-wta-intro="nb"
     >
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between gap-3 px-5 py-4 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-wisdom-cyan/40 cursor-pointer"
+        className="w-full flex items-center justify-between gap-3 px-5 sm:px-6 py-4 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/40 cursor-pointer hover:bg-white/[0.02] transition-colors"
         aria-expanded={open}
       >
-        <span className="inline-flex items-center gap-2">
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-wisdom-cyan/30 bg-wisdom-cyan/15 text-wisdom-cyan text-xs font-extrabold tracking-wide">
+        <span className="inline-flex items-center gap-3">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-sky-400/30 bg-sky-500/15 text-sky-300 text-xs font-black shadow-sm">
             NB
           </span>
-          <span className="text-sm font-semibold text-white/90">
+          <span className="text-xs sm:text-sm font-semibold text-white/95">
             Read this before you choose
           </span>
         </span>
-        <ChevronDown
-          className={`w-5 h-5 text-wisdom-cyan/90 shrink-0 transition-transform duration-300 ${open ? "rotate-180" : ""}`}
-        />
+        <span className="w-8 h-8 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center shrink-0">
+          <ChevronDown
+            className={`w-4 h-4 text-slate-300 transition-transform duration-300 ${
+              open ? "rotate-180" : ""
+            }`}
+          />
+        </span>
       </button>
       <div
         className={`grid transition-[grid-template-rows] duration-300 ease-out ${
@@ -71,11 +74,11 @@ function UniversityNbCard() {
         }`}
       >
         <div className="overflow-hidden">
-          <div className="px-5 pb-5 border-t border-white/8 pt-4 space-y-3 text-[15px] text-wisdom-muted leading-relaxed font-reading">
+          <div className="px-5 sm:px-6 pb-6 border-t border-white/[0.06] pt-4 space-y-3 text-xs sm:text-sm text-slate-300 leading-relaxed font-reading">
             {universitiesIntro.paragraphs.map((p) => (
               <p key={p.slice(0, 48)}>{p}</p>
             ))}
-            <p className="text-white/75 italic border-l-2 border-wisdom-cyan/40 pl-3">
+            <p className="text-white/80 italic border-l-2 border-sky-400/40 pl-3">
               {universitiesIntro.closing}
             </p>
           </div>
@@ -88,19 +91,17 @@ function UniversityNbCard() {
 function AdminNotesBlock({ notes }: { notes: FreeResourceItem[] }) {
   if (!notes.length) return null;
   return (
-    <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 p-5 space-y-3">
+    <div className="rounded-2xl border border-amber-400/25 bg-amber-500/10 p-4 space-y-2.5">
       <p className="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-2">
-        <StickyNote className="w-4 h-4" />
+        <StickyNote className="w-3.5 h-3.5" />
         Scholar & Admin Notes
       </p>
       {notes.map((n) => (
-        <div key={n.id} className="space-y-1.5 pt-1">
-          {n.title && (
-            <p className="text-sm font-bold text-white">{n.title}</p>
-          )}
+        <div key={n.id} className="space-y-1 pt-1">
+          {n.title && <p className="text-xs sm:text-sm font-bold text-white">{n.title}</p>}
           {n.bodyMd && (
             <div
-              className="formatted-body text-sm text-slate-200 leading-relaxed font-reading"
+              className="formatted-body text-xs sm:text-sm text-slate-200 leading-relaxed font-reading"
               dangerouslySetInnerHTML={{ __html: simpleMarkdownToHtml(n.bodyMd) }}
             />
           )}
@@ -110,408 +111,56 @@ function AdminNotesBlock({ notes }: { notes: FreeResourceItem[] }) {
   );
 }
 
-// ── Detail Modal for University (No Layout Shift, Structured Tabs) ──
-function UniversityDetailModal({
+/**
+ * In-Place Expandable University Card
+ * Eliminates full-screen popup window and slide-left drawers for optimal Android WebView experience.
+ */
+function UniversityCard({
   uni,
   notes,
-  onClose,
+  isExpanded,
+  onToggle,
 }: {
   uni: University;
   notes: FreeResourceItem[];
-  onClose: () => void;
+  isExpanded: boolean;
+  onToggle: () => void;
 }) {
   type TabKey = "overview" | "academics" | "studentFit" | "notes";
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
 
-  // Close on Escape key
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
-
-  // Prevent background scrolling while modal is open
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, []);
-
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="modal-uni-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto bg-slate-950/85 backdrop-blur-md animate-fade-in"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+    <article
+      className={`group relative rounded-3xl border transition-all duration-300 shadow-[0_8px_30px_rgb(0_0_0/0.18)] flex flex-col justify-between ${
+        isExpanded
+          ? "border-sky-400/40 bg-[#0e172e]/95 ring-1 ring-sky-400/20 md:col-span-2 lg:col-span-3"
+          : "border-white/[0.08] bg-[#0c1328]/75 hover:bg-[#0f1833]/85 hover:border-white/20 hover:scale-[1.005]"
+      }`}
     >
-      <div className="relative w-full max-w-3xl max-h-[92vh] flex flex-col rounded-3xl border border-sky-400/30 bg-gradient-to-b from-[#0e1a30] via-[#091222] to-[#060b16] shadow-2xl overflow-hidden text-white animate-scale-up">
-        {/* Sticky Native Header */}
-        <div className="shrink-0 p-5 sm:p-6 border-b border-white/10 bg-[#0c172b]/95 backdrop-blur-lg flex items-start justify-between gap-4">
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2 mb-2">
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-black bg-sky-500/20 text-sky-300 border border-sky-400/30">
-                {uni.abbr}
-              </span>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-medium text-slate-300 bg-white/5 border border-white/10">
-                <MapPin className="w-3 h-3 text-sky-400" />
-                {uni.region}
-              </span>
-              {uni.featured && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                  <Star className="w-3 h-3 fill-current" />
-                  Featured
-                </span>
-              )}
-            </div>
-
-            <h2 id="modal-uni-title" className="font-display text-xl sm:text-2xl font-black text-white tracking-tight">
-              {uni.name}
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1 flex items-center gap-1.5">
-              <span>{uni.location}</span>
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            {uni.website && uni.website !== "#" && (
-              <a
-                href={uni.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white/5 hover:bg-white/10 text-sky-300 hover:text-white border border-white/10 transition-colors"
-              >
-                <span>Official Site</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            )}
-            <button
-              type="button"
-              onClick={onClose}
-              className="p-2 rounded-xl bg-white/5 hover:bg-white/15 text-slate-400 hover:text-white border border-white/10 transition-all cursor-pointer"
-              aria-label="Close modal"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Segmented Structure Tabs */}
-        <div className="shrink-0 px-4 sm:px-6 pt-3 pb-2 border-b border-white/10 bg-[#080f1d] flex items-center gap-1.5 overflow-x-auto scrollbar-thin">
-          <button
-            type="button"
-            onClick={() => setActiveTab("overview")}
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
-              activeTab === "overview"
-                ? "bg-sky-400 text-slate-950 font-black shadow-md"
-                : "text-slate-400 hover:text-white hover:bg-white/5"
-            }`}
-          >
-            <Building2 className="w-3.5 h-3.5" />
-            <span>Overview & Campuses</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("academics")}
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
-              activeTab === "academics"
-                ? "bg-sky-400 text-slate-950 font-black shadow-md"
-                : "text-slate-400 hover:text-white hover:bg-white/5"
-            }`}
-          >
-            <GraduationCap className="w-3.5 h-3.5" />
-            <span>Strengths & Known For</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("studentFit")}
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
-              activeTab === "studentFit"
-                ? "bg-sky-400 text-slate-950 font-black shadow-md"
-                : "text-slate-400 hover:text-white hover:bg-white/5"
-            }`}
-          >
-            <Target className="w-3.5 h-3.5" />
-            <span>Honest Student Fit & Tips</span>
-          </button>
-
-          {notes.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setActiveTab("notes")}
-              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                activeTab === "notes"
-                  ? "bg-amber-400 text-slate-950 font-black shadow-md"
-                  : "text-amber-300 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <StickyNote className="w-3.5 h-3.5" />
-              <span>Notes ({notes.length})</span>
-            </button>
-          )}
-        </div>
-
-        {/* Scrollable Tab Content Area */}
-        <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5">
-          {/* TAB 1: OVERVIEW & CAMPUSES */}
-          {activeTab === "overview" && (
-            <div className="space-y-5 animate-fade-in">
-              {/* Quick Metrics Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {uni.distanceFromAddisKm != null && (
-                  <div className="p-3.5 rounded-2xl bg-[#091426] border border-white/10 shadow-sm">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
-                      <Route className="w-3.5 h-3.5 text-amber-400" />
-                      Distance
-                    </span>
-                    <p className="text-sm sm:text-base font-extrabold text-white mt-1">
-                      {uni.distanceFromAddisKm === 0 ? "In Addis Ababa" : `~${uni.distanceFromAddisKm} km`}
-                    </p>
-                    <span className="text-[10px] text-slate-400">from Capital</span>
-                  </div>
-                )}
-
-                {uni.elevationM != null && (
-                  <div className="p-3.5 rounded-2xl bg-[#091426] border border-white/10 shadow-sm">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
-                      <Mountain className="w-3.5 h-3.5 text-sky-400" />
-                      Elevation
-                    </span>
-                    <p className="text-sm sm:text-base font-extrabold text-white mt-1">
-                      ~{uni.elevationM} m
-                    </p>
-                    <span className="text-[10px] text-slate-400">Above sea level</span>
-                  </div>
-                )}
-
-                {uni.founded && (
-                  <div className="p-3.5 rounded-2xl bg-[#091426] border border-white/10 shadow-sm col-span-2 sm:col-span-1">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5 text-emerald-400" />
-                      Established
-                    </span>
-                    <p className="text-sm sm:text-base font-extrabold text-white mt-1">
-                      {uni.founded}
-                    </p>
-                    <span className="text-[10px] text-slate-400">Official Founding</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Campuses Breakdown Card */}
-              {uni.campuses && (
-                <div className="rounded-2xl border border-sky-400/25 bg-gradient-to-br from-sky-950/30 to-[#0a1324] p-4 sm:p-5 shadow-md">
-                  <div className="flex items-center gap-2 mb-2 text-sky-300 font-bold text-sm">
-                    <Building2 className="w-4 h-4 text-sky-400" />
-                    <span>Campus Geography & Organization</span>
-                  </div>
-                  <p className="text-sm text-slate-200 leading-relaxed font-reading">
-                    {uni.campuses}
-                  </p>
-                </div>
-              )}
-
-              {/* Weather & Climate Card */}
-              {uni.climate && (
-                <div className="rounded-2xl border border-amber-400/25 bg-gradient-to-br from-amber-950/20 to-[#0a1324] p-4 sm:p-5 shadow-md">
-                  <div className="flex items-center gap-2 mb-2 text-amber-300 font-bold text-sm">
-                    <Thermometer className="w-4 h-4 text-amber-400" />
-                    <span>Weather & Living Climate</span>
-                  </div>
-                  <p className="text-sm text-slate-200 leading-relaxed font-reading">
-                    {uni.climate}
-                  </p>
-                </div>
-              )}
-
-              {/* Distance Note */}
-              {uni.distanceNote && (
-                <div className="p-3.5 rounded-xl border border-white/10 bg-[#060c18] text-xs text-slate-300 leading-relaxed font-reading">
-                  <span className="font-bold text-white mr-1.5">Travel Context:</span>
-                  {uni.distanceNote}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* TAB 2: ACADEMICS & STRENGTHS */}
-          {activeTab === "academics" && (
-            <div className="space-y-5 animate-fade-in">
-              {/* Well Known For Tags */}
-              {uni.knownFor && uni.knownFor.length > 0 && (
-                <div className="rounded-2xl border border-violet-400/25 bg-gradient-to-br from-violet-950/20 to-[#0a1324] p-4 sm:p-5">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-violet-300 flex items-center gap-2 mb-3">
-                    <BookOpen className="w-4 h-4 text-violet-400" />
-                    Prominent Disciplines & Reputation
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {uni.knownFor.map((k) => (
-                      <span
-                        key={k}
-                        className="rounded-xl border border-violet-400/30 bg-violet-500/15 px-3 py-1.5 text-xs font-semibold text-violet-100 shadow-sm"
-                      >
-                        {k}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Academic Strengths */}
-              <div className="rounded-2xl border border-white/10 bg-[#091426] p-4 sm:p-5">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-sky-300 flex items-center gap-2 mb-3">
-                  <GraduationCap className="w-4 h-4 text-sky-400" />
-                  Key Academic Strengths
-                </h4>
-                <ul className="space-y-2.5">
-                  {uni.strengths.map((s) => (
-                    <li key={s} className="text-sm text-slate-200 flex items-start gap-2.5 leading-relaxed font-reading">
-                      <CheckCircle2 className="w-4 h-4 text-sky-400 mt-0.5 shrink-0" />
-                      <span>{s}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 3: HONEST STUDENT FIT & TIPS */}
-          {activeTab === "studentFit" && (
-            <div className="space-y-5 animate-fade-in">
-              {/* Student Fit */}
-              {uni.studentFit && (
-                <div className="rounded-2xl border border-emerald-400/25 bg-gradient-to-br from-emerald-950/20 to-[#0a1324] p-4 sm:p-5 shadow-md">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-300 flex items-center gap-2 mb-2">
-                    <Target className="w-4 h-4 text-emerald-400" />
-                    Who Thrives Here (Honest Student Fit)
-                  </h4>
-                  <p className="text-sm text-slate-200 leading-relaxed font-reading">
-                    {uni.studentFit}
-                  </p>
-                </div>
-              )}
-
-              {/* What to Expect / Campus Life Reality */}
-              {uni.whatToExpect && uni.whatToExpect.length > 0 && (
-                <div className="rounded-2xl border border-white/10 bg-[#081222] p-4 sm:p-5">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-white/90 flex items-center gap-2 mb-3">
-                    <Compass className="w-4 h-4 text-sky-400" />
-                    What Campus Life is Actually Like
-                  </h4>
-                  <ul className="space-y-2.5">
-                    {uni.whatToExpect.map((item) => (
-                      <li
-                        key={item}
-                        className="text-sm text-slate-300 leading-relaxed pl-3.5 border-l-2 border-sky-400/40 font-reading"
-                      >
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Insider Tips for Freshmen */}
-              {uni.tips && uni.tips.length > 0 && (
-                <div className="rounded-2xl border border-amber-400/25 bg-gradient-to-br from-amber-950/20 to-[#0a1324] p-4 sm:p-5 shadow-md">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-2 mb-3">
-                    <Lightbulb className="w-4 h-4 text-amber-400" />
-                    Insider Tips for Freshmen & New Students
-                  </h4>
-                  <ul className="space-y-2">
-                    {uni.tips.map((tip) => (
-                      <li key={tip} className="text-sm text-slate-200 flex items-start gap-2.5 leading-relaxed font-reading">
-                        <span className="text-amber-400 mt-1 font-bold">•</span>
-                        <span>{tip}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* TAB 4: ADMIN / SCHOLAR NOTES */}
-          {activeTab === "notes" && (
-            <div className="space-y-4 animate-fade-in">
-              <AdminNotesBlock notes={notes} />
-            </div>
-          )}
-        </div>
-
-        {/* Modal Bottom Action Bar */}
-        <div className="shrink-0 p-4 sm:p-5 border-t border-white/10 bg-[#080f1d] flex items-center justify-between gap-3">
-          <span className="text-xs text-slate-400">
-            Ethiopian Higher Education Free Directory
-          </span>
-          <div className="flex items-center gap-2">
-            {uni.website && uni.website !== "#" && (
-              <a
-                href={uni.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="sm:hidden inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-sky-500/15 text-sky-300 border border-sky-400/30"
-              >
-                <span>Site</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            )}
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
-            >
-              Done Reading
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Uniform Directory Card (Stable Grid, Never Breaks Layout) ──
-function UniversityCard({
-  uni,
-  onOpenGuide,
-  notesCount,
-}: {
-  uni: University;
-  onOpenGuide: () => void;
-  notesCount: number;
-}) {
-  return (
-    <article className="group relative overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-gradient-to-b from-[#0f1d33] via-[#0a1426] to-[#070e1c] p-5 sm:p-6 transition-all duration-300 hover:border-sky-400/50 hover:shadow-xl hover:-translate-y-0.5 flex flex-col justify-between">
-      <div>
-        {/* Header badges */}
-        <div className="flex items-start justify-between gap-2 mb-3">
+      <div className="p-5 sm:p-6">
+        {/* Header Badges */}
+        <div className="flex items-center justify-between gap-2 mb-3.5">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-black bg-sky-500/20 text-sky-300 border border-sky-400/30">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-black bg-sky-500/20 text-sky-300 border border-sky-400/30">
               {uni.abbr}
             </span>
-            <span className="text-xs text-slate-400 font-medium">
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium text-slate-300 bg-white/[0.04] border border-white/10">
+              <MapPin className="w-3 h-3 text-sky-400" />
               {uni.region}
             </span>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             {uni.featured && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-300 border border-amber-400/30">
                 <Star className="w-3 h-3 fill-current" />
                 Featured
               </span>
             )}
-            {notesCount > 0 && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-amber-400/15 text-amber-300 border border-amber-400/30">
+            {notes.length > 0 && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-400/15 text-amber-300 border border-amber-400/30">
                 <StickyNote className="w-3 h-3" />
-                {notesCount}
+                {notes.length}
               </span>
             )}
           </div>
@@ -529,54 +178,318 @@ function UniversityCard({
         {/* Quick Stats Pill Strip */}
         <div className="mt-3.5 flex flex-wrap gap-1.5 text-[11px]">
           {uni.distanceFromAddisKm != null && (
-            <span className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-[#060b16] px-2 py-1 text-slate-300 font-medium">
+            <span className="inline-flex items-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-0.5 text-slate-300 font-medium">
               <Route className="w-3 h-3 text-amber-400 shrink-0" />
-              {uni.distanceFromAddisKm === 0 ? "Addis" : `~${uni.distanceFromAddisKm} km`}
+              {uni.distanceFromAddisKm === 0 ? "In Capital" : `~${uni.distanceFromAddisKm} km`}
             </span>
           )}
           {uni.elevationM != null && (
-            <span className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-[#060b16] px-2 py-1 text-slate-300 font-medium">
+            <span className="inline-flex items-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-0.5 text-slate-300 font-medium">
               <Mountain className="w-3 h-3 text-sky-400 shrink-0" />
               ~{uni.elevationM}m
             </span>
           )}
           {uni.founded && (
-            <span className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-[#060b16] px-2 py-1 text-slate-300 font-medium">
+            <span className="inline-flex items-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-0.5 text-slate-300 font-medium">
+              <Calendar className="w-3 h-3 text-emerald-400 shrink-0" />
               Est. {uni.founded}
             </span>
           )}
         </div>
 
         {/* Known For Tags Preview */}
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {(uni.knownFor ?? uni.strengths).slice(0, 3).map((k) => (
-            <span
-              key={k}
-              className="rounded-lg border border-white/8 bg-white/[0.04] px-2 py-0.5 text-[11px] text-slate-300 font-medium"
-            >
-              {k}
-            </span>
-          ))}
-        </div>
+        {!isExpanded && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {(uni.knownFor ?? uni.strengths).slice(0, 3).map((k) => (
+              <span
+                key={k}
+                className="rounded-full border border-white/[0.06] bg-white/[0.03] px-2.5 py-0.5 text-[11px] text-slate-300 font-medium"
+              >
+                {k}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* Student fit snippet */}
-        {uni.studentFit && (
-          <p className="mt-3 text-xs text-slate-400 line-clamp-2 leading-relaxed">
+        {!isExpanded && uni.studentFit && (
+          <p className="mt-3 text-xs text-slate-400 line-clamp-2 leading-relaxed font-reading">
             {uni.studentFit}
           </p>
         )}
       </div>
 
-      {/* Action Button - Opens Clean Detail Modal without shifting grid */}
-      <div className="mt-5 pt-3.5 border-t border-white/10 flex items-center justify-between">
+      {/* ── INLINE EXPANDED DETAILS (In-Place, No Window Popup) ── */}
+      {isExpanded && (
+        <div className="px-5 sm:px-6 pb-6 pt-2 border-t border-white/[0.08] space-y-5 animate-fade-in">
+          {/* Segmented Pill Tabs */}
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-thin pb-1">
+            <button
+              type="button"
+              onClick={() => setActiveTab("overview")}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                activeTab === "overview"
+                  ? "bg-sky-400 text-slate-950 shadow-md"
+                  : "text-slate-400 hover:text-white bg-white/[0.04] border border-white/[0.06]"
+              }`}
+            >
+              <Building2 className="w-3.5 h-3.5" />
+              <span>Overview</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab("academics")}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                activeTab === "academics"
+                  ? "bg-sky-400 text-slate-950 shadow-md"
+                  : "text-slate-400 hover:text-white bg-white/[0.04] border border-white/[0.06]"
+              }`}
+            >
+              <GraduationCap className="w-3.5 h-3.5" />
+              <span>Strengths & Reputation</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab("studentFit")}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                activeTab === "studentFit"
+                  ? "bg-sky-400 text-slate-950 shadow-md"
+                  : "text-slate-400 hover:text-white bg-white/[0.04] border border-white/[0.06]"
+              }`}
+            >
+              <Target className="w-3.5 h-3.5" />
+              <span>Student Fit & Tips</span>
+            </button>
+
+            {notes.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setActiveTab("notes")}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                  activeTab === "notes"
+                    ? "bg-amber-400 text-slate-950 shadow-md"
+                    : "text-amber-300 hover:text-white bg-white/[0.04] border border-white/[0.06]"
+                }`}
+              >
+                <StickyNote className="w-3.5 h-3.5" />
+                <span>Notes ({notes.length})</span>
+              </button>
+            )}
+          </div>
+
+          {/* TAB 1: OVERVIEW & CAMPUSES */}
+          {activeTab === "overview" && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                {uni.distanceFromAddisKm != null && (
+                  <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                      <Route className="w-3 h-3 text-amber-400" />
+                      Distance
+                    </span>
+                    <p className="text-xs sm:text-sm font-bold text-white mt-1">
+                      {uni.distanceFromAddisKm === 0 ? "In Addis Ababa" : `~${uni.distanceFromAddisKm} km`}
+                    </p>
+                    <span className="text-[10px] text-slate-400">from Capital</span>
+                  </div>
+                )}
+
+                {uni.elevationM != null && (
+                  <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                      <Mountain className="w-3 h-3 text-sky-400" />
+                      Elevation
+                    </span>
+                    <p className="text-xs sm:text-sm font-bold text-white mt-1">
+                      ~{uni.elevationM} m
+                    </p>
+                    <span className="text-[10px] text-slate-400">Above sea level</span>
+                  </div>
+                )}
+
+                {uni.founded && (
+                  <div className="p-3 rounded-2xl bg-white/[0.02] border border-white/[0.06] col-span-2 sm:col-span-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                      <Calendar className="w-3 h-3 text-emerald-400" />
+                      Established
+                    </span>
+                    <p className="text-xs sm:text-sm font-bold text-white mt-1">{uni.founded}</p>
+                    <span className="text-[10px] text-slate-400">Official Founding</span>
+                  </div>
+                )}
+              </div>
+
+              {uni.campuses && (
+                <div className="rounded-2xl border border-sky-400/20 bg-sky-500/[0.05] p-4">
+                  <div className="flex items-center gap-2 mb-1.5 text-sky-300 font-bold text-xs uppercase tracking-wider">
+                    <Building2 className="w-3.5 h-3.5 text-sky-400" />
+                    <span>Campus Geography & Setup</span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-reading">
+                    {uni.campuses}
+                  </p>
+                </div>
+              )}
+
+              {uni.climate && (
+                <div className="rounded-2xl border border-amber-400/20 bg-amber-500/[0.05] p-4">
+                  <div className="flex items-center gap-2 mb-1.5 text-amber-300 font-bold text-xs uppercase tracking-wider">
+                    <Thermometer className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Weather & Living Climate</span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-reading">
+                    {uni.climate}
+                  </p>
+                </div>
+              )}
+
+              {uni.distanceNote && (
+                <div className="p-3 rounded-xl border border-white/[0.06] bg-white/[0.02] text-xs text-slate-300 leading-relaxed font-reading">
+                  <span className="font-bold text-white mr-1.5">Travel Context:</span>
+                  {uni.distanceNote}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 2: ACADEMICS & STRENGTHS */}
+          {activeTab === "academics" && (
+            <div className="space-y-4">
+              {uni.knownFor && uni.knownFor.length > 0 && (
+                <div className="rounded-2xl border border-violet-400/20 bg-violet-500/[0.05] p-4">
+                  <h4 className="text-[11px] font-bold uppercase tracking-wider text-violet-300 flex items-center gap-1.5 mb-2.5">
+                    <BookOpen className="w-3.5 h-3.5 text-violet-400" />
+                    Prominent Disciplines & Reputation
+                  </h4>
+                  <div className="flex flex-wrap gap-1.5">
+                    {uni.knownFor.map((k) => (
+                      <span
+                        key={k}
+                        className="rounded-full border border-violet-400/25 bg-violet-500/10 px-3 py-1 text-xs font-semibold text-violet-200"
+                      >
+                        {k}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+                <h4 className="text-[11px] font-bold uppercase tracking-wider text-sky-300 flex items-center gap-1.5 mb-2.5">
+                  <GraduationCap className="w-3.5 h-3.5 text-sky-400" />
+                  Key Academic Strengths
+                </h4>
+                <ul className="space-y-2">
+                  {uni.strengths.map((s) => (
+                    <li key={s} className="text-xs sm:text-sm text-slate-200 flex items-start gap-2 leading-relaxed font-reading">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-sky-400 mt-0.5 shrink-0" />
+                      <span>{s}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 3: HONEST STUDENT FIT & TIPS */}
+          {activeTab === "studentFit" && (
+            <div className="space-y-4">
+              {uni.studentFit && (
+                <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/[0.05] p-4">
+                  <h4 className="text-[11px] font-bold uppercase tracking-wider text-emerald-300 flex items-center gap-1.5 mb-1.5">
+                    <Target className="w-3.5 h-3.5 text-emerald-400" />
+                    Who Thrives Here (Student Fit)
+                  </h4>
+                  <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-reading">
+                    {uni.studentFit}
+                  </p>
+                </div>
+              )}
+
+              {uni.whatToExpect && uni.whatToExpect.length > 0 && (
+                <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+                  <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5 mb-2.5">
+                    <Compass className="w-3.5 h-3.5 text-sky-400" />
+                    Campus Life Reality
+                  </h4>
+                  <ul className="space-y-2">
+                    {uni.whatToExpect.map((item) => (
+                      <li
+                        key={item}
+                        className="text-xs sm:text-sm text-slate-300 leading-relaxed pl-3 border-l-2 border-sky-400/30 font-reading"
+                      >
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {uni.tips && uni.tips.length > 0 && (
+                <div className="rounded-2xl border border-amber-400/20 bg-amber-500/[0.05] p-4">
+                  <h4 className="text-[11px] font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5 mb-2">
+                    <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
+                    Insider Tips for New Students
+                  </h4>
+                  <ul className="space-y-1.5">
+                    {uni.tips.map((tip) => (
+                      <li key={tip} className="text-xs sm:text-sm text-slate-200 flex items-start gap-2 leading-relaxed font-reading">
+                        <span className="text-amber-400 font-bold">•</span>
+                        <span>{tip}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 4: ADMIN / SCHOLAR NOTES */}
+          {activeTab === "notes" && (
+            <div className="space-y-3">
+              <AdminNotesBlock notes={notes} />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Action Footer: In-Place Toggle Control */}
+      <div className="px-5 sm:px-6 pb-5 pt-3.5 border-t border-white/[0.06] flex items-center justify-between gap-2.5">
         <button
           type="button"
-          onClick={onOpenGuide}
-          className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold bg-sky-500/20 hover:bg-sky-400 hover:text-slate-950 text-sky-300 border border-sky-400/40 transition-all shadow-md group-hover:bg-sky-400 group-hover:text-slate-950 cursor-pointer"
+          onClick={onToggle}
+          className={`flex-1 inline-flex items-center justify-center gap-2 py-3 px-5 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer shadow-sm active:scale-[0.98] ${
+            isExpanded
+              ? "bg-white/[0.08] hover:bg-white/[0.14] text-white border border-white/10"
+              : "bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-400/30"
+          }`}
         >
-          <span>Explore University Guide</span>
-          <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+          {isExpanded ? (
+            <>
+              <ChevronUp className="w-4 h-4" />
+              <span>Collapse Details</span>
+            </>
+          ) : (
+            <>
+              <span>Explore University Guide</span>
+              <ChevronDown className="w-4 h-4" />
+            </>
+          )}
         </button>
+
+        {isExpanded && uni.website && uni.website !== "#" && (
+          <a
+            href={uni.website}
+            rel="noopener noreferrer"
+            className="w-11 h-11 rounded-full bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 flex items-center justify-center text-sky-400 hover:text-white transition-all shrink-0 active:scale-95"
+            title="Official Website"
+            aria-label="Official Website"
+          >
+            <ExternalLink className="w-4 h-4" />
+          </a>
+        )}
       </div>
     </article>
   );
@@ -584,7 +497,6 @@ function UniversityCard({
 
 function UniversitiesContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
 
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -592,7 +504,7 @@ function UniversitiesContent() {
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
   const [showDetailedOnly, setShowDetailedOnly] = useState(false);
   const [allNotes, setAllNotes] = useState<FreeResourceItem[]>([]);
-  const [selectedUni, setSelectedUni] = useState<University | null>(null);
+  const [expandedUniId, setExpandedUniId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -613,9 +525,11 @@ function UniversitiesContent() {
     const uniParam = searchParams.get("uni");
     if (uniParam) {
       const found = universities.find(
-        (u) => u.id.toLowerCase() === uniParam.toLowerCase() || u.abbr.toLowerCase() === uniParam.toLowerCase()
+        (u) =>
+          u.id.toLowerCase() === uniParam.toLowerCase() ||
+          u.abbr.toLowerCase() === uniParam.toLowerCase()
       );
-      if (found) setSelectedUni(found);
+      if (found) setExpandedUniId(found.id);
     }
   }, [searchParams]);
 
@@ -652,45 +566,52 @@ function UniversitiesContent() {
 
   return (
     <div className="relative min-h-screen" data-scroll-zoom-skip>
+      {/* Soft Ambient Blurred Background Glows */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
+        <div className="absolute top-0 right-1/4 w-96 h-96 bg-sky-500/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/3 left-0 w-80 h-80 bg-violet-500/8 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-0 w-72 h-72 bg-amber-500/6 rounded-full blur-3xl" />
+      </div>
+
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">
         <CategoryBackButton fallback="/academy" />
 
         <header className="mb-8 md:mb-12">
-          <p className="text-sm font-semibold tracking-[0.2em] uppercase text-amber-400/90 mb-2">
-            Free resource
-          </p>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-white/[0.05] border border-white/10 text-sky-300 mb-3">
+            Other resources
+          </span>
           <h1 className="font-display text-3xl sm:text-5xl font-black tracking-tight mb-3">
             <span className="text-white">Ethiopian </span>
             <span className="text-sky-400">Universities Directory</span>
           </h1>
-          <p className="text-slate-300 text-sm sm:text-base max-w-2xl leading-relaxed font-reading">
-            {universitiesIntro.subtitle}. Authentic guides, student fit, weather, and campus realities before you pick.
+          <p className="text-slate-300 text-xs sm:text-sm max-w-2xl leading-relaxed font-reading">
+            {universitiesIntro.subtitle}. Authentic guides, student fit, climate, and campus realities before you pick.
           </p>
           <UniversityNbCard />
 
-          <div className="mt-5 flex flex-wrap gap-2 text-xs">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0b1424] border border-white/10 text-slate-300 font-medium">
+          <div className="mt-6 flex flex-wrap gap-2 text-xs">
+            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0c1328]/70 border border-white/10 backdrop-blur-md text-slate-300 font-semibold shadow-sm">
               <Building2 className="w-3.5 h-3.5 text-sky-400" />
               {universities.length} Institutions
             </span>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0b1424] border border-white/10 text-slate-300 font-medium">
+            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0c1328]/70 border border-white/10 backdrop-blur-md text-slate-300 font-semibold shadow-sm">
               <BookOpen className="w-3.5 h-3.5 text-violet-300" />
               {detailedCount} In-Depth Guides
             </span>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0b1424] border border-white/10 text-slate-300 font-medium">
+            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0c1328]/70 border border-white/10 backdrop-blur-md text-slate-300 font-semibold shadow-sm">
               <MapPin className="w-3.5 h-3.5 text-amber-400" />
-              All 10+ Regions
+              All Ethiopian Regions
             </span>
           </div>
         </header>
 
-        {/* Filter and Search Bar */}
-        <div className="mb-6 space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
+        {/* Filter and Search Bar: Control Center Style */}
+        <div className="mb-8 space-y-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
             <select
               value={region}
               onChange={(e) => setRegion(e.target.value as Region | "all")}
-              className="px-3.5 py-2.5 text-xs sm:text-sm font-medium rounded-xl border border-white/15 bg-[#091322] text-white focus:outline-none focus:border-sky-400 flex-1 sm:flex-none cursor-pointer"
+              className="px-4 py-2.5 rounded-full text-xs sm:text-sm font-semibold border border-white/10 bg-[#0c1328]/85 text-white backdrop-blur-xl focus:outline-none focus:border-sky-400 flex-1 sm:flex-none cursor-pointer transition-all shadow-sm"
             >
               <option value="all">All Regions</option>
               {regions.map((r) => (
@@ -703,10 +624,10 @@ function UniversitiesContent() {
             <button
               type="button"
               onClick={() => setShowFeaturedOnly((v) => !v)}
-              className={`inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold border transition-colors cursor-pointer ${
+              className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full text-xs font-semibold border transition-all cursor-pointer active:scale-95 shadow-sm ${
                 showFeaturedOnly
-                  ? "bg-amber-500/20 border-amber-500/40 text-amber-300"
-                  : "bg-[#091322] border-white/12 text-slate-300 hover:border-white/20"
+                  ? "bg-amber-500/20 border-amber-400/40 text-amber-300 shadow-sm"
+                  : "bg-[#0c1328]/70 backdrop-blur-md border-white/10 text-slate-300 hover:border-white/20"
               }`}
             >
               <Star className="w-3.5 h-3.5 fill-current" />
@@ -716,10 +637,10 @@ function UniversitiesContent() {
             <button
               type="button"
               onClick={() => setShowDetailedOnly((v) => !v)}
-              className={`inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold border transition-colors cursor-pointer ${
+              className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full text-xs font-semibold border transition-all cursor-pointer active:scale-95 shadow-sm ${
                 showDetailedOnly
-                  ? "bg-violet-500/20 border-violet-500/40 text-violet-300"
-                  : "bg-[#091322] border-white/12 text-slate-300 hover:border-white/20"
+                  ? "bg-violet-500/20 border-violet-400/40 text-violet-300 shadow-sm"
+                  : "bg-[#0c1328]/70 backdrop-blur-md border-white/10 text-slate-300 hover:border-white/20"
               }`}
             >
               <Filter className="w-3.5 h-3.5" />
@@ -729,10 +650,10 @@ function UniversitiesContent() {
             <button
               type="button"
               onClick={() => setSearchOpen((o) => !o)}
-              className={`inline-flex h-10 w-10 items-center justify-center rounded-xl border transition-colors cursor-pointer ${
+              className={`inline-flex h-10 w-10 items-center justify-center rounded-full border transition-all cursor-pointer active:scale-95 shadow-sm ${
                 searchOpen || query
-                  ? "border-sky-400/40 bg-sky-500/20 text-sky-300"
-                  : "border-white/12 bg-[#091322] text-slate-300 hover:border-white/25"
+                  ? "border-sky-400/40 bg-sky-500/20 text-sky-300 shadow-sm"
+                  : "border-white/10 bg-[#0c1328]/70 backdrop-blur-md text-slate-300 hover:border-white/20"
               }`}
               aria-label="Toggle Search"
             >
@@ -741,24 +662,24 @@ function UniversitiesContent() {
           </div>
 
           {searchOpen && (
-            <div className="relative animate-fade-in">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <div className="relative animate-fade-in pt-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
               <input
                 type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search by university name, abbr (AAU, ASTU...), or city..."
                 autoFocus
-                className="w-full rounded-xl border border-white/15 bg-[#091322] pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-400 transition-colors"
+                className="w-full rounded-full border border-white/15 bg-[#0c1328]/90 backdrop-blur-xl pl-11 pr-4 py-3 text-xs sm:text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-400 shadow-inner transition-colors"
               />
             </div>
           )}
         </div>
 
-        {/* Stable Grid of University Cards (Zero Grid Layout Shifts) */}
+        {/* Grid of Universities (In-Place Expandable, Zero Popup Overlays) */}
         {filtered.length === 0 ? (
-          <div className="rounded-2xl border border-white/10 bg-[#091322]/80 px-6 py-14 text-center">
-            <p className="text-white font-bold mb-1">No universities found</p>
+          <div className="rounded-3xl border border-white/10 bg-[#0c1328]/70 px-6 py-12 text-center">
+            <p className="text-white font-bold mb-1 text-sm">No universities found</p>
             <p className="text-xs text-slate-400">Try adjusting your search terms or clearing the region filter.</p>
           </div>
         ) : (
@@ -767,29 +688,23 @@ function UniversitiesContent() {
               <UniversityCard
                 key={uni.id}
                 uni={uni}
-                notesCount={notesByUni[uni.id]?.length || 0}
-                onOpenGuide={() => setSelectedUni(uni)}
+                notes={notesByUni[uni.id] || []}
+                isExpanded={expandedUniId === uni.id}
+                onToggle={() =>
+                  setExpandedUniId((prev) => (prev === uni.id ? null : uni.id))
+                }
               />
             ))}
           </div>
         )}
 
-        {/* Full Detail Modal / Sheet */}
-        {selectedUni && (
-          <UniversityDetailModal
-            uni={selectedUni}
-            notes={notesByUni[selectedUni.id] || []}
-            onClose={() => setSelectedUni(null)}
-          />
-        )}
-
         <div className="mt-12 text-center">
           <Link
             href="/academy"
-            className="inline-flex items-center gap-2 text-sm font-bold text-sky-400 hover:text-sky-300 transition-colors"
+            className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-sky-400 hover:text-sky-300 transition-colors"
           >
             <ArrowRight className="w-4 h-4 rotate-180" />
-            Back to Academy Free Resources
+            Back to Academy Other Resources
           </Link>
         </div>
       </div>

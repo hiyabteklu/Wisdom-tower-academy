@@ -18,7 +18,6 @@ import {
   SkipForward,
   Eye,
   ChevronDown,
-  Sparkles,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
@@ -423,9 +422,8 @@ export default function AcademicResultSaver({
             <div className="min-w-0 flex-1 space-y-1">
               <div className="flex items-center gap-2">
                 <span
-                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${overall.badgeBorder} ${overall.badgeBg}`}
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${overall.badgeBorder} ${overall.badgeBg}`}
                 >
-                  <Sparkles className="w-3 h-3" />
                   {overall.label}
                 </span>
               </div>

@@ -264,36 +264,56 @@ export default function AcademyPage() {
           </div>
 
           <section className="mt-20 md:mt-24">
-            <div className="text-center mb-8 md:mb-10">
-              <h2 className="font-display text-3xl md:text-4xl font-bold text-white">
-                Free resources
+            <div className="text-center mb-8 md:mb-12">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-white/[0.05] border border-white/10 text-slate-300 mb-3">
+                Academy Directory & Guides
+              </span>
+              <h2 className="font-display text-3xl md:text-4xl font-bold text-white tracking-tight">
+                Other resources
               </h2>
+              <p className="text-slate-400 text-sm max-w-xl mx-auto mt-2">
+                Essential institutional directories, department roadmaps, evidence-based study techniques, and campus life essentials.
+              </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
               {freeResources.map((item) => {
                 const Icon = item.icon;
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`group relative rounded-2xl border bg-wisdom-card/95 p-6 transition-all duration-300 ease-out hover:-translate-y-1.5 hover:bg-white/[0.04] ${item.border} ${item.glow}`}
+                    className="group relative rounded-3xl border border-white/[0.08] bg-[#0c1328]/70 hover:bg-[#0f1833]/85 backdrop-blur-xl p-5 sm:p-6 transition-all duration-300 shadow-[0_8px_30px_rgb(0_0_0/0.18)] hover:scale-[1.01] hover:border-white/20 active:scale-[0.99] flex flex-col justify-between"
                   >
-                    <div
-                      className={`mb-4 inline-flex p-3 rounded-xl border ${item.iconBg} transition-transform duration-300 group-hover:scale-110`}
-                    >
-                      <Icon className="w-5 h-5" />
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <div
+                          className={`w-12 h-12 rounded-full border flex items-center justify-center transition-transform duration-300 group-hover:scale-105 shadow-sm ${item.iconBg}`}
+                        >
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        <span className="w-8 h-8 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-slate-400 group-hover:text-white group-hover:bg-white/[0.08] transition-colors">
+                          <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+                        </span>
+                      </div>
+                      <h3
+                        className={`font-display text-lg sm:text-xl font-bold mb-1.5 transition-colors ${item.accent}`}
+                      >
+                        {item.name}
+                      </h3>
+                      <p className="text-xs sm:text-sm text-slate-400 leading-relaxed font-normal">
+                        {item.blurb}
+                      </p>
                     </div>
-                    <h3
-                      className={`font-display text-xl mb-2 font-semibold transition-colors ${item.accent}`}
-                    >
-                      {item.name}
-                    </h3>
-                    <p className="text-sm text-wisdom-muted leading-relaxed">{item.blurb}</p>
-                    <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-wisdom-muted group-hover:text-white/90 transition-colors">
-                      Explore
-                      <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1.5" />
-                    </span>
+
+                    <div className="mt-5 pt-3 border-t border-white/[0.06] flex items-center justify-between">
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                        Resource Guide
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-300 group-hover:text-cyan-300 transition-colors">
+                        Open Guide
+                      </span>
+                    </div>
                   </Link>
                 );
               })}

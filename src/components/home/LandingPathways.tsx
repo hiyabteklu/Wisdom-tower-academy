@@ -331,46 +331,58 @@ export default function LandingPathways() {
             ))}
           </div>
 
-          {/* Free Academic Resources Section */}
+          {/* Academic Other Resources Section */}
           <section className="mb-12">
             <div className="text-center mb-10 md:mb-12">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-400/90 mb-2">
-                Open Access
-              </p>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-white/[0.05] border border-white/10 text-slate-300 mb-3">
+                Academy Directory & Guides
+              </span>
               <h3 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3">
-                Free resources & guides
+                Other resources
               </h3>
-              <p className="text-wisdom-muted text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
+              <p className="text-slate-400 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
                 Study frameworks, student insights, and university directories available freely to every learner.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
               {freeResources.map((item) => {
                 const Icon = item.icon;
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`card-modern group p-5 sm:p-6 flex flex-col transition-all duration-300 hover:-translate-y-1 ${item.border}`}
+                    className="group relative rounded-3xl border border-white/[0.08] bg-[#0c1328]/70 hover:bg-[#0f1833]/85 backdrop-blur-xl p-5 sm:p-6 transition-all duration-300 shadow-[0_8px_30px_rgb(0_0_0/0.18)] hover:scale-[1.01] hover:border-white/20 active:scale-[0.99] flex flex-col justify-between"
                   >
-                    <div
-                      className={`mb-4 inline-flex p-3 rounded-xl border w-fit ${item.iconBg} transition-transform duration-300 group-hover:scale-105`}
-                    >
-                      <Icon className="w-5 h-5" />
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <div
+                          className={`w-12 h-12 rounded-full border flex items-center justify-center transition-transform duration-300 group-hover:scale-105 shadow-sm ${item.iconBg}`}
+                        >
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        <span className="w-8 h-8 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-slate-400 group-hover:text-white group-hover:bg-white/[0.08] transition-colors">
+                          <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+                        </span>
+                      </div>
+                      <h4
+                        className={`font-display text-lg sm:text-xl font-bold mb-1.5 transition-colors ${item.accent}`}
+                      >
+                        {item.name}
+                      </h4>
+                      <p className="text-xs sm:text-sm text-slate-400 leading-relaxed font-normal">
+                        {item.blurb}
+                      </p>
                     </div>
-                    <h4
-                      className={`font-display text-lg sm:text-xl mb-2 font-bold transition-colors ${item.accent}`}
-                    >
-                      {item.name}
-                    </h4>
-                    <p className="text-sm text-wisdom-muted leading-relaxed mb-5 flex-1">
-                      {item.blurb}
-                    </p>
-                    <span className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-cyan-300 group-hover:text-cyan-200 transition-colors">
-                      Open guide
-                      <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-1" />
-                    </span>
+
+                    <div className="mt-5 pt-3 border-t border-white/[0.06] flex items-center justify-between">
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                        Resource Guide
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-300 group-hover:text-cyan-300 transition-colors">
+                        Open Guide
+                      </span>
+                    </div>
                   </Link>
                 );
               })}
