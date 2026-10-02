@@ -310,7 +310,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
   };
 
   return (
-    <div className="space-y-2 select-none touch-manipulation">
+    <div className="space-y-3 select-none touch-manipulation">
       {/* Movable & Resizable Calculator */}
       <ScientificCalculator isOpen={calcOpen} onClose={() => setCalcOpen(false)} />
 
@@ -342,25 +342,29 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
       />
 
       {/* Clean iOS Top Bar: Stats, Segmented Mode Switcher & Calc Button (No Popups) */}
-      <div className="flex items-center justify-between gap-1.5 rounded-xl border border-white/10 bg-wisdom-dark/70 px-2.5 py-1 text-xs">
-        <div className="flex items-center gap-1.5">
+      <div className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-wisdom-dark/70 px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs">
+        <div className="flex items-center gap-2">
           {!isExam ? (
             <>
-              <span className="inline-flex items-center gap-1 text-cyan-200 font-bold text-[11px]">
-                <Target className="w-3 h-3 text-cyan-400" /> {attempted}/{questions.length}
+              <span className="inline-flex items-center gap-1 text-cyan-200 font-bold text-xs">
+                <Target className="w-3.5 h-3.5 text-cyan-400" /> {attempted}/{questions.length}
               </span>
-              <span className="text-white/20 text-xs font-bold">·</span>
-              <span className="text-amber-300 font-extrabold text-[11px]">{accuracy}%</span>
+              <span className="text-white/20 text-xs">·</span>
+              <span className="inline-flex items-center gap-1 text-emerald-300 font-bold text-xs">
+                <Trophy className="w-3.5 h-3.5 text-emerald-400" /> {score}
+              </span>
+              <span className="text-white/20 text-xs">·</span>
+              <span className="text-amber-300 font-extrabold text-xs">{accuracy}%</span>
             </>
           ) : (
-            <span className="text-white/80 font-bold text-[11px]">
+            <span className="text-white/90 font-semibold text-xs">
               {attempted}/{questions.length} Answered
               {skipped > 0 ? ` · ${skipped} left` : ""}
             </span>
           )}
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           {/* iOS-Style Clean Segmented Answer Mode (Question Bank only, No popups) */}
           {!isExam && !submitted && (
             <div className="inline-flex rounded-lg p-0.5 bg-black/70 border border-white/10 shadow-inner">
@@ -372,14 +376,14 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                     localStorage.setItem("wta_qb_feedback_mode", "immediate");
                   } catch {}
                 }}
-                className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
+                className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
                   feedbackMode === "immediate"
                     ? "bg-cyan-400 text-slate-950 shadow-sm"
                     : "text-slate-400 hover:text-white"
                 }`}
                 title="Immediate answer validation on click"
               >
-                Instant
+                Right Away
               </button>
               <button
                 type="button"
@@ -389,14 +393,14 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                     localStorage.setItem("wta_qb_feedback_mode", "completion");
                   } catch {}
                 }}
-                className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
+                className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
                   feedbackMode === "completion"
                     ? "bg-cyan-400 text-slate-950 shadow-sm"
                     : "text-slate-400 hover:text-white"
                 }`}
                 title="Validate answers after finishing quiz"
               >
-                At End
+                After Finish
               </button>
             </div>
           )}
@@ -406,21 +410,21 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
             <button
               type="button"
               onClick={() => setCalcOpen((o) => !o)}
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[11px] font-bold transition-all shadow-sm active:scale-95 cursor-pointer ${
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer ${
                 calcOpen
                   ? "border-cyan-400 bg-cyan-500/20 text-cyan-200 ring-1 ring-cyan-400/50"
                   : "border-cyan-400/30 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-200"
               }`}
               title="Open Draggable & Resizable Calculator"
             >
-              <Calculator className="w-3 h-3 text-cyan-300" />
+              <Calculator className="w-3.5 h-3.5 text-cyan-300" />
               <span>Calc</span>
             </button>
           )}
 
           {/* Exam Timer */}
           {isExam && durationMin > 0 && !submitted && (
-            <span className={`font-mono font-bold inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-black/50 border border-white/10 text-[11px] ${left < 60 ? "text-rose-300 animate-pulse border-rose-400/40" : "text-emerald-200"}`}>
+            <span className={`font-mono font-bold inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-black/50 border border-white/10 text-xs ${left < 60 ? "text-rose-300 animate-pulse border-rose-400/40" : "text-emerald-200"}`}>
               <Clock className="w-3 h-3" />
               {Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")}
             </span>
@@ -429,7 +433,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
       </div>
 
       {/* Question Number Pills */}
-      <div className="flex flex-wrap gap-1">
+      <div className="flex flex-wrap gap-1.5">
         {questions.map((qq, i) => {
           const answered = answers[i] != null;
           const isFlagged = Boolean(flagged[i]);
@@ -444,47 +448,47 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
           else if (answered) cls = "border-cyan-400/50 bg-cyan-500/10 text-cyan-200";
           return (
             <button key={i} type="button" onClick={() => goTo(i)}
-              className={`relative w-6 h-6 sm:w-7 sm:h-7 rounded-md text-[10px] sm:text-[11px] font-bold border transition-colors cursor-pointer ${cls}`}>
+              className={`relative w-7 h-7 sm:w-8 sm:h-8 rounded-lg text-xs font-bold border transition-colors cursor-pointer ${cls}`}>
               {i + 1}
-              {isFlagged && <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-orange-400 ring-1 ring-[#0b1220]" />}
+              {isFlagged && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-orange-400 ring-1 ring-[#0b1220]" />}
             </button>
           );
         })}
       </div>
 
-      {/* Ultra-Compact Question Card for Mobile & App WebView */}
+      {/* Comfortable Question Card with Natural Breathing Room */}
       {!submitted && q && (
         <div
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
-          className="rounded-2xl border border-white/12 bg-wisdom-card p-2.5 sm:p-3.5 shadow-sm transition-all"
+          className="rounded-2xl border border-white/12 bg-wisdom-card p-4 sm:p-5 shadow-sm transition-all"
         >
-          <div className="flex items-center justify-between gap-1.5 mb-1.5">
-            <div className="flex items-center gap-1.5">
-              <p className="text-[11px] sm:text-xs text-wisdom-muted font-semibold">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <div className="flex items-center gap-2">
+              <p className="text-xs sm:text-sm text-wisdom-muted font-semibold">
                 Question {idx + 1} of {questions.length}
               </p>
               {isLockedInImmediate && (
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-300 bg-amber-500/15 border border-amber-400/30 px-1.5 py-0.5 rounded-full">
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-300 bg-amber-500/15 border border-amber-400/30 px-2 py-0.5 rounded-full">
                   <Lock className="w-2.5 h-2.5" /> Locked
                 </span>
               )}
             </div>
             <button type="button" onClick={() => setFlagged((f) => ({ ...f, [idx]: !f[idx] }))}
-              className={`inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 text-[11px] font-bold transition-colors cursor-pointer ${
+              className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-bold transition-colors cursor-pointer ${
                 flagged[idx] ? "border-orange-400/50 bg-orange-500/15 text-orange-200" : "border-white/12 text-wisdom-muted hover:text-white"
               }`}>
-              {flagged[idx] ? <><Flag className="w-3 h-3 fill-current" /> Flagged</> : <><FlagOff className="w-3 h-3" /> Flag</>}
+              {flagged[idx] ? <><Flag className="w-3.5 h-3.5 fill-current" /> Flagged</> : <><FlagOff className="w-3.5 h-3.5" /> Flag</>}
             </button>
           </div>
 
-          {/* Compact Question Prompt */}
-          <div className="text-white font-bold leading-snug mb-2 study-prose text-xs sm:text-sm [&_p]:m-0">
+          {/* Comfortable Question Prompt with Relaxed Line-Height */}
+          <div className="text-white font-bold leading-relaxed mb-3.5 study-prose text-sm sm:text-base [&_p]:m-0">
             <RichContent body={q.prompt} />
           </div>
 
-          {/* Ultra-Compact Single-Line Choice Buttons (A. Option on ONE line) */}
-          <div className="space-y-1 sm:space-y-1.5">
+          {/* Clean Choice Buttons: Letter and option content in one line, with comfortable padding & relaxed line spacing */}
+          <div className="space-y-2 sm:space-y-2.5">
             {(q.choices || []).map((c, ci) => {
               const selected = answers[idx] === ci;
               const isRight = q.correct === ci;
@@ -499,11 +503,11 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                 .replace(/[\r\n]+/g, " ")
                 .trim();
 
-              let choiceCls = "border-white/10 bg-white/[0.025] text-white/90 hover:border-white/25 hover:bg-white/[0.06]";
+              let choiceCls = "border-white/10 bg-white/[0.03] text-white/90 hover:border-white/25 hover:bg-white/[0.06]";
               if (showMark && isRight) {
-                choiceCls = "!border-emerald-400 !bg-emerald-500/20 !text-emerald-100 shadow-[0_0_8px_rgba(16,185,129,0.2)] font-bold";
+                choiceCls = "!border-emerald-400 !bg-emerald-500/20 !text-emerald-100 shadow-[0_0_10px_rgba(16,185,129,0.25)] font-bold";
               } else if (showMark && selected && !isRight) {
-                choiceCls = "!border-rose-500 !bg-rose-500/20 !text-rose-100 shadow-[0_0_8px_rgba(244,63,94,0.2)] font-bold";
+                choiceCls = "!border-rose-500 !bg-rose-500/20 !text-rose-100 shadow-[0_0_10px_rgba(244,63,94,0.25)] font-bold";
               } else if (selected) {
                 choiceCls = "border-cyan-400 bg-cyan-500/20 text-white ring-1 ring-cyan-400/50 font-bold";
               } else if (isEliminated) {
@@ -540,16 +544,16 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                         }
                       }
                     }}
-                    className={`w-full text-left py-1.5 px-2.5 sm:py-2 sm:px-3 rounded-xl border text-xs sm:text-sm leading-tight transition-all flex items-center justify-between gap-1.5 ${choiceCls} ${
+                    className={`w-full text-left py-2.5 px-3.5 sm:py-3 sm:px-4 rounded-xl border text-xs sm:text-sm leading-relaxed transition-all flex items-center justify-between gap-2.5 ${choiceCls} ${
                       answersLocked ? "opacity-95 cursor-not-allowed" : "cursor-pointer"
                     }`}
                   >
                     {/* Strictly inline single-line letter and content on ONE line: A. Option */}
-                    <div className="flex items-baseline gap-1.5 min-w-0 flex-1">
+                    <div className="flex items-baseline gap-2 min-w-0 flex-1">
                       <span className="font-extrabold text-amber-300 shrink-0 text-xs sm:text-sm select-none">
                         {String.fromCharCode(65 + ci)}.
                       </span>
-                      <span className={`choice-inline-text text-xs sm:text-sm font-semibold inline leading-snug [&_*]:inline [&_*]:m-0 ${isEliminated ? "line-through opacity-60" : ""}`}>
+                      <span className={`choice-inline-text text-xs sm:text-sm font-semibold inline leading-relaxed [&_*]:inline [&_*]:m-0 ${isEliminated ? "line-through opacity-60" : ""}`}>
                         <RichContent body={cleanedChoice} inline />
                       </span>
                     </div>
@@ -563,14 +567,14 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                         e.stopPropagation();
                         toggleEliminate(idx, ci);
                       }}
-                      className={`absolute right-2 p-1 rounded-md transition-all cursor-pointer ${
+                      className={`absolute right-2.5 p-1.5 rounded-lg transition-all cursor-pointer ${
                         isEliminated
                           ? "bg-rose-500/20 text-rose-300 border border-rose-400/40 opacity-100"
                           : "text-slate-500 hover:text-slate-200 opacity-30 hover:opacity-100"
                       }`}
                       title={isEliminated ? "Restore choice" : "Cross out choice"}
                     >
-                      <EyeOff className="w-3 h-3" />
+                      <EyeOff className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
@@ -579,9 +583,9 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
           </div>
 
           {!isExam && (
-            <div className="mt-2.5 flex flex-wrap gap-2">
+            <div className="mt-3.5 flex flex-wrap gap-2">
               <button type="button" onClick={openOfficialSolution}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-emerald-400/45 bg-emerald-500/15 text-emerald-50 text-[11px] sm:text-xs font-bold hover:bg-emerald-500/25 transition-colors cursor-pointer">
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-400/45 bg-emerald-500/15 text-emerald-50 text-xs font-bold hover:bg-emerald-500/25 transition-colors cursor-pointer">
                 <BadgeCheck className="w-3.5 h-3.5" />
                 {showSol ? "Hide solution" : "Official solution"}
               </button>
@@ -589,9 +593,9 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
           )}
 
           {!isExam && showSol && q.solution && (
-            <div className="mt-2 rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-2.5 text-xs sm:text-sm">
-              <p className="text-[10px] font-black uppercase tracking-wider text-emerald-300 mb-0.5 inline-flex items-center gap-1">
-                <BadgeCheck className="w-3 h-3" /> Official solution
+            <div className="mt-2.5 rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-3 sm:p-3.5 text-xs sm:text-sm">
+              <p className="text-[11px] font-black uppercase tracking-wider text-emerald-300 mb-1 inline-flex items-center gap-1">
+                <BadgeCheck className="w-3.5 h-3.5" /> Official solution
               </p>
               <div className="study-prose text-emerald-50 text-xs sm:text-sm leading-relaxed italic font-serif font-normal explanation-text font-['Times_New_Roman',Times,serif]">
                 <RichContent body={q.solution} />
@@ -600,16 +604,16 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
           )}
 
           {!isExam && (
-            <div className={`flex flex-col gap-2 ${showSol ? "mt-2" : "mt-2.5"}`}>
+            <div className={`flex flex-col gap-2.5 ${showSol ? "mt-2.5" : "mt-3"}`}>
               <button type="button" onClick={() => void explainQ()} disabled={aiLoading}
-                className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-lg border border-violet-400/45 bg-violet-500/15 text-violet-50 text-[11px] sm:text-xs font-bold disabled:opacity-60 w-full sm:w-auto hover:bg-violet-500/25 transition-colors cursor-pointer">
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-violet-400/45 bg-violet-500/15 text-violet-50 text-xs font-bold disabled:opacity-60 w-full sm:w-auto hover:bg-violet-500/25 transition-colors cursor-pointer">
                 <Lightbulb className="w-3.5 h-3.5" />
                 {aiLoading ? "Generating…" : "Explain with AI"}
               </button>
               {ai && (
-                <div className="rounded-xl border border-violet-400/30 bg-violet-500/10 p-2.5 text-xs sm:text-sm">
-                  <p className="text-[10px] font-black uppercase tracking-wider text-violet-300 mb-0.5 inline-flex items-center gap-1">
-                    <Lightbulb className="w-3 h-3" /> AI explanation
+                <div className="rounded-xl border border-violet-400/30 bg-violet-500/10 p-3 sm:p-3.5 text-xs sm:text-sm">
+                  <p className="text-[11px] font-black uppercase tracking-wider text-violet-300 mb-1 inline-flex items-center gap-1">
+                    <Lightbulb className="w-3.5 h-3.5" /> AI explanation
                   </p>
                   <div className="study-prose text-white/95 text-xs sm:text-sm leading-relaxed italic font-serif font-normal explanation-text font-['Times_New_Roman',Times,serif]">
                     <RichContent body={ai} />
@@ -623,19 +627,19 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
 
       {/* Navigation & Submit Controls */}
       {!submitted && (
-        <div className="flex flex-wrap items-center gap-2 pt-0.5">
+        <div className="flex flex-wrap items-center gap-2.5 pt-1.5">
           <button type="button" disabled={idx === 0} onClick={() => goTo(idx - 1)}
-            className="px-3.5 py-1.5 rounded-lg border border-white/12 text-xs font-semibold disabled:opacity-40 hover:bg-white/5 transition-colors flex items-center gap-1 cursor-pointer">
-            <ChevronLeft className="w-3.5 h-3.5" />
+            className="px-4 py-2 rounded-xl border border-white/12 text-xs sm:text-sm font-semibold disabled:opacity-40 hover:bg-white/5 transition-colors flex items-center gap-1.5 cursor-pointer">
+            <ChevronLeft className="w-4 h-4" />
             <span>Prev</span>
           </button>
           <button type="button" disabled={idx >= questions.length - 1} onClick={() => goTo(idx + 1)}
-            className="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-wisdom-dark text-xs font-bold disabled:opacity-40 transition-colors shadow-sm flex items-center gap-1 cursor-pointer">
+            className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-wisdom-dark text-xs sm:text-sm font-bold disabled:opacity-40 transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer">
             <span>Next</span>
-            <ChevronRight className="w-3.5 h-3.5" />
+            <ChevronRight className="w-4 h-4" />
           </button>
           <button type="button" onClick={() => setConfirmOpen(true)}
-            className="ml-auto px-3.5 py-1.5 rounded-lg border border-emerald-400/40 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-200 text-xs font-bold transition-colors cursor-pointer">
+            className="ml-auto px-4 py-2 rounded-xl border border-emerald-400/40 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-200 text-xs sm:text-sm font-bold transition-colors cursor-pointer">
             {isExam ? "Submit Exam" : "Finish Practice"}
           </button>
         </div>
@@ -804,11 +808,11 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                       )}
                     </div>
 
-                    <div className="text-white font-bold leading-snug mb-2.5 study-prose text-sm sm:text-base [&_p]:m-0">
+                    <div className="text-white font-bold leading-relaxed mb-3 study-prose text-sm sm:text-base [&_p]:m-0">
                       <RichContent body={qq.prompt} />
                     </div>
 
-                    <div className="space-y-1 sm:space-y-1.5">
+                    <div className="space-y-2 sm:space-y-2.5">
                       {(qq.choices || []).map((c, ci) => {
                         const isRight = qq.correct === ci;
                         const isUser = selected === ci;
@@ -820,29 +824,29 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                         return (
                           <div
                             key={ci}
-                            className={`w-full text-left py-1.5 px-2.5 sm:py-2 sm:px-3 rounded-xl border text-xs sm:text-sm leading-tight font-medium flex items-center justify-between gap-1.5 ${
+                            className={`w-full text-left py-2.5 px-3.5 sm:py-3 sm:px-4 rounded-xl border text-xs sm:text-sm leading-relaxed font-medium flex items-center justify-between gap-2.5 ${
                               isRight
-                                ? "border-emerald-400/60 bg-emerald-500/15 text-white font-bold shadow-[0_0_8px_rgba(16,185,129,0.15)]"
+                                ? "border-emerald-400/60 bg-emerald-500/15 text-white font-bold shadow-[0_0_10px_rgba(16,185,129,0.2)]"
                                 : isUser
-                                ? "border-rose-400/60 bg-rose-500/15 text-white font-bold"
+                                ? "border-rose-400/60 bg-rose-500/15 text-white font-bold shadow-[0_0_10px_rgba(244,63,94,0.2)]"
                                 : "border-white/10 text-white/70 bg-white/[0.02]"
                             }`}
                           >
-                            <div className="flex items-baseline gap-1.5 min-w-0 flex-1">
+                            <div className="flex items-baseline gap-2 min-w-0 flex-1">
                               <span className="font-extrabold text-amber-300 shrink-0 text-xs sm:text-sm select-none">
                                 {String.fromCharCode(65 + ci)}.
                               </span>
-                              <span className="choice-inline-text text-xs sm:text-sm font-semibold inline leading-snug [&_*]:inline [&_*]:m-0">
+                              <span className="choice-inline-text text-xs sm:text-sm font-semibold inline leading-relaxed [&_*]:inline [&_*]:m-0">
                                 <RichContent body={cleanedChoice} inline />
                               </span>
                             </div>
                             {isRight && (
-                              <span className="shrink-0 text-[10px] sm:text-[11px] font-bold text-emerald-300">
+                              <span className="shrink-0 text-xs font-bold text-emerald-300">
                                 ✓ Correct
                               </span>
                             )}
                             {isUser && !isRight && (
-                              <span className="shrink-0 text-[10px] sm:text-[11px] font-bold text-rose-300">
+                              <span className="shrink-0 text-xs font-bold text-rose-300">
                                 ✗ Your Choice
                               </span>
                             )}
