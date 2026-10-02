@@ -48,7 +48,7 @@ import {
   Volume2,
   VolumeX,
   Gamepad2,
-  Sparkles,
+  Award,
   AlertTriangle,
 } from "lucide-react";
 import { triggerHaptic, playCelebrationSound } from "@/lib/sound-haptics";
@@ -95,7 +95,7 @@ function SettingsContent() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // In-place accordion states — Profile starts expanded by default
+  // In-place accordion states: Profile starts expanded by default
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     profile: true,
     study: initialTab === "study",
@@ -455,7 +455,7 @@ function SettingsContent() {
         {/* ========================================================= */}
         {/* TOP HEADER: STUDENT IDENTITY & ACTIONS                     */}
         {/* ========================================================= */}
-        <div className="rounded-3xl border border-white/[0.08] bg-[#0c1626]/80 backdrop-blur-2xl p-5 sm:p-7 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+        <div className="rounded-3xl border border-white/[0.08] bg-wisdom-card/75 backdrop-blur-2xl p-5 sm:p-7 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-5">
           <div className="flex items-center gap-4">
             <StudentAvatar
               avatarPreset={profile.avatar_preset}
@@ -505,7 +505,7 @@ function SettingsContent() {
           {/* ======================================================= */}
           {/* SECTION 1: ACADEMIC PROFILE & IDENTITY (Profile Completion) */}
           {/* ======================================================= */}
-          <div className="rounded-3xl border border-white/[0.08] bg-[#0c1626]/80 backdrop-blur-2xl overflow-hidden shadow-xl transition-all duration-300 hover:border-white/15">
+          <div className="rounded-3xl border border-white/[0.08] bg-wisdom-card/85 backdrop-blur-2xl overflow-hidden shadow-xl transition-all duration-300 hover:border-white/15">
             <button
               type="button"
               onClick={() => toggleSection("profile")}
@@ -558,7 +558,7 @@ function SettingsContent() {
             </button>
 
             {/* Circular Progress Gauge Hero Banner */}
-            <div className="px-5 sm:px-7 py-5 bg-black/20 border-t border-white/[0.06] flex flex-col sm:flex-row items-center gap-6">
+            <div className="px-5 sm:px-7 py-5 bg-white/[0.03] border-t border-white/[0.06] flex flex-col sm:flex-row items-center gap-6">
               {/* SVG Circular Progress Gauge */}
               <div className="relative shrink-0 w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center">
                 <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 100 100">
@@ -618,7 +618,7 @@ function SettingsContent() {
                   <h3 className="text-xs sm:text-sm font-semibold text-white flex items-center gap-2">
                     {profileCompletion >= 100 ? (
                       <>
-                        <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                        <Award className="w-3.5 h-3.5 text-amber-300" />
                         <span>Golden Scholar Rank Achieved</span>
                       </>
                     ) : (
@@ -634,10 +634,10 @@ function SettingsContent() {
                         playCelebrationSound(prefs.soundVolume ?? 0.5);
                         triggerHaptic("celebrate");
                       }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white text-slate-950 hover:bg-slate-200 active:scale-95 shadow-sm cursor-pointer transition-all"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-cyan-400 text-slate-950 hover:bg-cyan-300 font-bold active:scale-95 shadow-sm cursor-pointer transition-all"
                     >
-                      <Sparkles className="w-3 h-3 text-slate-950" />
-                      <span>Celebrate 🎉</span>
+                      <Award className="w-3 h-3 text-slate-950" />
+                      <span>Celebrate</span>
                     </button>
                   )}
                 </div>
@@ -719,7 +719,7 @@ function SettingsContent() {
                     </button>
 
                     {openSub.avatar && (
-                      <div className="p-4 sm:p-5 border-t border-white/[0.08] space-y-4 bg-black/20">
+                      <div className="p-4 sm:p-5 border-t border-white/[0.08] space-y-4 bg-white/[0.03]">
                         {/* Avatar Preset Selector */}
                         <div>
                           <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2.5">
@@ -774,7 +774,7 @@ function SettingsContent() {
                                 setProfile((prev) => ({ ...prev, first_name: e.target.value }))
                               }
                               placeholder="e.g. Abebe"
-                              className="w-full px-4 py-2.5 rounded-2xl border border-white/[0.1] bg-black/40 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-white/30 transition-colors"
+                              className="w-full px-4 py-2.5 rounded-2xl border border-white/[0.1] bg-white/[0.05] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-white/30 transition-colors"
                             />
                           </div>
                           <div>
@@ -788,7 +788,7 @@ function SettingsContent() {
                                 setProfile((prev) => ({ ...prev, last_name: e.target.value }))
                               }
                               placeholder="e.g. Bikila"
-                              className="w-full px-4 py-2.5 rounded-2xl border border-white/[0.1] bg-black/40 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-white/30 transition-colors"
+                              className="w-full px-4 py-2.5 rounded-2xl border border-white/[0.1] bg-white/[0.05] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-white/30 transition-colors"
                             />
                           </div>
                         </div>
@@ -837,7 +837,7 @@ function SettingsContent() {
                     </button>
 
                     {openSub.academic && (
-                      <div className="p-4 sm:p-5 border-t border-white/[0.08] space-y-4 bg-black/20">
+                      <div className="p-4 sm:p-5 border-t border-white/[0.08] space-y-4 bg-white/[0.03]">
                         {/* Education Level & Stream */}
                         <div className="grid sm:grid-cols-2 gap-4">
                           <CustomSelect
@@ -876,7 +876,7 @@ function SettingsContent() {
                                 setProfile((prev) => ({ ...prev, school_name: e.target.value }))
                               }
                               placeholder="e.g. Addis Ababa University"
-                              className="w-full px-4 py-2.5 rounded-2xl border border-white/[0.1] bg-black/40 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-white/30 transition-colors"
+                              className="w-full px-4 py-2.5 rounded-2xl border border-white/[0.1] bg-white/[0.05] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-white/30 transition-colors"
                             />
                           </div>
 
@@ -936,7 +936,7 @@ function SettingsContent() {
                     </button>
 
                     {openSub.contact && (
-                      <div className="p-4 sm:p-5 border-t border-white/[0.08] space-y-4 bg-black/20">
+                      <div className="p-4 sm:p-5 border-t border-white/[0.08] space-y-4 bg-white/[0.03]">
                         {/* Contact Phone & Email */}
                         <div className="grid sm:grid-cols-2 gap-4">
                           <div>
@@ -950,7 +950,7 @@ function SettingsContent() {
                                 setProfile((prev) => ({ ...prev, phone: e.target.value }))
                               }
                               placeholder="09... or +251..."
-                              className="w-full px-4 py-2.5 rounded-2xl border border-white/[0.1] bg-black/40 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-white/30 font-mono transition-colors"
+                              className="w-full px-4 py-2.5 rounded-2xl border border-white/[0.1] bg-white/[0.05] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-white/30 font-mono transition-colors"
                             />
                             <p className="text-[11px] text-slate-400 mt-1">
                               Used for payment verification and order confirmation.
@@ -985,7 +985,7 @@ function SettingsContent() {
                               setProfile((prev) => ({ ...prev, bio: e.target.value }))
                             }
                             placeholder="e.g. Aspiring software engineer aiming for top rank in national entrance."
-                            className="w-full px-4 py-2.5 rounded-2xl border border-white/[0.1] bg-black/40 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-white/30 resize-none transition-colors"
+                            className="w-full px-4 py-2.5 rounded-2xl border border-white/[0.1] bg-white/[0.05] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-white/30 resize-none transition-colors"
                           />
                         </div>
                       </div>
@@ -997,7 +997,7 @@ function SettingsContent() {
                     <button
                       type="submit"
                       disabled={savingProfile}
-                      className="px-6 py-2.5 rounded-full text-xs sm:text-sm font-semibold bg-white text-slate-950 hover:bg-slate-200 active:scale-95 transition-all shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                      className="px-6 py-2.5 rounded-full text-xs sm:text-sm font-semibold bg-cyan-400 text-slate-950 hover:bg-cyan-300 font-bold active:scale-95 transition-all shadow-sm flex items-center gap-2 cursor-pointer disabled:opacity-50"
                     >
                       <Save className="w-3.5 h-3.5 text-slate-950" />
                       <span>{savingProfile ? "Saving Profile..." : "Save Profile"}</span>
@@ -1014,7 +1014,7 @@ function SettingsContent() {
           {/* ======================================================= */}
           {/* SECTION 2: STUDY GOALS & PACING                          */}
           {/* ======================================================= */}
-          <div className="rounded-3xl border border-white/[0.08] bg-[#0c1626]/80 backdrop-blur-2xl overflow-hidden shadow-xl transition-all duration-300 hover:border-white/15">
+          <div className="rounded-3xl border border-white/[0.08] bg-wisdom-card/85 backdrop-blur-2xl overflow-hidden shadow-xl transition-all duration-300 hover:border-white/15">
             <button
               type="button"
               onClick={() => toggleSection("study")}
@@ -1094,7 +1094,7 @@ function SettingsContent() {
                           setProfile((prev) => ({ ...prev, target_exam: e.target.value }))
                         }
                         placeholder="e.g. University Exit Exam or Matriculation"
-                        className="w-full px-4 py-2.5 rounded-2xl border border-white/[0.1] bg-black/40 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-white/30 transition-colors"
+                        className="w-full px-4 py-2.5 rounded-2xl border border-white/[0.1] bg-white/[0.05] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-white/30 transition-colors"
                       />
                     </div>
 
@@ -1109,7 +1109,7 @@ function SettingsContent() {
                           setProfile((prev) => ({ ...prev, target_score: e.target.value }))
                         }
                         placeholder="e.g. 3.85 GPA or 90%+"
-                        className="w-full px-4 py-2.5 rounded-2xl border border-white/[0.1] bg-black/40 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-white/30 transition-colors"
+                        className="w-full px-4 py-2.5 rounded-2xl border border-white/[0.1] bg-white/[0.05] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-white/30 transition-colors"
                       />
                     </div>
                   </div>
@@ -1121,10 +1121,10 @@ function SettingsContent() {
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                       {[
-                        { id: "morning", label: "Early Morning", hours: "5:00 AM – 8:00 AM" },
-                        { id: "afternoon", label: "Afternoon", hours: "1:00 PM – 4:00 PM" },
-                        { id: "evening", label: "Evening", hours: "6:00 PM – 9:00 PM" },
-                        { id: "night", label: "Late Night", hours: "10:00 PM – 1:00 AM" },
+                        { id: "morning", label: "Early Morning", hours: "5:00 AM to 8:00 AM" },
+                        { id: "afternoon", label: "Afternoon", hours: "1:00 PM to 4:00 PM" },
+                        { id: "evening", label: "Evening", hours: "6:00 PM to 9:00 PM" },
+                        { id: "night", label: "Late Night", hours: "10:00 PM to 1:00 AM" },
                       ].map((slot) => {
                         const selected = profile.preferred_study_time === slot.id;
                         return (
@@ -1158,7 +1158,7 @@ function SettingsContent() {
                     <button
                       type="submit"
                       disabled={savingStudy}
-                      className="px-6 py-2.5 rounded-full text-xs sm:text-sm font-semibold bg-white text-slate-950 hover:bg-slate-200 active:scale-95 transition-all shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                      className="px-6 py-2.5 rounded-full text-xs sm:text-sm font-semibold bg-cyan-400 text-slate-950 hover:bg-cyan-300 font-bold active:scale-95 transition-all shadow-sm flex items-center gap-2 cursor-pointer disabled:opacity-50"
                     >
                       <Save className="w-3.5 h-3.5 text-slate-950" />
                       <span>{savingStudy ? "Saving..." : "Save Study Goals"}</span>
@@ -1175,7 +1175,7 @@ function SettingsContent() {
           {/* ======================================================= */}
           {/* SECTION 3: NOTIFICATIONS & STUDY REMINDERS               */}
           {/* ======================================================= */}
-          <div className="rounded-3xl border border-white/[0.08] bg-[#0c1626]/80 backdrop-blur-2xl overflow-hidden shadow-xl transition-all duration-300 hover:border-white/15">
+          <div className="rounded-3xl border border-white/[0.08] bg-wisdom-card/85 backdrop-blur-2xl overflow-hidden shadow-xl transition-all duration-300 hover:border-white/15">
             <button
               type="button"
               onClick={() => toggleSection("notifications")}
@@ -1254,7 +1254,7 @@ function SettingsContent() {
           {/* ======================================================= */}
           {/* SECTION 4: GAME SOUND PREFERENCES                       */}
           {/* ======================================================= */}
-          <div className="rounded-3xl border border-white/[0.08] bg-[#0c1626]/80 backdrop-blur-2xl overflow-hidden shadow-xl transition-all duration-300 hover:border-white/15">
+          <div className="rounded-3xl border border-white/[0.08] bg-wisdom-card/85 backdrop-blur-2xl overflow-hidden shadow-xl transition-all duration-300 hover:border-white/15">
             <button
               type="button"
               onClick={() => toggleSection("audio")}
@@ -1357,7 +1357,7 @@ function SettingsContent() {
           {/* ======================================================= */}
           {/* SECTION 5: READING & DISPLAY PREFERENCES                */}
           {/* ======================================================= */}
-          <div className="rounded-3xl border border-white/[0.08] bg-[#0c1626]/80 backdrop-blur-2xl overflow-hidden shadow-xl transition-all duration-300 hover:border-white/15">
+          <div className="rounded-3xl border border-white/[0.08] bg-wisdom-card/85 backdrop-blur-2xl overflow-hidden shadow-xl transition-all duration-300 hover:border-white/15">
             <button
               type="button"
               onClick={() => toggleSection("display")}
@@ -1442,7 +1442,7 @@ function SettingsContent() {
                     Live Sample Preview
                   </label>
                   <div
-                    className="p-5 sm:p-6 rounded-2xl border border-white/[0.08] bg-black/40 shadow-inner"
+                    className="p-5 sm:p-6 rounded-2xl border border-white/[0.08] bg-white/[0.05] shadow-inner"
                     style={{
                       fontFamily: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif",
                       fontSize:
@@ -1472,7 +1472,7 @@ function SettingsContent() {
           {/* ======================================================= */}
           {/* SECTION 6: OFFLINE STORAGE & DATA SYNC                   */}
           {/* ======================================================= */}
-          <div className="rounded-3xl border border-white/[0.08] bg-[#0c1626]/80 backdrop-blur-2xl overflow-hidden shadow-xl transition-all duration-300 hover:border-white/15">
+          <div className="rounded-3xl border border-white/[0.08] bg-wisdom-card/85 backdrop-blur-2xl overflow-hidden shadow-xl transition-all duration-300 hover:border-white/15">
             <button
               type="button"
               onClick={() => toggleSection("storage")}
@@ -1533,7 +1533,7 @@ function SettingsContent() {
                     type="button"
                     onClick={handleSyncOffline}
                     disabled={syncingOffline}
-                    className="px-6 py-2.5 rounded-full text-xs sm:text-sm font-semibold bg-white text-slate-950 hover:bg-slate-200 transition-all shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-60 active:scale-95"
+                    className="px-6 py-2.5 rounded-full text-xs sm:text-sm font-semibold bg-cyan-400 text-slate-950 hover:bg-cyan-300 font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer disabled:opacity-60 active:scale-95"
                   >
                     {syncingOffline ? (
                       <>
@@ -1555,7 +1555,7 @@ function SettingsContent() {
           {/* ======================================================= */}
           {/* SECTION 7: SECURITY                                      */}
           {/* ======================================================= */}
-          <div className="rounded-3xl border border-white/[0.08] bg-[#0c1626]/80 backdrop-blur-2xl overflow-hidden shadow-xl transition-all duration-300 hover:border-white/15">
+          <div className="rounded-3xl border border-white/[0.08] bg-wisdom-card/85 backdrop-blur-2xl overflow-hidden shadow-xl transition-all duration-300 hover:border-white/15">
             <button
               type="button"
               onClick={() => toggleSection("security")}
@@ -1624,7 +1624,7 @@ function SettingsContent() {
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                         placeholder="At least 6 characters"
-                        className="w-full px-4 py-2.5 rounded-2xl border border-white/[0.1] bg-black/40 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-white/30 transition-colors"
+                        className="w-full px-4 py-2.5 rounded-2xl border border-white/[0.1] bg-white/[0.05] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-white/30 transition-colors"
                       />
                     </div>
                     <div>
@@ -1636,7 +1636,7 @@ function SettingsContent() {
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         placeholder="Repeat new password"
-                        className="w-full px-4 py-2.5 rounded-2xl border border-white/[0.1] bg-black/40 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-white/30 transition-colors"
+                        className="w-full px-4 py-2.5 rounded-2xl border border-white/[0.1] bg-white/[0.05] text-white placeholder-slate-500 text-sm focus:outline-none focus:border-white/30 transition-colors"
                       />
                     </div>
                   </div>
@@ -1644,7 +1644,7 @@ function SettingsContent() {
                   <button
                     type="submit"
                     disabled={passwordLoading}
-                    className="px-6 py-2.5 rounded-full text-xs sm:text-sm font-semibold bg-white text-slate-950 hover:bg-slate-200 transition-all shadow-md cursor-pointer disabled:opacity-50 active:scale-95"
+                    className="px-6 py-2.5 rounded-full text-xs sm:text-sm font-semibold bg-cyan-400 text-slate-950 hover:bg-cyan-300 font-bold transition-all shadow-sm cursor-pointer disabled:opacity-50 active:scale-95"
                   >
                     {passwordLoading ? "Updating Password..." : "Update Password"}
                   </button>

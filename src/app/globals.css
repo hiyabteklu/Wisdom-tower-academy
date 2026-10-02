@@ -45,6 +45,7 @@ html {
   scroll-behavior: smooth;
   scroll-padding-top: 5.5rem;
   -webkit-tap-highlight-color: transparent;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Mobile Android WebView Touch & Performance Optimizations */
@@ -103,61 +104,65 @@ h1, h2, h3, h4, .font-display {
   letter-spacing: -0.02em;
 }
 
-/* Flat scene — no perspective (avoids diagonal skew on cards) */
+/* Flat scene - no perspective (avoids diagonal skew on cards) */
 .perspective-scene {
   perspective: none;
 }
 
-/* Consistent, refined card styling */
+/* Consistent, refined iOS squircle card styling */
 .card-modern {
   position: relative;
   overflow: hidden;
-  border-radius: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(28, 40, 60, 0.95);
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(28, 40, 60, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
               box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
               border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 @media (min-width: 640px) {
   .card-modern {
-    border-radius: 1.25rem;
+    border-radius: 1.5rem;
   }
 }
 .card-modern:hover {
-  transform: translateY(-4px);
-  border-color: rgba(255, 255, 255, 0.22);
-  box-shadow: 0 16px 36px -12px rgba(0, 0, 0, 0.55),
-              0 0 0 1px rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 16px 36px -12px rgba(0, 0, 0, 0.45);
+}
+.card-modern:active {
+  transform: scale(0.99);
 }
 
-/* Button Design Tokens */
+/* Unified Button Design System (iOS-inspired tactile feel) */
 .btn-primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   padding: 0.6875rem 1.375rem;
-  border-radius: 0.75rem;
+  border-radius: 1rem;
   font-weight: 700;
   font-size: 0.875rem;
   line-height: 1.25rem;
   white-space: nowrap;
   background: #22e0ff;
   color: #070c16;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 4px 14px -3px rgba(34, 224, 255, 0.35);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
   user-select: none;
 }
 .btn-primary:hover {
-  background: #5fe9ff;
+  background: #67e8f9;
   box-shadow: 0 6px 20px -3px rgba(34, 224, 255, 0.5);
   transform: translateY(-1px);
 }
 .btn-primary:active {
-  transform: translateY(0);
-  scale: 0.98;
+  transform: scale(0.98);
 }
 
 /* Radiant Cyan Button Token */
@@ -167,28 +172,27 @@ h1, h2, h3, h4, .font-display {
   justify-content: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  border-radius: 0.75rem;
-  font-weight: 800;
-  font-size: 0.9375rem;
+  border-radius: 1rem;
+  font-weight: 700;
+  font-size: 0.875rem;
   line-height: 1.25rem;
   white-space: nowrap;
-  background: linear-gradient(135deg, #22e0ff 0%, #38bdf8 100%);
+  background: #22e0ff;
   color: #040812;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  box-shadow: 0 4px 20px -2px rgba(34, 224, 255, 0.45), 0 0 12px rgba(34, 224, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 16px -2px rgba(34, 224, 255, 0.4);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
   user-select: none;
 }
 .btn-cyan:hover {
-  background: linear-gradient(135deg, #67e8f9 0%, #38bdf8 100%);
-  box-shadow: 0 6px 25px -2px rgba(34, 224, 255, 0.65), 0 0 20px rgba(34, 224, 255, 0.4);
-  transform: translateY(-1.5px);
+  background: #67e8f9;
+  box-shadow: 0 6px 22px -2px rgba(34, 224, 255, 0.55);
+  transform: translateY(-1px);
   color: #020617;
 }
 .btn-cyan:active {
-  transform: translateY(0);
-  scale: 0.98;
+  transform: scale(0.98);
 }
 .btn-cyan:disabled {
   opacity: 0.5;
@@ -196,72 +200,12 @@ h1, h2, h3, h4, .font-display {
   transform: none;
 }
 
-/* 3D Golden Card Edge Reflection & Specular Sheen */
-@keyframes goldenEdgeSheen {
-  0% {
-    background-position: -200% 0%;
-  }
-  100% {
-    background-position: 200% 0%;
-  }
-}
-
-@keyframes goldenEdgeOrbit {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes specularSheenPass {
-  0% {
-    transform: translateX(-160%) skewX(-25deg);
-    opacity: 0;
-  }
-  30% {
-    opacity: 0.85;
-  }
-  70% {
-    opacity: 0.85;
-  }
-  100% {
-    transform: translateX(260%) skewX(-25deg);
-    opacity: 0;
-  }
-}
-
-.golden-edge-reflection {
-  background: linear-gradient(
-    90deg,
-    rgba(245, 158, 11, 0) 0%,
-    rgba(251, 191, 36, 0.3) 15%,
-    rgba(254, 240, 138, 1) 50%,
-    rgba(251, 191, 36, 0.3) 85%,
-    rgba(245, 158, 11, 0) 100%
-  );
-  background-size: 200% 100%;
-  animation: goldenEdgeSheen 2s infinite linear;
-}
-
-.golden-orbit-beam {
+/* Refined Subtle Card Sheen (Calm, non-exaggerated) */
+.subtle-card-sheen {
   position: absolute;
-  inset: -120%;
-  background: conic-gradient(
-    from 0deg,
-    transparent 0deg,
-    transparent 280deg,
-    rgba(245, 158, 11, 0.5) 320deg,
-    rgba(254, 240, 138, 0.95) 345deg,
-    rgba(251, 191, 36, 0.6) 360deg
-  );
-  animation: goldenEdgeOrbit 4s linear infinite;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, transparent 60%);
   pointer-events: none;
-}
-
-.specular-shine-sweep {
-  animation: specularSheenPass 2.8s ease-in-out infinite;
 }
 
 .btn-accent {
@@ -270,26 +214,26 @@ h1, h2, h3, h4, .font-display {
   justify-content: center;
   gap: 0.5rem;
   padding: 0.6875rem 1.375rem;
-  border-radius: 0.75rem;
+  border-radius: 1rem;
   font-weight: 700;
   font-size: 0.875rem;
   line-height: 1.25rem;
   white-space: nowrap;
-  background: #f59e0b;
-  color: #070c16;
-  box-shadow: 0 4px 14px -3px rgba(245, 158, 11, 0.35);
+  background: #22e0ff;
+  color: #040812;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 14px -3px rgba(34, 224, 255, 0.4);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
   user-select: none;
 }
 .btn-accent:hover {
-  background: #fbbf24;
-  box-shadow: 0 6px 20px -3px rgba(245, 158, 11, 0.5);
+  background: #67e8f9;
+  box-shadow: 0 6px 20px -3px rgba(34, 224, 255, 0.55);
   transform: translateY(-1px);
 }
 .btn-accent:active {
-  transform: translateY(0);
-  scale: 0.98;
+  transform: scale(0.98);
 }
 
 .btn-secondary {
@@ -339,7 +283,7 @@ h1, h2, h3, h4, .font-display {
   background: rgba(255, 255, 255, 0.06);
 }
 
-/* Soft lift only — no rotateX/rotateY (those warped cards on click/hover) */
+/* Soft lift only - no rotateX/rotateY (those warped cards on click/hover) */
 .card-3d {
   transform: none;
   transform-style: flat;
@@ -359,7 +303,7 @@ h1, h2, h3, h4, .font-display {
   transform: translateY(-1px);
   transition-duration: 0.1s;
 }
-/* Expanded / focused cards stay square — never skew */
+/* Expanded / focused cards stay square - never skew */
 .card-3d.is-expanded,
 .card-3d[data-expanded="true"] {
   transform: none !important;
@@ -378,7 +322,7 @@ h1, h2, h3, h4, .font-display {
 /*
  * Fade-up: progressive enhancement only.
  * Base state is always fully visible. Never use fill-mode "both" with from{opacity:0}
- * — Android WebView often cancels the animation and leaves content invisible.
+ * - Android WebView often cancels the animation and leaves content invisible.
  */
 @keyframes fade-up {
   from { opacity: 0; transform: translateY(16px); }

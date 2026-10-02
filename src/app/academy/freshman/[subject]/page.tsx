@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import {
   freshmanSubjects,
   getFreshmanSubject,
@@ -71,9 +72,7 @@ export default async function FreshmanSubjectPage({
                     </h3>
                     <p className="text-xs text-wisdom-muted capitalize">Freshman course</p>
                   </div>
-                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-purple-400/10 text-purple-300 border border-purple-400/20 group-hover:bg-purple-400/20 shrink-0 transition-colors">
-                    Open →
-                  </span>
+                  <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-cyan-300 transition-colors" />
                 </Link>
               ))}
             </div>

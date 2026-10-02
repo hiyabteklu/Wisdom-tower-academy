@@ -325,7 +325,7 @@ function parseBlocks(raw: string): { blocks: Block[]; toc: TocItem[] } {
       continue;
     }
 
-    // Markdown table — only after math is masked; requires real separator row
+    // Markdown table: only after math is masked; requires real separator row
     if (
       looksLikeTableHeader(trimmed) &&
       i + 1 < lines.length &&

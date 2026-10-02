@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-/** Official brand mark — keep public/images/brand/logo.png up to date. */
+/** Official brand mark: keep public/images/brand/logo.png up to date. */
 const LOGO_SRC = "/images/brand/logo.png";
 
 export default function BrandLogo({

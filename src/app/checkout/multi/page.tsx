@@ -33,24 +33,20 @@ function MultiCheckoutInner() {
   if (IS_FREE_MODE) {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center">
-        <div className="rounded-3xl border border-emerald-500/30 bg-wisdom-card p-8 sm:p-10 shadow-2xl backdrop-blur-xl">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-emerald-400/40 bg-emerald-500/15 text-emerald-300">
+        <div className="rounded-3xl border border-white/10 bg-wisdom-card p-8 sm:p-10 shadow-2xl backdrop-blur-xl">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-cyan-400/30 bg-cyan-500/10 text-cyan-300">
             <Gift className="w-8 h-8" />
           </div>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-300 border border-emerald-400/30 mb-3">
-            Full Scholar Access Active
-          </span>
           <h1 className="font-display text-2xl sm:text-3xl font-black text-white mb-3">
-            All Packages are 100% Free
+            All Packages Unlocked
           </h1>
           <p className="text-sm text-wisdom-muted leading-relaxed mb-6">
-            Tuition requirements and checkouts are bypassed during this review period.
-            All registered scholars receive full access to all pathways.
+            All registered scholars receive full access to all curriculum pathways and materials.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href="/learning"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 py-3 text-sm font-bold text-slate-950 hover:bg-emerald-300 shadow-lg shadow-emerald-500/20 transition-all"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-400 px-6 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-300 shadow-sm transition-all active:scale-[0.98]"
             >
               <BookOpen className="w-4 h-4" />
               <span>Go to My Learning</span>

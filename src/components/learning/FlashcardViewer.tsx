@@ -156,7 +156,7 @@ export default function FlashcardViewer({ meta, resourceId }: Props) {
           className={`fc-card ${slideClass} ${flipped ? "is-flipped" : ""}`}
           role="button"
           tabIndex={0}
-          aria-label={flipped ? "Answer — tap to flip back" : "Question — tap to flip"}
+          aria-label={flipped ? "Answer: tap to flip back" : "Question: tap to flip"}
           onClick={() => {
             if (!isAnimating) setFlipped((f) => !f);
           }}

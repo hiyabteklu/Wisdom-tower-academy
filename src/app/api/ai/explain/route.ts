@@ -95,7 +95,7 @@ async function writeCache(opts: {
   const supabase = createServiceClient();
   if (!supabase) return;
   try {
-    // Prefer upsert on context_key (requires unique index — see SQL migration)
+    // Prefer upsert on context_key (requires unique index: see SQL migration)
     const row: Record<string, unknown> = {
       context_key: opts.contextKey,
       explanation: opts.explanation,

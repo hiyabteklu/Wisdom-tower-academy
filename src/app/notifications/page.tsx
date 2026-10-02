@@ -9,7 +9,6 @@ import {
   XCircle,
   ArrowLeft,
   BookOpen,
-  Sparkles,
   Info,
   Layers,
   CheckCheck,
@@ -66,7 +65,7 @@ function orderToNotice(o: ManualOrder): UnifiedNotice | null {
     return {
       id: `ord-${o.id}-wait`,
       title: "Order Pending Verification",
-      body: `${o.packageName || o.packageId} — receipt under review.`,
+      body: `${o.packageName || o.packageId}: receipt under review.`,
       href: "/orders",
       createdAt: o.createdAt,
       category: "order",
@@ -311,7 +310,7 @@ export default function NotificationsPage() {
             const isRead = readIds.has(n.id);
 
             // Icon & accent
-            let Icon = Sparkles;
+            let Icon = Bell;
             let iconColor = "text-sky-400 bg-sky-500/10 border-sky-400/25";
             let categoryLabel = "General";
 

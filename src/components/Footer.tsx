@@ -39,7 +39,7 @@ export default function Footer() {
               <span className="font-semibold text-lg text-white">Wisdom Tower Academy</span>
             </div>
             <p className="text-wisdom-muted text-sm max-w-md leading-relaxed">
-              Grades 9–12, Freshman, UAT, GAT, COC & Exit Exam pathways — learn and unlock packages
+              Grades 9–12, Freshman, UAT, GAT, COC & Exit Exam pathways: learn and unlock packages
               on Academy.
             </p>
             <div className="mt-6 flex flex-wrap items-center gap-2.5">

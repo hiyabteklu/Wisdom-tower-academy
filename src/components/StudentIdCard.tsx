@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import StudentAvatar from "@/components/StudentAvatar";
 import { type StudentIdData } from "@/lib/student-id";
-import { RotateCw, ShieldCheck, Sparkles } from "lucide-react";
+import { RotateCw, ShieldCheck } from "lucide-react";
 import { triggerHaptic } from "@/lib/sound-haptics";
 
 interface StudentIdCardProps {
@@ -31,36 +31,9 @@ export default function StudentIdCard({
   schoolName,
   region,
   hasCrown = false,
-  autoFlipOnMount = true,
   className = "",
 }: StudentIdCardProps) {
   const [flipped, setFlipped] = useState(false);
-  const [edgeGleam, setEdgeGleam] = useState(true);
-
-  // Auto flip in 3D golden effect when viewing account, then flips back after 3 seconds
-  useEffect(() => {
-    if (!autoFlipOnMount) return;
-    setEdgeGleam(true);
-
-    const flipToBackTimer = setTimeout(() => {
-      setFlipped(true);
-      triggerHaptic("light");
-    }, 500);
-
-    const flipBackToFrontTimer = setTimeout(() => {
-      setFlipped(false);
-      triggerHaptic("light");
-      const fadeGleamTimer = setTimeout(() => {
-        setEdgeGleam(false);
-      }, 2500);
-      return () => clearTimeout(fadeGleamTimer);
-    }, 3500); // Exactly 3 seconds after flipping to back
-
-    return () => {
-      clearTimeout(flipToBackTimer);
-      clearTimeout(flipBackToFrontTimer);
-    };
-  }, [autoFlipOnMount]);
 
   const academicTrackDisplay = educationLevel || idData.academicTrack;
   const schoolDisplay = schoolName || idData.institutionName;
@@ -71,7 +44,6 @@ export default function StudentIdCard({
       <div
         onClick={() => {
           setFlipped((prev) => !prev);
-          setEdgeGleam(true);
           triggerHaptic("light");
         }}
         role="button"
@@ -81,79 +53,45 @@ export default function StudentIdCard({
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             setFlipped((prev) => !prev);
-            setEdgeGleam(true);
             triggerHaptic("light");
           }
         }}
-        className="relative mx-auto max-w-[430px] aspect-[1.586/1] [perspective:1400px] cursor-pointer group select-none outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded-2xl sm:rounded-3xl transition-transform duration-200 active:scale-[0.98]"
+        className="relative mx-auto max-w-[430px] aspect-[1.586/1] [perspective:1400px] cursor-pointer group select-none outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 rounded-2xl sm:rounded-3xl transition-transform duration-300 active:scale-[0.99]"
         title="Tap anywhere to flip card"
       >
-        {/* Dynamic Revolving Golden Edge Light Reflection (Orbital Light Ray at edges) */}
         <div
-          className={`absolute -inset-[3px] rounded-2xl sm:rounded-3xl overflow-hidden pointer-events-none transition-opacity duration-700 z-0 ${
-            edgeGleam ? "opacity-100" : "opacity-0 group-hover:opacity-75"
-          }`}
-          aria-hidden
-        >
-          <div className="golden-orbit-beam" />
-        </div>
-
-        {/* Golden Specular Edge Light Reflection Halo */}
-        <div
-          className={`absolute -inset-[2.5px] rounded-2xl sm:rounded-3xl pointer-events-none transition-opacity duration-700 z-0 ${
-            edgeGleam ? "opacity-100 golden-edge-reflection" : "opacity-0 group-hover:opacity-70"
-          }`}
-          style={{
-            filter: "drop-shadow(0 0 14px rgba(245, 158, 11, 0.8))",
-          }}
-          aria-hidden
-        />
-
-        <div
-          className={`relative z-10 w-full h-full duration-700 [transform-style:preserve-3d] transition-transform ease-out ${
+          className={`relative z-10 w-full h-full duration-700 [transform-style:preserve-3d] transition-transform ease-[cubic-bezier(0.2,0.8,0.2,1)] ${
             flipped ? "[transform:rotateY(180deg)]" : ""
           }`}
         >
           {/* ========================================================= */}
           {/* FRONT FACE OF STUDENT ID CARD                            */}
           {/* ========================================================= */}
-          <div className="absolute inset-0 w-full h-full rounded-2xl sm:rounded-3xl p-5 sm:p-6 [backface-visibility:hidden] overflow-hidden border border-amber-400/40 bg-gradient-to-br from-[#0c1427] via-[#09101f] to-[#040711] shadow-[0_20px_50px_rgba(0,0,0,0.6),0_0_20px_rgba(245,158,11,0.18)] flex flex-col justify-between text-white group-hover:border-amber-400/60 transition-colors">
-            {/* Specular Diagonal Sheen Reflection Ray that glides during flip */}
-            <div
-              className={`absolute -inset-full w-[40%] h-[300%] bg-gradient-to-r from-transparent via-amber-200/25 to-transparent pointer-events-none z-20 ${
-                edgeGleam ? "specular-shine-sweep" : "hidden"
-              }`}
-            />
-            {/* Holographic Security Guilloche Texture */}
-            <div
-              className="absolute inset-0 opacity-[0.04] pointer-events-none"
-              style={{
-                backgroundImage:
-                  "repeating-linear-gradient(45deg, #f59e0b 0, #f59e0b 1px, transparent 0, transparent 16px), repeating-linear-gradient(-45deg, #06b6d4 0, #06b6d4 1px, transparent 0, transparent 16px)",
-              }}
-            />
+          <div className="absolute inset-0 w-full h-full rounded-2xl sm:rounded-3xl p-5 sm:p-6 [backface-visibility:hidden] overflow-hidden border border-white/12 bg-gradient-to-br from-[#121c32] via-[#0d1527] to-[#0a1020] shadow-xl flex flex-col justify-between text-white group-hover:border-white/20 transition-colors">
+            {/* Subtle frosted glass specular highlight */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/[0.04] via-transparent to-transparent pointer-events-none" />
 
-            {/* Subtle Metallic Top Band */}
-            <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-amber-400 via-yellow-200 to-amber-500 shadow-sm" />
+            {/* Subtle Top Hairline Accent */}
+            <div className="absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent" />
 
             {/* Top Institutional Header */}
-            <div className="relative z-10 flex items-center justify-between gap-3 border-b border-white/10 pb-3">
+            <div className="relative z-10 flex items-center justify-between gap-3 border-b border-white/8 pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/15 p-1 flex items-center justify-center shrink-0 shadow-inner">
+                <div className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/10 p-1 flex items-center justify-center shrink-0">
                   <Image
                     src="/images/brand/logo.png"
                     alt="Wisdom Tower Academy Logo"
-                    width={32}
-                    height={32}
+                    width={28}
+                    height={28}
                     className="object-contain"
                     priority
                   />
                 </div>
                 <div>
-                  <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-amber-300/90 leading-tight">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/90 leading-tight">
                     Wisdom Tower Academy
                   </p>
-                  <p className="text-[9px] font-semibold text-slate-300 tracking-wider uppercase">
+                  <p className="text-[8.5px] font-medium text-slate-400 tracking-wider uppercase">
                     Official Student Credential
                   </p>
                 </div>
@@ -161,33 +99,35 @@ export default function StudentIdCard({
 
               {/* Status & Country Seal */}
               <div className="text-right">
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-400/30">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  {idData.status}
-                </span>
-                <p className="text-[8.5px] font-mono text-wisdom-muted mt-0.5">
+                <div className="flex items-center gap-1.5 justify-end">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  <span className="text-[9px] font-semibold text-emerald-400 tracking-wider uppercase">
+                    {idData.status}
+                  </span>
+                </div>
+                <p className="text-[8px] font-mono text-slate-400 mt-0.5 tracking-wider">
                   ETHIOPIA
                 </p>
               </div>
             </div>
 
             {/* Main Card Body */}
-            <div className="relative z-10 grid grid-cols-[82px_1fr] sm:grid-cols-[96px_1fr] gap-3 sm:gap-4 items-center my-auto py-1">
+            <div className="relative z-10 grid grid-cols-[80px_1fr] sm:grid-cols-[92px_1fr] gap-3 sm:gap-4 items-center my-auto py-1">
               {/* Photo & ID Badge Box */}
               <div className="flex flex-col items-center">
-                <div className="relative p-1 rounded-2xl border-2 border-amber-400/40 bg-gradient-to-b from-amber-400/20 to-transparent shadow-lg">
+                <div className="relative p-1 rounded-2xl border border-white/15 bg-white/[0.03] shadow-md">
                   <StudentAvatar
                     avatarPreset={avatarPreset}
                     avatarUrl={avatarUrl}
                     name={studentName}
                     size="xl"
-                    className="rounded-xl shadow-inner"
+                    className="rounded-xl"
                     showGlow={false}
                     hasCrown={hasCrown}
                   />
                   <div className="absolute -bottom-2 inset-x-0 flex justify-center">
-                    <span className="px-1.5 py-0.5 rounded text-[8px] font-mono font-black uppercase bg-black/85 text-amber-300 border border-amber-400/40 shadow-sm flex items-center gap-0.5">
-                      <ShieldCheck className="w-2.5 h-2.5 text-amber-400" />
+                    <span className="px-2 py-0.5 rounded-full text-[7.5px] font-mono font-bold uppercase bg-slate-900/90 text-cyan-300 border border-white/15 shadow-sm flex items-center gap-1">
+                      <ShieldCheck className="w-2.5 h-2.5 text-cyan-400" />
                       VERIFIED
                     </span>
                   </div>
@@ -197,25 +137,25 @@ export default function StudentIdCard({
               {/* Student Metadata Information */}
               <div className="min-w-0 space-y-1">
                 <div>
-                  <p className="text-[9px] font-bold uppercase tracking-wider text-wisdom-muted">
+                  <p className="text-[8.5px] font-semibold uppercase tracking-wider text-slate-400">
                     Full Legal Name
                   </p>
-                  <h3 className="font-display text-sm sm:text-base font-extrabold text-white truncate leading-tight tracking-tight">
+                  <h3 className="font-display text-sm sm:text-base font-bold text-white truncate leading-tight tracking-tight">
                     {studentName}
                   </h3>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 pt-0.5">
                   <div>
-                    <p className="text-[8px] font-bold uppercase tracking-wider text-wisdom-muted">
+                    <p className="text-[8px] font-semibold uppercase tracking-wider text-slate-400">
                       Student ID No.
                     </p>
-                    <p className="font-mono text-xs sm:text-sm font-black text-amber-300 tracking-wide">
+                    <p className="font-mono text-xs sm:text-sm font-bold text-cyan-300 tracking-wide">
                       {idData.idNumber}
                     </p>
                   </div>
                   <div>
-                    <p className="text-[8px] font-bold uppercase tracking-wider text-wisdom-muted">
+                    <p className="text-[8px] font-semibold uppercase tracking-wider text-slate-400">
                       Registry Folio
                     </p>
                     <p className="font-mono text-[11px] sm:text-xs font-semibold text-slate-300 truncate">
@@ -225,10 +165,10 @@ export default function StudentIdCard({
                 </div>
 
                 <div className="pt-0.5">
-                  <p className="text-[8px] font-bold uppercase tracking-wider text-wisdom-muted">
+                  <p className="text-[8px] font-semibold uppercase tracking-wider text-slate-400">
                     Academic Scope & Level
                   </p>
-                  <p className="text-[11px] sm:text-xs font-semibold text-cyan-300 truncate">
+                  <p className="text-[11px] sm:text-xs font-medium text-slate-200 truncate">
                     {academicTrackDisplay}
                     {stream ? ` · ${stream}` : ""}
                   </p>
@@ -237,39 +177,39 @@ export default function StudentIdCard({
             </div>
 
             {/* Bottom Validity Bar with Barcode */}
-            <div className="relative z-10 pt-2.5 border-t border-white/10 flex items-end justify-between gap-3 text-[9px]">
+            <div className="relative z-10 pt-2.5 border-t border-white/8 flex items-end justify-between gap-3 text-[9px]">
               <div className="space-y-0.5 min-w-0">
-                <div className="flex items-center gap-2 text-slate-300 text-[8.5px] sm:text-[9.5px]">
+                <div className="flex items-center gap-2 text-slate-400 text-[8.5px] sm:text-[9.5px]">
                   <span>
-                    <strong className="text-wisdom-muted uppercase tracking-wider">Issued:</strong>{" "}
+                    <strong className="text-slate-300 uppercase tracking-wider font-medium">Issued:</strong>{" "}
                     {idData.issueDateFull}
                   </span>
-                  <span>•</span>
+                  <span>·</span>
                   <span>
-                    <strong className="text-amber-400/90 uppercase tracking-wider">Valid Until:</strong>{" "}
+                    <strong className="text-slate-300 uppercase tracking-wider font-medium">Valid Until:</strong>{" "}
                     {idData.expiryDateFull}
                   </span>
                 </div>
-                <p className="text-[8.5px] text-wisdom-muted truncate">
+                <p className="text-[8.5px] text-slate-400 truncate">
                   {schoolDisplay} {region ? `(${region})` : ""}
                 </p>
               </div>
 
               {/* Realistic Barcode Graphic */}
               <div className="text-right shrink-0">
-                <div className="flex items-center gap-0.5 h-5 px-1 bg-white/95 rounded">
-                  <span className="w-0.5 h-4 bg-black" />
-                  <span className="w-1 h-4 bg-black" />
-                  <span className="w-0.5 h-4 bg-black" />
-                  <span className="w-1.5 h-4 bg-black" />
-                  <span className="w-0.5 h-4 bg-black" />
-                  <span className="w-2 h-4 bg-black" />
-                  <span className="w-0.5 h-4 bg-black" />
-                  <span className="w-1 h-4 bg-black" />
-                  <span className="w-1.5 h-4 bg-black" />
-                  <span className="w-0.5 h-4 bg-black" />
+                <div className="flex items-center gap-0.5 h-4.5 px-1 bg-white/90 rounded">
+                  <span className="w-0.5 h-3.5 bg-black" />
+                  <span className="w-1 h-3.5 bg-black" />
+                  <span className="w-0.5 h-3.5 bg-black" />
+                  <span className="w-1.5 h-3.5 bg-black" />
+                  <span className="w-0.5 h-3.5 bg-black" />
+                  <span className="w-2 h-3.5 bg-black" />
+                  <span className="w-0.5 h-3.5 bg-black" />
+                  <span className="w-1 h-3.5 bg-black" />
+                  <span className="w-1.5 h-3.5 bg-black" />
+                  <span className="w-0.5 h-3.5 bg-black" />
                 </div>
-                <span className="font-mono text-[8px] text-wisdom-muted tracking-widest block mt-0.5">
+                <span className="font-mono text-[7.5px] text-slate-400 tracking-widest block mt-0.5">
                   {idData.numericId}
                 </span>
               </div>
@@ -279,49 +219,46 @@ export default function StudentIdCard({
           {/* ========================================================= */}
           {/* BACK FACE OF STUDENT ID CARD                             */}
           {/* ========================================================= */}
-          <div className="absolute inset-0 w-full h-full rounded-2xl sm:rounded-3xl p-5 sm:p-6 [backface-visibility:hidden] [transform:rotateY(180deg)] overflow-hidden border border-amber-400/35 bg-gradient-to-br from-[#070c17] via-[#091122] to-[#04060c] shadow-2xl flex flex-col justify-between text-white group-hover:border-amber-400/50 transition-colors">
-            {/* Specular Diagonal Sheen Reflection Ray that glides during flip */}
-            <div
-              className={`absolute -inset-full w-[40%] h-[300%] bg-gradient-to-r from-transparent via-amber-200/20 to-transparent pointer-events-none z-20 ${
-                edgeGleam ? "specular-shine-sweep" : "hidden"
-              }`}
-            />
-            {/* Magnetic Tape Simulation */}
-            <div className="absolute top-4 inset-x-0 h-9 bg-neutral-900 border-y border-white/10" />
+          <div className="absolute inset-0 w-full h-full rounded-2xl sm:rounded-3xl p-5 sm:p-6 [backface-visibility:hidden] [transform:rotateY(180deg)] overflow-hidden border border-white/12 bg-gradient-to-br from-[#121c32] via-[#0d1527] to-[#0a1020] shadow-xl flex flex-col justify-between text-white group-hover:border-white/20 transition-colors">
+            {/* Subtle frosted glass specular highlight */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/[0.04] via-transparent to-transparent pointer-events-none" />
 
-            <div className="pt-11 space-y-3 relative z-10 text-[10px] text-slate-300/90 leading-relaxed">
+            {/* Subtle Top Hairline Accent */}
+            <div className="absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent" />
+
+            <div className="pt-2 space-y-3 relative z-10 text-[10px] text-slate-300 leading-relaxed">
               <div className="space-y-1">
                 <p className="font-bold text-white uppercase tracking-wider text-[9px]">
                   Institutional Terms & Conditions
                 </p>
-                <p className="text-[9px] text-wisdom-muted leading-tight">
+                <p className="text-[9px] text-slate-400 leading-tight">
                   This digital credential certifies active enrollment in Wisdom Tower Academy. It
                   authorizes the named scholar to access designated curriculum repositories, examination
                   simulations, and academic resource hubs.
                 </p>
               </div>
 
-              <div className="rounded-xl border border-white/10 bg-white/[0.02] p-2.5 grid grid-cols-2 gap-2 text-[9px]">
+              <div className="rounded-xl border border-white/8 bg-white/[0.03] p-2.5 grid grid-cols-2 gap-2 text-[9px]">
                 <div>
-                  <span className="text-wisdom-muted block uppercase text-[8px]">
+                  <span className="text-slate-400 block uppercase text-[8px]">
                     Academic Registry
                   </span>
                   <span className="font-semibold text-white">Wisdom Tower Academy</span>
                 </div>
                 <div>
-                  <span className="text-wisdom-muted block uppercase text-[8px]">
+                  <span className="text-slate-400 block uppercase text-[8px]">
                     Validity Period
                   </span>
-                  <span className="font-semibold text-amber-300">1 Academic Year</span>
+                  <span className="font-semibold text-cyan-300">1 Academic Year</span>
                 </div>
                 <div>
-                  <span className="text-wisdom-muted block uppercase text-[8px]">
+                  <span className="text-slate-400 block uppercase text-[8px]">
                     Official Support
                   </span>
                   <span className="text-cyan-300 font-mono">support@wisdomtower.tech</span>
                 </div>
                 <div>
-                  <span className="text-wisdom-muted block uppercase text-[8px]">
+                  <span className="text-slate-400 block uppercase text-[8px]">
                     Credential Verification
                   </span>
                   <span className="text-white font-mono">wisdomtower.tech/verify</span>
@@ -330,18 +267,18 @@ export default function StudentIdCard({
             </div>
 
             {/* Registrar Signature & Seal */}
-            <div className="relative z-10 border-t border-white/10 pt-2 flex items-center justify-between text-[9px]">
+            <div className="relative z-10 border-t border-white/8 pt-2.5 flex items-center justify-between text-[9px]">
               <div>
-                <p className="font-mono text-[8px] text-wisdom-muted">AUTHORIZATION SEAL</p>
-                <p className="font-serif italic text-amber-300 font-semibold text-xs">
+                <p className="font-mono text-[8px] text-slate-400">AUTHORIZATION SEAL</p>
+                <p className="font-serif italic text-cyan-300 font-medium text-xs">
                   Academic Affairs Registrar
                 </p>
               </div>
               <div className="text-right">
-                <span className="font-mono text-[9px] text-slate-300">
+                <span className="font-mono text-[9px] text-slate-400">
                   REF: {idData.idNumber}
                 </span>
-                <p className="text-[8px] text-emerald-400 font-semibold">
+                <p className="text-[8.5px] text-emerald-400 font-semibold">
                   DIGITALLY SIGNED & VERIFIED
                 </p>
               </div>
@@ -355,10 +292,10 @@ export default function StudentIdCard({
         <button
           type="button"
           onClick={() => setFlipped((prev) => !prev)}
-          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[11px] font-bold text-slate-300 hover:text-amber-300 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-amber-400/35 transition-all shadow-sm cursor-pointer"
+          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[11px] font-bold text-slate-300 hover:text-cyan-300 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-cyan-400/30 transition-all shadow-sm cursor-pointer"
         >
-          <RotateCw className="w-3.5 h-3.5 text-amber-400 transition-transform duration-500 group-hover:rotate-180" />
-          <span>{flipped ? "Tap to view front side" : "Tap card to flip (Front / Back)"}</span>
+          <RotateCw className="w-3.5 h-3.5 text-cyan-400 transition-transform duration-500 group-hover:rotate-180" />
+          <span>{flipped ? "View front side" : "Tap card to flip"}</span>
         </button>
       </div>
     </div>

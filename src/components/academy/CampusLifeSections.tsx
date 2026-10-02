@@ -47,8 +47,8 @@ export function CampusFriends() {
           </h3>
           <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-reading">
             University is where many people meet the friends they keep for years. That matters.
-            What also matters is that endless availability—answering every message the moment
-            it arrives, accepting every invitation because saying no feels rude—leaves almost
+            What also matters is that endless availability-answering every message the moment
+            it arrives, accepting every invitation because saying no feels rude-leaves almost
             no quiet stretch for real study.
           </p>
           <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-reading">

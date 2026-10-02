@@ -8,11 +8,11 @@ type Props = {
   /** Short supporting line under the title */
   subtitle?: string;
   /**
-   * Direct video file (mp4/webm URL) — recommended for a fully clean, on-brand player.
+   * Direct video file (mp4/webm URL): recommended for a fully clean, on-brand player.
    * Host on Supabase Storage, R2, Bunny, etc.
    */
   src?: string;
-  /** YouTube id — custom cover first; YouTube UI only after the user presses play */
+  /** YouTube id: custom cover first; YouTube UI only after the user presses play */
   youtubeId?: string;
   /** Optional cover image */
   poster?: string;

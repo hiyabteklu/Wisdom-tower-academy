@@ -74,7 +74,7 @@ export default function AdminPaymentsPage() {
     const res = await verifyOrder(id, adminEmail);
     setBusyId("");
     if (res.ok) {
-      setToast("Verified — student enrolled");
+      setToast("Verified: student enrolled");
       load();
     } else {
       setToast(res.error || "Verify failed");

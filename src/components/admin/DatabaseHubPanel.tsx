@@ -80,7 +80,7 @@ const TRACKED_TABLES: Omit<TableHealth, "status" | "rowCount">[] = [
 ];
 
 const MASTER_SQL_SCRIPT = `-- =============================================================================
--- WISDOM TOWER ACADEMY — COMPLETE PRODUCTION SUPABASE MASTER MIGRATION
+-- WISDOM TOWER ACADEMY: COMPLETE PRODUCTION SUPABASE MASTER MIGRATION
 -- Run this in your Supabase SQL Editor:
 -- 1. Open https://supabase.com/dashboard
 -- 2. Select your project -> SQL Editor -> New Query

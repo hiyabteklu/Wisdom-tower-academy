@@ -59,7 +59,7 @@ function resolveBand(row: Row): GradeBand | null {
 }
 
 function subjectName(id: string) {
-  return freshmanSubjects.find((s) => s.id === id)?.name ?? "—";
+  return freshmanSubjects.find((s) => s.id === id)?.name ?? "-";
 }
 
 export default function GpaCalculator() {
@@ -132,7 +132,7 @@ export default function GpaCalculator() {
                 GPA calculator
               </h2>
               <p className="text-sm text-wisdom-muted mt-1 max-w-lg leading-relaxed">
-                Build your semester from the course list, enter percent, letter, or fixed points — we
+                Build your semester from the course list, enter percent, letter, or fixed points: we
                 map everything to the official scale.
               </p>
             </div>
@@ -392,7 +392,7 @@ export default function GpaCalculator() {
                     Semester GPA
                   </p>
                   <p className={`text-3xl sm:text-4xl font-black tabular-nums ${gpaColor}`}>
-                    {computed.gpa != null ? computed.gpa.toFixed(2) : "—"}
+                    {computed.gpa != null ? computed.gpa.toFixed(2) : "-"}
                   </p>
                   <p className="text-[11px] text-wisdom-muted mt-0.5">
                     Σ (points × credits) ÷ total credits

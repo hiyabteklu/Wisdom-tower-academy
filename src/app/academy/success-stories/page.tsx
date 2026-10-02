@@ -145,7 +145,7 @@ export default function SuccessStoriesPage() {
     void load();
   }, [load]);
 
-  // Prefer admin page title/subtitle only — never claim “trained with Academy”
+  // Prefer admin page title/subtitle only: never claim “trained with Academy”
   const title = page?.title?.trim() || "Success Stories";
   const subtitle = page?.subtitle?.trim() || "";
   const intro = page?.published ? (page.bodyMd || "").trim() : "";

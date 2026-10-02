@@ -19,7 +19,7 @@ export default function AuthHashHandler() {
     const access = params.get("access_token");
     const path = window.location.pathname || "/";
 
-    // Already on reset-password — leave alone
+    // Already on reset-password: leave alone
     if (path.startsWith("/reset-password")) return;
 
     if (

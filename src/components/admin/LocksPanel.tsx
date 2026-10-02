@@ -108,7 +108,7 @@ export default function LocksPanel() {
     if (res.error) {
       setError(
         res.error.includes("relation") || res.error.includes("does not exist")
-          ? "Table missing — run docs/content-locks-setup.sql in Supabase SQL Editor."
+          ? "Table missing: run docs/content-locks-setup.sql in Supabase SQL Editor."
           : res.error
       );
       setLocks([]);

@@ -67,7 +67,7 @@ function overallGrade(score: number): {
       badgeBorder: "border-cyan-400/30",
       badgeBg: "bg-cyan-500/10 text-cyan-300",
       tone: "#22d3ee",
-      message: "You're mastering this course — keep this standard and push even higher.",
+      message: "You're mastering this course: keep this standard and push even higher.",
     };
   if (score >= 70)
     return {
@@ -76,7 +76,7 @@ function overallGrade(score: number): {
       badgeBorder: "border-emerald-400/30",
       badgeBg: "bg-emerald-500/10 text-emerald-300",
       tone: "#34d399",
-      message: "Strong momentum — stay consistent and you will reach the top tier.",
+      message: "Strong momentum: stay consistent and you will reach the top tier.",
     };
   if (score >= 55)
     return {
@@ -85,7 +85,7 @@ function overallGrade(score: number): {
       badgeBorder: "border-amber-400/30",
       badgeBg: "bg-amber-500/10 text-amber-300",
       tone: "#fbbf24",
-      message: "Steady progress — consistent daily review will lift your score.",
+      message: "Steady progress: consistent daily review will lift your score.",
     };
   if (score >= 40)
     return {
@@ -94,7 +94,7 @@ function overallGrade(score: number): {
       badgeBorder: "border-orange-400/30",
       badgeBg: "bg-orange-500/10 text-orange-300",
       tone: "#fb923c",
-      message: "Keep practicing — allocate 15 focused minutes each day on this section.",
+      message: "Keep practicing: allocate 15 focused minutes each day on this section.",
     };
   if (score > 0)
     return {
@@ -451,7 +451,7 @@ export default function AcademicResultSaver({
             icon={Eye}
             label="Avg focus"
             value={
-              effectiveStudy.avgFocusLabel && effectiveStudy.avgFocusLabel !== "—"
+              effectiveStudy.avgFocusLabel && effectiveStudy.avgFocusLabel !== "-"
                 ? effectiveStudy.avgFocusLabel
                 : effectiveStudy.totalFocusSeconds > 0
                 ? `${Math.round((effectiveStudy.totalFocusSeconds / Math.max(1, effectiveStudy.totalStudySeconds)) * 100)}%`
@@ -528,7 +528,7 @@ export default function AcademicResultSaver({
             icon={Eye}
             label="Avg focus"
             value={
-              effectiveStudy.avgFocusLabel && effectiveStudy.avgFocusLabel !== "—"
+              effectiveStudy.avgFocusLabel && effectiveStudy.avgFocusLabel !== "-"
                 ? effectiveStudy.avgFocusLabel
                 : effectiveStudy.totalFocusSeconds > 0
                 ? `${Math.round((effectiveStudy.totalFocusSeconds / Math.max(1, effectiveStudy.totalStudySeconds)) * 100)}%`

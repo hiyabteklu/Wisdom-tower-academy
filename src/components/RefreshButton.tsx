@@ -6,7 +6,7 @@ import { RefreshCw } from "lucide-react";
 import { clearOwnershipCache } from "@/lib/ownership";
 
 /**
- * Manual refresh — clears ownership cache, reloads progress listeners,
+ * Manual refresh: clears ownership cache, reloads progress listeners,
  * and revalidates the current route so tracker/exam results update in place.
  */
 export default function RefreshButton({ className = "" }: { className?: string }) {

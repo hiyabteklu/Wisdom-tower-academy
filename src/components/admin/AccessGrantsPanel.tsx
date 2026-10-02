@@ -41,7 +41,7 @@ export default function AccessGrantsPanel({ adminEmail }: Props) {
     if (res.error) {
       setError(
         res.error.includes("relation") || res.error.includes("does not exist")
-          ? "Table missing — run docs/access-grants-setup.sql in Supabase SQL Editor."
+          ? "Table missing: run docs/access-grants-setup.sql in Supabase SQL Editor."
           : res.error
       );
       setGrants([]);
@@ -159,7 +159,7 @@ export default function AccessGrantsPanel({ adminEmail }: Props) {
             Access grants
           </h2>
           <p className="text-sm text-wisdom-muted mt-0.5 max-w-xl">
-            Whitelist emails for beta users — unlock specific packages or the whole
+            Whitelist emails for beta users: unlock specific packages or the whole
             catalog without payment. Works even before they sign up (matched by email).
           </p>
         </div>
@@ -230,7 +230,7 @@ export default function AccessGrantsPanel({ adminEmail }: Props) {
         </button>
         <p className="text-xs text-wisdom-muted">
           User does not need an account yet. When they sign in with this email,
-          packages unlock automatically — no cart or payment.
+          packages unlock automatically: no cart or payment.
         </p>
       </form>
 

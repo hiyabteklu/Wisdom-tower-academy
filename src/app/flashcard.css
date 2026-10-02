@@ -1,4 +1,4 @@
-/* Flashcard 3D flip + swipe — isolated so global .card-3d rules do not break it */
+/* Flashcard 3D flip + swipe - isolated so global .card-3d rules do not break it */
 /* Used only by FlashcardViewer.tsx */
 
 .fc-scene {

@@ -1,7 +1,7 @@
 const quotes = [
   {
     name: "Lidya A.",
-    text: "UAT stopped feeling impossible — the mocks and weekly plan actually stuck.",
+    text: "UAT stopped feeling impossible: the mocks and weekly plan actually stuck.",
   },
   {
     name: "Bereket N.",
@@ -32,7 +32,7 @@ export default function TestimonialMarquee() {
             className="shrink-0 max-w-[min(320px,70vw)] rounded-2xl border border-white/10 bg-wisdom-card/90 px-5 py-4 shadow-lg"
           >
             <p className="text-sm text-white/90 leading-relaxed">&ldquo;{q.text}&rdquo;</p>
-            <footer className="mt-3 text-xs font-semibold text-amber-400/90">— {q.name}</footer>
+            <footer className="mt-3 text-xs font-semibold text-amber-400/90">- {q.name}</footer>
           </blockquote>
         ))}
       </div>

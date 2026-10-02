@@ -38,7 +38,7 @@ export default function UatPage() {
           <PackageOfferBanner packageId="uat" />
         </div>
 
-        {/* Authoritative introduction — architecture of the exam */}
+        {/* Authoritative introduction: architecture of the exam */}
         <UatIntroduction />
 
         <div className="max-w-2xl mx-auto sm:mx-0">

@@ -41,28 +41,25 @@ export default function PackageOfferBanner({ packageId }: { packageId: string })
 
   if (isFree && signedIn) {
     return (
-      <div className="card-modern border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 via-wisdom-card to-wisdom-card p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
+      <div className="card-modern border-white/10 bg-wisdom-card/80 p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg backdrop-blur-xl">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide uppercase bg-emerald-500/15 text-emerald-300 border border-emerald-400/30">
-              <Gift className="w-3.5 h-3.5" />
-              Complimentary Access
-            </span>
-          </div>
           <h3 className="font-display text-lg sm:text-xl font-bold text-white tracking-tight">{pkg.name}</h3>
           {pkg.description ? (
             <p className="text-xs sm:text-sm text-wisdom-muted mt-1 leading-relaxed line-clamp-2">
               {pkg.description}
             </p>
           ) : null}
-          <p className="text-xs text-emerald-300/80 mt-1 font-medium">
+          <p className="text-xs text-cyan-300/90 mt-1.5 font-medium">
             Active session · Learning hubs for this pathway are fully unlocked.
           </p>
         </div>
         <div className="shrink-0 flex items-center">
-          <span className="inline-flex items-center justify-center rounded-xl border border-emerald-400/30 bg-emerald-500/20 px-4 py-2 text-xs sm:text-sm font-bold text-emerald-200">
-            Access Active
-          </span>
+          <Link
+            href="/learning"
+            className="btn-cyan px-5 py-2.5 text-xs sm:text-sm"
+          >
+            Open Learning Hub
+          </Link>
         </div>
       </div>
     );
@@ -70,21 +67,16 @@ export default function PackageOfferBanner({ packageId }: { packageId: string })
 
   if (isFree && !signedIn) {
     return (
-      <div className="card-modern border-cyan-500/30 bg-gradient-to-r from-cyan-500/10 via-wisdom-card to-wisdom-card p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
+      <div className="card-modern border-white/10 bg-wisdom-card/80 p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg backdrop-blur-xl">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide uppercase bg-cyan-500/15 text-cyan-300 border border-cyan-400/30">
-              Free with account
-            </span>
-          </div>
           <h3 className="font-display text-lg sm:text-xl font-bold text-white tracking-tight">{pkg.name}</h3>
           {pkg.description ? (
             <p className="text-xs sm:text-sm text-wisdom-muted mt-1 leading-relaxed line-clamp-2">
               {pkg.description}
             </p>
           ) : null}
-          <p className="text-xs text-wisdom-muted mt-1">
-            Create an account or sign in to explore and unlock all materials at no charge.
+          <p className="text-xs text-wisdom-muted mt-1.5">
+            Sign in with your student account to open materials for this pathway.
           </p>
         </div>
         <div className="shrink-0 flex items-center">
@@ -92,7 +84,7 @@ export default function PackageOfferBanner({ packageId }: { packageId: string })
             href={`/login?next=${encodeURIComponent(pathname || "/learning")}`}
             className="btn-cyan px-5 py-2.5 text-xs sm:text-sm"
           >
-            Sign In to Unlock
+            Sign In to Open
           </Link>
         </div>
       </div>
@@ -100,21 +92,15 @@ export default function PackageOfferBanner({ packageId }: { packageId: string })
   }
 
   return (
-    <div className="card-modern border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-wisdom-card to-wisdom-card p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
+    <div className="card-modern border-white/10 bg-wisdom-card/80 p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg backdrop-blur-xl">
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1.5">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide uppercase bg-amber-500/15 text-amber-300 border border-amber-400/30">
-            <Users className="w-3.5 h-3.5" />
-            {pkg.enrolledLabel || "Official Package"}
-          </span>
-        </div>
         <h3 className="font-display text-lg sm:text-xl font-bold text-white tracking-tight">{pkg.name}</h3>
         {pkg.description ? (
           <p className="text-xs sm:text-sm text-wisdom-muted mt-1 leading-relaxed line-clamp-2">
             {pkg.description}
           </p>
         ) : null}
-        <p className="text-base sm:text-lg font-black text-amber-300 mt-1.5 tracking-tight">
+        <p className="text-base sm:text-lg font-bold text-cyan-300 mt-1.5 tracking-tight">
           {formatEtb(pkg.priceEtb)}
         </p>
       </div>

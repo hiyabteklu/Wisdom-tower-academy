@@ -1,9 +1,9 @@
-/* Notes / study reader — layout + mobile overflow (no page horizontal skew) */
+/* Notes / study reader - layout + mobile overflow (no page horizontal skew) */
 
 .notes-reading-surface {
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden; /* was visible — caused whole-page horizontal skew */
+  overflow-x: hidden; /* was visible - caused whole-page horizontal skew */
   background: linear-gradient(
     165deg,
     rgba(18, 26, 42, 0.98),

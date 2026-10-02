@@ -1,5 +1,5 @@
 /**
- * Department guides for Academy — competitive undergraduate fields.
+ * Department guides for Academy, competitive undergraduate fields.
  * Writing targets students choosing a path, not institutional brochure tone.
  */
 
@@ -78,7 +78,7 @@ export const departmentCategories: DepartmentCategory[] = [
   {
     id: "sciences",
     label: "Natural Sciences",
-    blurb: "Theory first — then labs, models, and research paths.",
+    blurb: "Theory first, then labs, models, and research paths.",
     accent: "text-violet-300",
     border: "hover:border-violet-400/40",
     badge: "border-violet-400/30 bg-violet-500/15 text-violet-200",
@@ -130,7 +130,7 @@ export const departments: Department[] = [
     category: "law",
     durationYears: "5 years typical",
     about:
-      "Law trains you to read rules as tools: constitutions, codes, contracts, and procedure. The work is less about memorizing slogans and more about applying text to facts — who has standing, what remedy exists, which court has jurisdiction. In Ethiopia the LLB is the standard first degree for advocates and many public-sector legal roles. Expect dense reading, oral argument practice, and written opinions under time pressure. The field rewards precision and patience more than charisma alone.",
+      "Law trains you to read rules as tools: constitutions, codes, contracts, and procedure. The work is less about memorizing slogans and more about applying text to facts, who has standing, what remedy exists, which court has jurisdiction. In Ethiopia the LLB is the standard first degree for advocates and many public-sector legal roles. Expect dense reading, oral argument practice, and written opinions under time pressure. The field rewards precision and patience more than charisma alone.",
     courses: [
       "Constitutional law",
       "Civil and criminal procedure",
@@ -148,7 +148,7 @@ export const departments: Department[] = [
       "Compliance and contracts in business",
     ],
     market:
-      "Domestic demand is steady in urban centers and government. Cross-border work (trade, investment, IP) grows slowly and favors additional language and specialization. Globally, a first law degree is often a stepping stone to an LLM or local qualification exams — not an automatic license abroad. Strong writers who can handle commercial files remain scarce relative to pure volume of graduates.",
+      "Domestic demand is steady in urban centers and government. Cross-border work (trade, investment, IP) grows slowly and favors additional language and specialization. Globally, a first law degree is often a stepping stone to an LLM or local qualification exams, not an automatic license abroad. Strong writers who can handle commercial files remain scarce relative to pure volume of graduates.",
     pros: [
       "Clear professional identity and exam pathways",
       "Skills transfer to policy, compliance, and negotiation",
@@ -167,7 +167,7 @@ export const departments: Department[] = [
     category: "business",
     durationYears: "3–4 years",
     about:
-      "This degree is about recording economic reality so decisions can be trusted. Accounting maps transactions into statements; finance asks how capital is raised, priced, and allocated. You will live in ratios, standards, tax rules, and the difference between cash and accrual. Employers hire the degree because it is auditable skill — not because of vague ‘business sense.’ Students who treat it as arithmetic only struggle; those who understand the story behind the numbers advance.",
+      "This degree is about recording economic reality so decisions can be trusted. Accounting maps transactions into statements; finance asks how capital is raised, priced, and allocated. You will live in ratios, standards, tax rules, and the difference between cash and accrual. Employers hire the degree because it is auditable skill, not because of vague ‘business sense.’ Students who treat it as arithmetic only struggle; those who understand the story behind the numbers advance.",
     courses: [
       "Financial and managerial accounting",
       "Auditing and assurance",
@@ -193,7 +193,7 @@ export const departments: Department[] = [
     ],
     cons: [
       "Entry roles can be repetitive and seasonal (close periods)",
-      "Standards and tax law change — continuous updating",
+      "Standards and tax law change, continuous updating",
       "Promotion often requires soft skills beyond the ledger",
     ],
   },
@@ -204,7 +204,7 @@ export const departments: Department[] = [
     category: "business",
     durationYears: "3–4 years",
     about:
-      "Economics studies how scarce resources are allocated — by prices, policy, institutions, and incentives. Undergraduate programs mix theory (micro, macro) with measurement (statistics, econometrics). The best graduates can move from a model to a real dataset without losing the argument. Weak programs stop at diagram-drawing; strong ones force you to explain growth, inflation, trade, and poverty with evidence. It is not ‘business light’; it is social science with mathematics.",
+      "Economics studies how scarce resources are allocated, by prices, policy, institutions, and incentives. Undergraduate programs mix theory (micro, macro) with measurement (statistics, econometrics). The best graduates can move from a model to a real dataset without losing the argument. Weak programs stop at diagram-drawing; strong ones force you to explain growth, inflation, trade, and poverty with evidence. It is not ‘business light’; it is social science with mathematics.",
     courses: [
       "Microeconomics and macroeconomics",
       "Mathematical economics",
@@ -259,7 +259,7 @@ export const departments: Department[] = [
       "Graduate schemes in large firms",
     ],
     market:
-      "Almost every formal organization needs coordinators; the degree is common, so differentiation matters — internships, language, and a specialty (operations, HR, digital marketing). Globally, a general management BA is less portable than accounting or engineering unless paired with experience or an MBA later. In local markets, networks and demonstrated reliability often outweigh the transcript alone.",
+      "Almost every formal organization needs coordinators; the degree is common, so differentiation matters, internships, language, and a specialty (operations, HR, digital marketing). Globally, a general management BA is less portable than accounting or engineering unless paired with experience or an MBA later. In local markets, networks and demonstrated reliability often outweigh the transcript alone.",
     pros: [
       "Broad applicability across private and public sectors",
       "Room to specialize later without restarting from zero",
@@ -278,7 +278,7 @@ export const departments: Department[] = [
     category: "health",
     durationYears: "6+ years incl. internship",
     about:
-      "Medicine prepares physicians to diagnose, treat, and prevent disease. The path is long: preclinical science, clinical rotations, then internship and possible specialty training. You will learn anatomy and physiology not as trivia but as the map for every decision at the bedside. The work demands stamina, ethical judgment, and comfort with uncertainty. It is not a ‘high score’ trophy — it is a public trust profession with real liability and night shifts.",
+      "Medicine prepares physicians to diagnose, treat, and prevent disease. The path is long: preclinical science, clinical rotations, then internship and possible specialty training. You will learn anatomy and physiology not as trivia but as the map for every decision at the bedside. The work demands stamina, ethical judgment, and comfort with uncertainty. It is not a ‘high score’ trophy, it is a public trust profession with real liability and night shifts.",
     courses: [
       "Anatomy, physiology, biochemistry",
       "Pathology and pharmacology",
@@ -295,7 +295,7 @@ export const departments: Department[] = [
       "NGO clinical programs",
     ],
     market:
-      "Domestic need for clinicians remains high, especially outside major cities, though placement and remuneration vary by region and facility. Specialty training is competitive. International practice almost always requires additional exams and licensing (USMLE, PLAB, etc.). The global shortage of physicians is real, but migration is regulated and expensive — plan years ahead if that is your goal.",
+      "Domestic need for clinicians remains high, especially outside major cities, though placement and remuneration vary by region and facility. Specialty training is competitive. International practice almost always requires additional exams and licensing (USMLE, PLAB, etc.). The global shortage of physicians is real, but migration is regulated and expensive, plan years ahead if that is your goal.",
     pros: [
       "Deep professional identity and societal need",
       "Wide specialty options after the base degree",
@@ -314,7 +314,7 @@ export const departments: Department[] = [
     category: "health",
     durationYears: "5 years typical",
     about:
-      "Clinical pharmacy sits between chemistry and the patient: drug action, dosing, interactions, and rational use. You study how medicines are designed and how they behave in the body, then apply that in hospital or community settings. The modern role is not only dispensing — it is preventing harm from therapy and advising the care team. Attention to detail and continuous updating on new agents are non-negotiable.",
+      "Clinical pharmacy sits between chemistry and the patient: drug action, dosing, interactions, and rational use. You study how medicines are designed and how they behave in the body, then apply that in hospital or community settings. The modern role is not only dispensing, it is preventing harm from therapy and advising the care team. Attention to detail and continuous updating on new agents are non-negotiable.",
     courses: [
       "Pharmaceutical chemistry",
       "Pharmacology and therapeutics",
@@ -351,7 +351,7 @@ export const departments: Department[] = [
     category: "health",
     durationYears: "3–4 years",
     about:
-      "Public health focuses on populations rather than single patients: surveillance, prevention, health systems, and the social conditions that drive disease. You will study epidemiology, biostatistics, environmental health, and program management. The discipline is for people who want measurable impact at scale — vaccination coverage, outbreak response, policy — not only bedside care. Writing clear reports and reading data carefully matter as much as fieldwork energy.",
+      "Public health focuses on populations rather than single patients: surveillance, prevention, health systems, and the social conditions that drive disease. You will study epidemiology, biostatistics, environmental health, and program management. The discipline is for people who want measurable impact at scale, vaccination coverage, outbreak response, policy, not only bedside care. Writing clear reports and reading data carefully matter as much as fieldwork energy.",
     courses: [
       "Epidemiology",
       "Biostatistics",
@@ -378,7 +378,7 @@ export const departments: Department[] = [
     cons: [
       "Field and desk mix can mean irregular hours during outbreaks",
       "Donor dependence affects contract length",
-      "Impact is collective — less individual ‘hero’ feedback than clinical care",
+      "Impact is collective, less individual ‘hero’ feedback than clinical care",
     ],
   },
   {
@@ -481,7 +481,7 @@ export const departments: Department[] = [
       "Technical product roles in startups",
     ],
     market:
-      "Local demand exists in banks, telecom, government digital projects, and product companies — but hiring screens for demonstrable skill (GitHub, projects, interviews), not only the degree title. Globally, CS remains one of the more mobile technical degrees if your English and portfolio are strong. The market punishes graduates who avoided coding practice during university.",
+      "Local demand exists in banks, telecom, government digital projects, and product companies, but hiring screens for demonstrable skill (GitHub, projects, interviews), not only the degree title. Globally, CS remains one of the more mobile technical degrees if your English and portfolio are strong. The market punishes graduates who avoided coding practice during university.",
     pros: [
       "High leverage skill set; remote and exportable work possible",
       "Strong base for specialization (security, ML, systems)",
@@ -611,7 +611,7 @@ export const departments: Department[] = [
     category: "sciences",
     durationYears: "3–4 years",
     about:
-      "Biology is the science of living systems — from molecules to ecosystems. Undergraduate study covers cell biology, genetics, physiology, ecology, and laboratory method. The degree is a foundation, not a finished professional license. Graduates who succeed plan early for a direction: research, health-related pathways, education, or applied biotech.",
+      "Biology is the science of living systems, from molecules to ecosystems. Undergraduate study covers cell biology, genetics, physiology, ecology, and laboratory method. The degree is a foundation, not a finished professional license. Graduates who succeed plan early for a direction: research, health-related pathways, education, or applied biotech.",
     courses: [
       "Cell and molecular biology",
       "Genetics",
@@ -648,7 +648,7 @@ export const departments: Department[] = [
     category: "sciences",
     durationYears: "3–4 years",
     about:
-      "Chemistry explains matter by structure and reaction. You work through inorganic, organic, physical, and analytical chemistry with substantial lab time. Precision, safety habits, and honest data recording define the culture. The degree supports industry, further study, and teaching — not a single narrow job title.",
+      "Chemistry explains matter by structure and reaction. You work through inorganic, organic, physical, and analytical chemistry with substantial lab time. Precision, safety habits, and honest data recording define the culture. The degree supports industry, further study, and teaching, not a single narrow job title.",
     courses: [
       "General and inorganic chemistry",
       "Organic chemistry",
@@ -722,7 +722,7 @@ export const departments: Department[] = [
     category: "sciences",
     durationYears: "3–4 years",
     about:
-      "Physics models nature with mathematics: mechanics, electromagnetism, thermodynamics, quantum ideas, and experiment. The habit it builds — reduce a system to governing principles — is valuable beyond the lab. Like mathematics, the bachelor is often a platform rather than a terminal professional degree.",
+      "Physics models nature with mathematics: mechanics, electromagnetism, thermodynamics, quantum ideas, and experiment. The habit it builds, reduce a system to governing principles, is valuable beyond the lab. Like mathematics, the bachelor is often a platform rather than a terminal professional degree.",
     courses: [
       "Classical mechanics",
       "Electromagnetism",
@@ -831,7 +831,7 @@ export const departments: Department[] = [
     category: "agriculture",
     durationYears: "3–4 years",
     about:
-      "Plant sciences focuses on crops: physiology, breeding, protection, and agronomic practice. The goal is higher, more reliable yields under real constraints — soil, water, pests, climate. You learn to diagnose field problems and recommend practices grounded in evidence, not folklore.",
+      "Plant sciences focuses on crops: physiology, breeding, protection, and agronomic practice. The goal is higher, more reliable yields under real constraints, soil, water, pests, climate. You learn to diagnose field problems and recommend practices grounded in evidence, not folklore.",
     courses: [
       "Crop physiology",
       "Soil–plant relations",
@@ -940,7 +940,7 @@ export const departments: Department[] = [
     category: "education",
     durationYears: "3–4 years",
     about:
-      "Psychology studies behavior and mental processes: development, learning, social influence, assessment, and mental health. Undergraduate training builds literacy in research methods and major theories. It does not by itself license independent clinical practice in most systems — postgraduate training and regulation matter. Students should be honest about whether they want science, counseling pathways, or organizational roles.",
+      "Psychology studies behavior and mental processes: development, learning, social influence, assessment, and mental health. Undergraduate training builds literacy in research methods and major theories. It does not by itself license independent clinical practice in most systems, postgraduate training and regulation matter. Students should be honest about whether they want science, counseling pathways, or organizational roles.",
     courses: [
       "Introduction to psychology",
       "Developmental psychology",
@@ -1070,7 +1070,7 @@ export const departments: Department[] = [
     pros: [
       "Elite communication skill in a global language",
       "Flexible gateway into education and media",
-      "Trains careful reading — rare and useful",
+      "Trains careful reading, rare and useful",
     ],
     cons: [
       "Not a narrow vocational license",

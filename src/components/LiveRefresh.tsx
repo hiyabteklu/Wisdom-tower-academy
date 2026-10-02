@@ -51,7 +51,7 @@ export default function LiveRefresh() {
         /* ignore */
       }
 
-      // Do NOT re-dispatch wta-refresh here (button/app already did) — listeners handle progress.
+      // Do NOT re-dispatch wta-refresh here (button/app already did): listeners handle progress.
 
       try {
         router.refresh();

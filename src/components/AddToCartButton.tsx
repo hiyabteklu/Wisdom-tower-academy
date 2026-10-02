@@ -107,17 +107,13 @@ export default function AddToCartButton({
   if (freeForRegistered) {
     if (owned || signedIn) {
       return (
-        <div className={`flex flex-wrap gap-2 ${className}`}>
-          <span className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-emerald-400/40 bg-emerald-500/15 text-emerald-300 text-sm font-semibold">
-            <Gift className="w-4 h-4" />
-            Free · unlocked
-          </span>
+        <div className={`flex flex-wrap items-center gap-2 ${className}`}>
           <Link
             href={openHref}
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-500 text-wisdom-dark text-sm font-bold hover:bg-emerald-400"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 text-sm font-bold shadow-sm transition-all active:scale-[0.98]"
           >
             <BookOpen className="w-4 h-4" />
-            Open content
+            <span>Open Materials</span>
           </Link>
         </div>
       );
@@ -126,27 +122,23 @@ export default function AddToCartButton({
     return (
       <Link
         href={`/login?next=${encodeURIComponent(pathname || "/learning")}`}
-        className={`inline-flex items-center justify-center gap-2 w-full py-2.5 sm:py-3 rounded-xl border border-cyan-400/40 bg-cyan-500/10 text-cyan-200 text-sm font-semibold hover:bg-cyan-500/15 ${className}`}
+        className={`inline-flex items-center justify-center gap-2 w-full py-2.5 sm:py-3 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 text-sm font-bold shadow-sm transition-all active:scale-[0.98] ${className}`}
       >
-        <Gift className="w-4 h-4" />
-        Free · sign in to open
+        <BookOpen className="w-4 h-4" />
+        <span>Sign in to Open</span>
       </Link>
     );
   }
 
   if (owned) {
     return (
-      <div className={`flex flex-wrap gap-2 ${className}`}>
-        <span className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-emerald-400/40 bg-emerald-500/15 text-emerald-300 text-sm font-semibold">
-          <Check className="w-4 h-4" />
-          Owned
-        </span>
+      <div className={`flex flex-wrap items-center gap-2 ${className}`}>
         <Link
           href={openHref}
-          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-500 text-wisdom-dark text-sm font-bold hover:bg-amber-400"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 text-sm font-bold shadow-sm transition-all active:scale-[0.98]"
         >
           <BookOpen className="w-4 h-4" />
-          Open content
+          <span>Open Materials</span>
         </Link>
       </div>
     );
@@ -158,10 +150,10 @@ export default function AddToCartButton({
         <button
           type="button"
           onClick={() => setSoonOpen(true)}
-          className={`inline-flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-amber-400/35 bg-amber-500/10 text-amber-200 text-sm font-semibold hover:bg-amber-500/15 ${className}`}
+          className={`inline-flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-white/10 bg-white/[0.04] text-slate-300 text-sm font-semibold hover:bg-white/[0.08] transition-all ${className}`}
         >
-          <CloudUpload className="w-4 h-4" />
-          Coming soon · not for sale yet
+          <CloudUpload className="w-4 h-4 text-cyan-300" />
+          <span>Coming soon</span>
         </button>
         <ComingSoonModal open={soonOpen} onClose={() => setSoonOpen(false)} hubName={pkg?.name} />
       </>
@@ -170,16 +162,16 @@ export default function AddToCartButton({
 
   if (inCart) {
     return (
-      <div className={`flex flex-wrap gap-2 ${className}`}>
-        <span className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-emerald-400/35 bg-emerald-500/10 text-emerald-300 text-sm font-semibold">
+      <div className={`flex flex-wrap items-center gap-2 ${className}`}>
+        <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-cyan-400/30 bg-cyan-500/10 text-cyan-300 text-xs font-semibold">
           <Check className="w-4 h-4" />
           {justAdded ? "Added" : "In cart"}
         </span>
         <Link
           href="/cart"
-          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-white/15 text-sm font-semibold text-white/90 hover:border-cyan-400/40 hover:text-cyan-300"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 text-xs font-bold shadow-sm transition-all active:scale-[0.98]"
         >
-          View cart
+          View Cart
         </Link>
       </div>
     );
@@ -190,7 +182,7 @@ export default function AddToCartButton({
       <button
         type="button"
         onClick={onAdd}
-        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-400 text-slate-950 text-xs font-bold hover:bg-amber-300 shadow-sm transition-all duration-200 active:scale-95 ${className}`}
+        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-400 hover:bg-cyan-300 text-slate-950 text-xs font-bold shadow-sm transition-all active:scale-95 ${className}`}
       >
         <ShoppingBag className="w-3.5 h-3.5" />
         {formatEtb(price)}
@@ -203,10 +195,10 @@ export default function AddToCartButton({
       <button
         type="button"
         onClick={onAdd}
-        className={`inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl border border-amber-400/40 bg-amber-500/5 text-amber-200 text-sm font-bold hover:bg-amber-500/15 hover:border-amber-400/70 transition-all duration-200 active:scale-[0.98] ${className}`}
+        className={`inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl border border-cyan-400/40 bg-cyan-500/10 text-cyan-200 text-sm font-bold hover:bg-cyan-500/20 hover:border-cyan-400/70 transition-all duration-200 active:scale-[0.98] ${className}`}
       >
-        <ShoppingBag className="w-4 h-4 text-amber-300" />
-        Add to cart · {formatEtb(price)}
+        <ShoppingBag className="w-4 h-4 text-cyan-300" />
+        <span>Add to Cart · {formatEtb(price)}</span>
       </button>
     );
   }
@@ -215,10 +207,10 @@ export default function AddToCartButton({
     <button
       type="button"
       onClick={onAdd}
-      className={`btn-accent w-full ${className}`}
+      className={`btn-primary w-full ${className}`}
     >
       <ShoppingBag className="w-4 h-4" />
-      <span>Add to cart · {formatEtb(price)}</span>
+      <span>Add to Cart · {formatEtb(price)}</span>
     </button>
   );
 }

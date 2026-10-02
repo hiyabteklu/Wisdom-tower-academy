@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { remedialSubjects, getRemedialSubject } from "@/data/remedial";
 import { getResource, resourceHubs } from "@/data/academy";
 import CategoryBackButton from "@/components/CategoryBackButton";
@@ -57,9 +58,7 @@ export default async function RemedialSubjectPage({
                   </h3>
                   <p className="text-xs text-wisdom-muted">Remedial Curriculum</p>
                 </div>
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-400/10 text-amber-300 border border-amber-400/20 group-hover:bg-amber-400/20 shrink-0 transition-colors">
-                  Open →
-                </span>
+                <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-cyan-300 transition-colors" />
               </Link>
             ))}
           </div>

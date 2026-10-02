@@ -223,7 +223,7 @@ export default function ContentPanel() {
     });
     setSaving(false);
     if (!res.ok) {
-      setToast(res.error || "Save failed — run learning-content-setup.sql?");
+      setToast(res.error || "Save failed: run learning-content-setup.sql?");
       return;
     }
     setToast(

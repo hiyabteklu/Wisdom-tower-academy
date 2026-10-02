@@ -34,7 +34,7 @@ function appwriteViewUrl(fileId: string) {
   return `${endpoint}/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
 }
 
-/** HEAD — size probe only; do not download body when possible. */
+/** HEAD: size probe only; do not download body when possible. */
 export async function HEAD(req: NextRequest) {
   const path = req.nextUrl.searchParams.get("path");
   if (!path || path.includes("..")) {
@@ -59,7 +59,7 @@ export async function HEAD(req: NextRequest) {
       });
       let len = upstream.headers.get("Content-Length");
 
-      // Some Appwrite setups ignore HEAD — try Range
+      // Some Appwrite setups ignore HEAD: try Range
       if ((!len || !upstream.ok) && upstream.status !== 404) {
         upstream = await fetch(viewUrl, {
           method: "GET",
@@ -93,7 +93,7 @@ export async function HEAD(req: NextRequest) {
     }
   }
 
-  // Legacy Supabase — no cheap HEAD; return 200 without length
+  // Legacy Supabase: no cheap HEAD; return 200 without length
   return new NextResponse(null, {
     status: 200,
     headers: {

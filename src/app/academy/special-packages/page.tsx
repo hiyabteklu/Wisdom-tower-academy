@@ -6,7 +6,7 @@ import { specialPackages } from "@/data/special-packages";
 export const metadata = {
   title: "Special Packages · Wisdom Tower Academy",
   description:
-    "Department track packages — Electrical & Computer Engineering by semester",
+    "Department track packages: Electrical & Computer Engineering by semester",
 };
 
 export default function SpecialPackagesPage() {

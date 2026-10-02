@@ -45,7 +45,7 @@ export default function UatIntroduction() {
           </h2>
           <p className="text-wisdom-muted text-base sm:text-lg leading-relaxed max-w-3xl">
             The University Aptitude Test measures how a student processes new information under
-            time constraint — unfamiliar arguments, numerical relationships, dense text. Content
+            time constraint: unfamiliar arguments, numerical relationships, dense text. Content
             knowledge varies by school and curriculum. The capacity to reason does not. The UAT
             therefore uses two pillars: Quantitative Reasoning and Verbal Reasoning. Universities
             ask whether a candidate can think fast, precisely, and without external scaffolding.
@@ -124,7 +124,7 @@ export default function UatIntroduction() {
                   <AlertTriangle className="w-3.5 h-3.5" /> Dominant error source
                 </span>
                 <p>
-                  Copying mistakes and sign flips under time pressure — not conceptual gaps. Rewrite
+                  Copying mistakes and sign flips under time pressure: not conceptual gaps. Rewrite
                   cleanly after every distribution step. Pause on every negative multiplier in an
                   inequality.
                 </p>
@@ -171,7 +171,7 @@ export default function UatIntroduction() {
                 </span>
                 <p>
                   Factor first. Exclude values that zero a denominator. Logarithm properties are
-                  exponent laws in different clothing — internalize the definition and the rules
+                  exponent laws in different clothing: internalize the definition and the rules
                   follow.
                 </p>
               </div>
@@ -193,7 +193,7 @@ export default function UatIntroduction() {
                   <AlertTriangle className="w-3.5 h-3.5" /> Recurring traps
                 </span>
                 <ul className="space-y-1.5 list-disc pl-4">
-                  <li>Figures are not drawn to scale — solve from stated values only.</li>
+                  <li>Figures are not drawn to scale: solve from stated values only.</li>
                   <li>Order matters? → permutation. Order does not? → combination. Ask first.</li>
                   <li>LCM for coincidence of cycles; HCF for largest equal groups.</li>
                 </ul>
@@ -235,7 +235,7 @@ export default function UatIntroduction() {
                   <CheckCircle2 className="w-3.5 h-3.5" /> Hard rules
                 </span>
                 <ul className="space-y-1.5 list-disc pl-4">
-                  <li>Inference answers must follow necessarily from the passage — not merely sound plausible.</li>
+                  <li>Inference answers must follow necessarily from the passage: not merely sound plausible.</li>
                   <li>Main idea is the author’s central claim about the topic, not the topic itself.</li>
                   <li>Tone lives in diction, not in the subject matter.</li>
                   <li>Vocabulary-in-context: substitute the chosen sense back into the sentence.</li>
@@ -262,7 +262,7 @@ export default function UatIntroduction() {
                   <li>Analogies: state the exact relationship as a sentence, then test every option against it.</li>
                   <li>Conditionals fail almost always on tense mismatch between clauses.</li>
                   <li>Comma splice is the single most common punctuation error tested.</li>
-                  <li>Synonyms require the same shade, formality and intensity — related is not enough.</li>
+                  <li>Synonyms require the same shade, formality and intensity: related is not enough.</li>
                 </ul>
               </div>
             </div>

@@ -167,7 +167,7 @@ const allPrograms: ProgramCard[] = [
     border: "hover:border-amber-400/40",
     description:
       remedialPkg?.description ||
-      "Catch-up pathway for core subjects. Strengthen foundations in English, Maths, Physics, Chemistry, Biology, History and Geography with the same learning hubs used across the Academy — notes, flashcards, question banks and practice exams.",
+      "Catch-up pathway for core subjects. Strengthen foundations in English, Maths, Physics, Chemistry, Biology, History and Geography with the same learning hubs used across the Academy: notes, flashcards, question banks and practice exams.",
     includes: remedialPkg?.includes || [
       "All seven core remedial prerequisite subjects",
       ...CORE_PACKAGE_INCLUDES,

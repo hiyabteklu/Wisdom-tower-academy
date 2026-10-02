@@ -559,7 +559,7 @@ export async function getScopeStats(opts: {
     totalStudySeconds: 0,
     totalFocusSeconds: 0,
     avgProgressPct: 0,
-    avgFocusLabel: "—",
+    avgFocusLabel: "-",
     quizAttempted: 0,
     quizCorrect: 0,
     quizWrong: 0,

@@ -333,7 +333,7 @@ export async function getPlayableExamTowers(): Promise<TowerTrack[]> {
     title: "Citadel Foundation Trial",
     subtitle: "Introductory wave drill covering fundamental science & logic",
     subject: "Academic Essentials",
-    badge: "Free Drill",
+    badge: "Foundation",
     accentColor: "text-amber-400",
     packageId: "freshman",
     isLocked: false,

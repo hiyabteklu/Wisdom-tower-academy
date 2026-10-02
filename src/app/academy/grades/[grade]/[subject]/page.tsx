@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { getGrade, getResource, grades, resourceHubs } from "@/data/academy";
 import { subjectsForGrade, getGradeSubject } from "@/data/grade-subjects";
 import { packageIdForGrade } from "@/data/packages";
@@ -74,9 +75,7 @@ export default async function GradeSubjectPage({
                     <p className="text-xs text-wisdom-muted">Open {resource.name}</p>
                   </div>
                 </div>
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-sky-400/10 text-sky-300 border border-sky-400/20 group-hover:bg-sky-400/20 transition-colors">
-                  Open →
-                </span>
+                <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-cyan-300 transition-colors" />
               </Link>
             ))}
           </div>

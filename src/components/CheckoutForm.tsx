@@ -348,14 +348,14 @@ export default function CheckoutForm({ packageId, packageIds }: Props) {
         : `/checkout/${pkg.id}`;
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center">
-        <LogIn className="w-10 h-10 text-amber-400 mx-auto mb-3" />
+        <LogIn className="w-10 h-10 text-cyan-400 mx-auto mb-3" />
         <h1 className="text-xl font-bold text-white mb-2">Sign in to checkout</h1>
         <p className="text-sm text-wisdom-muted mb-6">
-          You need an account so we can unlock {displayName} after payment verification.
+          You need an account so we can unlock {displayName} upon verification.
         </p>
         <Link
           href={`/login?next=${encodeURIComponent(next)}`}
-          className="inline-flex rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-bold text-wisdom-dark"
+          className="inline-flex rounded-xl bg-cyan-400 hover:bg-cyan-300 px-5 py-2.5 text-sm font-bold text-slate-950 shadow-sm transition-all active:scale-[0.98]"
         >
           Sign in
         </Link>

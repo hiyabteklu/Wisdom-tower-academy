@@ -196,7 +196,7 @@ export const academyPackages: AcademyPackage[] = [
     name: "Remedial Package",
     shortName: "Remedial",
     description:
-      "Catch-up pathway for core subjects. Strengthen foundations in English, Maths, Physics, Chemistry, Biology, History and Geography with the same learning hubs used across the Academy — notes, flashcards, question banks and practice exams.",
+      "Catch-up pathway for core subjects. Strengthen foundations in English, Maths, Physics, Chemistry, Biology, History and Geography with the same learning hubs used across the Academy: notes, flashcards, question banks and practice exams.",
     priceEtb: 250,
     href: "/academy/remedial",
     image: packageImages.remedial,
@@ -209,7 +209,7 @@ export const academyPackages: AcademyPackage[] = [
   },
   {
     id: "ece-y3-sem-1",
-    name: "ECE Year 3 — Semester 1",
+    name: "ECE Year 3: Semester 1",
     shortName: "ECE S1",
     description:
       "Senior Electrical and Computer Engineering, Semester 1. Course material written for your department, not generic engineering notes. Each course carries its own question bank, flashcards, and practice exams with solutions. More departments join this track over time.",
@@ -225,7 +225,7 @@ export const academyPackages: AcademyPackage[] = [
   },
   {
     id: "ece-y3-sem-2",
-    name: "ECE Year 3 — Semester 2",
+    name: "ECE Year 3: Semester 2",
     shortName: "ECE S2",
     description:
       "Senior Electrical and Computer Engineering, Semester 2. Same department standard as Semester 1: course-level notes, chapter questions, flashcards, and solved practice exams for every listed course.",

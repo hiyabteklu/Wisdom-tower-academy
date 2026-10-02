@@ -7,7 +7,7 @@ type Props = {
   name: string;
   program: string;
   duration: string;
-  /** Optional real audio URL — leave empty until you upload */
+  /** Optional real audio URL: leave empty until you upload */
   audioSrc?: string;
   accent?: string;
 };

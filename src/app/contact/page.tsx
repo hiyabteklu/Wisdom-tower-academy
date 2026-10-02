@@ -83,7 +83,7 @@ export default function ContactPage() {
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Contact Academy</h1>
           <p className="text-wisdom-muted text-lg">
-            Questions about pathways, packages, or your account? Send a message — we aim to reply
+            Questions about pathways, packages, or your account? Send a message; we aim to reply
             within 24 hours.
           </p>
         </div>

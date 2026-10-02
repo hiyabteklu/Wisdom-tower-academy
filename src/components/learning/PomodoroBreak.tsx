@@ -62,7 +62,7 @@ export default function PomodoroBreak({
           </h2>
           <p className="mt-2 text-sm text-white/60">
             You’ve been reading for about {sessionMinutes} minutes. Rest your eyes,
-            stretch, drink water — then come back stronger.
+            stretch, drink water: then come back stronger.
           </p>
         </div>
 
@@ -71,7 +71,7 @@ export default function PomodoroBreak({
             “{quote.text}”
           </p>
           <footer className="mt-3 text-center text-xs font-semibold text-amber-200/80">
-            — {quote.author}
+           : {quote.author}
           </footer>
         </blockquote>
 

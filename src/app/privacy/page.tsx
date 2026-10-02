@@ -339,7 +339,7 @@ export default function PrivacyPage() {
                 If you have inquiries concerning this policy or wish to exercise your data subject prerogatives, please submit a formal request:
               </p>
               <div className="rounded-xl border border-white/10 bg-wisdom-card p-4 space-y-1 font-mono text-xs text-slate-300">
-                <p className="text-white font-semibold font-sans text-sm mb-1">Wisdom Tower Academy — Data Protection Officer</p>
+                <p className="text-white font-semibold font-sans text-sm mb-1">Wisdom Tower Academy · Data Protection Officer</p>
                 <p>Addis Ababa, Ethiopia</p>
                 <p>Email: <a href="mailto:support@wisdomtower.tech" className="text-cyan-300 hover:underline">support@wisdomtower.tech</a></p>
                 <p>Official Channel: <a href="https://t.me/wisdom_tower2" target="_blank" rel="noopener noreferrer" className="text-amber-300 hover:underline">@wisdom_tower2</a></p>

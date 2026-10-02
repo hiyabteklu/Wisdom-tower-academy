@@ -444,23 +444,23 @@ export default function UsersPanel({ adminEmail = "admin@wisdomtower.tech" }: Pr
               </div>
               <div>
                 <p className="text-wisdom-muted">Email</p>
-                <p className="font-semibold text-white mt-0.5 truncate">{inspectStudent.email || "—"}</p>
+                <p className="font-semibold text-white mt-0.5 truncate">{inspectStudent.email || "-"}</p>
               </div>
               <div>
                 <p className="text-wisdom-muted">Phone</p>
-                <p className="font-semibold text-white mt-0.5">{inspectStudent.phone || "—"}</p>
+                <p className="font-semibold text-white mt-0.5">{inspectStudent.phone || "-"}</p>
               </div>
               <div>
                 <p className="text-wisdom-muted">School</p>
-                <p className="font-semibold text-white mt-0.5">{inspectStudent.school_name || "—"}</p>
+                <p className="font-semibold text-white mt-0.5">{inspectStudent.school_name || "-"}</p>
               </div>
               <div>
                 <p className="text-wisdom-muted">Stream</p>
-                <p className="font-semibold text-white mt-0.5">{inspectStudent.stream || "—"}</p>
+                <p className="font-semibold text-white mt-0.5">{inspectStudent.stream || "-"}</p>
               </div>
               <div>
                 <p className="text-wisdom-muted">Town / Region</p>
-                <p className="font-semibold text-white mt-0.5">{inspectStudent.town_region || "—"}</p>
+                <p className="font-semibold text-white mt-0.5">{inspectStudent.town_region || "-"}</p>
               </div>
             </div>
 

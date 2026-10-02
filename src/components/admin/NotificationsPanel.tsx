@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from "react";
 import {
   Bell,
   Send,
-  Sparkles,
   Smartphone,
   CheckCircle2,
   AlertCircle,
@@ -51,10 +50,10 @@ const PRESETS: Preset[] = [
     url: "/learning",
   },
   {
-    label: "Free Access Active",
+    label: "Full Access Active",
     type: "general",
     title: "Full Scholar Access is Active",
-    body: "Explore all learning tracks, solved questions, and exams free of charge with your account.",
+    body: "Explore all learning tracks, solved questions, and exams with your account.",
     url: "/packages",
   },
 ];
@@ -222,7 +221,7 @@ export default function NotificationsPanel() {
       {/* Quick Presets */}
       <div>
         <p className="text-xs font-bold uppercase tracking-wider text-wisdom-muted mb-3 flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          <Bell className="w-3.5 h-3.5 text-cyan-400" />
           <span>Quick Broadcast Presets</span>
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import BrandLoader from "@/components/BrandLoader";
 
-/** Dedicated sign-out route — works from app menu and deep links */
+/** Dedicated sign-out route: works from app menu and deep links */
 export default function LogoutPage() {
   const router = useRouter();
   const [msg, setMsg] = useState("Signing out…");

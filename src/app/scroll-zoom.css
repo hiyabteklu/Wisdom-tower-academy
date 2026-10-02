@@ -1,4 +1,4 @@
-/* Global scroll zoom — transform + opacity only (smooth, low cost)
+/* Global scroll zoom - transform + opacity only (smooth, low cost)
  *
  * CRITICAL: base state is ALWAYS fully visible.
  * We only dim items when the scroll system is active (html.sz-smooth)
@@ -10,7 +10,7 @@ html.sz-smooth {
   scroll-behavior: smooth;
 }
 
-/* Visible by default — progressive enhancement only */
+/* Visible by default - progressive enhancement only */
 .sz-item {
   opacity: 1;
   transform: none;
@@ -92,7 +92,7 @@ html.sz-smooth:not(.wta-native-app) main section.sz-item:not(.sz-in) {
 }
 
 /*
- * Android WebView: hard force — no opacity traps, no transforms.
+ * Android WebView: hard force - no opacity traps, no transforms.
  */
 html.wta-native-app .sz-item,
 body.wta-native-app .sz-item,

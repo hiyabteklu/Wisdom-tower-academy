@@ -24,7 +24,6 @@ import {
   Send,
   Settings2,
   ShieldCheck,
-  Sparkles,
 } from "lucide-react";
 
 interface Inquiry {
@@ -192,12 +191,11 @@ export default function AccountPage() {
               schoolName={profile?.school_name}
               region={profile?.town_region}
               hasCrown={profileCompleted}
-              autoFlipOnMount={true}
             />
           </div>
 
           {/* Floating Glassmorphic Pill Control Bar */}
-          <div className="w-full max-w-2xl mx-auto rounded-3xl sm:rounded-full border border-white/10 bg-[#0b1329]/75 backdrop-blur-2xl p-3 sm:p-3.5 shadow-[0_12px_40px_rgba(0,0,0,0.35)] flex flex-wrap items-center justify-between gap-3">
+          <div className="w-full max-w-2xl mx-auto rounded-3xl sm:rounded-full border border-white/10 bg-wisdom-card/80 backdrop-blur-2xl p-2.5 sm:p-3 shadow-lg flex flex-wrap items-center justify-between gap-3">
             {/* Folio Pill with Circular Copy Button */}
             <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/10">
               <span className="text-[11px] text-slate-400 font-medium">Folio</span>
@@ -223,7 +221,7 @@ export default function AccountPage() {
             <div className="flex flex-wrap items-center gap-2">
               <Link
                 href="/learning"
-                className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 rounded-full text-xs font-semibold text-white bg-gradient-to-r from-cyan-500 to-sky-600 hover:from-cyan-400 hover:to-sky-500 shadow-[0_4px_18px_rgba(6,182,212,0.3)] hover:shadow-[0_6px_24px_rgba(6,182,212,0.45)] transition-all duration-200 active:scale-95"
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-xs font-bold text-slate-950 bg-cyan-400 hover:bg-cyan-300 shadow-sm transition-all duration-200 active:scale-95"
               >
                 <BookOpen className="w-3.5 h-3.5" />
                 <span>Learning Hub</span>

@@ -517,7 +517,7 @@ export default function FloorPlayView({
         ) : (
           <div className="mb-6 p-2.5 rounded-2xl border border-rose-500/30 bg-rose-950/20 text-center text-xs font-mono text-rose-300 font-bold flex items-center justify-center gap-2">
             <Shield className="w-4 h-4 text-rose-400" />
-            <span>Boss Floor Active — Tactical Power-Ups Suppressed</span>
+            <span>Boss Floor Active: Tactical Power-Ups Suppressed</span>
           </div>
         )}
 

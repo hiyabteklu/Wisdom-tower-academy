@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Bell, CheckCircle2, Clock, XCircle, BookOpen, Sparkles } from "lucide-react";
+import { Bell, CheckCircle2, Clock, XCircle, BookOpen } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { listMyOrders, type ManualOrder } from "@/lib/orders";
 import { requestNotificationPermissionGently } from "@/lib/fcm-client";
@@ -31,7 +31,7 @@ function orderToNotice(o: ManualOrder): Notice | null {
     return {
       id: `ord-${o.id}-wait`,
       title: "Payment pending",
-      body: `${o.packageName || o.packageId} — waiting for verification.`,
+      body: `${o.packageName || o.packageId}: waiting for verification.`,
       href: "/orders",
       createdAt: o.createdAt,
       kind: "pending",
@@ -228,7 +228,7 @@ export default function NotificationBell({
                   n.kind === "material"
                     ? BookOpen
                     : n.kind === "admin"
-                      ? Sparkles
+                      ? Bell
                       : n.kind === "verified"
                         ? CheckCircle2
                         : n.kind === "rejected"

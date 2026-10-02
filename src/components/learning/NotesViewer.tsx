@@ -56,7 +56,7 @@ export default function NotesViewer({ body, resourceId, onProgress }: Props) {
     };
   }, [resourceId]);
 
-  // Progress tracking only — never resets scroll
+  // Progress tracking only: never resets scroll
   useEffect(() => {
     reported.current = false;
 

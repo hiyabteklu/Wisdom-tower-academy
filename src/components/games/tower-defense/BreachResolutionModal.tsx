@@ -43,7 +43,7 @@ export default function BreachResolutionModal({
           </div>
           <div>
             <h2 className="text-xl font-display font-extrabold text-white tracking-tight">
-              {isTimeout ? "Defense Timeout — Node Breached" : "Incorrect Tactical Computation"}
+              {isTimeout ? "Defense Timeout: Node Breached" : "Incorrect Tactical Computation"}
             </h2>
             <p className="text-xs text-rose-300/90 font-mono">
               Tower Integrity: -1 HP | Remaining Core Health:{" "}

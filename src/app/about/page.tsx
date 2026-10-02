@@ -21,7 +21,7 @@ import {
 export const metadata: Metadata = {
   title: "About Us · Wisdom Tower Academy",
   description:
-    "Discover the vision, engineering, and pedagogical philosophy powering Wisdom Tower Academy — elevating Ethiopian e-learning into a world-class, 21st-century academic sphere.",
+    "Discover the vision, engineering, and pedagogical philosophy powering Wisdom Tower Academy, elevating Ethiopian e-learning into a world-class, 21st-century academic sphere.",
 };
 
 const PILLARS = [

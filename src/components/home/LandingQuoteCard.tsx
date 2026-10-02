@@ -53,7 +53,7 @@ export default function LandingQuoteCard() {
               <blockquote className="font-display text-lg sm:text-xl md:text-2xl font-semibold text-white leading-snug tracking-tight">
                 &ldquo;{q.text}&rdquo;
               </blockquote>
-              <p className="mt-4 text-sm font-medium text-amber-200/90">— {q.author}</p>
+              <p className="mt-4 text-sm font-medium text-amber-200/90">- {q.author}</p>
             </div>
           </div>
         </div>

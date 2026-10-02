@@ -48,7 +48,7 @@ export default function ComingSoonModal({ open, onClose, hubName }: Props) {
       aria-modal="true"
       aria-labelledby="coming-soon-title"
     >
-      {/* Dim only — no heavy blur that fights scroll position */}
+      {/* Dim only: no heavy blur that fights scroll position */}
       <button
         type="button"
         className="absolute inset-0 bg-black/60"
@@ -95,7 +95,7 @@ export default function ComingSoonModal({ open, onClose, hubName }: Props) {
             onClick={onClose}
             className="btn-accent min-h-[44px] w-full sm:w-auto px-6 py-2.5 text-sm"
           >
-            Got it — check back later
+            Got it: check back later
           </button>
         </div>
       </div>

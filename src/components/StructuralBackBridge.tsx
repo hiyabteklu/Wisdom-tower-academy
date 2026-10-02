@@ -14,7 +14,7 @@ declare global {
 
 /**
  * Exposes structural back for the Android WebView and hard-refresh helper.
- * Back goes up one site layer — never chronological browser history.
+ * Back goes up one site layer: never chronological browser history.
  */
 export default function StructuralBackBridge() {
   const pathname = usePathname();
@@ -28,7 +28,7 @@ export default function StructuralBackBridge() {
         const path = pathname || window.location.pathname || "/";
         const parent = structuralParent(path);
         if (!parent || parent === path) {
-          // At root — let the app exit
+          // At root: let the app exit
           return false;
         }
         router.push(parent);

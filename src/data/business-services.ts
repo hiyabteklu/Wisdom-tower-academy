@@ -14,7 +14,7 @@ export interface BusinessService {
   icon: "megaphone" | "share" | "palette" | "globe" | "search" | "pen" | "camera" | "headset" | "chart";
 }
 
-/** High-level packages shown on Digital — 4 cards only */
+/** High-level packages shown on Digital: 4 cards only */
 export interface BusinessPackage {
   id: string;
   name: string;
@@ -72,7 +72,7 @@ export const businessServices: BusinessService[] = [
     id: "graphic-design-retainer",
     name: "Graphic design retainer",
     category: "Creative",
-    description: "Ongoing brand assets — posts, stories, ads, and light print support.",
+    description: "Ongoing brand assets: posts, stories, ads, and light print support.",
     billing: "monthly",
     priceFromEtb: 7000,
     features: ["Fixed monthly credits", "Brand-consistent templates", "Revision rounds", "Source files"],
@@ -102,7 +102,7 @@ export const businessServices: BusinessService[] = [
     id: "website-build",
     name: "Website development",
     category: "Web",
-    description: "New site or redesign — structure, design, and launch with your team.",
+    description: "New site or redesign: structure, design, and launch with your team.",
     billing: "project",
     priceFromEtb: 45000,
     features: ["Scope workshop", "Responsive build", "CMS handoff", "Launch support"],
@@ -122,7 +122,7 @@ export const businessServices: BusinessService[] = [
     id: "virtual-ops",
     name: "Ops & admin support",
     category: "Operations",
-    description: "Inbox triage, calendar, light CRM hygiene — coordinated with your marketing stack.",
+    description: "Inbox triage, calendar, light CRM hygiene: coordinated with your marketing stack.",
     billing: "monthly",
     priceFromEtb: 5500,
     features: ["Shared inbox rules", "Weekly status", "Handoff notes", "Escalation path"],

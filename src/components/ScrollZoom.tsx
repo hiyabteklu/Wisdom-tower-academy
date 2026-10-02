@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { isAndroidWebView } from "@/lib/native-app";
 
 /**
- * Site-wide scroll zoom — GPU-friendly: transform + opacity only.
+ * Site-wide scroll zoom: GPU-friendly: transform + opacity only.
  * Disabled inside the native app WebView (wta-native-app) and respects reduced-motion.
  * ONLY targets explicit [data-scroll-zoom] elements to prevent any React hydration mismatches.
  */

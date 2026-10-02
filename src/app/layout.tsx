@@ -17,7 +17,7 @@ import StructuralBackBridge from "@/components/StructuralBackBridge";
 export const metadata: Metadata = {
   title: "Wisdom Tower Academy | Grades 9–12, Freshman, UAT, GAT, COC & Exit Exam",
   description:
-    "Wisdom Tower Academy — pathways for Grades 9–12, Freshman, UAT, GAT, COC and Exit Exam. Learn, practice, and unlock packages.",
+    "Wisdom Tower Academy: pathways for Grades 9-12, Freshman, UAT, GAT, COC and Exit Exam. Learn, practice, and unlock packages.",
   keywords: [
     "Wisdom Tower Academy",
     "Ethiopia education",

@@ -2,7 +2,7 @@
  * CRITICAL: Do NOT put overflow-x: auto on .katex-display.
  * Even short equations that fit the screen become nested scrollports on
  * mobile WebView/Chrome, and a touch that starts on them freezes page scroll.
- * KaTeX already uses white-space: nowrap; long lines may extend slightly —
+ * KaTeX already uses white-space: nowrap; long lines may extend slightly -
  * that is better than trapping vertical gestures.
  *
  * Tables and pre/code are the only intentional horizontal scrollers.

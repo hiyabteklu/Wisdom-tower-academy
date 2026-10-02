@@ -471,7 +471,7 @@ export default function Header() {
                     onClick={() => setIsOpen(false)}
                     className="btn-accent block text-center w-full py-2.5 text-sm font-extrabold shadow-md"
                   >
-                    Get Started Free
+                    Get Started
                   </Link>
                 </div>
               )}

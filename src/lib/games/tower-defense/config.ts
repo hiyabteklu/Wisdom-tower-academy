@@ -53,11 +53,11 @@ export const BASE_POINTS = {
 };
 
 export const WAVE_CONFIGURATIONS: WaveConfig[] = [
-  { waveNumber: 1, enemyCount: 3, hasBoss: false, timePerQuestionSec: 25, description: "Wave 1: Vanguard Scouts — Standard Exam Drill" },
-  { waveNumber: 2, enemyCount: 4, hasBoss: false, timePerQuestionSec: 24, description: "Wave 2: Accelerated Incursion — Rapid Problem Solving" },
-  { waveNumber: 3, enemyCount: 5, hasBoss: true,  timePerQuestionSec: 22, description: "Wave 3: Midterm Siege — Armored Question Node Encounter" },
-  { waveNumber: 4, enemyCount: 6, hasBoss: false, timePerQuestionSec: 20, description: "Wave 4: Cumulative Swarm — Advanced Analytical Proofs" },
-  { waveNumber: 5, enemyCount: 7, hasBoss: true,  timePerQuestionSec: 18, description: "Wave 5: National Exam Inquisitor — Final Synthesis Boss" },
+  { waveNumber: 1, enemyCount: 3, hasBoss: false, timePerQuestionSec: 25, description: "Wave 1: Vanguard Scouts: Standard Exam Drill" },
+  { waveNumber: 2, enemyCount: 4, hasBoss: false, timePerQuestionSec: 24, description: "Wave 2: Accelerated Incursion: Rapid Problem Solving" },
+  { waveNumber: 3, enemyCount: 5, hasBoss: true,  timePerQuestionSec: 22, description: "Wave 3: Midterm Siege: Armored Question Node Encounter" },
+  { waveNumber: 4, enemyCount: 6, hasBoss: false, timePerQuestionSec: 20, description: "Wave 4: Cumulative Swarm: Advanced Analytical Proofs" },
+  { waveNumber: 5, enemyCount: 7, hasBoss: true,  timePerQuestionSec: 18, description: "Wave 5: National Exam Inquisitor: Final Synthesis Boss" },
 ];
 
 export function getWaveConfig(waveNum: number): WaveConfig {
@@ -70,7 +70,7 @@ export function getWaveConfig(waveNum: number): WaveConfig {
     enemyCount: Math.min(10, 6 + Math.floor(waveNum / 2)),
     hasBoss: waveNum % 2 === 1,
     timePerQuestionSec: Math.max(14, 18 - Math.floor((waveNum - 5) / 2)),
-    description: `Wave ${waveNum}: Infinite Defense Threshold — Maximum Academic Pressure`,
+    description: `Wave ${waveNum}: Infinite Defense Threshold: Maximum Academic Pressure`,
   };
 }
 

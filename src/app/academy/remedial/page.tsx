@@ -28,7 +28,7 @@ export default function RemedialPage() {
             <span className="text-amber-400">Remedial</span> subjects
           </h1>
           <p className="text-wisdom-muted text-lg max-w-2xl leading-relaxed">
-            {remedialSubjects.length} core subjects with the same learning hubs used everywhere —
+            {remedialSubjects.length} core subjects with the same learning hubs used everywhere:
             books, short notes, flashcards, question banks and exams.
           </p>
         </div>

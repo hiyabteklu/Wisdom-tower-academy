@@ -14,7 +14,7 @@ import {
 } from "@/lib/focus-timer";
 
 /**
- * Floating bar while a focus session is active — survives leaving My Learning.
+ * Floating bar while a focus session is active: survives leaving My Learning.
  */
 export default function GlobalFocusBar() {
   const pathname = usePathname() || "/";

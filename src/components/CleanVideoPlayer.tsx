@@ -4,9 +4,9 @@ import { useCallback, useRef, useState } from "react";
 import { Play, Pause, Maximize2, Volume2, VolumeX } from "lucide-react";
 
 type Props = {
-  /** Direct file URL (mp4/webm) — fully custom player, no YouTube branding */
+  /** Direct file URL (mp4/webm): fully custom player, no YouTube branding */
   src?: string;
-  /** YouTube video id — custom cover until play; then YouTube iframe (their UI after click) */
+  /** YouTube video id: custom cover until play; then YouTube iframe (their UI after click) */
   youtubeId?: string;
   /** Poster / cover image URL */
   poster?: string;
@@ -68,7 +68,7 @@ export default function CleanVideoPlayer({
     }
   }, []);
 
-  // ——— Self-hosted / direct file (fully clean) ———
+  // --- Self-hosted / direct file (fully clean) ---
   if (src) {
     return (
       <div className={`relative w-full aspect-video bg-black group ${className}`}>
@@ -143,7 +143,7 @@ export default function CleanVideoPlayer({
     );
   }
 
-  // ——— YouTube with custom facade (clean until click) ———
+  // --- YouTube with custom facade (clean until click) ---
   if (youtubeId) {
     const thumb =
       poster || `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`;
@@ -187,7 +187,7 @@ export default function CleanVideoPlayer({
     );
   }
 
-  // ——— Empty placeholder ———
+  // --- Empty placeholder ---
   return (
     <div
       className={`relative w-full aspect-video flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-wisdom-navy via-wisdom-dark to-black/80 ${className}`}

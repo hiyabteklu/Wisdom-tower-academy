@@ -1,5 +1,5 @@
 /**
- * Wisdom Tower Academy — Student Classification & Academic Knowledge Base Engine
+ * Wisdom Tower Academy: Student Classification & Academic Knowledge Base Engine
  * 
  * Auto-reads a student's registered curriculum from their profile, user metadata,
  * verified orders, and real learning progress records.
@@ -160,7 +160,7 @@ function buildEceSubjects(): RealSubjectInfo[] {
 }
 
 /**
- * Institutional Academic Knowledge Base — strictly built from REAL Academy data
+ * Institutional Academic Knowledge Base: strictly built from REAL Academy data
  */
 export const ACADEMIC_KNOWLEDGE_BASE: Record<string, TrackBenchmark> = {
   "freshman-natural": {
@@ -873,7 +873,7 @@ export function computeStudentAnalytics(
     immediatelyStopSignals.push({
       id: "signal-healthy-habits",
       severity: "Warning",
-      signal: "Study Cadence Verified — No Destructive Anomalies",
+      signal: "Study Cadence Verified: No Destructive Anomalies",
       observedData: `Current verified metrics: ${totalStudyHours}h logged, ${readingSpeedWpm} WPM velocity, and ${focusRatioPct}% focus ratio with ${currentStreakDays}-day streak. Data shows consistent learning discipline.`,
       immediateAction: "Maintain your active recall cycle and schedule a comprehensive chapter mock exam every weekend.",
     });
@@ -893,7 +893,7 @@ export function computeStudentAnalytics(
     complimentOrCaution:
       questionAccuracyPct >= 80
         ? `Your accuracy rate of ${questionAccuracyPct}% places you in the ${masteryTier}. Maintain this exact study discipline.`
-        : `Your accuracy rate is at ${questionAccuracyPct}%. Avoid rushing through question stems — read the final question sentence twice before selecting an answer.`,
+        : `Your accuracy rate is at ${questionAccuracyPct}%. Avoid rushing through question stems: read the final question sentence twice before selecting an answer.`,
   };
 
   return {

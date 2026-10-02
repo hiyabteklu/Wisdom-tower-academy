@@ -24,7 +24,7 @@ export default function QuizDemoPage() {
           <p className="text-wisdom-muted text-sm leading-relaxed max-w-lg">
             After you check an answer you get two options:{" "}
             <span className="text-emerald-300/90 font-medium">Solution</span> (our premade
-            write-up — free, no AI) and{" "}
+            write-up without AI) and{" "}
             <span className="text-cyan-300/90 font-medium">Explain with AI</span> (optional extra
             tutoring when you want more).
           </p>

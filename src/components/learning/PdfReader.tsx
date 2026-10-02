@@ -126,7 +126,7 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
 
     (async () => {
       try {
-        // 1) HEAD — cheap size probe (works in desktop browsers)
+        // 1) HEAD: cheap size probe (works in desktop browsers)
         let res = await fetch(url, {
           method: "HEAD",
           cache: "no-store",
@@ -146,7 +146,7 @@ export default function PdfReader({ url, title, onOpened, onPageChange }: Props)
           }
         }
 
-        // 2) Range GET — more reliable in Android WebView; only 1 byte
+        // 2) Range GET: more reliable in Android WebView; only 1 byte
         res = await fetch(url, {
           method: "GET",
           headers: { Range: "bytes=0-0" },

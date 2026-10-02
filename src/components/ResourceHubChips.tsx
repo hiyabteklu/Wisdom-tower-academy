@@ -29,7 +29,7 @@ type Props = {
 
 /**
  * Polished hub switcher (Books, Notes, Flashcards, …).
- * Larger tap targets + icons — not tiny text boxes.
+ * Larger tap targets + icons: not tiny text boxes.
  */
 export default function ResourceHubChips({ basePath, activeId }: Props) {
   const base = basePath.replace(/\/$/, "");

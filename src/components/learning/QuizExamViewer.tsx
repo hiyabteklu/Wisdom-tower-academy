@@ -201,7 +201,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
         }),
       });
       const data = await res.json();
-      setAi(data.explanation || data.error || "—");
+      setAi(data.explanation || data.error || "-");
     } catch { setAi("AI unavailable"); }
     setAiLoading(false);
   }
@@ -221,7 +221,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
         }),
       });
       const data = await res.json();
-      setReviewAi((m) => ({ ...m, [qi]: data.explanation || data.error || "—" }));
+      setReviewAi((m) => ({ ...m, [qi]: data.explanation || data.error || "-" }));
     } catch { setReviewAi((m) => ({ ...m, [qi]: "AI unavailable" })); }
     setReviewAiLoading((m) => ({ ...m, [qi]: false }));
   }
@@ -759,7 +759,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
           {reviewQuestions.length === 0 ? (
             <div className="rounded-xl border border-white/10 bg-wisdom-card p-6 text-center text-wisdom-muted text-xs sm:text-sm">
               {reviewFilter === "missed"
-                ? "No missed questions — perfect score on this set!"
+                ? "No missed questions: perfect score on this set!"
                 : reviewFilter === "flagged"
                 ? "No flagged questions in this session."
                 : "No questions to review."}

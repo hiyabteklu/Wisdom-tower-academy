@@ -42,33 +42,29 @@ function PackageCatalogCard({ pkg }: { pkg: AcademyPackage }) {
       </div>
 
       <div className="p-4 sm:p-5 flex flex-col flex-1 border-t border-white/8 space-y-3">
-        {/* Title with price / free badge next to title */}
+        {/* Title with price */}
         <div className="flex items-baseline justify-between gap-3">
           <h2 className="font-display text-lg font-bold text-white leading-snug truncate">
             {pkg.name}
           </h2>
-          {IS_FREE_MODE ? (
-            <span className="shrink-0 text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-400/30">
-              Free Access
-            </span>
-          ) : (
-            <span className="shrink-0 font-display font-black text-amber-300 text-base">
+          {!IS_FREE_MODE && (
+            <span className="shrink-0 font-display font-bold text-cyan-300 text-base">
               {formatEtb(pkg.priceEtb)}
             </span>
           )}
         </div>
 
-        {/* Two clean buttons side by side (mobile view and desktop) */}
+        {/* Two clean buttons side by side */}
         <div className="grid grid-cols-2 gap-2 pt-1">
           <button
             type="button"
             onClick={() => setExpanded(!expanded)}
-            className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold border border-white/15 bg-white/5 text-cyan-300 hover:bg-white/10 hover:border-cyan-400/40 transition-colors cursor-pointer"
+            className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-semibold border border-white/10 bg-white/[0.05] text-slate-200 hover:bg-white/[0.1] hover:border-white/20 transition-all cursor-pointer"
           >
             <span>What&apos;s included</span>
             <ChevronDown
               className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                expanded ? "rotate-180 text-cyan-400" : ""
+                expanded ? "rotate-180 text-cyan-300" : ""
               }`}
             />
           </button>
@@ -77,7 +73,7 @@ function PackageCatalogCard({ pkg }: { pkg: AcademyPackage }) {
             owned ? (
               <Link
                 href={pkg.href || "/learning"}
-                className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-emerald-400 hover:bg-emerald-300 text-slate-950 shadow-md transition-colors text-center"
+                className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-cyan-400 hover:bg-cyan-300 text-slate-950 shadow-sm transition-all text-center active:scale-[0.98]"
               >
                 <BookOpen className="w-3.5 h-3.5" />
                 <span>Start Learning</span>
@@ -85,25 +81,25 @@ function PackageCatalogCard({ pkg }: { pkg: AcademyPackage }) {
             ) : (
               <Link
                 href={`/login?next=${encodeURIComponent(pkg.href || "/packages")}`}
-                className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-cyan-400 hover:bg-cyan-300 text-slate-950 shadow-md transition-colors text-center"
+                className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-cyan-400 hover:bg-cyan-300 text-slate-950 shadow-sm transition-all text-center active:scale-[0.98]"
               >
                 <LogIn className="w-3.5 h-3.5" />
-                <span>Sign In Free</span>
+                <span>Sign In</span>
               </Link>
             )
           ) : owned ? (
             <Link
               href={pkg.href || "/learning"}
-              className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 hover:bg-emerald-500/30 transition-colors text-center"
+              className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-semibold bg-white/[0.08] text-white border border-white/15 hover:bg-white/[0.14] transition-all text-center"
             >
-              <Check className="w-3.5 h-3.5" />
+              <Check className="w-3.5 h-3.5 text-cyan-400" />
               <span>Owned</span>
             </Link>
           ) : (
             <button
               type="button"
               onClick={handlePurchase}
-              className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-md transition-colors cursor-pointer"
+              className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-cyan-400 hover:bg-cyan-300 text-slate-950 shadow-sm transition-all cursor-pointer active:scale-[0.98]"
             >
               <span>Purchase</span>
             </button>
@@ -195,7 +191,7 @@ export default function PackagesCatalog() {
       <div className="mt-12 rounded-2xl border border-white/10 bg-wisdom-dark/50 p-5 flex gap-3 max-w-2xl mx-auto">
         <Shield className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
         <p className="text-sm text-wisdom-muted leading-relaxed">
-          After payment, submit your transaction ID. Access appears in{" "}
+          Submit your transaction ID to confirm enrollment. Access appears in{" "}
           <Link href="/learning" className="text-cyan-400 hover:underline">
             My Learning
           </Link>{" "}

@@ -25,7 +25,7 @@ const stages = [
     accent: "text-amber-300",
     border: "border-amber-400/40",
     bg: "from-amber-500/20 to-orange-500/5",
-    body: "Courses, modules, or learning tools that help students in our community — secondary, freshman, entrance, and professional tracks.",
+    body: "Courses, modules, or learning tools that help students in our community: secondary, freshman, entrance, and professional tracks.",
     points: [
       "Premade courses ready for students",
       "Packages for business, tech, or personal development",
@@ -39,7 +39,7 @@ const stages = [
     accent: "text-sky-300",
     border: "border-sky-400/40",
     bg: "from-sky-500/20 to-cyan-500/5",
-    body: "Every proposal is checked against community standards — clarity, accuracy, and usefulness for Ethiopian learners first.",
+    body: "Every proposal is checked against community standards: clarity, accuracy, and usefulness for Ethiopian learners first.",
     points: [
       "Alignment with our six academic branches",
       "Quality of materials and teaching design",
@@ -53,7 +53,7 @@ const stages = [
     accent: "text-emerald-300",
     border: "border-emerald-400/40",
     bg: "from-emerald-500/20 to-teal-500/5",
-    body: "From co-branded modules to hosted content on Academy pathways — we structure collaboration so both sides know the scope.",
+    body: "From co-branded modules to hosted content on Academy pathways: we structure collaboration so both sides know the scope.",
     points: [
       "Clear ownership and credit",
       "Shared or hosted delivery options",
@@ -67,7 +67,7 @@ const stages = [
     accent: "text-amber-200",
     border: "border-amber-400/35",
     bg: "from-amber-500/15 to-transparent",
-    body: "Bring premade courses, cohort ideas, or institutional packages. Tell us who you serve, what you’ve already built, and how it could sit beside our pathways. Incomplete pitches are fine — clarity beats polish.",
+    body: "Bring premade courses, cohort ideas, or institutional packages. Tell us who you serve, what you’ve already built, and how it could sit beside our pathways. Incomplete pitches are fine: clarity beats polish.",
     points: [
       "Student-first content",
       "Business & tech upskilling",
@@ -109,7 +109,7 @@ export default function PartnershipPath() {
 
   return (
     <div className="rounded-3xl border border-white/12 bg-wisdom-card overflow-hidden shadow-card-3d">
-      {/* 16:9 cover — click to open path */}
+      {/* 16:9 cover: click to open path */}
       <button
         type="button"
         onClick={() => setStarted(true)}
@@ -131,7 +131,7 @@ export default function PartnershipPath() {
             Open for partnership &amp; collaboration
           </h2>
           <p className="mt-3 text-sm text-white/80 max-w-md">
-            {started ? "Path open below — follow the steps" : "Tap to explore the partnership path"}
+            {started ? "Path open below: follow the steps" : "Tap to explore the partnership path"}
           </p>
           {!started && (
             <span className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 text-wisdom-dark text-sm font-bold shadow-lg shadow-amber-500/30">
@@ -145,7 +145,7 @@ export default function PartnershipPath() {
       {started && (
         <div className="p-5 sm:p-7 md:p-8 border-t border-white/10">
           <p className="text-sm text-wisdom-muted mb-6 max-w-2xl leading-relaxed">
-            Educators, course creators, and institutions — we review for fit with our community, not
+            Educators, course creators, and institutions: we review for fit with our community, not
             volume of pitch decks. Read each step in order.
           </p>
 

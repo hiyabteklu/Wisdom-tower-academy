@@ -87,7 +87,7 @@ export default function QuizResultModal({
   const tier = useMemo(() => {
     if (pct >= 90) {
       return {
-        label: "Mastery Level 🌟",
+        label: "Mastery Level",
         tone: "text-emerald-400",
         border: "border-emerald-400/40",
         bg: "from-emerald-500/20 via-teal-500/10 to-transparent",
@@ -97,7 +97,7 @@ export default function QuizResultModal({
     }
     if (pct >= 75) {
       return {
-        label: "Strong Performance 🎯",
+        label: "Strong Performance",
         tone: "text-cyan-400",
         border: "border-cyan-400/40",
         bg: "from-cyan-500/20 via-blue-500/10 to-transparent",
@@ -107,7 +107,7 @@ export default function QuizResultModal({
     }
     if (pct >= 50) {
       return {
-        label: "Good Progress 📚",
+        label: "Good Progress",
         tone: "text-amber-400",
         border: "border-amber-400/40",
         bg: "from-amber-500/20 via-orange-500/10 to-transparent",
@@ -116,7 +116,7 @@ export default function QuizResultModal({
       };
     }
     return {
-      label: "Needs Reinforcement 💡",
+      label: "Needs Reinforcement",
       tone: "text-rose-400",
       border: "border-rose-400/40",
       bg: "from-rose-500/20 via-red-500/10 to-transparent",

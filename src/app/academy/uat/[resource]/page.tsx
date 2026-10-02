@@ -58,13 +58,13 @@ export default async function UatResourcePage({
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
                 href="/academy/uat"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/15 text-sm font-medium hover:border-emerald-400/40 hover:text-emerald-400 transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/15 text-sm font-semibold hover:border-cyan-400/40 hover:text-cyan-300 transition-colors"
               >
                 All UAT hubs
               </Link>
               <Link
                 href="/contact"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 text-wisdom-dark text-sm font-semibold hover:bg-emerald-400 transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-400 text-slate-950 text-sm font-bold hover:bg-cyan-300 shadow-sm transition-all active:scale-[0.98]"
               >
                 <BookOpen className="w-4 h-4" />
                 Request materials
