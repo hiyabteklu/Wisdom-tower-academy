@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
   Lightbulb,
   Trophy,
@@ -14,7 +14,13 @@ import {
   RotateCcw,
   ListChecks,
   AlertTriangle,
-  Sparkles,
+  Sigma,
+  Volume2,
+  VolumeX,
+  EyeOff,
+  ChevronLeft,
+  ChevronRight,
+  ZoomIn,
 } from "lucide-react";
 import RichContent from "@/components/learning/RichContent";
 import { saveProgress, saveExamAttempt } from "@/lib/contentWithOffline";
@@ -23,6 +29,7 @@ import { triggerCorrectConfetti } from "@/lib/confetti";
 import ScientificCalculator from "@/components/learning/ScientificCalculator";
 import QuizResultModal from "@/components/learning/QuizResultModal";
 import AnswerCheckingModeModal from "@/components/learning/AnswerCheckingModeModal";
+import FormulasDrawer from "@/components/learning/FormulasDrawer";
 
 type Q = { prompt: string; choices?: string[]; correct?: number; solution?: string };
 type Props = {
@@ -32,7 +39,8 @@ type Props = {
   title?: string;
   trackerScopeId?: string;
 };
-type ReviewFilter = "all" | "missed";
+type ReviewFilter = "all" | "missed" | "flagged";
+type FontSize = "sm" | "base" | "lg";
 
 export default function QuizExamViewer({ meta, isExam, resourceId, title, trackerScopeId }: Props) {
   const questions = useMemo(() => (Array.isArray(meta.questions) ? meta.questions : []) as Q[], [meta.questions]);
@@ -56,21 +64,82 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
   const [feedbackMode, setFeedbackMode] = useState<"immediate" | "completion">("immediate");
   const [wrongShakeOption, setWrongShakeOption] = useState<{ idx: number; choice: number } | null>(null);
 
-  // New states for interactive enhancements
+  // Native WebView Enhancements & Tools
   const [calcOpen, setCalcOpen] = useState(false);
+  const [formulaOpen, setFormulaOpen] = useState(false);
   const [resultModalOpen, setResultModalOpen] = useState(false);
-  // Show answer checking popup when user opens Question Bank before starting
   const [modeModalOpen, setModeModalOpen] = useState(!isExam);
+  const [fontSize, setFontSize] = useState<FontSize>("base");
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [eliminated, setEliminated] = useState<Record<number, Record<number, boolean>>>({});
 
+  // Touch Swipe Refs
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+
+  // Restore user preferences
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("wta_qb_feedback_mode");
-      if (saved === "completion" || saved === "immediate") {
-        setFeedbackMode(saved);
+      const savedMode = localStorage.getItem("wta_qb_feedback_mode");
+      if (savedMode === "completion" || savedMode === "immediate") {
+        setFeedbackMode(savedMode);
+      }
+      const savedFont = localStorage.getItem("wta_quiz_fontsize") as FontSize | null;
+      if (savedFont === "sm" || savedFont === "base" || savedFont === "lg") {
+        setFontSize(savedFont);
+      }
+      const savedSound = localStorage.getItem("wta_quiz_sound");
+      if (savedSound != null) {
+        setSoundEnabled(savedSound === "true");
       }
     } catch {}
   }, []);
 
+  // Screen Wake Lock API during timed exams
+  useEffect(() => {
+    if (!isExam || submitted) return;
+    let wakeLockSentinel: unknown = null;
+
+    async function activateWakeLock() {
+      try {
+        if ("wakeLock" in navigator && typeof (navigator as unknown as { wakeLock: { request: (type: string) => Promise<unknown> } }).wakeLock?.request === "function") {
+          wakeLockSentinel = await (navigator as unknown as { wakeLock: { request: (type: string) => Promise<unknown> } }).wakeLock.request("screen");
+        }
+      } catch {
+        /* WakeLock not permitted or unsupported */
+      }
+    }
+
+    void activateWakeLock();
+
+    return () => {
+      if (wakeLockSentinel && typeof (wakeLockSentinel as { release: () => Promise<void> }).release === "function") {
+        void (wakeLockSentinel as { release: () => Promise<void> }).release().catch(() => {});
+      }
+    };
+  }, [isExam, submitted]);
+
+  // Android Hardware Back button sync with open modals
+  useEffect(() => {
+    const hasAnyModal = calcOpen || formulaOpen || resultModalOpen || confirmOpen || modeModalOpen;
+
+    if (!hasAnyModal) return;
+
+    window.history.pushState({ modalOpen: true }, "");
+
+    function handlePopState() {
+      if (calcOpen) setCalcOpen(false);
+      else if (formulaOpen) setFormulaOpen(false);
+      else if (resultModalOpen) setResultModalOpen(false);
+      else if (confirmOpen) setConfirmOpen(false);
+      else if (modeModalOpen) setModeModalOpen(false);
+    }
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [calcOpen, formulaOpen, resultModalOpen, confirmOpen, modeModalOpen]);
+
+  // Timer countdown
   useEffect(() => {
     if (!isExam || durationMin <= 0 || submitted) return;
     if (left <= 0) {
@@ -103,9 +172,10 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
     if (!submitted) return [];
     return questions.map((qq, i) => ({ qq, i })).filter(({ qq, i }) => {
       if (reviewFilter === "missed") return answers[i] == null || answers[i] !== qq.correct;
+      if (reviewFilter === "flagged") return Boolean(flagged[i]);
       return true;
     });
-  }, [submitted, questions, answers, reviewFilter]);
+  }, [submitted, questions, answers, flagged, reviewFilter]);
 
   useEffect(() => {
     if (!resourceId || questions.length === 0) return;
@@ -197,6 +267,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
   }
 
   function goTo(i: number) {
+    if (i < 0 || i >= questions.length) return;
     setIdx(i);
     setShowSol(Boolean(lockedBySolution[i]));
     setAi("");
@@ -217,6 +288,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
     setSaved(false);
     setAnswers({});
     setFlagged({});
+    setEliminated({});
     setIdx(0);
     setShowSol(false);
     setLockedBySolution({});
@@ -226,9 +298,49 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
     setResultModalOpen(false);
   }
 
+  // Process of Elimination: toggle strike-out on choice
+  function toggleEliminate(qIndex: number, choiceIndex: number) {
+    setEliminated((prev) => {
+      const forQ = { ...(prev[qIndex] || {}) };
+      forQ[choiceIndex] = !forQ[choiceIndex];
+      return { ...prev, [qIndex]: forQ };
+    });
+  }
+
+  // Touch Swipe Handlers for mobile WebView navigation
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current == null || touchStartY.current == null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+    touchStartX.current = null;
+    touchStartY.current = null;
+
+    // Detect intentional horizontal swipe (min 50px, predominantly horizontal)
+    if (Math.abs(deltaX) > 50 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
+      if (deltaX < 0 && idx < questions.length - 1) {
+        goTo(idx + 1);
+        if (soundEnabled) triggerHaptic("light");
+      } else if (deltaX > 0 && idx > 0) {
+        goTo(idx - 1);
+        if (soundEnabled) triggerHaptic("light");
+      }
+    }
+  };
+
+  // Font size classes
+  const promptFontClass =
+    fontSize === "sm" ? "text-sm sm:text-base" : fontSize === "lg" ? "text-lg sm:text-xl" : "text-base sm:text-lg";
+  const choiceFontClass =
+    fontSize === "sm" ? "text-xs sm:text-sm" : fontSize === "lg" ? "text-base sm:text-lg" : "text-sm sm:text-base";
+
   return (
-    <div className="space-y-2.5">
-      {/* Answer Checking Mode Picker Modal (pops up on opening Question Bank) */}
+    <div className="space-y-2.5 select-none touch-manipulation">
+      {/* Answer Checking Mode Picker Modal */}
       {!isExam && (
         <AnswerCheckingModeModal
           isOpen={modeModalOpen}
@@ -245,16 +357,20 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
         />
       )}
 
-      {/* Advanced Scientific Calculator Modal/Drawer */}
+      {/* Advanced Scientific Calculator */}
       <ScientificCalculator isOpen={calcOpen} onClose={() => setCalcOpen(false)} />
 
-      {/* Results Pop-up Modal (Radial gauge, Correct, Missed, Skipped, Retake & Review buttons) */}
+      {/* Formulas & Constants Reference Drawer */}
+      <FormulasDrawer isOpen={formulaOpen} onClose={() => setFormulaOpen(false)} />
+
+      {/* Results Pop-up Modal with Radial Gauge */}
       <QuizResultModal
         isOpen={resultModalOpen}
         score={score}
         total={questions.length}
         wrong={wrong}
         skipped={skipped}
+        flagged={flaggedCount}
         elapsedSec={elapsedSec}
         isExam={isExam}
         title={title}
@@ -266,11 +382,15 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
           setReviewFilter("missed");
           setResultModalOpen(false);
         }}
+        onReviewFlagged={() => {
+          setReviewFilter("flagged");
+          setResultModalOpen(false);
+        }}
         onRetake={handleRetake}
         onClose={() => setResultModalOpen(false)}
       />
 
-      {/* Question Bank Practice Mode Switcher & Calculator Bar */}
+      {/* Question Bank Practice Mode Switcher & Tools */}
       {!isExam && !submitted && (
         <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-2xl border border-white/10 bg-wisdom-card/90 px-3.5 py-2 text-xs shadow-sm">
           <div className="flex items-center gap-2">
@@ -281,7 +401,8 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                 : "Grade after completion"}
             </span>
           </div>
-          <div className="flex items-center gap-2">
+
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <div className="inline-flex rounded-xl p-0.5 bg-slate-950/80 border border-white/10">
               <button
                 type="button"
@@ -316,26 +437,11 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                 After Completion
               </button>
             </div>
-
-            {/* Clean Working Calculator Button */}
-            <button
-              type="button"
-              onClick={() => setCalcOpen((o) => !o)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer ${
-                calcOpen
-                  ? "border-cyan-400 bg-cyan-500/20 text-cyan-200 ring-1 ring-cyan-400/50"
-                  : "border-cyan-400/30 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-200"
-              }`}
-              title="Open Scientific Calculator"
-            >
-              <Calculator className="w-3.5 h-3.5 text-cyan-300" />
-              <span>Calculator</span>
-            </button>
           </div>
         </div>
       )}
 
-      {/* Status & Stats Bar */}
+      {/* Native Mobile Toolbar: Calculator, Formulas, Font Size, Audio */}
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/10 bg-wisdom-dark/40 px-3.5 py-2 text-xs">
         <div className="flex flex-wrap items-center gap-2.5">
           {!isExam && (
@@ -359,13 +465,13 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
           )}
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Working Calculator button on Exams as well */}
-          {isExam && !submitted && (
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Working Calculator Button */}
+          {!submitted && (
             <button
               type="button"
               onClick={() => setCalcOpen((o) => !o)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer ${
+              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer ${
                 calcOpen
                   ? "border-cyan-400 bg-cyan-500/20 text-cyan-200 ring-1 ring-cyan-400/50"
                   : "border-cyan-400/30 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-200"
@@ -373,10 +479,70 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
               title="Open Scientific Calculator"
             >
               <Calculator className="w-3.5 h-3.5 text-cyan-300" />
-              <span>Calculator</span>
+              <span>Calc</span>
             </button>
           )}
 
+          {/* Formulas Sheet Button */}
+          {!submitted && (
+            <button
+              type="button"
+              onClick={() => setFormulaOpen((o) => !o)}
+              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer ${
+                formulaOpen
+                  ? "border-violet-400 bg-violet-500/20 text-violet-200 ring-1 ring-violet-400/50"
+                  : "border-violet-400/30 bg-violet-500/10 hover:bg-violet-500/20 text-violet-200"
+              }`}
+              title="Open Formulas and Constants Reference"
+            >
+              <Sigma className="w-3.5 h-3.5 text-violet-300" />
+              <span>Formulas</span>
+            </button>
+          )}
+
+          {/* Font Size Toggle */}
+          {!submitted && (
+            <button
+              type="button"
+              onClick={() => {
+                const next: FontSize = fontSize === "sm" ? "base" : fontSize === "base" ? "lg" : "sm";
+                setFontSize(next);
+                try {
+                  localStorage.setItem("wta_quiz_fontsize", next);
+                } catch {}
+              }}
+              className="p-1.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer"
+              title={`Text Size: ${fontSize.toUpperCase()} (tap to toggle)`}
+            >
+              <span className="font-mono text-xs font-bold px-0.5">
+                {fontSize === "sm" ? "A⁻" : fontSize === "lg" ? "A⁺" : "A"}
+              </span>
+            </button>
+          )}
+
+          {/* Audio / Vibration Mute Toggle */}
+          {!submitted && (
+            <button
+              type="button"
+              onClick={() => {
+                const next = !soundEnabled;
+                setSoundEnabled(next);
+                try {
+                  localStorage.setItem("wta_quiz_sound", String(next));
+                } catch {}
+              }}
+              className={`p-1.5 rounded-xl border transition-colors cursor-pointer ${
+                soundEnabled
+                  ? "border-white/10 bg-white/5 text-slate-300 hover:text-white"
+                  : "border-rose-400/30 bg-rose-500/15 text-rose-300"
+              }`}
+              title={soundEnabled ? "Sound & Haptics: ON" : "Sound & Haptics: MUTED"}
+            >
+              {soundEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+            </button>
+          )}
+
+          {/* Exam Timer */}
           {isExam && durationMin > 0 && !submitted && (
             <span className={`font-mono font-bold inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-black/40 border border-white/10 ${left < 60 ? "text-rose-300 animate-pulse border-rose-400/40" : "text-emerald-200"}`}>
               <Clock className="w-3.5 h-3.5" />
@@ -402,7 +568,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
           else if (answered) cls = "border-cyan-400/50 bg-cyan-500/10 text-cyan-200";
           return (
             <button key={i} type="button" onClick={() => goTo(i)}
-              className={`relative w-7 h-7 rounded-md text-[11px] font-bold border transition-colors ${cls}`}>
+              className={`relative w-7 h-7 rounded-md text-[11px] font-bold border transition-colors cursor-pointer ${cls}`}>
               {i + 1}
               {isFlagged && <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-orange-400 ring-1 ring-[#0b1220]" />}
             </button>
@@ -410,8 +576,13 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
         })}
       </div>
 
+      {/* Interactive Question Card with Touch Swipe Support */}
       {!submitted && q && (
-        <div className="rounded-2xl border border-white/12 bg-wisdom-card p-4 sm:p-5 shadow-sm">
+        <div
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          className="rounded-2xl border border-white/12 bg-wisdom-card p-4 sm:p-5 shadow-sm transition-all"
+        >
           <div className="flex flex-wrap items-center justify-between gap-1.5 mb-2">
             <div className="flex items-center gap-2">
               <p className="text-xs text-wisdom-muted font-semibold">
@@ -422,19 +593,24 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                   <Lock className="w-2.5 h-2.5" /> Locked
                 </span>
               )}
+              <span className="text-[10px] text-wisdom-muted/60 hidden sm:inline">
+                (Swipe left/right to navigate)
+              </span>
             </div>
             <button type="button" onClick={() => setFlagged((f) => ({ ...f, [idx]: !f[idx] }))}
-              className={`inline-flex items-center gap-1 rounded-xl border px-2.5 py-1 text-xs font-bold transition-colors ${
+              className={`inline-flex items-center gap-1 rounded-xl border px-2.5 py-1 text-xs font-bold transition-colors cursor-pointer ${
                 flagged[idx] ? "border-orange-400/50 bg-orange-500/15 text-orange-200" : "border-white/12 text-wisdom-muted hover:text-white"
               }`}>
               {flagged[idx] ? <><Flag className="w-3 h-3 fill-current" /> Flagged</> : <><FlagOff className="w-3 h-3" /> Flag</>}
             </button>
           </div>
-          <div className="text-white font-bold leading-snug mb-4 study-prose text-base sm:text-lg">
+
+          {/* Question Prompt with Adjustable Font Size */}
+          <div className={`text-white font-bold leading-snug mb-4 study-prose ${promptFontClass}`}>
             <RichContent body={q.prompt} />
           </div>
 
-          {/* Answer Choices */}
+          {/* Answer Choices with Process of Elimination (Strikethrough Tool) */}
           <div className="space-y-2.5">
             {(q.choices || []).map((c, ci) => {
               const selected = answers[idx] === ci;
@@ -442,6 +618,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
               const isAnswered = answers[idx] != null;
               const showMark = isExam ? submitted : (isImmediate ? isAnswered : (showSol || submitted));
               const isShaking = wrongShakeOption?.idx === idx && wrongShakeOption?.choice === ci;
+              const isEliminated = Boolean(eliminated[idx]?.[ci]);
 
               let choiceCls = "border-white/15 bg-white/[0.03] text-white/90 hover:border-white/30 hover:bg-white/[0.06]";
               if (showMark && isRight) {
@@ -450,6 +627,8 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                 choiceCls = "!border-rose-500 !bg-rose-500/20 !text-rose-100 shadow-[0_0_15px_rgba(244,63,94,0.25)] font-bold";
               } else if (selected) {
                 choiceCls = "border-cyan-400 bg-cyan-500/20 text-white ring-2 ring-cyan-400/50 font-bold";
+              } else if (isEliminated) {
+                choiceCls = "border-white/5 bg-black/40 text-slate-500 opacity-40 line-through";
               }
 
               if (isShaking) {
@@ -457,35 +636,61 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
               }
 
               return (
-                <button
-                  key={ci}
-                  type="button"
-                  disabled={answersLocked}
-                  onClick={(e) => {
-                    if (answersLocked) return;
-                    // In immediate mode, first click is locked
-                    if (isImmediate && answers[idx] != null) return;
+                <div key={ci} className="relative group/choice flex items-center">
+                  <button
+                    type="button"
+                    disabled={answersLocked}
+                    onClick={(e) => {
+                      if (answersLocked) return;
+                      if (isImmediate && answers[idx] != null) return;
 
-                    setAnswers((a) => ({ ...a, [idx]: ci }));
-                    if (!isExam && q.correct !== undefined) {
-                      if (feedbackMode === "immediate") {
-                        if (ci === q.correct) {
-                          triggerCorrectConfetti(e.currentTarget);
-                        } else {
-                          triggerHaptic("wrong");
-                          setWrongShakeOption({ idx, choice: ci });
-                          setTimeout(() => setWrongShakeOption(null), 500);
+                      // If was eliminated, un-eliminate on select
+                      if (isEliminated) {
+                        toggleEliminate(idx, ci);
+                      }
+
+                      setAnswers((a) => ({ ...a, [idx]: ci }));
+                      if (!isExam && q.correct !== undefined) {
+                        if (feedbackMode === "immediate") {
+                          if (ci === q.correct) {
+                            if (soundEnabled) triggerCorrectConfetti(e.currentTarget);
+                          } else {
+                            if (soundEnabled) triggerHaptic("wrong");
+                            setWrongShakeOption({ idx, choice: ci });
+                            setTimeout(() => setWrongShakeOption(null), 500);
+                          }
                         }
                       }
-                    }
-                  }}
-                  className={`w-full text-left px-4 py-3 rounded-2xl border text-sm sm:text-base leading-snug font-semibold transition-all ${choiceCls} ${
-                    answersLocked ? "opacity-95 cursor-not-allowed" : "cursor-pointer"
-                  }`}
-                >
-                  <span className="font-extrabold text-amber-300 mr-2.5">{String.fromCharCode(65 + ci)}.</span>
-                  <span className="study-prose inline"><RichContent body={c} /></span>
-                </button>
+                    }}
+                    className={`w-full text-left px-4 py-3 rounded-2xl border ${choiceFontClass} leading-snug font-semibold transition-all ${choiceCls} ${
+                      answersLocked ? "opacity-95 cursor-not-allowed" : "cursor-pointer"
+                    }`}
+                  >
+                    <span className="font-extrabold text-amber-300 mr-2.5">{String.fromCharCode(65 + ci)}.</span>
+                    <span className={`study-prose inline ${isEliminated ? "line-through opacity-75" : ""}`}>
+                      <RichContent body={c} />
+                    </span>
+                  </button>
+
+                  {/* Strikethrough / Elimination Tool Icon Button */}
+                  {!answersLocked && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleEliminate(idx, ci);
+                      }}
+                      className={`absolute right-3 p-1.5 rounded-lg border transition-all cursor-pointer ${
+                        isEliminated
+                          ? "bg-rose-500/20 text-rose-300 border-rose-400/40 opacity-100"
+                          : "text-slate-500 hover:text-slate-200 border-transparent hover:bg-white/10 opacity-40 group-hover/choice:opacity-100"
+                      }`}
+                      title={isEliminated ? "Restore choice" : "Cross out / eliminate choice"}
+                    >
+                      <EyeOff className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
               );
             })}
           </div>
@@ -533,19 +738,21 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
         </div>
       )}
 
-      {/* Navigation & Submit Controls */}
+      {/* Navigation & Submit Controls with Swipe Indication */}
       {!submitted && (
-        <div className="flex flex-wrap gap-2.5 pt-1">
+        <div className="flex flex-wrap items-center gap-2.5 pt-1">
           <button type="button" disabled={idx === 0} onClick={() => goTo(idx - 1)}
-            className="px-4 py-2 rounded-xl border border-white/12 text-xs font-semibold disabled:opacity-40 hover:bg-white/5 transition-colors">
-            Prev
+            className="px-4 py-2 rounded-xl border border-white/12 text-xs font-semibold disabled:opacity-40 hover:bg-white/5 transition-colors flex items-center gap-1 cursor-pointer">
+            <ChevronLeft className="w-4 h-4" />
+            <span>Prev</span>
           </button>
           <button type="button" disabled={idx >= questions.length - 1} onClick={() => goTo(idx + 1)}
-            className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-wisdom-dark text-xs font-bold disabled:opacity-40 transition-colors shadow-sm">
-            Next
+            className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-wisdom-dark text-xs font-bold disabled:opacity-40 transition-colors shadow-sm flex items-center gap-1 cursor-pointer">
+            <span>Next</span>
+            <ChevronRight className="w-4 h-4" />
           </button>
           <button type="button" onClick={() => setConfirmOpen(true)}
-            className="ml-auto px-4 py-2 rounded-xl border border-emerald-400/40 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-200 text-xs font-bold transition-colors">
+            className="ml-auto px-4 py-2 rounded-xl border border-emerald-400/40 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-200 text-xs font-bold transition-colors cursor-pointer">
             {isExam ? "Submit Exam" : "Finish Practice"}
           </button>
         </div>
@@ -566,7 +773,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
             </p>
             <div className="flex gap-2.5 justify-end">
               <button type="button" onClick={() => setConfirmOpen(false)}
-                className="px-4 py-2 rounded-xl border border-white/15 text-xs font-semibold text-white/80 hover:bg-white/5 transition-colors">
+                className="px-4 py-2 rounded-xl border border-white/15 text-xs font-semibold text-white/80 hover:bg-white/5 transition-colors cursor-pointer">
                 Keep Going
               </button>
               <button type="button" onClick={() => {
@@ -575,7 +782,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                 setResultModalOpen(true);
                 setReviewFilter("all");
               }}
-                className="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-wisdom-dark text-xs font-bold shadow-md shadow-emerald-900/30 transition-colors">
+                className="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-wisdom-dark text-xs font-bold shadow-md shadow-emerald-900/30 transition-colors cursor-pointer">
                 Submit & View Results
               </button>
             </div>
@@ -598,7 +805,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                 </span>
               </div>
               <p className="text-xs text-wisdom-muted">
-                {score} Correct · {wrong} Missed · {skipped} Skipped
+                {score} Correct · {wrong} Missed · {skipped} Skipped · {flaggedCount} Flagged
               </p>
             </div>
 
@@ -613,12 +820,12 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                 <span>View Score Card</span>
               </button>
 
-              {/* Filter Tabs */}
+              {/* Filter Tabs: All, Missed, Flagged */}
               <div className="inline-flex rounded-xl p-0.5 bg-slate-950/80 border border-white/10">
                 <button
                   type="button"
                   onClick={() => setReviewFilter("all")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     reviewFilter === "all"
                       ? "bg-cyan-400 text-slate-950 shadow-sm"
                       : "text-slate-400 hover:text-white"
@@ -629,7 +836,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                 <button
                   type="button"
                   onClick={() => setReviewFilter("missed")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     reviewFilter === "missed"
                       ? "bg-rose-500 text-white shadow-sm"
                       : "text-slate-400 hover:text-white"
@@ -637,6 +844,19 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                 >
                   Missed ({wrong + skipped})
                 </button>
+                {flaggedCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setReviewFilter("flagged")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      reviewFilter === "flagged"
+                        ? "bg-orange-500 text-slate-950 shadow-sm"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    Flagged ({flaggedCount})
+                  </button>
+                )}
               </div>
 
               {/* Retake Button */}
@@ -656,6 +876,8 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
             <div className="rounded-2xl border border-white/10 bg-wisdom-card p-8 text-center text-wisdom-muted text-sm">
               {reviewFilter === "missed"
                 ? "No missed questions — perfect score on this set!"
+                : reviewFilter === "flagged"
+                ? "No flagged questions in this session."
                 : "No questions to review."}
             </div>
           ) : (
@@ -664,6 +886,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                 const selected = answers[i];
                 const isCorrect = selected != null && selected === qq.correct;
                 const isSkipped = selected == null;
+                const isFlagged = Boolean(flagged[i]);
                 const solOpen = Boolean(reviewSolOpen[i]);
                 return (
                   <div
@@ -692,6 +915,11 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                       {isSkipped && (
                         <span className="text-[10px] font-bold uppercase tracking-wide text-amber-300 bg-amber-500/20 border border-amber-400/30 px-2 py-0.5 rounded-full">
                           Skipped
+                        </span>
+                      )}
+                      {isFlagged && (
+                        <span className="text-[10px] font-bold uppercase tracking-wide text-orange-300 bg-orange-500/20 border border-orange-400/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <Flag className="w-2.5 h-2.5 fill-current" /> Flagged
                         </span>
                       )}
                     </div>
