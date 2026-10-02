@@ -577,4 +577,31 @@ html.reading-font-mono {
   animation: wtaShakeHorizontal 0.38s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
+/* Compact Single-Line Question Choice styling (A. Option strictly inline) */
+.choice-inline-content,
+.choice-inline-text {
+  display: inline !important;
+  vertical-align: baseline;
+}
+.choice-inline-content .katex-display,
+.choice-inline-text .katex-display {
+  display: inline !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  vertical-align: middle;
+}
+.choice-inline-content .katex,
+.choice-inline-text .katex {
+  display: inline !important;
+  vertical-align: baseline;
+}
+.choice-inline-content p,
+.choice-inline-content article,
+.choice-inline-text p {
+  display: inline !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+
 

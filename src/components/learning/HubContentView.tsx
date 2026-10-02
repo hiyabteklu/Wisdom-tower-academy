@@ -262,29 +262,47 @@ export default function HubContentView({
       active.contentType === "quiz" || active.contentType === "exam";
 
     return (
-      <div className={`w-full max-w-full ${isQuizOrExam ? "space-y-2.5" : "space-y-4"}`}>
+      <div className={`w-full max-w-full ${isQuizOrExam ? "space-y-1.5" : "space-y-4"}`}>
         {/*
           Back control: document flow at top (not mid-screen sticky overlay).
-          Compact on quiz/exam so one question fits better on mobile / app WebView.
+          Ultra-compact single line on quiz/exam so questions fit completely without scrolling.
         */}
-        <button
-          type="button"
-          onClick={backToItems}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/30 bg-wisdom-dark/80 px-2.5 py-1.5 text-xs font-semibold text-cyan-200 hover:bg-cyan-500/15 hover:border-cyan-400/50 transition-colors"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          Back to {hubItemsLabel(hub)}
-        </button>
+        {isQuizOrExam ? (
+          <div className="flex items-center justify-between gap-2 pb-0.5">
+            <button
+              type="button"
+              onClick={backToItems}
+              className="inline-flex items-center gap-1 rounded-lg border border-cyan-400/30 bg-wisdom-dark/80 px-2 py-1 text-xs font-semibold text-cyan-200 hover:bg-cyan-500/15 transition-colors cursor-pointer"
+            >
+              <ArrowLeft className="w-3 h-3" />
+              <span>Back</span>
+            </button>
+            <h2
+              className={`font-display font-bold leading-snug truncate max-w-[200px] sm:max-w-md text-xs sm:text-sm ${accent}`}
+            >
+              {active.title}
+            </h2>
+          </div>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={backToItems}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/30 bg-wisdom-dark/80 px-2.5 py-1.5 text-xs font-semibold text-cyan-200 hover:bg-cyan-500/15 hover:border-cyan-400/50 transition-colors cursor-pointer"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              Back to {hubItemsLabel(hub)}
+            </button>
 
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <h2
-            className={`font-display font-bold leading-snug ${accent} ${
-              isQuizOrExam ? "text-base sm:text-lg" : "text-xl sm:text-2xl"
-            }`}
-          >
-            {active.title}
-          </h2>
-        </div>
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <h2
+                className={`font-display font-bold leading-snug ${accent} text-xl sm:text-2xl`}
+              >
+                {active.title}
+              </h2>
+            </div>
+          </>
+        )}
 
         {!isQuizOrExam && (
           <>

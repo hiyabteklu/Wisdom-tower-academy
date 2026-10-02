@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Lightbulb,
   Trophy,
@@ -14,13 +14,9 @@ import {
   RotateCcw,
   ListChecks,
   AlertTriangle,
-  Sigma,
-  Volume2,
-  VolumeX,
   EyeOff,
   ChevronLeft,
   ChevronRight,
-  ZoomIn,
 } from "lucide-react";
 import RichContent from "@/components/learning/RichContent";
 import { saveProgress, saveExamAttempt } from "@/lib/contentWithOffline";
@@ -28,8 +24,6 @@ import { triggerHaptic } from "@/lib/sound-haptics";
 import { triggerCorrectConfetti } from "@/lib/confetti";
 import ScientificCalculator from "@/components/learning/ScientificCalculator";
 import QuizResultModal from "@/components/learning/QuizResultModal";
-import AnswerCheckingModeModal from "@/components/learning/AnswerCheckingModeModal";
-import FormulasDrawer from "@/components/learning/FormulasDrawer";
 
 type Q = { prompt: string; choices?: string[]; correct?: number; solution?: string };
 type Props = {
@@ -40,7 +34,6 @@ type Props = {
   trackerScopeId?: string;
 };
 type ReviewFilter = "all" | "missed" | "flagged";
-type FontSize = "sm" | "base" | "lg";
 
 export default function QuizExamViewer({ meta, isExam, resourceId, title, trackerScopeId }: Props) {
   const questions = useMemo(() => (Array.isArray(meta.questions) ? meta.questions : []) as Q[], [meta.questions]);
@@ -64,33 +57,21 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
   const [feedbackMode, setFeedbackMode] = useState<"immediate" | "completion">("immediate");
   const [wrongShakeOption, setWrongShakeOption] = useState<{ idx: number; choice: number } | null>(null);
 
-  // Native WebView Enhancements & Tools
+  // Movable / Resizable Calculator & Result Modal
   const [calcOpen, setCalcOpen] = useState(false);
-  const [formulaOpen, setFormulaOpen] = useState(false);
   const [resultModalOpen, setResultModalOpen] = useState(false);
-  const [modeModalOpen, setModeModalOpen] = useState(!isExam);
-  const [fontSize, setFontSize] = useState<FontSize>("base");
-  const [soundEnabled, setSoundEnabled] = useState(true);
   const [eliminated, setEliminated] = useState<Record<number, Record<number, boolean>>>({});
 
   // Touch Swipe Refs
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
 
-  // Restore user preferences
+  // Restore answer-checking preference
   useEffect(() => {
     try {
       const savedMode = localStorage.getItem("wta_qb_feedback_mode");
       if (savedMode === "completion" || savedMode === "immediate") {
         setFeedbackMode(savedMode);
-      }
-      const savedFont = localStorage.getItem("wta_quiz_fontsize") as FontSize | null;
-      if (savedFont === "sm" || savedFont === "base" || savedFont === "lg") {
-        setFontSize(savedFont);
-      }
-      const savedSound = localStorage.getItem("wta_quiz_sound");
-      if (savedSound != null) {
-        setSoundEnabled(savedSound === "true");
       }
     } catch {}
   }, []);
@@ -121,23 +102,20 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
 
   // Android Hardware Back button sync with open modals
   useEffect(() => {
-    const hasAnyModal = calcOpen || formulaOpen || resultModalOpen || confirmOpen || modeModalOpen;
-
+    const hasAnyModal = calcOpen || resultModalOpen || confirmOpen;
     if (!hasAnyModal) return;
 
     window.history.pushState({ modalOpen: true }, "");
 
     function handlePopState() {
       if (calcOpen) setCalcOpen(false);
-      else if (formulaOpen) setFormulaOpen(false);
       else if (resultModalOpen) setResultModalOpen(false);
       else if (confirmOpen) setConfirmOpen(false);
-      else if (modeModalOpen) setModeModalOpen(false);
     }
 
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [calcOpen, formulaOpen, resultModalOpen, confirmOpen, modeModalOpen]);
+  }, [calcOpen, resultModalOpen, confirmOpen]);
 
   // Timer countdown
   useEffect(() => {
@@ -251,7 +229,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
   const isImmediate = !isExam && feedbackMode === "immediate";
   const revealCorrectness = isExam ? submitted : (isImmediate ? true : submitted);
 
-  // In Right Away mode, once the student picks an answer, that question is locked
+  // In Right Away mode, once student picks an answer, that question is locked
   const isQuestionAnswered = answers[idx] != null;
   const isLockedInImmediate = isImmediate && isQuestionAnswered;
   const answersLocked = submitted || Boolean(lockedBySolution[idx]) || isLockedInImmediate;
@@ -307,7 +285,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
     });
   }
 
-  // Touch Swipe Handlers for mobile WebView navigation
+  // Touch Swipe Handlers for mobile question navigation
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
@@ -320,48 +298,21 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
     touchStartX.current = null;
     touchStartY.current = null;
 
-    // Detect intentional horizontal swipe (min 50px, predominantly horizontal)
     if (Math.abs(deltaX) > 50 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
       if (deltaX < 0 && idx < questions.length - 1) {
         goTo(idx + 1);
-        if (soundEnabled) triggerHaptic("light");
+        triggerHaptic("light");
       } else if (deltaX > 0 && idx > 0) {
         goTo(idx - 1);
-        if (soundEnabled) triggerHaptic("light");
+        triggerHaptic("light");
       }
     }
   };
 
-  // Font size classes
-  const promptFontClass =
-    fontSize === "sm" ? "text-sm sm:text-base" : fontSize === "lg" ? "text-lg sm:text-xl" : "text-base sm:text-lg";
-  const choiceFontClass =
-    fontSize === "sm" ? "text-xs sm:text-sm" : fontSize === "lg" ? "text-base sm:text-lg" : "text-sm sm:text-base";
-
   return (
-    <div className="space-y-2.5 select-none touch-manipulation">
-      {/* Answer Checking Mode Picker Modal */}
-      {!isExam && (
-        <AnswerCheckingModeModal
-          isOpen={modeModalOpen}
-          selectedMode={feedbackMode}
-          onSelectMode={(mode) => {
-            setFeedbackMode(mode);
-            try {
-              localStorage.setItem("wta_qb_feedback_mode", mode);
-            } catch {}
-          }}
-          onConfirm={() => {
-            setModeModalOpen(false);
-          }}
-        />
-      )}
-
-      {/* Advanced Scientific Calculator */}
+    <div className="space-y-2 select-none touch-manipulation">
+      {/* Movable & Resizable Calculator */}
       <ScientificCalculator isOpen={calcOpen} onClose={() => setCalcOpen(false)} />
-
-      {/* Formulas & Constants Reference Drawer */}
-      <FormulasDrawer isOpen={formulaOpen} onClose={() => setFormulaOpen(false)} />
 
       {/* Results Pop-up Modal with Radial Gauge */}
       <QuizResultModal
@@ -390,20 +341,29 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
         onClose={() => setResultModalOpen(false)}
       />
 
-      {/* Question Bank Practice Mode Switcher & Tools */}
-      {!isExam && !submitted && (
-        <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-2xl border border-white/10 bg-wisdom-card/90 px-3.5 py-2 text-xs shadow-sm">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-white">Answer Checking:</span>
-            <span className="text-[11px] text-wisdom-muted hidden sm:inline">
-              {feedbackMode === "immediate"
-                ? "Instant check (first click locked)"
-                : "Grade after completion"}
+      {/* Clean iOS Top Bar: Stats, Segmented Mode Switcher & Calc Button (No Popups) */}
+      <div className="flex items-center justify-between gap-1.5 rounded-xl border border-white/10 bg-wisdom-dark/70 px-2.5 py-1 text-xs">
+        <div className="flex items-center gap-1.5">
+          {!isExam ? (
+            <>
+              <span className="inline-flex items-center gap-1 text-cyan-200 font-bold text-[11px]">
+                <Target className="w-3 h-3 text-cyan-400" /> {attempted}/{questions.length}
+              </span>
+              <span className="text-white/20 text-xs font-bold">·</span>
+              <span className="text-amber-300 font-extrabold text-[11px]">{accuracy}%</span>
+            </>
+          ) : (
+            <span className="text-white/80 font-bold text-[11px]">
+              {attempted}/{questions.length} Answered
+              {skipped > 0 ? ` · ${skipped} left` : ""}
             </span>
-          </div>
+          )}
+        </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <div className="inline-flex rounded-xl p-0.5 bg-slate-950/80 border border-white/10">
+        <div className="flex items-center gap-1.5">
+          {/* iOS-Style Clean Segmented Answer Mode (Question Bank only, No popups) */}
+          {!isExam && !submitted && (
+            <div className="inline-flex rounded-lg p-0.5 bg-black/70 border border-white/10 shadow-inner">
               <button
                 type="button"
                 onClick={() => {
@@ -412,13 +372,14 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                     localStorage.setItem("wta_qb_feedback_mode", "immediate");
                   } catch {}
                 }}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
                   feedbackMode === "immediate"
                     ? "bg-cyan-400 text-slate-950 shadow-sm"
                     : "text-slate-400 hover:text-white"
                 }`}
+                title="Immediate answer validation on click"
               >
-                Show Right Away
+                Instant
               </button>
               <button
                 type="button"
@@ -428,124 +389,39 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                     localStorage.setItem("wta_qb_feedback_mode", "completion");
                   } catch {}
                 }}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
                   feedbackMode === "completion"
                     ? "bg-cyan-400 text-slate-950 shadow-sm"
                     : "text-slate-400 hover:text-white"
                 }`}
+                title="Validate answers after finishing quiz"
               >
-                After Completion
+                At End
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Native Mobile Toolbar: Calculator, Formulas, Font Size, Audio */}
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/10 bg-wisdom-dark/40 px-3.5 py-2 text-xs">
-        <div className="flex flex-wrap items-center gap-2.5">
-          {!isExam && (
-            <>
-              <span className="inline-flex items-center gap-1 text-cyan-200 font-semibold">
-                <Target className="w-3.5 h-3.5 text-cyan-400" /> {attempted}/{questions.length}
-              </span>
-              <span className="inline-flex items-center gap-1 text-emerald-200 font-semibold">
-                <Trophy className="w-3.5 h-3.5 text-emerald-400" /> {score} Correct
-              </span>
-              <span className="text-amber-300 font-bold">{accuracy}%</span>
-            </>
           )}
 
-          {isExam && !submitted && (
-            <span className="inline-flex items-center gap-1 text-white/80 font-medium">
-              {attempted}/{questions.length} Answered
-              {skipped > 0 ? ` · ${skipped} left` : ""}
-              {flaggedCount > 0 ? ` · ${flaggedCount} flagged` : ""}
-            </span>
-          )}
-        </div>
-
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          {/* Working Calculator Button */}
+          {/* Movable & Resizable Calculator Button */}
           {!submitted && (
             <button
               type="button"
               onClick={() => setCalcOpen((o) => !o)}
-              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer ${
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[11px] font-bold transition-all shadow-sm active:scale-95 cursor-pointer ${
                 calcOpen
                   ? "border-cyan-400 bg-cyan-500/20 text-cyan-200 ring-1 ring-cyan-400/50"
                   : "border-cyan-400/30 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-200"
               }`}
-              title="Open Scientific Calculator"
+              title="Open Draggable & Resizable Calculator"
             >
-              <Calculator className="w-3.5 h-3.5 text-cyan-300" />
+              <Calculator className="w-3 h-3 text-cyan-300" />
               <span>Calc</span>
-            </button>
-          )}
-
-          {/* Formulas Sheet Button */}
-          {!submitted && (
-            <button
-              type="button"
-              onClick={() => setFormulaOpen((o) => !o)}
-              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer ${
-                formulaOpen
-                  ? "border-violet-400 bg-violet-500/20 text-violet-200 ring-1 ring-violet-400/50"
-                  : "border-violet-400/30 bg-violet-500/10 hover:bg-violet-500/20 text-violet-200"
-              }`}
-              title="Open Formulas and Constants Reference"
-            >
-              <Sigma className="w-3.5 h-3.5 text-violet-300" />
-              <span>Formulas</span>
-            </button>
-          )}
-
-          {/* Font Size Toggle */}
-          {!submitted && (
-            <button
-              type="button"
-              onClick={() => {
-                const next: FontSize = fontSize === "sm" ? "base" : fontSize === "base" ? "lg" : "sm";
-                setFontSize(next);
-                try {
-                  localStorage.setItem("wta_quiz_fontsize", next);
-                } catch {}
-              }}
-              className="p-1.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer"
-              title={`Text Size: ${fontSize.toUpperCase()} (tap to toggle)`}
-            >
-              <span className="font-mono text-xs font-bold px-0.5">
-                {fontSize === "sm" ? "A⁻" : fontSize === "lg" ? "A⁺" : "A"}
-              </span>
-            </button>
-          )}
-
-          {/* Audio / Vibration Mute Toggle */}
-          {!submitted && (
-            <button
-              type="button"
-              onClick={() => {
-                const next = !soundEnabled;
-                setSoundEnabled(next);
-                try {
-                  localStorage.setItem("wta_quiz_sound", String(next));
-                } catch {}
-              }}
-              className={`p-1.5 rounded-xl border transition-colors cursor-pointer ${
-                soundEnabled
-                  ? "border-white/10 bg-white/5 text-slate-300 hover:text-white"
-                  : "border-rose-400/30 bg-rose-500/15 text-rose-300"
-              }`}
-              title={soundEnabled ? "Sound & Haptics: ON" : "Sound & Haptics: MUTED"}
-            >
-              {soundEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
             </button>
           )}
 
           {/* Exam Timer */}
           {isExam && durationMin > 0 && !submitted && (
-            <span className={`font-mono font-bold inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-black/40 border border-white/10 ${left < 60 ? "text-rose-300 animate-pulse border-rose-400/40" : "text-emerald-200"}`}>
-              <Clock className="w-3.5 h-3.5" />
+            <span className={`font-mono font-bold inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-black/50 border border-white/10 text-[11px] ${left < 60 ? "text-rose-300 animate-pulse border-rose-400/40" : "text-emerald-200"}`}>
+              <Clock className="w-3 h-3" />
               {Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")}
             </span>
           )}
@@ -568,7 +444,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
           else if (answered) cls = "border-cyan-400/50 bg-cyan-500/10 text-cyan-200";
           return (
             <button key={i} type="button" onClick={() => goTo(i)}
-              className={`relative w-7 h-7 rounded-md text-[11px] font-bold border transition-colors cursor-pointer ${cls}`}>
+              className={`relative w-6 h-6 sm:w-7 sm:h-7 rounded-md text-[10px] sm:text-[11px] font-bold border transition-colors cursor-pointer ${cls}`}>
               {i + 1}
               {isFlagged && <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-orange-400 ring-1 ring-[#0b1220]" />}
             </button>
@@ -576,42 +452,39 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
         })}
       </div>
 
-      {/* Interactive Question Card with Touch Swipe Support */}
+      {/* Ultra-Compact Question Card for Mobile & App WebView */}
       {!submitted && q && (
         <div
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
-          className="rounded-2xl border border-white/12 bg-wisdom-card p-4 sm:p-5 shadow-sm transition-all"
+          className="rounded-2xl border border-white/12 bg-wisdom-card p-2.5 sm:p-3.5 shadow-sm transition-all"
         >
-          <div className="flex flex-wrap items-center justify-between gap-1.5 mb-2">
-            <div className="flex items-center gap-2">
-              <p className="text-xs text-wisdom-muted font-semibold">
+          <div className="flex items-center justify-between gap-1.5 mb-1.5">
+            <div className="flex items-center gap-1.5">
+              <p className="text-[11px] sm:text-xs text-wisdom-muted font-semibold">
                 Question {idx + 1} of {questions.length}
               </p>
               {isLockedInImmediate && (
-                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-300 bg-amber-500/15 border border-amber-400/30 px-2 py-0.5 rounded-full">
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-300 bg-amber-500/15 border border-amber-400/30 px-1.5 py-0.5 rounded-full">
                   <Lock className="w-2.5 h-2.5" /> Locked
                 </span>
               )}
-              <span className="text-[10px] text-wisdom-muted/60 hidden sm:inline">
-                (Swipe left/right to navigate)
-              </span>
             </div>
             <button type="button" onClick={() => setFlagged((f) => ({ ...f, [idx]: !f[idx] }))}
-              className={`inline-flex items-center gap-1 rounded-xl border px-2.5 py-1 text-xs font-bold transition-colors cursor-pointer ${
+              className={`inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 text-[11px] font-bold transition-colors cursor-pointer ${
                 flagged[idx] ? "border-orange-400/50 bg-orange-500/15 text-orange-200" : "border-white/12 text-wisdom-muted hover:text-white"
               }`}>
               {flagged[idx] ? <><Flag className="w-3 h-3 fill-current" /> Flagged</> : <><FlagOff className="w-3 h-3" /> Flag</>}
             </button>
           </div>
 
-          {/* Question Prompt with Adjustable Font Size */}
-          <div className={`text-white font-bold leading-snug mb-4 study-prose ${promptFontClass}`}>
+          {/* Compact Question Prompt */}
+          <div className="text-white font-bold leading-snug mb-2 study-prose text-xs sm:text-sm [&_p]:m-0">
             <RichContent body={q.prompt} />
           </div>
 
-          {/* Answer Choices with Process of Elimination (Strikethrough Tool) */}
-          <div className="space-y-2.5">
+          {/* Ultra-Compact Single-Line Choice Buttons (A. Option on ONE line) */}
+          <div className="space-y-1 sm:space-y-1.5">
             {(q.choices || []).map((c, ci) => {
               const selected = answers[idx] === ci;
               const isRight = q.correct === ci;
@@ -620,13 +493,19 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
               const isShaking = wrongShakeOption?.idx === idx && wrongShakeOption?.choice === ci;
               const isEliminated = Boolean(eliminated[idx]?.[ci]);
 
-              let choiceCls = "border-white/15 bg-white/[0.03] text-white/90 hover:border-white/30 hover:bg-white/[0.06]";
+              // Strip redundant leading "A.", "A)", "1." and collapse newlines into space
+              const cleanedChoice = (c || "")
+                .replace(/^[A-Da-d][.)]\s*/, "")
+                .replace(/[\r\n]+/g, " ")
+                .trim();
+
+              let choiceCls = "border-white/10 bg-white/[0.025] text-white/90 hover:border-white/25 hover:bg-white/[0.06]";
               if (showMark && isRight) {
-                choiceCls = "!border-emerald-400 !bg-emerald-500/20 !text-emerald-100 shadow-[0_0_15px_rgba(16,185,129,0.25)] font-bold";
+                choiceCls = "!border-emerald-400 !bg-emerald-500/20 !text-emerald-100 shadow-[0_0_8px_rgba(16,185,129,0.2)] font-bold";
               } else if (showMark && selected && !isRight) {
-                choiceCls = "!border-rose-500 !bg-rose-500/20 !text-rose-100 shadow-[0_0_15px_rgba(244,63,94,0.25)] font-bold";
+                choiceCls = "!border-rose-500 !bg-rose-500/20 !text-rose-100 shadow-[0_0_8px_rgba(244,63,94,0.2)] font-bold";
               } else if (selected) {
-                choiceCls = "border-cyan-400 bg-cyan-500/20 text-white ring-2 ring-cyan-400/50 font-bold";
+                choiceCls = "border-cyan-400 bg-cyan-500/20 text-white ring-1 ring-cyan-400/50 font-bold";
               } else if (isEliminated) {
                 choiceCls = "border-white/5 bg-black/40 text-slate-500 opacity-40 line-through";
               }
@@ -644,7 +523,6 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                       if (answersLocked) return;
                       if (isImmediate && answers[idx] != null) return;
 
-                      // If was eliminated, un-eliminate on select
                       if (isEliminated) {
                         toggleEliminate(idx, ci);
                       }
@@ -653,26 +531,31 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                       if (!isExam && q.correct !== undefined) {
                         if (feedbackMode === "immediate") {
                           if (ci === q.correct) {
-                            if (soundEnabled) triggerCorrectConfetti(e.currentTarget);
+                            triggerCorrectConfetti(e.currentTarget);
                           } else {
-                            if (soundEnabled) triggerHaptic("wrong");
+                            triggerHaptic("wrong");
                             setWrongShakeOption({ idx, choice: ci });
                             setTimeout(() => setWrongShakeOption(null), 500);
                           }
                         }
                       }
                     }}
-                    className={`w-full text-left px-4 py-3 rounded-2xl border ${choiceFontClass} leading-snug font-semibold transition-all ${choiceCls} ${
+                    className={`w-full text-left py-1.5 px-2.5 sm:py-2 sm:px-3 rounded-xl border text-xs sm:text-sm leading-tight transition-all flex items-center justify-between gap-1.5 ${choiceCls} ${
                       answersLocked ? "opacity-95 cursor-not-allowed" : "cursor-pointer"
                     }`}
                   >
-                    <span className="font-extrabold text-amber-300 mr-2.5">{String.fromCharCode(65 + ci)}.</span>
-                    <span className={`study-prose inline ${isEliminated ? "line-through opacity-75" : ""}`}>
-                      <RichContent body={c} />
-                    </span>
+                    {/* Strictly inline single-line letter and content on ONE line: A. Option */}
+                    <div className="flex items-baseline gap-1.5 min-w-0 flex-1">
+                      <span className="font-extrabold text-amber-300 shrink-0 text-xs sm:text-sm select-none">
+                        {String.fromCharCode(65 + ci)}.
+                      </span>
+                      <span className={`choice-inline-text text-xs sm:text-sm font-semibold inline leading-snug [&_*]:inline [&_*]:m-0 ${isEliminated ? "line-through opacity-60" : ""}`}>
+                        <RichContent body={cleanedChoice} inline />
+                      </span>
+                    </div>
                   </button>
 
-                  {/* Strikethrough / Elimination Tool Icon Button */}
+                  {/* Strikethrough Elimination Icon */}
                   {!answersLocked && (
                     <button
                       type="button"
@@ -680,14 +563,14 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                         e.stopPropagation();
                         toggleEliminate(idx, ci);
                       }}
-                      className={`absolute right-3 p-1.5 rounded-lg border transition-all cursor-pointer ${
+                      className={`absolute right-2 p-1 rounded-md transition-all cursor-pointer ${
                         isEliminated
-                          ? "bg-rose-500/20 text-rose-300 border-rose-400/40 opacity-100"
-                          : "text-slate-500 hover:text-slate-200 border-transparent hover:bg-white/10 opacity-40 group-hover/choice:opacity-100"
+                          ? "bg-rose-500/20 text-rose-300 border border-rose-400/40 opacity-100"
+                          : "text-slate-500 hover:text-slate-200 opacity-30 hover:opacity-100"
                       }`}
-                      title={isEliminated ? "Restore choice" : "Cross out / eliminate choice"}
+                      title={isEliminated ? "Restore choice" : "Cross out choice"}
                     >
-                      <EyeOff className="w-3.5 h-3.5" />
+                      <EyeOff className="w-3 h-3" />
                     </button>
                   )}
                 </div>
@@ -696,39 +579,39 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
           </div>
 
           {!isExam && (
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-2.5 flex flex-wrap gap-2">
               <button type="button" onClick={openOfficialSolution}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-emerald-400/45 bg-emerald-500/15 text-emerald-50 text-xs font-bold hover:bg-emerald-500/25 transition-colors cursor-pointer">
-                <BadgeCheck className="w-4 h-4" />
-                {showSol ? "Hide official solution" : "Official solution"}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-emerald-400/45 bg-emerald-500/15 text-emerald-50 text-[11px] sm:text-xs font-bold hover:bg-emerald-500/25 transition-colors cursor-pointer">
+                <BadgeCheck className="w-3.5 h-3.5" />
+                {showSol ? "Hide solution" : "Official solution"}
               </button>
             </div>
           )}
 
           {!isExam && showSol && q.solution && (
-            <div className="mt-3 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4 text-sm sm:text-base">
-              <p className="text-xs font-black uppercase tracking-wider text-emerald-300 mb-2 inline-flex items-center gap-1.5">
-                <BadgeCheck className="w-4 h-4" /> Official solution
+            <div className="mt-2 rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-2.5 text-xs sm:text-sm">
+              <p className="text-[10px] font-black uppercase tracking-wider text-emerald-300 mb-0.5 inline-flex items-center gap-1">
+                <BadgeCheck className="w-3 h-3" /> Official solution
               </p>
-              <div className="study-prose text-emerald-50 text-sm sm:text-base leading-relaxed italic font-serif font-normal explanation-text font-['Times_New_Roman',Times,serif]">
+              <div className="study-prose text-emerald-50 text-xs sm:text-sm leading-relaxed italic font-serif font-normal explanation-text font-['Times_New_Roman',Times,serif]">
                 <RichContent body={q.solution} />
               </div>
             </div>
           )}
 
           {!isExam && (
-            <div className={`flex flex-col gap-2 ${showSol ? "mt-3" : "mt-3.5"}`}>
+            <div className={`flex flex-col gap-2 ${showSol ? "mt-2" : "mt-2.5"}`}>
               <button type="button" onClick={() => void explainQ()} disabled={aiLoading}
-                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-violet-400/45 bg-violet-500/15 text-violet-50 text-xs font-bold disabled:opacity-60 w-full sm:w-auto hover:bg-violet-500/25 transition-colors cursor-pointer">
-                <Lightbulb className="w-4 h-4" />
+                className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-lg border border-violet-400/45 bg-violet-500/15 text-violet-50 text-[11px] sm:text-xs font-bold disabled:opacity-60 w-full sm:w-auto hover:bg-violet-500/25 transition-colors cursor-pointer">
+                <Lightbulb className="w-3.5 h-3.5" />
                 {aiLoading ? "Generating…" : "Explain with AI"}
               </button>
               {ai && (
-                <div className="rounded-2xl border border-violet-400/30 bg-violet-500/10 p-4 text-sm sm:text-base">
-                  <p className="text-xs font-black uppercase tracking-wider text-violet-300 mb-2 inline-flex items-center gap-1.5">
-                    <Lightbulb className="w-4 h-4" /> AI explanation
+                <div className="rounded-xl border border-violet-400/30 bg-violet-500/10 p-2.5 text-xs sm:text-sm">
+                  <p className="text-[10px] font-black uppercase tracking-wider text-violet-300 mb-0.5 inline-flex items-center gap-1">
+                    <Lightbulb className="w-3 h-3" /> AI explanation
                   </p>
-                  <div className="study-prose text-white/95 text-sm sm:text-base leading-relaxed italic font-serif font-normal explanation-text font-['Times_New_Roman',Times,serif]">
+                  <div className="study-prose text-white/95 text-xs sm:text-sm leading-relaxed italic font-serif font-normal explanation-text font-['Times_New_Roman',Times,serif]">
                     <RichContent body={ai} />
                   </div>
                 </div>
@@ -738,21 +621,21 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
         </div>
       )}
 
-      {/* Navigation & Submit Controls with Swipe Indication */}
+      {/* Navigation & Submit Controls */}
       {!submitted && (
-        <div className="flex flex-wrap items-center gap-2.5 pt-1">
+        <div className="flex flex-wrap items-center gap-2 pt-0.5">
           <button type="button" disabled={idx === 0} onClick={() => goTo(idx - 1)}
-            className="px-4 py-2 rounded-xl border border-white/12 text-xs font-semibold disabled:opacity-40 hover:bg-white/5 transition-colors flex items-center gap-1 cursor-pointer">
-            <ChevronLeft className="w-4 h-4" />
+            className="px-3.5 py-1.5 rounded-lg border border-white/12 text-xs font-semibold disabled:opacity-40 hover:bg-white/5 transition-colors flex items-center gap-1 cursor-pointer">
+            <ChevronLeft className="w-3.5 h-3.5" />
             <span>Prev</span>
           </button>
           <button type="button" disabled={idx >= questions.length - 1} onClick={() => goTo(idx + 1)}
-            className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-wisdom-dark text-xs font-bold disabled:opacity-40 transition-colors shadow-sm flex items-center gap-1 cursor-pointer">
+            className="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-wisdom-dark text-xs font-bold disabled:opacity-40 transition-colors shadow-sm flex items-center gap-1 cursor-pointer">
             <span>Next</span>
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-3.5 h-3.5" />
           </button>
           <button type="button" onClick={() => setConfirmOpen(true)}
-            className="ml-auto px-4 py-2 rounded-xl border border-emerald-400/40 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-200 text-xs font-bold transition-colors cursor-pointer">
+            className="ml-auto px-3.5 py-1.5 rounded-lg border border-emerald-400/40 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-200 text-xs font-bold transition-colors cursor-pointer">
             {isExam ? "Submit Exam" : "Finish Practice"}
           </button>
         </div>
@@ -792,40 +675,38 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
 
       {/* Post-Submission Review Mode */}
       {submitted && (
-        <div className="space-y-4">
-          {/* Review Control Header Banner */}
-          <div className="rounded-2xl border border-white/12 bg-wisdom-card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md">
+        <div className="space-y-3">
+          {/* Review Header Banner */}
+          <div className="rounded-xl border border-white/12 bg-wisdom-card p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-display text-lg sm:text-xl font-bold text-white">
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="font-display text-base sm:text-lg font-bold text-white">
                   Score: {score}/{questions.length}
                 </span>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-400/30">
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-400/30">
                   {questions.length ? Math.round((score / questions.length) * 100) : 0}% Accuracy
                 </span>
               </div>
               <p className="text-xs text-wisdom-muted">
-                {score} Correct · {wrong} Missed · {skipped} Skipped · {flaggedCount} Flagged
+                {score} Correct · {wrong} Missed · {skipped} Skipped
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Reopen Results Card Button */}
+            <div className="flex flex-wrap items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => setResultModalOpen(true)}
-                className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-md shadow-amber-950/20 cursor-pointer transition-all"
+                className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-bold flex items-center gap-1 shadow-sm cursor-pointer transition-all"
               >
-                <Trophy className="w-3.5 h-3.5" />
-                <span>View Score Card</span>
+                <Trophy className="w-3 h-3" />
+                <span>Score Card</span>
               </button>
 
-              {/* Filter Tabs: All, Missed, Flagged */}
-              <div className="inline-flex rounded-xl p-0.5 bg-slate-950/80 border border-white/10">
+              <div className="inline-flex rounded-lg p-0.5 bg-slate-950/80 border border-white/10">
                 <button
                   type="button"
                   onClick={() => setReviewFilter("all")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
                     reviewFilter === "all"
                       ? "bg-cyan-400 text-slate-950 shadow-sm"
                       : "text-slate-400 hover:text-white"
@@ -836,7 +717,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                 <button
                   type="button"
                   onClick={() => setReviewFilter("missed")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
                     reviewFilter === "missed"
                       ? "bg-rose-500 text-white shadow-sm"
                       : "text-slate-400 hover:text-white"
@@ -848,7 +729,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                   <button
                     type="button"
                     onClick={() => setReviewFilter("flagged")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
                       reviewFilter === "flagged"
                         ? "bg-orange-500 text-slate-950 shadow-sm"
                         : "text-slate-400 hover:text-white"
@@ -859,21 +740,20 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                 )}
               </div>
 
-              {/* Retake Button */}
               <button
                 type="button"
                 onClick={handleRetake}
-                className="px-3 py-1.5 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                className="px-2.5 py-1 rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
               >
-                <RotateCcw className="w-3.5 h-3.5" />
+                <RotateCcw className="w-3 h-3" />
                 <span>Retake</span>
               </button>
             </div>
           </div>
 
-          {/* Review Questions List */}
+          {/* Review Questions List with Compact Single-Line Choices */}
           {reviewQuestions.length === 0 ? (
-            <div className="rounded-2xl border border-white/10 bg-wisdom-card p-8 text-center text-wisdom-muted text-sm">
+            <div className="rounded-xl border border-white/10 bg-wisdom-card p-6 text-center text-wisdom-muted text-xs sm:text-sm">
               {reviewFilter === "missed"
                 ? "No missed questions — perfect score on this set!"
                 : reviewFilter === "flagged"
@@ -881,7 +761,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                 : "No questions to review."}
             </div>
           ) : (
-            <div className="space-y-3.5">
+            <div className="space-y-2.5">
               {reviewQuestions.map(({ qq, i }) => {
                 const selected = answers[i];
                 const isCorrect = selected != null && selected === qq.correct;
@@ -892,7 +772,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                   <div
                     key={i}
                     id={`review-q-${i}`}
-                    className={`rounded-2xl border p-4 sm:p-5 transition-all shadow-sm ${
+                    className={`rounded-xl border p-3 sm:p-4 transition-all shadow-sm ${
                       isCorrect
                         ? "border-emerald-400/30 bg-emerald-500/[0.04]"
                         : isSkipped
@@ -900,7 +780,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                         : "border-rose-400/30 bg-rose-500/[0.04]"
                     }`}
                   >
-                    <div className="flex flex-wrap items-center gap-2 mb-2.5">
+                    <div className="flex flex-wrap items-center gap-1.5 mb-2">
                       <span className="text-xs font-bold text-wisdom-muted">Question {i + 1}</span>
                       {isCorrect && (
                         <span className="text-[10px] font-bold uppercase tracking-wide text-emerald-300 bg-emerald-500/20 border border-emerald-400/30 px-2 py-0.5 rounded-full">
@@ -924,38 +804,45 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                       )}
                     </div>
 
-                    <div className="text-white font-bold leading-snug mb-3.5 study-prose text-base sm:text-lg">
+                    <div className="text-white font-bold leading-snug mb-2.5 study-prose text-sm sm:text-base [&_p]:m-0">
                       <RichContent body={qq.prompt} />
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-1 sm:space-y-1.5">
                       {(qq.choices || []).map((c, ci) => {
                         const isRight = qq.correct === ci;
                         const isUser = selected === ci;
+                        const cleanedChoice = (c || "")
+                          .replace(/^[A-Da-d][.)]\s*/, "")
+                          .replace(/[\r\n]+/g, " ")
+                          .trim();
+
                         return (
                           <div
                             key={ci}
-                            className={`w-full text-left px-4 py-2.5 rounded-xl border text-sm sm:text-base leading-snug font-semibold ${
+                            className={`w-full text-left py-1.5 px-2.5 sm:py-2 sm:px-3 rounded-xl border text-xs sm:text-sm leading-tight font-medium flex items-center justify-between gap-1.5 ${
                               isRight
-                                ? "border-emerald-400/60 bg-emerald-500/15 text-white font-bold shadow-[0_0_10px_rgba(16,185,129,0.15)]"
+                                ? "border-emerald-400/60 bg-emerald-500/15 text-white font-bold shadow-[0_0_8px_rgba(16,185,129,0.15)]"
                                 : isUser
                                 ? "border-rose-400/60 bg-rose-500/15 text-white font-bold"
                                 : "border-white/10 text-white/70 bg-white/[0.02]"
                             }`}
                           >
-                            <span className="font-extrabold text-amber-300 mr-2.5">
-                              {String.fromCharCode(65 + ci)}.
-                            </span>
-                            <span className="study-prose inline">
-                              <RichContent body={c} />
-                            </span>
+                            <div className="flex items-baseline gap-1.5 min-w-0 flex-1">
+                              <span className="font-extrabold text-amber-300 shrink-0 text-xs sm:text-sm select-none">
+                                {String.fromCharCode(65 + ci)}.
+                              </span>
+                              <span className="choice-inline-text text-xs sm:text-sm font-semibold inline leading-snug [&_*]:inline [&_*]:m-0">
+                                <RichContent body={cleanedChoice} inline />
+                              </span>
+                            </div>
                             {isRight && (
-                              <span className="ml-2.5 text-xs font-bold text-emerald-300">
-                                ✓ Correct Answer
+                              <span className="shrink-0 text-[10px] sm:text-[11px] font-bold text-emerald-300">
+                                ✓ Correct
                               </span>
                             )}
                             {isUser && !isRight && (
-                              <span className="ml-2.5 text-xs font-bold text-rose-300">
+                              <span className="shrink-0 text-[10px] sm:text-[11px] font-bold text-rose-300">
                                 ✗ Your Choice
                               </span>
                             )}
@@ -965,18 +852,18 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                     </div>
 
                     {qq.solution && (
-                      <div className="mt-3.5">
+                      <div className="mt-2.5">
                         <button
                           type="button"
                           onClick={() => setReviewSolOpen((m) => ({ ...m, [i]: !m[i] }))}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-emerald-400/40 bg-emerald-500/10 text-emerald-100 text-xs font-bold hover:bg-emerald-500/20 transition-colors cursor-pointer"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-emerald-400/40 bg-emerald-500/10 text-emerald-100 text-xs font-bold hover:bg-emerald-500/20 transition-colors cursor-pointer"
                         >
-                          <BadgeCheck className="w-3.5 h-3.5" />
+                          <BadgeCheck className="w-3 h-3" />
                           {solOpen ? "Hide solution" : "Official solution"}
                         </button>
                         {solOpen && (
-                          <div className="mt-2.5 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4 text-sm sm:text-base">
-                            <div className="study-prose text-emerald-50 text-sm sm:text-base leading-relaxed italic font-serif font-normal explanation-text font-['Times_New_Roman',Times,serif]">
+                          <div className="mt-2 rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-3 text-xs sm:text-sm">
+                            <div className="study-prose text-emerald-50 text-xs sm:text-sm leading-relaxed italic font-serif font-normal explanation-text font-['Times_New_Roman',Times,serif]">
                               <RichContent body={qq.solution} />
                             </div>
                           </div>
@@ -984,19 +871,19 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                       </div>
                     )}
 
-                    <div className="mt-2.5">
+                    <div className="mt-2">
                       <button
                         type="button"
                         onClick={() => void explainReview(i)}
                         disabled={Boolean(reviewAiLoading[i])}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-violet-400/40 bg-violet-500/10 text-violet-100 text-xs font-bold disabled:opacity-60 hover:bg-violet-500/20 transition-colors cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-violet-400/40 bg-violet-500/10 text-violet-100 text-xs font-bold disabled:opacity-60 hover:bg-violet-500/20 transition-colors cursor-pointer"
                       >
-                        <Lightbulb className="w-3.5 h-3.5" />
+                        <Lightbulb className="w-3 h-3" />
                         {reviewAiLoading[i] ? "Generating…" : "Explain with AI"}
                       </button>
                       {reviewAi[i] && (
-                        <div className="mt-2.5 rounded-2xl border border-violet-400/30 bg-violet-500/10 p-4 text-sm sm:text-base">
-                          <div className="study-prose text-white/95 text-sm sm:text-base leading-relaxed italic font-serif font-normal explanation-text font-['Times_New_Roman',Times,serif]">
+                        <div className="mt-2 rounded-xl border border-violet-400/30 bg-violet-500/10 p-3 text-xs sm:text-sm">
+                          <div className="study-prose text-white/95 text-xs sm:text-sm leading-relaxed italic font-serif font-normal explanation-text font-['Times_New_Roman',Times,serif]">
                             <RichContent body={reviewAi[i]} />
                           </div>
                         </div>
