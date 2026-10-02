@@ -8,7 +8,7 @@ import {
   BookOpen,
   ChevronDown,
   ChevronUp,
-  Globe2,
+  Globe,
   GraduationCap,
   Scale,
   Search,
@@ -86,15 +86,13 @@ function DepartmentCard({
   isExpanded: boolean;
   onToggle: () => void;
 }) {
-  type TabKey = "overview" | "careers" | "fit" | "notes";
-  const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const cat = categoryMeta(dept.category);
 
   return (
     <article
       className={`group relative rounded-3xl border transition-all duration-300 shadow-[0_8px_30px_rgb(0_0_0/0.18)] flex flex-col justify-between ${
         isExpanded
-          ? "border-cyan-400/40 bg-[#0e172e]/95 ring-1 ring-cyan-400/20 md:col-span-2 lg:col-span-3"
+          ? "border-cyan-400/40 bg-[#0c1328]/95 ring-1 ring-cyan-400/20"
           : "border-white/[0.08] bg-[#0c1328]/75 hover:bg-[#0f1833]/85 hover:border-white/20 hover:scale-[1.005]"
       }`}
     >
@@ -146,183 +144,113 @@ function DepartmentCard({
         )}
       </div>
 
-      {/* ── INLINE EXPANDED DETAILS (In-Place, No Window Popup) ── */}
+      {/* ── INLINE EXPANDED DETAILS (Fully Vertical, No Swipe Left, No Horizontal Tabs) ── */}
       {isExpanded && (
-        <div className="px-5 sm:px-6 pb-6 pt-2 border-t border-white/[0.08] space-y-5 animate-fade-in">
-          {/* Segmented Pill Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-thin pb-1">
-            <button
-              type="button"
-              onClick={() => setActiveTab("overview")}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                activeTab === "overview"
-                  ? "bg-cyan-400 text-slate-950 shadow-md"
-                  : "text-slate-400 hover:text-white bg-white/[0.04] border border-white/[0.06]"
-              }`}
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              <span>Demands & Modules</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("careers")}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                activeTab === "careers"
-                  ? "bg-cyan-400 text-slate-950 shadow-md"
-                  : "text-slate-400 hover:text-white bg-white/[0.04] border border-white/[0.06]"
-              }`}
-            >
-              <Briefcase className="w-3.5 h-3.5" />
-              <span>Careers & Market</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("fit")}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                activeTab === "fit"
-                  ? "bg-cyan-400 text-slate-950 shadow-md"
-                  : "text-slate-400 hover:text-white bg-white/[0.04] border border-white/[0.06]"
-              }`}
-            >
-              <GraduationCap className="w-3.5 h-3.5" />
-              <span>Fit & Realities</span>
-            </button>
-
-            {notes.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setActiveTab("notes")}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                  activeTab === "notes"
-                    ? "bg-amber-400 text-slate-950 shadow-md"
-                    : "text-amber-300 hover:text-white bg-white/[0.04] border border-white/[0.06]"
-                }`}
-              >
-                <StickyNote className="w-3.5 h-3.5" />
-                <span>Notes ({notes.length})</span>
-              </button>
-            )}
+        <div className="px-5 sm:px-6 pb-6 pt-3 border-t border-white/[0.08] space-y-4 animate-fade-in text-xs sm:text-sm">
+          {/* 1. Demands & Modules */}
+          <div className="rounded-2xl border border-sky-400/20 bg-sky-500/[0.05] p-3.5 space-y-1">
+            <h4 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-sky-300">
+              <BookOpen className="w-3.5 h-3.5 text-sky-400" />
+              What This Field Demands
+            </h4>
+            <p className="text-xs text-slate-200 leading-relaxed font-reading">
+              {dept.about}
+            </p>
           </div>
 
-          {/* TAB 1: OVERVIEW & COURSES */}
-          {activeTab === "overview" && (
-            <div className="space-y-4">
-              <div className="rounded-2xl border border-sky-400/20 bg-sky-500/[0.05] p-4">
-                <h4 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-sky-300 mb-1.5">
-                  <BookOpen className="w-3.5 h-3.5 text-sky-400" />
-                  What This Field Actually Demands
-                </h4>
-                <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-reading">
-                  {dept.about}
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
-                <h4 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-2.5">
-                  <Layers className="w-3.5 h-3.5 text-amber-400" />
-                  Core Coursework & Foundational Modules
-                </h4>
-                <div className="flex flex-wrap gap-1.5">
-                  {dept.courses.map((c) => (
-                    <span
-                      key={c}
-                      className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-medium text-slate-200"
-                    >
-                      {c}
-                    </span>
-                  ))}
-                </div>
-              </div>
+          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-3.5 space-y-2">
+            <h4 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-300">
+              <Layers className="w-3.5 h-3.5 text-amber-400" />
+              Core Coursework & Modules
+            </h4>
+            <div className="flex flex-wrap gap-1.5">
+              {dept.courses.map((c) => (
+                <span
+                  key={c}
+                  className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-0.5 text-xs font-medium text-slate-200"
+                >
+                  {c}
+                </span>
+              ))}
             </div>
-          )}
+          </div>
 
-          {/* TAB 2: CAREERS & MARKET REALITY */}
-          {activeTab === "careers" && (
-            <div className="space-y-4">
-              <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/[0.05] p-4">
-                <h4 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-emerald-300 mb-2.5">
-                  <Briefcase className="w-3.5 h-3.5 text-emerald-400" />
-                  Career Paths & Job Roles
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {dept.careers.map((job) => (
-                    <div
-                      key={job}
-                      className="flex items-center gap-2 rounded-xl border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-xs sm:text-sm text-slate-100 font-medium"
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                      <span>{job}</span>
-                    </div>
-                  ))}
+          {/* 2. Career Paths & Roles */}
+          <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/[0.05] p-3.5 space-y-2">
+            <h4 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-emerald-300">
+              <Briefcase className="w-3.5 h-3.5 text-emerald-400" />
+              Career Paths & Roles
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              {dept.careers.map((job) => (
+                <div
+                  key={job}
+                  className="flex items-center gap-2 rounded-xl border border-emerald-400/20 bg-emerald-500/10 px-2.5 py-1.5 text-xs text-slate-100 font-medium"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span>{job}</span>
                 </div>
-              </div>
-
-              <div className="rounded-2xl border border-violet-400/20 bg-violet-500/[0.05] p-4">
-                <h4 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-violet-300 mb-1.5">
-                  <Globe2 className="w-3.5 h-3.5 text-violet-400" />
-                  Opportunities & Ethiopian Market Reality
-                </h4>
-                <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-reading">
-                  {dept.market}
-                </p>
-              </div>
+              ))}
             </div>
-          )}
+          </div>
 
-          {/* TAB 3: FIT, STRENGTHS & TRADE-OFFS */}
-          {activeTab === "fit" && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="rounded-2xl border border-emerald-400/25 bg-emerald-500/[0.05] p-4">
-                  <h4 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-emerald-300 mb-2.5">
-                    <ThumbsUp className="w-3.5 h-3.5 text-emerald-400" />
-                    Key Upsides & Strengths
-                  </h4>
-                  <ul className="space-y-2">
-                    {dept.pros.map((p) => (
-                      <li key={p} className="text-xs sm:text-sm text-slate-200 leading-relaxed flex items-start gap-2 font-reading">
-                        <span className="text-emerald-400 font-bold shrink-0 mt-0.5">+</span>
-                        <span>{p}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+          {/* 3. Market Reality */}
+          <div className="rounded-2xl border border-violet-400/20 bg-violet-500/[0.05] p-3.5 space-y-1">
+            <h4 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-violet-300">
+              <Globe className="w-3.5 h-3.5 text-violet-400" />
+              Ethiopian Market Reality & Outlook
+            </h4>
+            <p className="text-xs text-slate-200 leading-relaxed font-reading">
+              {dept.market}
+            </p>
+          </div>
 
-                <div className="rounded-2xl border border-rose-400/25 bg-rose-500/[0.05] p-4">
-                  <h4 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-rose-300 mb-2.5">
-                    <ThumbsDown className="w-3.5 h-3.5 text-rose-400" />
-                    Trade-offs & Considerations
-                  </h4>
-                  <ul className="space-y-2">
-                    {dept.cons.map((c) => (
-                      <li key={c} className="text-xs sm:text-sm text-slate-200 leading-relaxed flex items-start gap-2 font-reading">
-                        <span className="text-rose-400 font-bold shrink-0 mt-0.5">−</span>
-                        <span>{c}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
+          {/* 4. Fit & Trade-offs */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div className="rounded-2xl border border-emerald-400/25 bg-emerald-500/[0.05] p-3.5 space-y-2">
+              <h4 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-emerald-300">
+                <ThumbsUp className="w-3.5 h-3.5 text-emerald-400" />
+                Key Upsides
+              </h4>
+              <ul className="space-y-1.5">
+                {dept.pros.map((p) => (
+                  <li key={p} className="text-xs text-slate-200 leading-relaxed flex items-start gap-1.5 font-reading">
+                    <span className="text-emerald-400 font-bold shrink-0">+</span>
+                    <span>{p}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-          )}
 
-          {/* TAB 4: ADMIN / SCHOLAR NOTES */}
-          {activeTab === "notes" && (
-            <div className="space-y-3">
-              <AdminNotesBlock notes={notes} />
+            <div className="rounded-2xl border border-rose-400/25 bg-rose-500/[0.05] p-3.5 space-y-2">
+              <h4 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-rose-300">
+                <ThumbsDown className="w-3.5 h-3.5 text-rose-400" />
+                Trade-offs
+              </h4>
+              <ul className="space-y-1.5">
+                {dept.cons.map((c) => (
+                  <li key={c} className="text-xs text-slate-200 leading-relaxed flex items-start gap-1.5 font-reading">
+                    <span className="text-rose-400 font-bold shrink-0">−</span>
+                    <span>{c}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
+          </div>
+
+          {/* 5. Notes */}
+          {notes.length > 0 && (
+            <AdminNotesBlock notes={notes} />
           )}
         </div>
       )}
 
-      {/* Action Footer: In-Place Toggle Control */}
+      {/* Action Footer: In-Place Toggle Control with More/Less */}
       <div className="px-5 sm:px-6 pb-5 pt-3.5 border-t border-white/[0.06] flex items-center justify-between">
         <button
           type="button"
           onClick={onToggle}
-          className={`w-full inline-flex items-center justify-center gap-2 py-3 px-5 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer shadow-sm active:scale-[0.98] ${
+          className={`w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer shadow-sm active:scale-[0.98] ${
             isExpanded
               ? "bg-white/[0.08] hover:bg-white/[0.14] text-white border border-white/10"
               : "bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-400/30"
@@ -330,12 +258,12 @@ function DepartmentCard({
         >
           {isExpanded ? (
             <>
+              <span>Less</span>
               <ChevronUp className="w-4 h-4" />
-              <span>Collapse Details</span>
             </>
           ) : (
             <>
-              <span>Explore Field & Careers</span>
+              <span>More</span>
               <ChevronDown className="w-4 h-4" />
             </>
           )}
