@@ -18,7 +18,7 @@ export default function CollapsibleProgress({
       title="Progress tracker"
       subtitle={scopeLabel}
       icon={<Activity className="w-5 h-5 text-cyan-300" />}
-      defaultOpen={false}
+      defaultOpen={true}
     >
       <AcademicResultSaver scopeId={scopeId} scopeLabel={scopeLabel} accent={accent} />
     </CollapsibleSection>
