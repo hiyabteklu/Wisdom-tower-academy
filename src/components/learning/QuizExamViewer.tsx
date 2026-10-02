@@ -2,12 +2,27 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
-  Lightbulb, Trophy, Target, BadgeCheck, Clock, Flag, FlagOff,
+  Lightbulb,
+  Trophy,
+  Target,
+  BadgeCheck,
+  Clock,
+  Flag,
+  FlagOff,
+  Calculator,
+  Lock,
+  RotateCcw,
+  ListChecks,
+  AlertTriangle,
+  Sparkles,
 } from "lucide-react";
 import RichContent from "@/components/learning/RichContent";
 import { saveProgress, saveExamAttempt } from "@/lib/contentWithOffline";
 import { triggerHaptic } from "@/lib/sound-haptics";
 import { triggerCorrectConfetti } from "@/lib/confetti";
+import ScientificCalculator from "@/components/learning/ScientificCalculator";
+import QuizResultModal from "@/components/learning/QuizResultModal";
+import AnswerCheckingModeModal from "@/components/learning/AnswerCheckingModeModal";
 
 type Q = { prompt: string; choices?: string[]; correct?: number; solution?: string };
 type Props = {
@@ -41,6 +56,12 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
   const [feedbackMode, setFeedbackMode] = useState<"immediate" | "completion">("immediate");
   const [wrongShakeOption, setWrongShakeOption] = useState<{ idx: number; choice: number } | null>(null);
 
+  // New states for interactive enhancements
+  const [calcOpen, setCalcOpen] = useState(false);
+  const [resultModalOpen, setResultModalOpen] = useState(false);
+  // Show answer checking popup when user opens Question Bank before starting
+  const [modeModalOpen, setModeModalOpen] = useState(!isExam);
+
   useEffect(() => {
     try {
       const saved = localStorage.getItem("wta_qb_feedback_mode");
@@ -52,7 +73,11 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
 
   useEffect(() => {
     if (!isExam || durationMin <= 0 || submitted) return;
-    if (left <= 0) { setSubmitted(true); return; }
+    if (left <= 0) {
+      setSubmitted(true);
+      setResultModalOpen(true);
+      return;
+    }
     const t = setTimeout(() => setLeft((s) => s - 1), 1000);
     return () => clearTimeout(t);
   }, [left, isExam, durationMin, submitted]);
@@ -155,7 +180,11 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
 
   const isImmediate = !isExam && feedbackMode === "immediate";
   const revealCorrectness = isExam ? submitted : (isImmediate ? true : submitted);
-  const answersLocked = submitted || Boolean(lockedBySolution[idx]);
+
+  // In Right Away mode, once the student picks an answer, that question is locked
+  const isQuestionAnswered = answers[idx] != null;
+  const isLockedInImmediate = isImmediate && isQuestionAnswered;
+  const answersLocked = submitted || Boolean(lockedBySolution[idx]) || isLockedInImmediate;
 
   function openOfficialSolution() {
     setShowSol((v) => {
@@ -183,79 +212,181 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
     }
   }
 
+  function handleRetake() {
+    setSubmitted(false);
+    setSaved(false);
+    setAnswers({});
+    setFlagged({});
+    setIdx(0);
+    setShowSol(false);
+    setLockedBySolution({});
+    setReviewSolOpen({});
+    setReviewAi({});
+    setLeft(durationMin > 0 ? durationMin * 60 : 0);
+    setResultModalOpen(false);
+  }
+
   return (
     <div className="space-y-2.5">
-      {/* Question Bank Practice Mode Switcher */}
+      {/* Answer Checking Mode Picker Modal (pops up on opening Question Bank) */}
       {!isExam && (
-        <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-white/10 bg-wisdom-card/90 px-3.5 py-2 text-xs">
+        <AnswerCheckingModeModal
+          isOpen={modeModalOpen}
+          selectedMode={feedbackMode}
+          onSelectMode={(mode) => {
+            setFeedbackMode(mode);
+            try {
+              localStorage.setItem("wta_qb_feedback_mode", mode);
+            } catch {}
+          }}
+          onConfirm={() => {
+            setModeModalOpen(false);
+          }}
+        />
+      )}
+
+      {/* Advanced Scientific Calculator Modal/Drawer */}
+      <ScientificCalculator isOpen={calcOpen} onClose={() => setCalcOpen(false)} />
+
+      {/* Results Pop-up Modal (Radial gauge, Correct, Missed, Skipped, Retake & Review buttons) */}
+      <QuizResultModal
+        isOpen={resultModalOpen}
+        score={score}
+        total={questions.length}
+        wrong={wrong}
+        skipped={skipped}
+        elapsedSec={elapsedSec}
+        isExam={isExam}
+        title={title}
+        onReviewAll={() => {
+          setReviewFilter("all");
+          setResultModalOpen(false);
+        }}
+        onReviewMissed={() => {
+          setReviewFilter("missed");
+          setResultModalOpen(false);
+        }}
+        onRetake={handleRetake}
+        onClose={() => setResultModalOpen(false)}
+      />
+
+      {/* Question Bank Practice Mode Switcher & Calculator Bar */}
+      {!isExam && !submitted && (
+        <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-2xl border border-white/10 bg-wisdom-card/90 px-3.5 py-2 text-xs shadow-sm">
           <div className="flex items-center gap-2">
             <span className="font-bold text-white">Answer Checking:</span>
             <span className="text-[11px] text-wisdom-muted hidden sm:inline">
               {feedbackMode === "immediate"
-                ? "Instant confetti check on tap"
+                ? "Instant check (first click locked)"
                 : "Grade after completion"}
             </span>
           </div>
-          <div className="inline-flex rounded-lg p-0.5 bg-slate-950/80 border border-white/10">
+          <div className="flex items-center gap-2">
+            <div className="inline-flex rounded-xl p-0.5 bg-slate-950/80 border border-white/10">
+              <button
+                type="button"
+                onClick={() => {
+                  setFeedbackMode("immediate");
+                  try {
+                    localStorage.setItem("wta_qb_feedback_mode", "immediate");
+                  } catch {}
+                }}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                  feedbackMode === "immediate"
+                    ? "bg-cyan-400 text-slate-950 shadow-sm"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                Show Right Away
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setFeedbackMode("completion");
+                  try {
+                    localStorage.setItem("wta_qb_feedback_mode", "completion");
+                  } catch {}
+                }}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                  feedbackMode === "completion"
+                    ? "bg-cyan-400 text-slate-950 shadow-sm"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                After Completion
+              </button>
+            </div>
+
+            {/* Clean Working Calculator Button */}
             <button
               type="button"
-              onClick={() => {
-                setFeedbackMode("immediate");
-                if (typeof window !== "undefined") localStorage.setItem("wta_qb_feedback_mode", "immediate");
-              }}
-              className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${
-                feedbackMode === "immediate"
-                  ? "bg-cyan-400 text-slate-950 shadow-sm"
-                  : "text-slate-400 hover:text-white"
+              onClick={() => setCalcOpen((o) => !o)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer ${
+                calcOpen
+                  ? "border-cyan-400 bg-cyan-500/20 text-cyan-200 ring-1 ring-cyan-400/50"
+                  : "border-cyan-400/30 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-200"
               }`}
+              title="Open Scientific Calculator"
             >
-              Show Right Away
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setFeedbackMode("completion");
-                if (typeof window !== "undefined") localStorage.setItem("wta_qb_feedback_mode", "completion");
-              }}
-              className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${
-                feedbackMode === "completion"
-                  ? "bg-cyan-400 text-slate-950 shadow-sm"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              After Completion
+              <Calculator className="w-3.5 h-3.5 text-cyan-300" />
+              <span>Calculator</span>
             </button>
           </div>
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-white/10 bg-wisdom-dark/40 px-3 py-1.5 text-[11px]">
-        {!isExam && (
-          <>
-            <span className="inline-flex items-center gap-1 text-cyan-200">
-              <Target className="w-3 h-3" /> {attempted}/{questions.length}
+      {/* Status & Stats Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/10 bg-wisdom-dark/40 px-3.5 py-2 text-xs">
+        <div className="flex flex-wrap items-center gap-2.5">
+          {!isExam && (
+            <>
+              <span className="inline-flex items-center gap-1 text-cyan-200 font-semibold">
+                <Target className="w-3.5 h-3.5 text-cyan-400" /> {attempted}/{questions.length}
+              </span>
+              <span className="inline-flex items-center gap-1 text-emerald-200 font-semibold">
+                <Trophy className="w-3.5 h-3.5 text-emerald-400" /> {score} Correct
+              </span>
+              <span className="text-amber-300 font-bold">{accuracy}%</span>
+            </>
+          )}
+
+          {isExam && !submitted && (
+            <span className="inline-flex items-center gap-1 text-white/80 font-medium">
+              {attempted}/{questions.length} Answered
+              {skipped > 0 ? ` · ${skipped} left` : ""}
+              {flaggedCount > 0 ? ` · ${flaggedCount} flagged` : ""}
             </span>
-            <span className="inline-flex items-center gap-1 text-emerald-200">
-              <Trophy className="w-3 h-3" /> {score}
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          {/* Working Calculator button on Exams as well */}
+          {isExam && !submitted && (
+            <button
+              type="button"
+              onClick={() => setCalcOpen((o) => !o)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer ${
+                calcOpen
+                  ? "border-cyan-400 bg-cyan-500/20 text-cyan-200 ring-1 ring-cyan-400/50"
+                  : "border-cyan-400/30 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-200"
+              }`}
+              title="Open Scientific Calculator"
+            >
+              <Calculator className="w-3.5 h-3.5 text-cyan-300" />
+              <span>Calculator</span>
+            </button>
+          )}
+
+          {isExam && durationMin > 0 && !submitted && (
+            <span className={`font-mono font-bold inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-black/40 border border-white/10 ${left < 60 ? "text-rose-300 animate-pulse border-rose-400/40" : "text-emerald-200"}`}>
+              <Clock className="w-3.5 h-3.5" />
+              {Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")}
             </span>
-            <span className="text-amber-200 font-semibold">{accuracy}%</span>
-          </>
-        )}
-        {isExam && !submitted && (
-          <span className="inline-flex items-center gap-1 text-white/70">
-            {attempted}/{questions.length}
-            {skipped > 0 ? ` · ${skipped} left` : ""}
-            {flaggedCount > 0 ? ` · ${flaggedCount} flagged` : ""}
-          </span>
-        )}
-        {isExam && durationMin > 0 && (
-          <span className={`ml-auto font-mono font-bold inline-flex items-center gap-1 ${left < 60 ? "text-rose-300" : "text-emerald-200"}`}>
-            <Clock className="w-3 h-3" />
-            {Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")}
-          </span>
-        )}
+          )}
+        </div>
       </div>
 
+      {/* Question Number Pills */}
       <div className="flex flex-wrap gap-1">
         {questions.map((qq, i) => {
           const answered = answers[i] != null;
@@ -280,25 +411,31 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
       </div>
 
       {!submitted && q && (
-        <div className="rounded-xl border border-white/12 bg-wisdom-card p-3 sm:p-4">
-          <div className="flex flex-wrap items-center justify-between gap-1.5 mb-1.5">
-            <p className="text-[11px] text-wisdom-muted">
-              Q {idx + 1}/{questions.length}
-              {answersLocked && !submitted && (
-                <span className="ml-1.5 text-amber-300/80">· Locked</span>
+        <div className="rounded-2xl border border-white/12 bg-wisdom-card p-4 sm:p-5 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-1.5 mb-2">
+            <div className="flex items-center gap-2">
+              <p className="text-xs text-wisdom-muted font-semibold">
+                Question {idx + 1} of {questions.length}
+              </p>
+              {isLockedInImmediate && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-300 bg-amber-500/15 border border-amber-400/30 px-2 py-0.5 rounded-full">
+                  <Lock className="w-2.5 h-2.5" /> Locked
+                </span>
               )}
-            </p>
+            </div>
             <button type="button" onClick={() => setFlagged((f) => ({ ...f, [idx]: !f[idx] }))}
-              className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-bold ${
-                flagged[idx] ? "border-orange-400/50 bg-orange-500/15 text-orange-200" : "border-white/12 text-wisdom-muted"
+              className={`inline-flex items-center gap-1 rounded-xl border px-2.5 py-1 text-xs font-bold transition-colors ${
+                flagged[idx] ? "border-orange-400/50 bg-orange-500/15 text-orange-200" : "border-white/12 text-wisdom-muted hover:text-white"
               }`}>
               {flagged[idx] ? <><Flag className="w-3 h-3 fill-current" /> Flagged</> : <><FlagOff className="w-3 h-3" /> Flag</>}
             </button>
           </div>
-          <div className="text-white font-bold leading-snug mb-3.5 study-prose text-base sm:text-lg">
+          <div className="text-white font-bold leading-snug mb-4 study-prose text-base sm:text-lg">
             <RichContent body={q.prompt} />
           </div>
-          <div className="space-y-2">
+
+          {/* Answer Choices */}
+          <div className="space-y-2.5">
             {(q.choices || []).map((c, ci) => {
               const selected = answers[idx] === ci;
               const isRight = q.correct === ci;
@@ -325,28 +462,28 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                   type="button"
                   disabled={answersLocked}
                   onClick={(e) => {
-                    if (!answersLocked) {
-                      setAnswers((a) => ({ ...a, [idx]: ci }));
-                      if (!isExam && q.correct !== undefined) {
-                        if (feedbackMode === "immediate") {
-                          if (ci === q.correct) {
-                            // Immediate Confetti (no sound)
-                            triggerCorrectConfetti(e.currentTarget);
-                          } else {
-                            // Sharp double-pulse tactile vibration + horizontal shake (no sound)
-                            triggerHaptic("wrong");
-                            setWrongShakeOption({ idx, choice: ci });
-                            setTimeout(() => setWrongShakeOption(null), 500);
-                          }
+                    if (answersLocked) return;
+                    // In immediate mode, first click is locked
+                    if (isImmediate && answers[idx] != null) return;
+
+                    setAnswers((a) => ({ ...a, [idx]: ci }));
+                    if (!isExam && q.correct !== undefined) {
+                      if (feedbackMode === "immediate") {
+                        if (ci === q.correct) {
+                          triggerCorrectConfetti(e.currentTarget);
+                        } else {
+                          triggerHaptic("wrong");
+                          setWrongShakeOption({ idx, choice: ci });
+                          setTimeout(() => setWrongShakeOption(null), 500);
                         }
                       }
                     }
                   }}
-                  className={`w-full text-left px-3.5 py-2.5 rounded-xl border text-sm sm:text-base leading-snug font-semibold transition-all ${choiceCls} ${
-                    answersLocked ? "opacity-90 cursor-not-allowed" : ""
+                  className={`w-full text-left px-4 py-3 rounded-2xl border text-sm sm:text-base leading-snug font-semibold transition-all ${choiceCls} ${
+                    answersLocked ? "opacity-95 cursor-not-allowed" : "cursor-pointer"
                   }`}
                 >
-                  <span className="font-extrabold text-amber-300 mr-2">{String.fromCharCode(65 + ci)}.</span>
+                  <span className="font-extrabold text-amber-300 mr-2.5">{String.fromCharCode(65 + ci)}.</span>
                   <span className="study-prose inline"><RichContent body={c} /></span>
                 </button>
               );
@@ -354,7 +491,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
           </div>
 
           {!isExam && (
-            <div className="mt-3.5 flex flex-wrap gap-2">
+            <div className="mt-4 flex flex-wrap gap-2">
               <button type="button" onClick={openOfficialSolution}
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-emerald-400/45 bg-emerald-500/15 text-emerald-50 text-xs font-bold hover:bg-emerald-500/25 transition-colors cursor-pointer">
                 <BadgeCheck className="w-4 h-4" />
@@ -364,7 +501,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
           )}
 
           {!isExam && showSol && q.solution && (
-            <div className="mt-3 rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-4 text-sm sm:text-base">
+            <div className="mt-3 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4 text-sm sm:text-base">
               <p className="text-xs font-black uppercase tracking-wider text-emerald-300 mb-2 inline-flex items-center gap-1.5">
                 <BadgeCheck className="w-4 h-4" /> Official solution
               </p>
@@ -382,7 +519,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                 {aiLoading ? "Generating…" : "Explain with AI"}
               </button>
               {ai && (
-                <div className="rounded-xl border border-violet-400/30 bg-violet-500/10 p-4 text-sm sm:text-base">
+                <div className="rounded-2xl border border-violet-400/30 bg-violet-500/10 p-4 text-sm sm:text-base">
                   <p className="text-xs font-black uppercase tracking-wider text-violet-300 mb-2 inline-flex items-center gap-1.5">
                     <Lightbulb className="w-4 h-4" /> AI explanation
                   </p>
@@ -396,130 +533,221 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
         </div>
       )}
 
+      {/* Navigation & Submit Controls */}
       {!submitted && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2.5 pt-1">
           <button type="button" disabled={idx === 0} onClick={() => goTo(idx - 1)}
-            className="px-3 py-1.5 rounded-lg border border-white/12 text-xs font-semibold disabled:opacity-40">Prev</button>
+            className="px-4 py-2 rounded-xl border border-white/12 text-xs font-semibold disabled:opacity-40 hover:bg-white/5 transition-colors">
+            Prev
+          </button>
           <button type="button" disabled={idx >= questions.length - 1} onClick={() => goTo(idx + 1)}
-            className="px-3 py-1.5 rounded-lg bg-amber-500 text-wisdom-dark text-xs font-bold disabled:opacity-40">Next</button>
+            className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-wisdom-dark text-xs font-bold disabled:opacity-40 transition-colors shadow-sm">
+            Next
+          </button>
           <button type="button" onClick={() => setConfirmOpen(true)}
-            className="px-3 py-1.5 rounded-lg border border-emerald-400/40 text-emerald-200 text-xs font-semibold">
-            {isExam ? "Submit exam" : "Finish practice"}
+            className="ml-auto px-4 py-2 rounded-xl border border-emerald-400/40 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-200 text-xs font-bold transition-colors">
+            {isExam ? "Submit Exam" : "Finish Practice"}
           </button>
         </div>
       )}
 
+      {/* Confirmation Dialog before Final Submission */}
       {confirmOpen && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true">
-          <div className="w-full max-w-sm rounded-2xl border border-white/15 bg-[#0d1526] p-5 shadow-2xl">
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
+          <div className="w-full max-w-sm rounded-3xl border border-white/15 bg-[#0d1526] p-6 shadow-2xl animate-in fade-in zoom-in-95">
             <h3 className="font-display text-lg font-bold text-white mb-2">
               {isExam ? "Submit this exam?" : "Finish this practice?"}
             </h3>
-            <p className="text-sm text-wisdom-muted leading-relaxed mb-4">
-              Answered <span className="text-cyan-200 font-semibold">{attempted}</span> ·{" "}
+            <p className="text-sm text-wisdom-muted leading-relaxed mb-5">
+              Answered <span className="text-cyan-200 font-semibold">{attempted}</span> of{" "}
+              <span className="text-white font-semibold">{questions.length}</span> ·{" "}
               Skipped <span className="text-amber-200 font-semibold">{skipped}</span>
               {flaggedCount > 0 && <> · Flagged <span className="text-orange-200 font-semibold">{flaggedCount}</span></>}
             </p>
-            <div className="flex gap-2 justify-end">
+            <div className="flex gap-2.5 justify-end">
               <button type="button" onClick={() => setConfirmOpen(false)}
-                className="px-4 py-2 rounded-xl border border-white/15 text-sm font-semibold text-white/80">Keep going</button>
-              <button type="button" onClick={() => { setConfirmOpen(false); setSubmitted(true); setReviewFilter("all"); }}
-                className="px-4 py-2 rounded-xl bg-emerald-500 text-wisdom-dark text-sm font-bold">Submit</button>
+                className="px-4 py-2 rounded-xl border border-white/15 text-xs font-semibold text-white/80 hover:bg-white/5 transition-colors">
+                Keep Going
+              </button>
+              <button type="button" onClick={() => {
+                setConfirmOpen(false);
+                setSubmitted(true);
+                setResultModalOpen(true);
+                setReviewFilter("all");
+              }}
+                className="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-wisdom-dark text-xs font-bold shadow-md shadow-emerald-900/30 transition-colors">
+                Submit & View Results
+              </button>
             </div>
           </div>
         </div>
       )}
 
+      {/* Post-Submission Review Mode */}
       {submitted && (
-        <div className="space-y-3">
-          <div className="rounded-xl border border-white/12 bg-wisdom-card p-4 space-y-3">
-            <div className="text-center">
-              <p className="font-display text-xl font-bold text-white">
-                {score}/{questions.length}{" "}
-                <span className="text-wisdom-muted text-sm font-semibold">
-                  ({questions.length ? Math.round((score / questions.length) * 100) : 0}%)
+        <div className="space-y-4">
+          {/* Review Control Header Banner */}
+          <div className="rounded-2xl border border-white/12 bg-wisdom-card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-display text-lg sm:text-xl font-bold text-white">
+                  Score: {score}/{questions.length}
                 </span>
-              </p>
-              <p className="text-xs text-wisdom-muted mt-1">
-                Correct {score} · Wrong {wrong} · Skipped {skipped}
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-400/30">
+                  {questions.length ? Math.round((score / questions.length) * 100) : 0}% Accuracy
+                </span>
+              </div>
+              <p className="text-xs text-wisdom-muted">
+                {score} Correct · {wrong} Missed · {skipped} Skipped
               </p>
             </div>
-            <div className="flex flex-wrap gap-2 justify-center">
-              <button type="button" onClick={() => setReviewFilter("all")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${
-                  reviewFilter === "all" ? "border-cyan-400/50 bg-cyan-500/15 text-cyan-100" : "border-white/12 text-wisdom-muted"
-                }`}>All</button>
-              <button type="button" onClick={() => setReviewFilter("missed")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${
-                  reviewFilter === "missed" ? "border-rose-400/50 bg-rose-500/15 text-rose-100" : "border-white/12 text-wisdom-muted"
-                }`}>Missed</button>
-              <button type="button" onClick={() => {
-                setSubmitted(false); setSaved(false); setAnswers({}); setFlagged({});
-                setIdx(0); setShowSol(false); setLockedBySolution({});
-                setReviewSolOpen({}); setReviewAi({});
-                setLeft(durationMin > 0 ? durationMin * 60 : 0);
-              }}
-                className="px-3 py-1.5 rounded-lg text-xs font-bold border border-amber-400/40 text-amber-100 bg-amber-500/10">
-                Retake
+
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Reopen Results Card Button */}
+              <button
+                type="button"
+                onClick={() => setResultModalOpen(true)}
+                className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-md shadow-amber-950/20 cursor-pointer transition-all"
+              >
+                <Trophy className="w-3.5 h-3.5" />
+                <span>View Score Card</span>
+              </button>
+
+              {/* Filter Tabs */}
+              <div className="inline-flex rounded-xl p-0.5 bg-slate-950/80 border border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setReviewFilter("all")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    reviewFilter === "all"
+                      ? "bg-cyan-400 text-slate-950 shadow-sm"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  All ({questions.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReviewFilter("missed")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    reviewFilter === "missed"
+                      ? "bg-rose-500 text-white shadow-sm"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  Missed ({wrong + skipped})
+                </button>
+              </div>
+
+              {/* Retake Button */}
+              <button
+                type="button"
+                onClick={handleRetake}
+                className="px-3 py-1.5 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Retake</span>
               </button>
             </div>
           </div>
 
+          {/* Review Questions List */}
           {reviewQuestions.length === 0 ? (
-            <p className="text-center text-sm text-wisdom-muted py-6">
-              {reviewFilter === "missed" ? "No missed questions — nice work." : "No questions to review."}
-            </p>
+            <div className="rounded-2xl border border-white/10 bg-wisdom-card p-8 text-center text-wisdom-muted text-sm">
+              {reviewFilter === "missed"
+                ? "No missed questions — perfect score on this set!"
+                : "No questions to review."}
+            </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-3.5">
               {reviewQuestions.map(({ qq, i }) => {
                 const selected = answers[i];
                 const isCorrect = selected != null && selected === qq.correct;
                 const isSkipped = selected == null;
                 const solOpen = Boolean(reviewSolOpen[i]);
                 return (
-                  <div key={i} id={`review-q-${i}`}
-                    className={`rounded-xl border p-3 sm:p-4 ${
-                      isCorrect ? "border-emerald-400/30 bg-emerald-500/5"
-                        : isSkipped ? "border-white/12 bg-wisdom-card"
-                        : "border-rose-400/30 bg-rose-500/5"
-                    }`}>
-                    <div className="flex flex-wrap items-center gap-2 mb-2">
-                      <span className="text-[11px] font-bold text-wisdom-muted">Q {i + 1}</span>
-                      {isCorrect && <span className="text-[10px] font-bold uppercase tracking-wide text-emerald-300">Correct</span>}
-                      {!isCorrect && !isSkipped && <span className="text-[10px] font-bold uppercase tracking-wide text-rose-300">Wrong</span>}
-                      {isSkipped && <span className="text-[10px] font-bold uppercase tracking-wide text-amber-300">Skipped</span>}
+                  <div
+                    key={i}
+                    id={`review-q-${i}`}
+                    className={`rounded-2xl border p-4 sm:p-5 transition-all shadow-sm ${
+                      isCorrect
+                        ? "border-emerald-400/30 bg-emerald-500/[0.04]"
+                        : isSkipped
+                        ? "border-white/12 bg-wisdom-card"
+                        : "border-rose-400/30 bg-rose-500/[0.04]"
+                    }`}
+                  >
+                    <div className="flex flex-wrap items-center gap-2 mb-2.5">
+                      <span className="text-xs font-bold text-wisdom-muted">Question {i + 1}</span>
+                      {isCorrect && (
+                        <span className="text-[10px] font-bold uppercase tracking-wide text-emerald-300 bg-emerald-500/20 border border-emerald-400/30 px-2 py-0.5 rounded-full">
+                          Correct
+                        </span>
+                      )}
+                      {!isCorrect && !isSkipped && (
+                        <span className="text-[10px] font-bold uppercase tracking-wide text-rose-300 bg-rose-500/20 border border-rose-400/30 px-2 py-0.5 rounded-full">
+                          Wrong
+                        </span>
+                      )}
+                      {isSkipped && (
+                        <span className="text-[10px] font-bold uppercase tracking-wide text-amber-300 bg-amber-500/20 border border-amber-400/30 px-2 py-0.5 rounded-full">
+                          Skipped
+                        </span>
+                      )}
                     </div>
-                    <div className="text-white font-bold leading-snug mb-3 study-prose text-base sm:text-lg">
+
+                    <div className="text-white font-bold leading-snug mb-3.5 study-prose text-base sm:text-lg">
                       <RichContent body={qq.prompt} />
                     </div>
+
                     <div className="space-y-2">
                       {(qq.choices || []).map((c, ci) => {
                         const isRight = qq.correct === ci;
                         const isUser = selected === ci;
                         return (
-                          <div key={ci}
-                            className={`w-full text-left px-3.5 py-2.5 rounded-xl border text-sm sm:text-base leading-snug font-semibold ${
-                              isRight ? "border-emerald-400/50 bg-emerald-500/10 text-white font-bold"
-                                : isUser ? "border-rose-400/40 bg-rose-500/10 text-white font-bold"
-                                : "border-white/10 text-white/70"
-                            }`}>
-                            <span className="font-extrabold text-amber-300 mr-2">{String.fromCharCode(65 + ci)}.</span>
-                            <span className="study-prose inline"><RichContent body={c} /></span>
-                            {isRight && <span className="ml-2 text-xs font-bold text-emerald-300">✓ Correct</span>}
-                            {isUser && !isRight && <span className="ml-2 text-xs font-bold text-rose-300">Your answer</span>}
+                          <div
+                            key={ci}
+                            className={`w-full text-left px-4 py-2.5 rounded-xl border text-sm sm:text-base leading-snug font-semibold ${
+                              isRight
+                                ? "border-emerald-400/60 bg-emerald-500/15 text-white font-bold shadow-[0_0_10px_rgba(16,185,129,0.15)]"
+                                : isUser
+                                ? "border-rose-400/60 bg-rose-500/15 text-white font-bold"
+                                : "border-white/10 text-white/70 bg-white/[0.02]"
+                            }`}
+                          >
+                            <span className="font-extrabold text-amber-300 mr-2.5">
+                              {String.fromCharCode(65 + ci)}.
+                            </span>
+                            <span className="study-prose inline">
+                              <RichContent body={c} />
+                            </span>
+                            {isRight && (
+                              <span className="ml-2.5 text-xs font-bold text-emerald-300">
+                                ✓ Correct Answer
+                              </span>
+                            )}
+                            {isUser && !isRight && (
+                              <span className="ml-2.5 text-xs font-bold text-rose-300">
+                                ✗ Your Choice
+                              </span>
+                            )}
                           </div>
                         );
                       })}
                     </div>
+
                     {qq.solution && (
-                      <div className="mt-3">
-                        <button type="button" onClick={() => setReviewSolOpen((m) => ({ ...m, [i]: !m[i] }))}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-400/40 bg-emerald-500/10 text-emerald-100 text-xs font-bold hover:bg-emerald-500/20 transition-colors">
+                      <div className="mt-3.5">
+                        <button
+                          type="button"
+                          onClick={() => setReviewSolOpen((m) => ({ ...m, [i]: !m[i] }))}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-emerald-400/40 bg-emerald-500/10 text-emerald-100 text-xs font-bold hover:bg-emerald-500/20 transition-colors cursor-pointer"
+                        >
                           <BadgeCheck className="w-3.5 h-3.5" />
                           {solOpen ? "Hide solution" : "Official solution"}
                         </button>
                         {solOpen && (
-                          <div className="mt-2.5 rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-4 text-sm sm:text-base">
+                          <div className="mt-2.5 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4 text-sm sm:text-base">
                             <div className="study-prose text-emerald-50 text-sm sm:text-base leading-relaxed italic font-serif font-normal explanation-text font-['Times_New_Roman',Times,serif]">
                               <RichContent body={qq.solution} />
                             </div>
@@ -527,14 +755,19 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                         )}
                       </div>
                     )}
+
                     <div className="mt-2.5">
-                      <button type="button" onClick={() => void explainReview(i)} disabled={Boolean(reviewAiLoading[i])}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-violet-400/40 bg-violet-500/10 text-violet-100 text-xs font-bold disabled:opacity-60 hover:bg-violet-500/20 transition-colors">
+                      <button
+                        type="button"
+                        onClick={() => void explainReview(i)}
+                        disabled={Boolean(reviewAiLoading[i])}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-violet-400/40 bg-violet-500/10 text-violet-100 text-xs font-bold disabled:opacity-60 hover:bg-violet-500/20 transition-colors cursor-pointer"
+                      >
                         <Lightbulb className="w-3.5 h-3.5" />
                         {reviewAiLoading[i] ? "Generating…" : "Explain with AI"}
                       </button>
                       {reviewAi[i] && (
-                        <div className="mt-2.5 rounded-xl border border-violet-400/30 bg-violet-500/10 p-4 text-sm sm:text-base">
+                        <div className="mt-2.5 rounded-2xl border border-violet-400/30 bg-violet-500/10 p-4 text-sm sm:text-base">
                           <div className="study-prose text-white/95 text-sm sm:text-base leading-relaxed italic font-serif font-normal explanation-text font-['Times_New_Roman',Times,serif]">
                             <RichContent body={reviewAi[i]} />
                           </div>

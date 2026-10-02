@@ -518,12 +518,15 @@ export default function HubContentView({
       <ul className="space-y-3 w-full max-w-full">
       {items.map((item) => {
         const isNew = !seenIds.has(item.id);
+        const cardCount = Array.isArray(item.meta?.cards) ? item.meta.cards.length : 0;
+        const qCount = Array.isArray(item.meta?.questions) ? item.meta.questions.length : 0;
+
         return (
           <li key={item.id}>
             <button
               type="button"
               onClick={() => void openItem(item)}
-              className="w-full flex items-center gap-4 rounded-2xl border border-white/12 bg-wisdom-card px-4 py-4 sm:px-5 sm:py-5 text-left hover:border-amber-400/40 hover:bg-wisdom-card/90 transition-colors shadow-sm group"
+              className="w-full flex items-center gap-4 rounded-2xl border border-white/12 bg-wisdom-card px-4 py-4 sm:px-5 sm:py-5 text-left hover:border-amber-400/40 hover:bg-wisdom-card/90 transition-colors shadow-sm group cursor-pointer"
             >
               <div className="relative flex h-14 w-14 sm:h-16 sm:w-16 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-wisdom-dark/50">
                 {hubIcon(hub, "w-7 h-7 sm:w-8 sm:h-8")}
@@ -544,12 +547,65 @@ export default function HubContentView({
                     </span>
                   )}
                 </div>
-                {item.chapter != null && (
-                  <p className="text-xs sm:text-sm text-wisdom-muted mt-0.5">
-                    Chapter {item.chapter}
-                  </p>
+
+                {/* Show chapter and exact count for flashcards, question banks, and exams */}
+                {(hub === "flashcards" || hub === "question-banks" || hub === "exams") ? (
+                  <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                    {item.chapter != null && (
+                      <span className="text-xs sm:text-sm text-wisdom-muted font-medium">
+                        Chapter {item.chapter}
+                      </span>
+                    )}
+                    {item.chapter != null && (
+                      <span className="text-white/20 text-xs font-bold">·</span>
+                    )}
+                    {hub === "flashcards" && (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-violet-500/15 border border-violet-400/30 text-violet-200 shadow-sm">
+                        <Layers className="w-3 h-3 text-violet-300" />
+                        <span>{cardCount} {cardCount === 1 ? "card" : "cards"}</span>
+                      </span>
+                    )}
+                    {hub === "question-banks" && (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-cyan-500/15 border border-cyan-400/30 text-cyan-200 shadow-sm">
+                        <HelpCircle className="w-3 h-3 text-cyan-300" />
+                        <span>{qCount} {qCount === 1 ? "question" : "questions"}</span>
+                      </span>
+                    )}
+                    {hub === "exams" && (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 border border-emerald-400/30 text-emerald-200 shadow-sm">
+                        <Timer className="w-3 h-3 text-emerald-300" />
+                        <span>{qCount} {qCount === 1 ? "question" : "questions"}</span>
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  item.chapter != null && (
+                    <p className="text-xs sm:text-sm text-wisdom-muted mt-0.5">
+                      Chapter {item.chapter}
+                    </p>
+                  )
                 )}
               </div>
+
+              {/* Extra badge on large screens */}
+              <div className="hidden sm:flex items-center shrink-0">
+                {hub === "flashcards" && (
+                  <span className="px-3 py-1 rounded-xl text-xs font-bold bg-white/[0.05] border border-white/10 text-violet-200">
+                    {cardCount} {cardCount === 1 ? "card" : "cards"}
+                  </span>
+                )}
+                {hub === "question-banks" && (
+                  <span className="px-3 py-1 rounded-xl text-xs font-bold bg-white/[0.05] border border-white/10 text-cyan-200">
+                    {qCount} {qCount === 1 ? "question" : "questions"}
+                  </span>
+                )}
+                {hub === "exams" && (
+                  <span className="px-3 py-1 rounded-xl text-xs font-bold bg-white/[0.05] border border-white/10 text-emerald-200">
+                    {qCount} {qCount === 1 ? "question" : "questions"}
+                  </span>
+                )}
+              </div>
+
               <ChevronRight className="w-5 h-5 text-wisdom-muted shrink-0 group-hover:text-amber-300 transition-colors" />
             </button>
           </li>

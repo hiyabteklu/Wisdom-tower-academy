@@ -14,6 +14,7 @@ import {
   toHubLockMode,
 } from "@/lib/content-locks";
 import { supabase } from "@/lib/supabase";
+import { listResources } from "@/lib/contentWithOffline";
 
 type Props = {
   /** Path prefix without trailing slash, e.g. /academy/freshman/mathematics */
@@ -74,6 +75,48 @@ export default function ResourceHubGrid({
 
   const [lockMode, setLockMode] = useState<HubLockMode>(staticMode);
   const [owned, setOwned] = useState(false);
+  const [hubCounts, setHubCounts] = useState<Record<string, number> | null>(null);
+
+  // Load published items count for each hub in this scope
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadCounts() {
+      if (!scopePath) return;
+      try {
+        const res = await listResources({
+          scopePath,
+          publishedOnly: true,
+          skipAuthCheck: true,
+        });
+        if (cancelled) return;
+        const counts: Record<string, number> = {
+          books: 0,
+          "short-notes": 0,
+          flashcards: 0,
+          "question-banks": 0,
+          exams: 0,
+        };
+        if (res.items) {
+          for (const item of res.items) {
+            const rawHub = String(item.hub);
+            const h = rawHub === "references" ? "short-notes" : rawHub;
+            if (counts[h] !== undefined) {
+              counts[h] += 1;
+            }
+          }
+        }
+        setHubCounts(counts);
+      } catch {
+        /* fallback */
+      }
+    }
+
+    void loadCounts();
+    return () => {
+      cancelled = true;
+    };
+  }, [scopePath]);
 
   useEffect(() => {
     let cancelled = false;
@@ -144,6 +187,7 @@ export default function ResourceHubGrid({
           owned={owned}
           lockMode={lockMode}
           purchasePackageId={purchasePackageId}
+          itemCount={hubCounts ? (hubCounts[hub.id] ?? 0) : undefined}
         />
       ))}
     </div>
