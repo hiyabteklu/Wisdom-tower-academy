@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Source+Serif+4:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Source+Serif+4:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap');
 @import "./ui-polish.css";
 @import "./ui-polish-scroll.css";
 @import "./flashcard.css";
@@ -23,7 +23,7 @@
   --wt-muted-rgb: 170 182 200;
   --font-display: 'Outfit', system-ui, sans-serif;
   --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
-  --font-reading: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-reading: "Times New Roman", Times, Georgia, 'Source Serif 4', serif;
 }
 
 .theme-light {
@@ -499,13 +499,14 @@ html.font-scale-xlarge {
   font-size: 20px;
 }
 
-/* Reading Font Preferences (Wisdom Tower Signature Bold & Stylized Sans) */
+/* Reading Font Preferences */
 html.reading-font-default,
-html.reading-font-sans,
 html.reading-font-times,
 html.reading-font-serif {
+  --font-reading: "Times New Roman", Times, Georgia, 'Source Serif 4', serif;
+}
+html.reading-font-sans {
   --font-reading: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-  --font-body: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
 }
 html.reading-font-mono {
   --font-reading: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -513,6 +514,7 @@ html.reading-font-mono {
 
 /* Preserve rich bold stylized look on study content */
 .study-prose {
+  font-family: var(--font-reading), "Times New Roman", Times, Georgia, serif;
   font-weight: 500;
   letter-spacing: -0.01em;
 }
@@ -523,7 +525,7 @@ html.reading-font-mono {
 }
 
 /* ========================================================================= */
-/* Times New Roman Italics typography for Notes, Flashcards, Explanations */
+/* Signature Italics Times New Roman typography for Notes, Flashcards, Question Banks, Exams & Explanations */
 /* ========================================================================= */
 .notes-reading-surface,
 .notes-reading-surface .study-prose,
@@ -533,6 +535,11 @@ html.reading-font-mono {
 .fc-face .study-prose,
 .fc-face p,
 .fc-face .study-p,
+.quiz-study-card .study-prose,
+.quiz-question-prompt,
+.quiz-question-prompt p,
+.choice-inline-text,
+.choice-inline-content,
 .study-explanation,
 .explanation-text,
 .solution-text,
@@ -540,15 +547,37 @@ html.reading-font-mono {
 [data-learning-content] p,
 [data-learning-content] li,
 .explanation-box {
-  font-family: "Times New Roman", Times, Georgia, serif !important;
-  font-weight: 400 !important;
+  font-family: "Times New Roman", Times, Georgia, "Source Serif 4", serif !important;
   font-style: italic !important;
+}
+
+.quiz-question-prompt,
+.quiz-question-prompt p,
+.fc-face .study-prose {
+  font-weight: 700 !important;
+}
+
+.choice-inline-text,
+.choice-inline-content {
+  font-weight: 600 !important;
+}
+
+.notes-reading-surface p,
+.notes-reading-surface li,
+.explanation-text,
+.solution-text,
+.study-explanation {
+  font-weight: 500 !important;
 }
 
 .notes-reading-surface strong,
 .notes-reading-surface b,
 .fc-face strong,
 .fc-face b,
+.quiz-question-prompt strong,
+.quiz-question-prompt b,
+.choice-inline-text strong,
+.choice-inline-text b,
 .study-explanation strong,
 .study-explanation b,
 .explanation-text strong,
@@ -558,6 +587,7 @@ html.reading-font-mono {
 [data-learning-content] strong,
 [data-learning-content] b {
   font-weight: 700 !important;
+  color: #ffffff;
 }
 
 /* Sharp horizontal shake animation for wrong answer card mistake signal */

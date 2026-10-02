@@ -24,7 +24,7 @@
 }
 
 .study-prose {
-  font-family: var(--font-reading), 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-reading), "Times New Roman", Times, Georgia, 'Source Serif 4', serif;
   font-size: 1.125rem;
   line-height: 1.8;
   color: rgba(236, 242, 250, 0.96);

@@ -461,7 +461,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
         <div
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
-          className="rounded-2xl border border-white/12 bg-wisdom-card p-4 sm:p-5 shadow-sm transition-all"
+          className="rounded-2xl border border-white/12 bg-wisdom-card p-4 sm:p-5 shadow-sm transition-all quiz-study-card"
         >
           <div className="flex items-center justify-between gap-2 mb-3">
             <div className="flex items-center gap-2">
@@ -483,7 +483,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
           </div>
 
           {/* Comfortable Question Prompt with Relaxed Line-Height */}
-          <div className="text-white font-bold leading-relaxed mb-3.5 study-prose text-sm sm:text-base [&_p]:m-0">
+          <div className="text-white font-bold leading-relaxed mb-3.5 study-prose quiz-question-prompt text-sm sm:text-base [&_p]:m-0">
             <RichContent body={q.prompt} />
           </div>
 
@@ -597,7 +597,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
               <p className="text-[11px] font-black uppercase tracking-wider text-emerald-300 mb-1 inline-flex items-center gap-1">
                 <BadgeCheck className="w-3.5 h-3.5" /> Official solution
               </p>
-              <div className="study-prose text-emerald-50 text-xs sm:text-sm leading-relaxed italic font-serif font-normal explanation-text font-['Times_New_Roman',Times,serif]">
+              <div className="study-prose text-emerald-50 text-xs sm:text-sm leading-relaxed italic font-serif font-medium solution-text">
                 <RichContent body={q.solution} />
               </div>
             </div>
@@ -615,7 +615,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                   <p className="text-[11px] font-black uppercase tracking-wider text-violet-300 mb-1 inline-flex items-center gap-1">
                     <Lightbulb className="w-3.5 h-3.5" /> AI explanation
                   </p>
-                  <div className="study-prose text-white/95 text-xs sm:text-sm leading-relaxed italic font-serif font-normal explanation-text font-['Times_New_Roman',Times,serif]">
+                  <div className="study-prose text-white/95 text-xs sm:text-sm leading-relaxed italic font-serif font-medium explanation-text">
                     <RichContent body={ai} />
                   </div>
                 </div>
@@ -808,7 +808,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                       )}
                     </div>
 
-                    <div className="text-white font-bold leading-relaxed mb-3 study-prose text-sm sm:text-base [&_p]:m-0">
+                    <div className="text-white font-bold leading-relaxed mb-3 study-prose quiz-question-prompt text-sm sm:text-base [&_p]:m-0">
                       <RichContent body={qq.prompt} />
                     </div>
 
@@ -867,7 +867,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                         </button>
                         {solOpen && (
                           <div className="mt-2 rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-3 text-xs sm:text-sm">
-                            <div className="study-prose text-emerald-50 text-xs sm:text-sm leading-relaxed italic font-serif font-normal explanation-text font-['Times_New_Roman',Times,serif]">
+                            <div className="study-prose text-emerald-50 text-xs sm:text-sm leading-relaxed italic font-serif font-medium solution-text">
                               <RichContent body={qq.solution} />
                             </div>
                           </div>
@@ -887,7 +887,7 @@ export default function QuizExamViewer({ meta, isExam, resourceId, title, tracke
                       </button>
                       {reviewAi[i] && (
                         <div className="mt-2 rounded-xl border border-violet-400/30 bg-violet-500/10 p-3 text-xs sm:text-sm">
-                          <div className="study-prose text-white/95 text-xs sm:text-sm leading-relaxed italic font-serif font-normal explanation-text font-['Times_New_Roman',Times,serif]">
+                          <div className="study-prose text-white/95 text-xs sm:text-sm leading-relaxed italic font-serif font-medium explanation-text">
                             <RichContent body={reviewAi[i]} />
                           </div>
                         </div>

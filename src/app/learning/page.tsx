@@ -1037,7 +1037,7 @@ function LearningContent() {
                       value={currentSheet.content}
                       onChange={(e) => handleUpdateSheet({ content: e.target.value })}
                       placeholder="Start typing your study notes, formulas, or summaries here..."
-                      className="w-full h-[320px] bg-black/40 border border-white/[0.08] rounded-2xl p-3.5 text-sm text-slate-100 font-serif italic font-normal font-['Times_New_Roman',Times,serif] leading-relaxed focus:outline-none focus:border-white/20 resize-y transition-colors"
+                      className="w-full h-[320px] bg-black/40 border border-white/[0.08] rounded-2xl p-3.5 text-sm text-slate-100 font-serif italic font-medium leading-relaxed focus:outline-none focus:border-white/20 resize-y transition-colors"
                     />
 
                     <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-white/[0.08]">
