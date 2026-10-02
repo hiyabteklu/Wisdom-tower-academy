@@ -355,9 +355,9 @@ export default function HubContentView({
               )}
             </div>
 
-            <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+            <div className="h-2 rounded-full bg-white/[0.06] border border-white/[0.04] p-0.5 overflow-hidden">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-amber-400 to-cyan-400 transition-all duration-500"
+                className="h-full rounded-full bg-gradient-to-r from-amber-400 via-cyan-400 to-emerald-400 transition-all duration-500 shadow-[0_0_8px_rgba(34,211,238,0.25)]"
                 style={{ width: `${Math.min(100, progressPct)}%` }}
               />
             </div>
@@ -568,7 +568,7 @@ function Chip({
   tone?: "muted" | "emerald" | "amber" | "rose" | "cyan";
 }) {
   const map = {
-    muted: "border-white/10 text-wisdom-muted",
+    muted: "border-white/10 text-slate-300 bg-white/[0.03]",
     emerald: "border-emerald-400/25 text-emerald-200 bg-emerald-500/10",
     amber: "border-amber-400/25 text-amber-200 bg-amber-500/10",
     rose: "border-rose-400/25 text-rose-200 bg-rose-500/10",
@@ -576,7 +576,7 @@ function Chip({
   };
   return (
     <span
-      className={`inline-flex items-center rounded-lg border px-2.5 py-1 font-medium ${map[tone]}`}
+      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-all ${map[tone]}`}
     >
       {children}
     </span>

@@ -4,8 +4,21 @@ import { useCallback, useEffect, useMemo, useState, type ComponentType } from "r
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Target, CheckCircle2, XCircle, Activity, Calendar, LogIn, Gauge, Clock,
-  Layers, Flame, BookOpen, SkipForward, Eye, ChevronDown, ChevronRight,
+  Target,
+  CheckCircle2,
+  XCircle,
+  Activity,
+  Calendar,
+  LogIn,
+  Gauge,
+  Clock,
+  Layers,
+  Flame,
+  BookOpen,
+  SkipForward,
+  Eye,
+  ChevronDown,
+  Sparkles,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
@@ -13,12 +26,22 @@ import { getScopeStats, type HubId, type ScopeStats } from "@/lib/content";
 import BrandLoader from "@/components/BrandLoader";
 
 export type ResultEntry = {
-  id: string; title: string; date: string; total: number;
-  correct: number; missed: number; percent: number; notes?: string | null;
+  id: string;
+  title: string;
+  date: string;
+  total: number;
+  correct: number;
+  missed: number;
+  percent: number;
+  notes?: string | null;
 };
 
 export type AcademicResultSaverProps = {
-  scopeId: string; scopeLabel: string; accent?: string; scopePath?: string; hub?: HubId;
+  scopeId: string;
+  scopeLabel: string;
+  accent?: string;
+  scopePath?: string;
+  hub?: HubId;
 };
 
 function formatTime(sec: number) {
@@ -29,40 +52,57 @@ function formatTime(sec: number) {
   return `${h}h ${m % 60}m`;
 }
 
-function overallGrade(score: number): { label: string; colorClass: string; tone: string; message: string } {
+function overallGrade(score: number): {
+  label: string;
+  colorClass: string;
+  badgeBorder: string;
+  badgeBg: string;
+  tone: string;
+  message: string;
+} {
   if (score >= 85)
     return {
       label: "Extraordinary",
       colorClass: "text-cyan-300",
+      badgeBorder: "border-cyan-400/30",
+      badgeBg: "bg-cyan-500/10 text-cyan-300",
       tone: "#22d3ee",
-      message: "You're the best by far on this course — keep that standard and push even higher.",
+      message: "You're mastering this course — keep this standard and push even higher.",
     };
   if (score >= 70)
     return {
       label: "Excellent",
       colorClass: "text-emerald-300",
+      badgeBorder: "border-emerald-400/30",
+      badgeBg: "bg-emerald-500/10 text-emerald-300",
       tone: "#34d399",
-      message: "Strong work — stay consistent and you can reach extraordinary.",
+      message: "Strong momentum — stay consistent and you will reach the top tier.",
     };
   if (score >= 55)
     return {
-      label: "Good",
+      label: "Good Progress",
       colorClass: "text-amber-300",
+      badgeBorder: "border-amber-400/30",
+      badgeBg: "bg-amber-500/10 text-amber-300",
       tone: "#fbbf24",
-      message: "Keep improving — a bit more practice each day will lift your results.",
+      message: "Steady progress — consistent daily review will lift your score.",
     };
   if (score >= 40)
     return {
-      label: "Improve",
+      label: "Needs Review",
       colorClass: "text-orange-300",
+      badgeBorder: "border-orange-400/30",
+      badgeBg: "bg-orange-500/10 text-orange-300",
       tone: "#fb923c",
-      message: "Keep practicing — your results need focused study to climb out of this range.",
+      message: "Keep practicing — allocate 15 focused minutes each day on this section.",
     };
   return {
-    label: "In danger",
+    label: "Getting Started",
     colorClass: "text-rose-300",
+    badgeBorder: "border-rose-400/30",
+    badgeBg: "bg-rose-500/10 text-rose-300",
     tone: "#fb7185",
-    message: "Keep practicing — your result is low right now; open materials and review every day.",
+    message: "Open materials and complete quick drills to establish your baseline.",
   };
 }
 
@@ -84,40 +124,84 @@ function computeOverallScore(study: ScopeStats | null, examAvg: number, hasAttem
   return Math.round(Math.min(100, Math.max(0, parts.reduce((a, b) => a + b, 0) / parts.length)));
 }
 
+/**
+ * Compact, fluid circular gauge optimized for mobile WebView and responsive displays
+ */
 function CircularGauge({
-  percent, size = 140, stroke = 10, label, sublabel, colorClass = "text-cyan-400", toneOverride,
+  percent,
+  size = 96,
+  stroke = 7,
+  label,
+  sublabel,
+  colorClass = "text-cyan-400",
+  toneOverride,
 }: {
-  percent: number; size?: number; stroke?: number; label: string; sublabel?: string;
-  colorClass?: string; toneOverride?: string;
+  percent: number;
+  size?: number;
+  stroke?: number;
+  label: string;
+  sublabel?: string;
+  colorClass?: string;
+  toneOverride?: string;
 }) {
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const clamped = Math.max(0, Math.min(100, percent));
   const offset = c - (clamped / 100) * c;
-  const tone = toneOverride || (clamped >= 80 ? "#34d399" : clamped >= 50 ? "#fbbf24" : clamped > 0 ? "#fb7185" : "#64748b");
+  const tone =
+    toneOverride ||
+    (clamped >= 80 ? "#34d399" : clamped >= 50 ? "#fbbf24" : clamped > 0 ? "#fb7185" : "#64748b");
+
   return (
     <div className="flex flex-col items-center">
-      <div className="relative" style={{ width: size, height: size }}>
+      <div className="relative shrink-0" style={{ width: size, height: size }}>
         <svg width={size} height={size} className="-rotate-90">
-          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={stroke} />
-          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={tone} strokeWidth={stroke}
-            strokeLinecap="round" strokeDasharray={c} strokeDashoffset={offset}
-            className="transition-[stroke-dashoffset] duration-1000 ease-out" />
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            fill="none"
+            stroke="rgba(255,255,255,0.06)"
+            strokeWidth={stroke}
+          />
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            fill="none"
+            stroke={tone}
+            strokeWidth={stroke}
+            strokeLinecap="round"
+            strokeDasharray={c}
+            strokeDashoffset={offset}
+            className="transition-[stroke-dashoffset] duration-700 ease-out"
+          />
         </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center px-2">
-          <span className={`font-display text-3xl font-black tabular-nums ${colorClass}`}>
-            {`${Math.round(clamped * 10) / 10}`}<span className="text-base font-bold text-white/40">%</span>
+        <div className="absolute inset-0 flex flex-col items-center justify-center px-1">
+          <span className={`font-display text-lg sm:text-xl font-black tabular-nums tracking-tight ${colorClass}`}>
+            {Math.round(clamped * 10) / 10}
+            <span className="text-[11px] font-bold text-white/40 ml-0.5">%</span>
           </span>
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-wisdom-muted mt-0.5 text-center leading-tight">{label}</span>
+          <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 mt-0.5 text-center leading-tight">
+            {label}
+          </span>
         </div>
       </div>
-      {sublabel && <p className="mt-2 text-xs text-wisdom-muted text-center max-w-[11rem]">{sublabel}</p>}
+      {sublabel && (
+        <p className="mt-1 text-[10px] sm:text-[11px] text-slate-400 text-center max-w-[6rem] sm:max-w-[7.5rem] truncate leading-tight">
+          {sublabel}
+        </p>
+      )}
     </div>
   );
 }
 
 export default function AcademicResultSaver({
-  scopeId, scopeLabel, accent = "text-wisdom-cyan", scopePath, hub,
+  scopeId,
+  scopeLabel,
+  accent = "text-cyan-400",
+  scopePath,
+  hub,
 }: AcademicResultSaverProps) {
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
@@ -127,65 +211,95 @@ export default function AcademicResultSaver({
   const [showOpened, setShowOpened] = useState(false);
   const [showAttempts, setShowAttempts] = useState(false);
 
-  const load = useCallback(async (uid: string) => {
-    setLoading(true);
-    try {
-      const semMatch = scopeId.match(/^special-([^-]+(?:-[^-]+)*)-(sem-[12])-(.+)$/);
-      let query = supabase
-        .from("academic_results")
-        .select("id, title, total, correct, missed, percent, notes, created_at")
-        .eq("user_id", uid);
+  const load = useCallback(
+    async (uid: string) => {
+      setLoading(true);
+      try {
+        const semMatch = scopeId.match(/^special-([^-]+(?:-[^-]+)*)-(sem-[12])-(.+)$/);
+        let query = supabase
+          .from("academic_results")
+          .select("id, title, total, correct, missed, percent, notes, created_at")
+          .eq("user_id", uid);
 
-      if (semMatch) {
-        const otherSem = semMatch[2] === "sem-1" ? "sem-2" : "sem-1";
-        const altScopeId = `special-${semMatch[1]}-${otherSem}-${semMatch[3]}`;
-        query = query.in("scope_id", [scopeId, altScopeId]);
-      } else {
-        query = query.eq("scope_id", scopeId);
-      }
+        if (semMatch) {
+          const otherSem = semMatch[2] === "sem-1" ? "sem-2" : "sem-1";
+          const altScopeId = `special-${semMatch[1]}-${otherSem}-${semMatch[3]}`;
+          query = query.in("scope_id", [scopeId, altScopeId]);
+        } else {
+          query = query.eq("scope_id", scopeId);
+        }
 
-      const { data, error: qErr } = await query
-        .order("created_at", { ascending: false })
-        .limit(50);
-      if (qErr) { console.warn("academic_results:", qErr.message); setResults([]); }
-      else {
-        setResults((data || []).map((row) => ({
-          id: row.id, title: row.title, date: row.created_at, total: row.total,
-          correct: row.correct, missed: row.missed, percent: Number(row.percent), notes: row.notes,
-        })));
+        const { data, error: qErr } = await query
+          .order("created_at", { ascending: false })
+          .limit(50);
+        if (qErr) {
+          console.warn("academic_results:", qErr.message);
+          setResults([]);
+        } else {
+          setResults(
+            (data || []).map((row) => ({
+              id: row.id,
+              title: row.title,
+              date: row.created_at,
+              total: row.total,
+              correct: row.correct,
+              missed: row.missed,
+              percent: Number(row.percent),
+              notes: row.notes,
+            }))
+          );
+        }
+
+        if (scopePath) {
+          const { stats, error: sErr } = await getScopeStats({ scopePath, hub });
+          if (sErr) console.warn("scope stats:", sErr);
+          setStudy(stats);
+        } else {
+          setStudy(null);
+        }
+      } catch (e) {
+        console.error(e);
+        setResults([]);
       }
-      if (scopePath) {
-        const { stats, error: sErr } = await getScopeStats({ scopePath, hub });
-        if (sErr) console.warn("scope stats:", sErr);
-        setStudy(stats);
-      } else setStudy(null);
-    } catch (e) { console.error(e); setResults([]); }
-    setLoading(false);
-  }, [scopeId, scopePath, hub]);
+      setLoading(false);
+    },
+    [scopeId, scopePath, hub]
+  );
 
   useEffect(() => {
     let mounted = true;
     supabase.auth.getUser().then(({ data: { user: u } }) => {
       if (!mounted) return;
       setUser(u);
-      if (u) load(u.id); else setLoading(false);
+      if (u) load(u.id);
+      else setLoading(false);
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_e, session) => {
       const u = session?.user ?? null;
       setUser(u);
       if (u) load(u.id);
-      else { setResults([]); setStudy(null); setLoading(false); }
+      else {
+        setResults([]);
+        setStudy(null);
+        setLoading(false);
+      }
     });
-    return () => { mounted = false; subscription.unsubscribe(); };
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [load]);
 
   useEffect(() => {
-    const onVis = () => { if (document.visibilityState === "visible" && user) void load(user.id); };
+    const onVis = () => {
+      if (document.visibilityState === "visible" && user) void load(user.id);
+    };
     document.addEventListener("visibilitychange", onVis);
     return () => document.removeEventListener("visibilitychange", onVis);
   }, [user, load]);
 
-  // Hard/soft refresh button — reload progress & exam results on the same screen
   useEffect(() => {
     const onRefresh = () => {
       if (user) void load(user.id);
@@ -195,7 +309,8 @@ export default function AcademicResultSaver({
   }, [user, load]);
 
   const stats = useMemo(() => {
-    if (!results.length) return { avg: 0, best: 0, attempts: 0, totalCorrect: 0, totalMissed: 0, trend: 0, latest: 0 };
+    if (!results.length)
+      return { avg: 0, best: 0, attempts: 0, totalCorrect: 0, totalMissed: 0, trend: 0, latest: 0 };
     const avg = results.reduce((s, r) => s + r.percent, 0) / results.length;
     return {
       avg: Math.round(avg * 10) / 10,
@@ -213,193 +328,377 @@ export default function AcademicResultSaver({
   const isQuizHub = hub === "question-banks" || hub === "exams";
   const isVideo = hub === "videos";
   const isCombined = !hub;
-  const hasStudy = !!study && (study.totalStudySeconds > 0 || study.quizAttempted > 0 ||
-    study.flashKnow + study.flashAgain + study.flashLearning > 0 || study.rows.length > 0);
+  const hasStudy =
+    !!study &&
+    (study.totalStudySeconds > 0 ||
+      study.quizAttempted > 0 ||
+      study.flashKnow + study.flashAgain + study.flashLearning > 0 ||
+      study.rows.length > 0);
   const hasAttempts = results.length > 0;
   const hasAnything = hasStudy || hasAttempts;
   const examAvgForScore = study && study.avgExamPercent > 0 ? study.avgExamPercent : stats.avg;
+
   const overall = useMemo(() => {
     const score = computeOverallScore(study, examAvgForScore, hasAttempts);
     return { score, ...overallGrade(score) };
   }, [study, examAvgForScore, hasAttempts]);
-  const hubLabel = hub === "short-notes" ? "short notes" : hub ? hub.replace(/-/g, " ") : "all hubs";
+
+  const hubLabel =
+    hub === "short-notes" ? "short notes" : hub ? hub.replace(/-/g, " ") : "all hubs";
 
   return (
-    <section className="card-modern w-full max-w-full shadow-xl shadow-black/25">
-      <div className="px-5 sm:px-6 py-5 border-b border-white/10 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-cyan-500/15 border border-cyan-400/30 text-cyan-400">
-            <Gauge className="w-5 h-5" />
+    <section className="relative overflow-hidden w-full max-w-full rounded-2xl sm:rounded-3xl border border-white/[0.08] bg-[#0c1328]/75 backdrop-blur-xl shadow-[0_8px_30px_rgb(0_0_0/0.18)] transition-all">
+      {/* Background ambient lighting */}
+      <div
+        className="absolute top-0 right-1/4 -z-10 w-44 h-44 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none"
+        aria-hidden
+      />
+
+      {/* Header Bar */}
+      <div className="px-4 sm:px-5 py-3 sm:py-3.5 border-b border-white/[0.06] flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-500/10 border border-cyan-400/20 text-cyan-400 shadow-sm">
+            <Gauge className="w-4 h-4" />
           </div>
           <div className="min-w-0">
-            <h2 className="font-display text-lg sm:text-xl font-bold tracking-tight">
+            <h2 className="font-display text-sm sm:text-base font-bold tracking-tight text-white leading-tight">
               Progress <span className={accent}>Tracker</span>
             </h2>
-            <p className="text-xs text-wisdom-muted truncate">{scopeLabel} · {hubLabel} · live activity</p>
+            <p className="text-[11px] text-slate-400 truncate mt-0.5">
+              {scopeLabel} · {hubLabel}
+            </p>
           </div>
         </div>
+
         {study && study.streakDays > 0 && (isCombined || isBooks || isFlash || isQuizHub) && (
-          <span className="inline-flex items-center gap-1.5 rounded-xl border border-orange-400/30 bg-orange-500/10 px-3 py-1.5 text-sm font-bold text-orange-300">
-            <Flame className="w-4 h-4" /> {study.streakDays} day streak
+          <span className="inline-flex items-center gap-1 rounded-full border border-amber-400/25 bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-300 shrink-0">
+            <Flame className="w-3.5 h-3.5 text-amber-400" />
+            <span>{study.streakDays}d streak</span>
           </span>
         )}
       </div>
 
       {loading ? (
-        <div className="p-10 flex justify-center" data-wta-spinner="true">
-          <BrandLoader size="md" />
+        <div className="p-8 flex justify-center" data-wta-spinner="true">
+          <BrandLoader size="sm" />
         </div>
       ) : !user ? (
-        <div className="px-6 py-12 text-center">
-          <LogIn className="w-10 h-10 text-wisdom-muted mx-auto mb-3 opacity-50" />
-          <p className="text-sm text-wisdom-muted max-w-sm mx-auto mb-5 leading-relaxed">
-            Sign in to see reading time, flashcard stats, exam scores, and streaks.
+        <div className="px-5 py-8 text-center">
+          <div className="w-10 h-10 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-slate-400 mx-auto mb-2.5">
+            <LogIn className="w-5 h-5 opacity-70" />
+          </div>
+          <p className="text-xs sm:text-sm text-slate-300/80 max-w-xs mx-auto mb-3.5 leading-relaxed">
+            Sign in to track your reading time, flashcards, quizzes, and streaks.
           </p>
-          <Link href={`/login?next=${encodeURIComponent(pathname || "/learning")}`} className="btn-cyan px-5 py-2.5 text-sm">
-            <LogIn className="w-4 h-4" /> Sign In
+          <Link
+            href={`/login?next=${encodeURIComponent(pathname || "/learning")}`}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition-all active:scale-95 shadow-md shadow-cyan-500/20"
+          >
+            <LogIn className="w-3.5 h-3.5" /> Sign In
           </Link>
         </div>
       ) : !hasAnything ? (
-        <div className="px-6 py-12 text-center">
-          <Activity className="w-10 h-10 text-wisdom-muted mx-auto mb-3 opacity-40" />
-          <p className="text-sm font-medium text-white/80 mb-1">No activity yet</p>
-          <p className="text-sm text-wisdom-muted max-w-sm mx-auto leading-relaxed">
-            Open materials in this section — progress appears here automatically.
+        <div className="px-5 py-8 text-center">
+          <div className="w-9 h-9 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-slate-400 mx-auto mb-2">
+            <Activity className="w-4 h-4 opacity-60" />
+          </div>
+          <p className="text-xs sm:text-sm font-semibold text-white/90 mb-0.5">No activity recorded yet</p>
+          <p className="text-[11px] sm:text-xs text-slate-400 max-w-xs mx-auto leading-relaxed">
+            Open materials in this section — your activity and scores will sync here automatically.
           </p>
         </div>
       ) : (
         <>
-          <div className="px-5 sm:px-8 py-6 flex flex-col sm:flex-row items-center justify-center gap-6 border-b border-white/10 bg-gradient-to-b from-white/[0.03] to-transparent">
-            <CircularGauge percent={overall.score} label={overall.label} sublabel="Overall performance"
-              colorClass={overall.colorClass} toneOverride={overall.tone} size={150} stroke={11} />
-            <div className="text-center sm:text-left max-w-xs space-y-1.5">
-              <p className="text-xs font-bold uppercase tracking-wider text-wisdom-muted inline-flex items-center gap-1.5">
-                <Gauge className="w-3.5 h-3.5" /> Student status
-              </p>
-              <p className={`font-display text-2xl font-bold ${overall.colorClass}`}>{overall.label}</p>
-              <p className="text-sm text-wisdom-muted leading-relaxed">
+          {/* Main Performance Overview - Compact for Mobile/WebView */}
+          <div className="p-4 sm:p-5 flex items-center gap-4 sm:gap-6 border-b border-white/[0.06] bg-gradient-to-r from-white/[0.02] via-transparent to-transparent">
+            <CircularGauge
+              percent={overall.score}
+              label="Overall"
+              colorClass={overall.colorClass}
+              toneOverride={overall.tone}
+              size={88}
+              stroke={7}
+            />
+
+            <div className="min-w-0 flex-1 space-y-1">
+              <div className="flex items-center gap-2">
+                <span
+                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${overall.badgeBorder} ${overall.badgeBg}`}
+                >
+                  <Sparkles className="w-3 h-3" />
+                  {overall.label}
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-300 leading-snug line-clamp-2 sm:line-clamp-none">
                 {overall.message}
               </p>
             </div>
           </div>
 
+          {/* Metric Chips Grid - Compact Micro-Cards */}
           {study && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-white/5 border-b border-white/10">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-3 sm:p-4 border-b border-white/[0.06]">
               {(isCombined || isBooks || isVideo) && (
-                <StatChip icon={Clock} label={isVideo ? "Watch time" : "Study time"}
-                  value={formatTime(isVideo ? study.videoWatchSeconds || study.totalStudySeconds : study.totalStudySeconds)}
-                  color="text-cyan-300" />
+                <StatChip
+                  icon={Clock}
+                  label={isVideo ? "Watch time" : "Study time"}
+                  value={formatTime(
+                    isVideo ? study.videoWatchSeconds || study.totalStudySeconds : study.totalStudySeconds
+                  )}
+                  color="text-cyan-300"
+                />
               )}
               {(isCombined || isBooks) && (
-                <StatChip icon={BookOpen} label="Avg progress" value={`${study.avgProgressPct}%`} color="text-amber-300" />
+                <StatChip
+                  icon={BookOpen}
+                  label="Avg progress"
+                  value={`${study.avgProgressPct}%`}
+                  color="text-amber-300"
+                />
               )}
               {(isCombined || isBooks) && (
-                <StatChip icon={Eye} label="Avg focus" value={study.avgFocusLabel || "—"} color="text-violet-300" />
+                <StatChip
+                  icon={Eye}
+                  label="Avg focus"
+                  value={study.avgFocusLabel || "—"}
+                  color="text-violet-300"
+                />
               )}
               {(isCombined || isQuizHub) && (
                 <>
-                  <StatChip icon={CheckCircle2} label="Correct"
-                    value={String(study.quizCorrect + (hasAttempts ? stats.totalCorrect : 0))} color="text-emerald-300" />
-                  <StatChip icon={XCircle} label="Wrong"
-                    value={String(study.quizWrong + (hasAttempts ? stats.totalMissed : 0))} color="text-rose-300" />
-                  <StatChip icon={Target} label="Questions tried"
-                    value={String(study.quizAttempted || stats.attempts)} color="text-cyan-200" />
-                  <StatChip icon={Gauge} label="Exam avg"
-                    value={study.avgExamPercent > 0 ? `${study.avgExamPercent}%` : stats.avg ? `${stats.avg}%` : "—"}
-                    color="text-amber-200" />
+                  <StatChip
+                    icon={CheckCircle2}
+                    label="Correct"
+                    value={String(study.quizCorrect + (hasAttempts ? stats.totalCorrect : 0))}
+                    color="text-emerald-300"
+                  />
+                  <StatChip
+                    icon={XCircle}
+                    label="Wrong"
+                    value={String(study.quizWrong + (hasAttempts ? stats.totalMissed : 0))}
+                    color="text-rose-300"
+                  />
+                  <StatChip
+                    icon={Target}
+                    label="Questions"
+                    value={String(study.quizAttempted || stats.attempts)}
+                    color="text-cyan-200"
+                  />
+                  <StatChip
+                    icon={Gauge}
+                    label="Exam avg"
+                    value={
+                      study.avgExamPercent > 0
+                        ? `${study.avgExamPercent}%`
+                        : stats.avg
+                        ? `${stats.avg}%`
+                        : "—"
+                    }
+                    color="text-amber-200"
+                  />
                 </>
               )}
               {(isCombined || isFlash) && (
                 <>
-                  <StatChip icon={Layers} label="Cards known" value={String(study.flashKnow)} color="text-violet-300" />
-                  <StatChip icon={Layers} label="Cards learning" value={String(study.flashLearning)} color="text-amber-200" />
-                  <StatChip icon={XCircle} label="Again" value={String(study.flashAgain)} color="text-rose-300" />
+                  <StatChip
+                    icon={Layers}
+                    label="Cards known"
+                    value={String(study.flashKnow)}
+                    color="text-violet-300"
+                  />
+                  <StatChip
+                    icon={Layers}
+                    label="Learning"
+                    value={String(study.flashLearning)}
+                    color="text-amber-200"
+                  />
+                  <StatChip
+                    icon={XCircle}
+                    label="Again"
+                    value={String(study.flashAgain)}
+                    color="text-rose-300"
+                  />
                 </>
               )}
               {(isCombined || isBooks || isFlash || isQuizHub) && (
-                <StatChip icon={Flame} label="Streak"
-                  value={study.streakDays > 0 ? `${study.streakDays}🔥` : "—"} color="text-orange-300" />
+                <StatChip
+                  icon={Flame}
+                  label="Streak"
+                  value={study.streakDays > 0 ? `${study.streakDays}🔥` : "—"}
+                  color="text-orange-300"
+                />
               )}
               {isCombined && (
-                <StatChip icon={Gauge} label="Overall" value={`${overall.score}`} color={overall.colorClass} />
+                <StatChip
+                  icon={Gauge}
+                  label="Score"
+                  value={`${overall.score}`}
+                  color={overall.colorClass}
+                />
               )}
             </div>
           )}
 
+          {/* Scored Attempts Gauges - Compact Side-by-Side Flex */}
           {hasAttempts && (isCombined || isQuizHub) && (
-            <div className="px-5 sm:px-8 py-8 flex flex-wrap items-center justify-center gap-8 sm:gap-12 border-b border-white/10">
-              <CircularGauge percent={stats.latest} label="Latest" sublabel={results[0]?.title}
-                colorClass={stats.latest >= 80 ? "text-emerald-400" : stats.latest >= 50 ? "text-amber-400" : "text-rose-400"} />
-              <CircularGauge percent={stats.avg} label="Average"
-                sublabel={`${stats.attempts} attempt${stats.attempts === 1 ? "" : "s"}`}
-                colorClass="text-cyan-400" size={120} stroke={9} />
-              <CircularGauge percent={stats.best} label="Best" sublabel="Personal peak"
-                colorClass="text-emerald-400" size={120} stroke={9} />
+            <div className="p-3 sm:p-4 border-b border-white/[0.06] bg-white/[0.01]">
+              <div className="flex items-center justify-around gap-2 sm:gap-4">
+                <div className="flex-1 flex justify-center p-2 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+                  <CircularGauge
+                    percent={stats.latest}
+                    label="Latest"
+                    sublabel={results[0]?.title}
+                    colorClass={
+                      stats.latest >= 80
+                        ? "text-emerald-400"
+                        : stats.latest >= 50
+                        ? "text-amber-400"
+                        : "text-rose-400"
+                    }
+                    size={72}
+                    stroke={5}
+                  />
+                </div>
+                <div className="flex-1 flex justify-center p-2 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+                  <CircularGauge
+                    percent={stats.avg}
+                    label="Average"
+                    sublabel={`${stats.attempts} try`}
+                    colorClass="text-cyan-400"
+                    size={72}
+                    stroke={5}
+                  />
+                </div>
+                <div className="flex-1 flex justify-center p-2 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+                  <CircularGauge
+                    percent={stats.best}
+                    label="Best"
+                    sublabel="Peak"
+                    colorClass="text-emerald-400"
+                    size={72}
+                    stroke={5}
+                  />
+                </div>
+              </div>
             </div>
           )}
 
+          {/* Previously Opened Items Accordion */}
           {study && study.rows.length > 0 && (
-            <div className="border-b border-white/10">
-              <button type="button" onClick={() => setShowOpened((v) => !v)}
-                className="w-full flex items-center justify-between gap-2 px-5 sm:px-6 py-3.5 text-left hover:bg-white/[0.03] transition-colors">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted">
-                  Previously opened items
-                  <span className="ml-2 normal-case font-semibold text-white/40">({study.rows.length})</span>
+            <div className="border-b border-white/[0.06]">
+              <button
+                type="button"
+                onClick={() => setShowOpened((v) => !v)}
+                className="w-full flex items-center justify-between gap-2 px-4 sm:px-5 py-3 text-left hover:bg-white/[0.02] transition-colors"
+              >
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                  Previously Opened
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/[0.05] text-slate-300">
+                    {study.rows.length}
+                  </span>
                 </span>
-                {showOpened ? <ChevronDown className="w-4 h-4 text-wisdom-muted shrink-0" /> :
-                  <ChevronRight className="w-4 h-4 text-wisdom-muted shrink-0" />}
+                <span className="w-6 h-6 rounded-full bg-white/[0.03] border border-white/[0.06] flex items-center justify-center shrink-0">
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
+                      showOpened ? "rotate-180" : ""
+                    }`}
+                  />
+                </span>
               </button>
               {showOpened && (
-                <ul className="px-5 sm:px-6 pb-5 space-y-2">
-                  {study.rows.slice().sort((a, b) => b.totalSeconds - a.totalSeconds).slice(0, 8).map((r) => (
-                    <li key={r.resourceId}
-                      className="flex flex-wrap items-center gap-2 rounded-xl border border-white/8 bg-wisdom-dark/40 px-3 py-2.5 text-sm">
-                      <span className="font-medium text-white/90 truncate flex-1 min-w-0">{r.title}</span>
-                      <span className="text-xs text-wisdom-muted">{formatTime(r.totalSeconds)}</span>
-                      <span className="text-xs font-semibold text-amber-200">{Math.round(r.progressPct)}%</span>
-                    </li>
-                  ))}
+                <ul className="px-4 sm:px-5 pb-4 space-y-1.5">
+                  {study.rows
+                    .slice()
+                    .sort((a, b) => b.totalSeconds - a.totalSeconds)
+                    .slice(0, 8)
+                    .map((r) => (
+                      <li
+                        key={r.resourceId}
+                        className="flex items-center gap-2 rounded-xl border border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.04] px-3 py-2 text-xs transition-colors"
+                      >
+                        <span className="font-medium text-white/90 truncate flex-1 min-w-0">
+                          {r.title}
+                        </span>
+                        <span className="text-[11px] text-slate-400 shrink-0">
+                          {formatTime(r.totalSeconds)}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 border border-amber-400/20 text-amber-300 shrink-0">
+                          {Math.round(r.progressPct)}%
+                        </span>
+                      </li>
+                    ))}
                 </ul>
               )}
             </div>
           )}
 
+          {/* Scored Attempts Accordion */}
           {hasAttempts && (isCombined || isQuizHub) && (
             <div>
-              <button type="button" onClick={() => setShowAttempts((v) => !v)}
-                className="w-full flex items-center justify-between gap-2 px-5 sm:px-6 py-3.5 text-left hover:bg-white/[0.03] transition-colors">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted">
-                  Scored attempts
-                  <span className="ml-2 normal-case font-semibold text-white/40">({results.length})</span>
+              <button
+                type="button"
+                onClick={() => setShowAttempts((v) => !v)}
+                className="w-full flex items-center justify-between gap-2 px-4 sm:px-5 py-3 text-left hover:bg-white/[0.02] transition-colors"
+              >
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                  Scored Attempts
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/[0.05] text-slate-300">
+                    {results.length}
+                  </span>
                 </span>
-                {showAttempts ? <ChevronDown className="w-4 h-4 text-wisdom-muted shrink-0" /> :
-                  <ChevronRight className="w-4 h-4 text-wisdom-muted shrink-0" />}
+                <span className="w-6 h-6 rounded-full bg-white/[0.03] border border-white/[0.06] flex items-center justify-center shrink-0">
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
+                      showAttempts ? "rotate-180" : ""
+                    }`}
+                  />
+                </span>
               </button>
               {showAttempts && (
-                <ul className="px-5 sm:px-6 pb-5 space-y-2.5">
+                <ul className="px-4 sm:px-5 pb-4 space-y-2">
                   {results.map((r) => (
-                    <li key={r.id} className="rounded-2xl border border-white/8 bg-wisdom-dark/40 px-4 py-3.5">
-                      <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <p className="font-semibold text-sm truncate flex-1 min-w-0">{r.title}</p>
-                        <span className={`text-sm font-black tabular-nums ${
-                          r.percent >= 80 ? "text-emerald-400" : r.percent >= 50 ? "text-amber-400" : "text-rose-400"
-                        }`}>{r.percent}%</span>
+                    <li
+                      key={r.id}
+                      className="rounded-xl border border-white/[0.05] bg-white/[0.02] p-3 space-y-1.5 transition-colors hover:bg-white/[0.04]"
+                    >
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-xs sm:text-sm text-white truncate flex-1 min-w-0">
+                          {r.title}
+                        </p>
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-xs font-bold tabular-nums border ${
+                            r.percent >= 80
+                              ? "bg-emerald-500/10 border-emerald-400/30 text-emerald-300"
+                              : r.percent >= 50
+                              ? "bg-amber-500/10 border-amber-400/30 text-amber-300"
+                              : "bg-rose-500/10 border-rose-400/30 text-rose-300"
+                          }`}
+                        >
+                          {r.percent}%
+                        </span>
                       </div>
-                      <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-wisdom-muted">
+                      <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-slate-400">
                         <span className="inline-flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3 text-emerald-400/80" /> {r.correct}/{r.total} correct
+                          <CheckCircle2 className="w-3 h-3 text-emerald-400/80" /> {r.correct}/
+                          {r.total} correct
                         </span>
                         <span className="inline-flex items-center gap-1">
                           <XCircle className="w-3 h-3 text-rose-400/80" /> {r.missed} missed
                         </span>
                         <span className="inline-flex items-center gap-1">
-                          <SkipForward className="w-3 h-3" /> {Math.max(0, r.total - r.correct - r.missed)} skipped
+                          <SkipForward className="w-3 h-3 text-slate-400" />{" "}
+                          {Math.max(0, r.total - r.correct - r.missed)} skipped
                         </span>
                         <span className="inline-flex items-center gap-1">
-                          <Calendar className="w-3 h-3" /> {new Date(r.date).toLocaleDateString()}
+                          <Calendar className="w-3 h-3 text-slate-400" />{" "}
+                          {new Date(r.date).toLocaleDateString()}
                         </span>
                       </div>
-                      {r.notes && <p className="mt-1.5 text-xs text-wisdom-muted/80 line-clamp-2">{r.notes}</p>}
+                      {r.notes && (
+                        <p className="text-[11px] text-slate-400/80 line-clamp-2 italic">
+                          {r.notes}
+                        </p>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -412,16 +711,33 @@ export default function AcademicResultSaver({
   );
 }
 
-function StatChip({ icon: Icon, label, value, color }: {
-  icon: ComponentType<{ className?: string }>; label: string; value: string; color: string;
+/**
+ * Modern translucent micro-card for key study stats
+ */
+function StatChip({
+  icon: Icon,
+  label,
+  value,
+  color,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  color: string;
 }) {
   return (
-    <div className="bg-wisdom-card px-3 py-3.5 sm:px-4 sm:py-4 min-w-0">
-      <div className={`flex items-center gap-1.5 mb-1 ${color}`}>
-        <Icon className="w-3.5 h-3.5 shrink-0" />
-        <span className="text-[10px] font-semibold uppercase tracking-wider truncate">{label}</span>
+    <div className="rounded-xl border border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.04] p-2.5 sm:p-3 transition-colors flex flex-col justify-between min-w-0">
+      <div className="flex items-center gap-1.5 min-w-0">
+        <span className="w-5 h-5 rounded-full bg-white/[0.05] flex items-center justify-center shrink-0">
+          <Icon className={`w-3 h-3 ${color}`} />
+        </span>
+        <span className="text-[10px] font-medium uppercase tracking-wider text-slate-400 truncate">
+          {label}
+        </span>
       </div>
-      <p className={`font-display text-lg sm:text-xl font-bold tabular-nums truncate ${color}`}>{value}</p>
+      <p className={`font-display text-sm sm:text-base font-bold tabular-nums truncate mt-1.5 ${color}`}>
+        {value}
+      </p>
     </div>
   );
 }
