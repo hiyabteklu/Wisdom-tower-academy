@@ -5,9 +5,6 @@ import Link from "next/link";
 import {
   Activity,
   AlertOctagon,
-  AlertTriangle,
-  ArrowRight,
-  BookOpen,
   Calendar,
   CheckCircle2,
   Clock,
@@ -15,9 +12,8 @@ import {
   Flame,
   Gauge,
   GraduationCap,
-  Layers,
-  RotateCcw,
   ShieldAlert,
+  Sparkles,
   Target,
   Timer,
   TrendingUp,
@@ -119,8 +115,6 @@ export default function StudentAnalyticsDashboard({
     );
   }, [rawProgress, studentName, selectedTrackKey, educationLevel, stream, userCreatedAt, enrolledPackageIds]);
 
-  const isAutoDetected = selectedTrackKey === defaultResolvedTrack.trackId;
-
   const trackOptions = Object.values(ACADEMIC_KNOWLEDGE_BASE).map((t) => ({
     value: t.trackId,
     label: t.trackId === defaultResolvedTrack.trackId ? `${t.trackName} (Enrolled)` : t.trackName,
@@ -128,20 +122,19 @@ export default function StudentAnalyticsDashboard({
   }));
 
   return (
-    <div className={`space-y-7 ${className}`}>
+    <div className={`space-y-8 sm:space-y-10 ${className}`}>
       {/* ========================================================= */}
       {/* 1. EXECUTIVE SYSTEM VERIFICATION BANNER                    */}
-      {/* "According to your records and our system..."              */}
       {/* ========================================================= */}
-      <div className="rounded-3xl border border-sky-500/30 bg-gradient-to-br from-[#070e1c] via-[#0b1528] to-[#050a14] p-6 sm:p-8 shadow-2xl space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
-          <div className="flex items-center gap-2.5">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-sky-500/20 text-sky-300 border border-sky-400/40">
-              <GraduationCap className="w-3.5 h-3.5 text-sky-400" />
-              Verified Academic Analytics & Progress
+      <div className="rounded-[2rem] border border-sky-500/25 bg-gradient-to-br from-[#071124]/85 via-[#0b1730]/80 to-[#060e1d]/85 backdrop-blur-2xl p-6 sm:p-8 md:p-9 shadow-[0_12px_45px_rgba(0,0,0,0.35)] space-y-5">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-sky-500/15 text-sky-300 border border-sky-400/30">
+              <GraduationCap className="w-4 h-4 text-sky-400" />
+              Verified Academic Analytics
             </span>
-            <span className="text-xs font-mono font-bold text-slate-300">
-              Standing: <strong className="text-cyan-300">{analytics.masteryTier}</strong>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono font-medium text-slate-300 bg-white/[0.04] border border-white/10">
+              Standing: <strong className="text-cyan-300 font-bold">{analytics.masteryTier}</strong>
             </span>
           </div>
 
@@ -159,34 +152,33 @@ export default function StudentAnalyticsDashboard({
         </div>
 
         {/* The Exact "According to your records and our system..." statement */}
-        <div className="p-4 sm:p-5 rounded-2xl border border-sky-400/30 bg-sky-500/10 space-y-2">
+        <div className="p-5 sm:p-6 rounded-2xl border border-sky-400/25 bg-sky-500/[0.07] backdrop-blur-md space-y-2">
           <p className="text-xs font-bold uppercase tracking-wider text-sky-300 flex items-center gap-2">
             <Activity className="w-4 h-4 text-sky-400" />
-            System Executive Assessment
+            <span>System Executive Assessment</span>
           </p>
-          <p className="text-sm sm:text-base text-slate-100 font-medium leading-relaxed">
+          <p className="text-sm sm:text-base text-slate-100 font-normal leading-relaxed">
             According to your verified study records and our academic system, your cumulative study time is{" "}
-            <strong className="text-white font-bold">{analytics.studyTimeAnalysis.totalStudyHours} hours</strong> (
+            <strong className="text-white font-semibold">{analytics.studyTimeAnalysis.totalStudyHours} hours</strong> (
             {analytics.studyTimeAnalysis.totalStudyMinutes} minutes). You are tracking at{" "}
-            <strong className="text-cyan-300 font-bold">{analytics.weeklyProgressPct}%</strong> of your{" "}
+            <strong className="text-cyan-300 font-semibold">{analytics.weeklyProgressPct}%</strong> of your{" "}
             {analytics.weeklyTargetHours}-hour weekly target with an active streak of{" "}
-            <strong className="text-amber-300 font-bold">{analytics.currentStreakDays} days</strong>.
+            <strong className="text-amber-300 font-semibold">{analytics.currentStreakDays} days</strong>.
           </p>
         </div>
       </div>
 
       {/* ========================================================= */}
       {/* 2. FOUR HIGH-CONTRAST LEVEL-COLORED HUD METRICS            */}
-      {/* Green (>=75%) / Yellow (50-74%) / Red (<50%)               */}
       {/* ========================================================= */}
       {(() => {
         // Study Time Level
         const timeLevel =
           analytics.weeklyProgressPct >= 75
-            ? { text: "text-emerald-400", border: "border-emerald-500/40 hover:border-emerald-400", badge: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40", status: "On Target" }
+            ? { text: "text-emerald-400", border: "border-emerald-500/30 hover:border-emerald-400/50", badge: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30", status: "On Target" }
             : analytics.weeklyProgressPct >= 50
-            ? { text: "text-amber-400", border: "border-amber-500/40 hover:border-amber-400", badge: "bg-amber-500/20 text-amber-300 border-amber-500/40", status: "Moderate Pace" }
-            : { text: "text-rose-400", border: "border-rose-500/40 hover:border-rose-400", badge: "bg-rose-500/20 text-rose-300 border-rose-500/40", status: "Under Goal" };
+            ? { text: "text-amber-400", border: "border-amber-500/30 hover:border-amber-400/50", badge: "bg-amber-500/15 text-amber-300 border-amber-500/30", status: "Moderate Pace" }
+            : { text: "text-rose-400", border: "border-rose-500/30 hover:border-rose-400/50", badge: "bg-rose-500/15 text-rose-300 border-rose-500/30", status: "Under Goal" };
 
         // Reading Speed Ratio
         const speedRatio = Math.round(
@@ -194,50 +186,54 @@ export default function StudentAnalyticsDashboard({
         );
         const speedLevel =
           speedRatio >= 90
-            ? { text: "text-emerald-400", border: "border-emerald-500/40 hover:border-emerald-400", badge: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40", status: "High Velocity" }
+            ? { text: "text-emerald-400", border: "border-emerald-500/30 hover:border-emerald-400/50", badge: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30", status: "High Velocity" }
             : speedRatio >= 65
-            ? { text: "text-amber-400", border: "border-amber-500/40 hover:border-amber-400", badge: "bg-amber-500/20 text-amber-300 border-amber-500/40", status: "Standard Pace" }
-            : { text: "text-rose-400", border: "border-rose-500/40 hover:border-rose-400", badge: "bg-rose-500/20 text-rose-300 border-rose-500/40", status: "Pacing Warning" };
+            ? { text: "text-amber-400", border: "border-amber-500/30 hover:border-amber-400/50", badge: "bg-amber-500/15 text-amber-300 border-amber-500/30", status: "Standard Pace" }
+            : { text: "text-rose-400", border: "border-rose-500/30 hover:border-rose-400/50", badge: "bg-rose-500/15 text-rose-300 border-rose-500/30", status: "Pacing Warning" };
 
         // Question Accuracy Level
         const accuracyLevel =
           analytics.questionAccuracyPct >= 75
-            ? { text: "text-emerald-400", border: "border-emerald-500/40 hover:border-emerald-400", badge: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40", status: "Mastery Level" }
+            ? { text: "text-emerald-400", border: "border-emerald-500/30 hover:border-emerald-400/50", badge: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30", status: "Mastery Level" }
             : analytics.questionAccuracyPct >= 50
-            ? { text: "text-amber-400", border: "border-amber-500/40 hover:border-amber-400", badge: "bg-amber-500/20 text-amber-300 border-amber-500/40", status: "Developing" }
-            : { text: "text-rose-400", border: "border-rose-500/40 hover:border-rose-400", badge: "bg-rose-500/20 text-rose-300 border-rose-500/40", status: "Needs Review" };
+            ? { text: "text-amber-400", border: "border-amber-500/30 hover:border-amber-400/50", badge: "bg-amber-500/15 text-amber-300 border-amber-500/30", status: "Developing" }
+            : { text: "text-rose-400", border: "border-rose-500/30 hover:border-rose-400/50", badge: "bg-rose-500/15 text-rose-300 border-rose-500/30", status: "Needs Review" };
 
         // Streak Level
         const streakLevel =
           analytics.currentStreakDays >= 7
-            ? { text: "text-emerald-400", border: "border-emerald-500/40 hover:border-emerald-400", badge: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" }
+            ? { text: "text-emerald-400", border: "border-emerald-500/30 hover:border-emerald-400/50", badge: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30" }
             : analytics.currentStreakDays >= 3
-            ? { text: "text-amber-400", border: "border-amber-500/40 hover:border-amber-400", badge: "bg-amber-500/20 text-amber-300 border-amber-500/40" }
-            : { text: "text-rose-400", border: "border-rose-500/40 hover:border-rose-400", badge: "bg-rose-500/20 text-rose-300 border-rose-500/40" };
+            ? { text: "text-amber-400", border: "border-amber-500/30 hover:border-amber-400/50", badge: "bg-amber-500/15 text-amber-300 border-amber-500/30" }
+            : { text: "text-rose-400", border: "border-rose-500/30 hover:border-rose-400/50", badge: "bg-rose-500/15 text-rose-300 border-rose-500/30" };
 
         return (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {/* Card 1: Study Time */}
-            <div className={`p-5 rounded-2xl border bg-[#0b1220] shadow-lg flex flex-col justify-between ${timeLevel.border} transition-all`}>
+            <div className={`p-6 sm:p-7 rounded-[1.75rem] border bg-[#0b1329]/75 backdrop-blur-2xl shadow-[0_8px_30px_rgba(0,0,0,0.25)] flex flex-col justify-between ${timeLevel.border} transition-all duration-300 hover:scale-[1.01]`}>
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-sky-400" />
-                    Study Time Logged
-                  </span>
-                  <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${timeLevel.badge}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-sky-500/15 border border-sky-400/30 flex items-center justify-center">
+                      <Clock className="w-4 h-4 text-sky-400" />
+                    </div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                      Study Time
+                    </span>
+                  </div>
+                  <span className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${timeLevel.badge}`}>
                     {timeLevel.status}
                   </span>
                 </div>
-                <p className={`font-display text-3xl sm:text-4xl font-black ${timeLevel.text}`}>
+                <p className={`font-display text-3xl sm:text-4xl font-extrabold ${timeLevel.text}`}>
                   {analytics.totalStudyHours}
-                  <span className="text-base font-normal text-slate-400 ml-1">hrs</span>
+                  <span className="text-base font-normal text-slate-400 ml-1.5">hrs</span>
                 </p>
-                <p className="text-xs text-slate-300 font-semibold mt-1">
+                <p className="text-xs text-slate-300 font-medium mt-1.5">
                   Target: {analytics.weeklyTargetHours} hrs/wk ({analytics.weeklyProgressPct}%)
                 </p>
               </div>
-              <div className="mt-4 pt-3 border-t border-white/10 text-[11px] text-slate-300">
+              <div className="mt-5 pt-3.5 border-t border-white/[0.08] text-xs text-slate-400 leading-relaxed">
                 {analytics.hoursRemainingThisWeek > 0
                   ? `${analytics.hoursRemainingThisWeek} hrs remaining to hit weekly quota.`
                   : "Weekly institutional study quota reached."}
@@ -245,75 +241,87 @@ export default function StudentAnalyticsDashboard({
             </div>
 
             {/* Card 2: Reading Speed & Focus */}
-            <div className={`p-5 rounded-2xl border bg-[#0b1220] shadow-lg flex flex-col justify-between ${speedLevel.border} transition-all`}>
+            <div className={`p-6 sm:p-7 rounded-[1.75rem] border bg-[#0b1329]/75 backdrop-blur-2xl shadow-[0_8px_30px_rgba(0,0,0,0.25)] flex flex-col justify-between ${speedLevel.border} transition-all duration-300 hover:scale-[1.01]`}>
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                    <Gauge className="w-3.5 h-3.5 text-sky-400" />
-                    Reading Speed
-                  </span>
-                  <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${speedLevel.badge}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center">
+                      <Gauge className="w-4 h-4 text-cyan-400" />
+                    </div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                      Reading Speed
+                    </span>
+                  </div>
+                  <span className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${speedLevel.badge}`}>
                     {analytics.readingAnalysis.method.split("/")[0].trim()}
                   </span>
                 </div>
-                <p className={`font-display text-3xl sm:text-4xl font-black ${speedLevel.text}`}>
+                <p className={`font-display text-3xl sm:text-4xl font-extrabold ${speedLevel.text}`}>
                   {analytics.readingSpeedWpm}
-                  <span className="text-sm font-normal text-slate-400 ml-1">WPM</span>
+                  <span className="text-sm font-normal text-slate-400 ml-1.5">WPM</span>
                 </p>
-                <p className="text-xs text-slate-300 font-semibold mt-1">
+                <p className="text-xs text-slate-300 font-medium mt-1.5">
                   Focus Dwell Ratio: <strong className="text-white">{analytics.focusRatioPct}%</strong>
                 </p>
               </div>
-              <div className="mt-4 pt-3 border-t border-white/10 text-[11px] text-slate-300">
+              <div className="mt-5 pt-3.5 border-t border-white/[0.08] text-xs text-slate-400 leading-relaxed">
                 Benchmark: {analytics.trackBenchmark.expectedReadingWpm} WPM for {analytics.trackBenchmark.trackName}.
               </div>
             </div>
 
             {/* Card 3: Question Accuracy */}
-            <div className={`p-5 rounded-2xl border bg-[#0b1220] shadow-lg flex flex-col justify-between ${accuracyLevel.border} transition-all`}>
+            <div className={`p-6 sm:p-7 rounded-[1.75rem] border bg-[#0b1329]/75 backdrop-blur-2xl shadow-[0_8px_30px_rgba(0,0,0,0.25)] flex flex-col justify-between ${accuracyLevel.border} transition-all duration-300 hover:scale-[1.01]`}>
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                    <Target className="w-3.5 h-3.5 text-sky-400" />
-                    Question Accuracy
-                  </span>
-                  <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${accuracyLevel.badge}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center">
+                      <Target className="w-4 h-4 text-emerald-400" />
+                    </div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                      Accuracy
+                    </span>
+                  </div>
+                  <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${accuracyLevel.badge}`}>
                     {accuracyLevel.status}
                   </span>
                 </div>
-                <p className={`font-display text-3xl sm:text-4xl font-black ${accuracyLevel.text}`}>
+                <p className={`font-display text-3xl sm:text-4xl font-extrabold ${accuracyLevel.text}`}>
                   {analytics.questionAccuracyPct}%
                 </p>
-                <p className="text-xs text-slate-300 font-semibold mt-1">
+                <p className="text-xs text-slate-300 font-medium mt-1.5">
                   Solved: {analytics.questionsCorrect} of {analytics.questionsAttempted} drills
                 </p>
               </div>
-              <div className="mt-4 pt-3 border-t border-white/10 text-[11px] text-slate-300">
+              <div className="mt-5 pt-3.5 border-t border-white/[0.08] text-xs text-slate-400 leading-relaxed">
                 Retention Index: <strong className="text-white">{analytics.retentionAnalysis.retentionIndexPct}%</strong>
               </div>
             </div>
 
             {/* Card 4: Active Streak */}
-            <div className={`p-5 rounded-2xl border bg-[#0b1220] shadow-lg flex flex-col justify-between ${streakLevel.border} transition-all`}>
+            <div className={`p-6 sm:p-7 rounded-[1.75rem] border bg-[#0b1329]/75 backdrop-blur-2xl shadow-[0_8px_30px_rgba(0,0,0,0.25)] flex flex-col justify-between ${streakLevel.border} transition-all duration-300 hover:scale-[1.01]`}>
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                    <Flame className="w-3.5 h-3.5 text-amber-400" />
-                    Active Streak
-                  </span>
-                  <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${streakLevel.badge}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-amber-500/15 border border-amber-400/30 flex items-center justify-center">
+                      <Flame className="w-4 h-4 text-amber-400" />
+                    </div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                      Active Streak
+                    </span>
+                  </div>
+                  <span className={`text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full border ${streakLevel.badge}`}>
                     {analytics.currentStreakDays >= 7 ? "Unbroken" : "Active"}
                   </span>
                 </div>
-                <p className={`font-display text-3xl sm:text-4xl font-black ${streakLevel.text}`}>
+                <p className={`font-display text-3xl sm:text-4xl font-extrabold ${streakLevel.text}`}>
                   {analytics.currentStreakDays}
-                  <span className="text-base font-normal text-slate-400 ml-1">days</span>
+                  <span className="text-base font-normal text-slate-400 ml-1.5">days</span>
                 </p>
-                <p className="text-xs text-slate-300 font-semibold mt-1">
+                <p className="text-xs text-slate-300 font-medium mt-1.5">
                   Daily active learning recorded
                 </p>
               </div>
-              <div className="mt-4 pt-3 border-t border-white/10 text-[11px] text-slate-300">
+              <div className="mt-5 pt-3.5 border-t border-white/[0.08] text-xs text-slate-400 leading-relaxed">
                 Daily goal: {dailyGoalMinutes} mins / day.
               </div>
             </div>
@@ -323,42 +331,41 @@ export default function StudentAnalyticsDashboard({
 
       {/* ========================================================= */}
       {/* 3. READING SPEED & READING METHOD IN-DEPTH DIAGNOSTIC       */}
-      {/* "Ur reading speed is...,reading method (skimming,... Etc"   */}
       {/* ========================================================= */}
-      <div className="rounded-3xl border border-white/10 bg-[#080e1c] p-6 sm:p-7 shadow-xl space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+      <div className="rounded-[2rem] border border-white/10 bg-[#0b1329]/75 backdrop-blur-2xl p-6 sm:p-8 md:p-9 shadow-[0_12px_45px_rgba(0,0,0,0.3)] space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-5">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-sky-500/20 text-sky-300 border border-sky-400/30">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-sky-500/15 text-sky-300 border border-sky-400/30">
                 Cognitive Reading Diagnostic
               </span>
               <span className="text-xs text-slate-400">
                 Evaluated across syllabus chapters & lecture notes
               </span>
             </div>
-            <h3 className="font-display text-lg sm:text-xl font-black text-white mt-1">
+            <h3 className="font-display text-lg sm:text-xl font-bold text-white">
               Your Reading Speed & Method Analysis
             </h3>
           </div>
 
           <div className="flex items-center gap-2 self-start sm:self-center">
-            <span className={`text-xs font-bold px-3 py-1 rounded-xl border ${analytics.readingAnalysis.methodColor}`}>
+            <span className={`text-xs font-semibold px-4 py-1.5 rounded-full border ${analytics.readingAnalysis.methodColor}`}>
               Method: {analytics.readingAnalysis.method}
             </span>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 text-xs">
           {/* Diagnostic 1: Reading Velocity */}
-          <div className="p-4 rounded-2xl border border-white/10 bg-white/[0.02] space-y-2">
+          <div className="p-5 sm:p-6 rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-md space-y-2.5 hover:bg-white/[0.05] transition-all duration-200">
             <div className="flex items-center justify-between text-slate-300 font-bold uppercase tracking-wider text-[11px]">
-              <span className="flex items-center gap-1.5 text-cyan-300">
+              <span className="flex items-center gap-2 text-cyan-300">
                 <Gauge className="w-4 h-4" />
-                Velocity Reading Rate
+                Velocity Rate
               </span>
-              <span className="font-mono text-white text-sm">{analytics.readingAnalysis.speedWpm} WPM</span>
+              <span className="font-mono text-white text-sm font-semibold">{analytics.readingAnalysis.speedWpm} WPM</span>
             </div>
-            <p className="text-slate-300 leading-relaxed">
+            <p className="text-slate-300 leading-relaxed text-xs">
               Your reading velocity is calculated at <strong>{analytics.readingAnalysis.speedWpm} Words Per Minute</strong>. 
               {analytics.readingAnalysis.speedWpm >= 285
                 ? " This falls in the rapid scanning category. You transition through text quickly."
@@ -369,29 +376,29 @@ export default function StudentAnalyticsDashboard({
           </div>
 
           {/* Diagnostic 2: Reading Method Classification */}
-          <div className="p-4 rounded-2xl border border-white/10 bg-white/[0.02] space-y-2">
+          <div className="p-5 sm:p-6 rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-md space-y-2.5 hover:bg-white/[0.05] transition-all duration-200">
             <div className="flex items-center justify-between text-slate-300 font-bold uppercase tracking-wider text-[11px]">
-              <span className="flex items-center gap-1.5 text-amber-300">
+              <span className="flex items-center gap-2 text-amber-300">
                 <Compass className="w-4 h-4" />
                 Detected Method
               </span>
-              <span className="font-bold text-amber-300">{analytics.readingAnalysis.methodBadge}</span>
+              <span className="font-semibold text-amber-300">{analytics.readingAnalysis.methodBadge}</span>
             </div>
-            <p className="text-slate-300 leading-relaxed">
+            <p className="text-slate-300 leading-relaxed text-xs">
               {analytics.readingAnalysis.methodDescription}
             </p>
           </div>
 
           {/* Diagnostic 3: Retention Impact */}
-          <div className="p-4 rounded-2xl border border-white/10 bg-white/[0.02] space-y-2">
+          <div className="p-5 sm:p-6 rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-md space-y-2.5 hover:bg-white/[0.05] transition-all duration-200">
             <div className="flex items-center justify-between text-slate-300 font-bold uppercase tracking-wider text-[11px]">
-              <span className="flex items-center gap-1.5 text-emerald-300">
+              <span className="flex items-center gap-2 text-emerald-300">
                 <Zap className="w-4 h-4" />
                 Retention Impact
               </span>
-              <span className="font-mono text-emerald-400 font-bold">{analytics.focusRatioPct}% Focus</span>
+              <span className="font-mono text-emerald-400 font-semibold">{analytics.focusRatioPct}% Focus</span>
             </div>
-            <p className="text-slate-300 leading-relaxed">
+            <p className="text-slate-300 leading-relaxed text-xs">
               {analytics.readingAnalysis.retentionImpact}
             </p>
           </div>
@@ -400,34 +407,33 @@ export default function StudentAnalyticsDashboard({
 
       {/* ========================================================= */}
       {/* 4. RETENTION & ACCURACY DIAGNOSIS                          */}
-      {/* "Retainton and accuracy..."                                */}
       {/* ========================================================= */}
-      <div className="rounded-3xl border border-white/10 bg-[#080e1c] p-6 sm:p-7 shadow-xl space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+      <div className="rounded-[2rem] border border-white/10 bg-[#0b1329]/75 backdrop-blur-2xl p-6 sm:p-8 md:p-9 shadow-[0_12px_45px_rgba(0,0,0,0.3)] space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-5">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-300 border border-emerald-400/30">
                 Retention & Exam Accuracy
               </span>
               <span className="text-xs text-slate-400">
                 Derived from drills, chapter checks, and question sets
               </span>
             </div>
-            <h3 className="font-display text-lg sm:text-xl font-black text-white mt-1">
+            <h3 className="font-display text-lg sm:text-xl font-bold text-white">
               Active Recall & Question Precision
             </h3>
           </div>
 
           <div className="flex items-center gap-2 self-start sm:self-center">
-            <span className={`text-xs font-bold px-3 py-1 rounded-xl border ${analytics.retentionAnalysis.ratingColor}`}>
+            <span className={`text-xs font-semibold px-4 py-1.5 rounded-full border ${analytics.retentionAnalysis.ratingColor}`}>
               {analytics.retentionAnalysis.rating}
             </span>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
           {/* Accuracy Breakdown */}
-          <div className="p-4 sm:p-5 rounded-2xl border border-white/10 bg-white/[0.02] space-y-3">
+          <div className="p-5 sm:p-6 rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-md space-y-3.5 hover:bg-white/[0.05] transition-all duration-200">
             <div className="flex items-center justify-between">
               <span className="font-bold text-white uppercase text-[11px] tracking-wider flex items-center gap-2">
                 <Target className="w-4 h-4 text-cyan-400" />
@@ -438,7 +444,7 @@ export default function StudentAnalyticsDashboard({
               </span>
             </div>
 
-            <div className="h-2.5 w-full bg-white/10 rounded-full overflow-hidden">
+            <div className="h-3 w-full bg-white/10 rounded-full overflow-hidden p-0.5">
               <div
                 style={{ width: `${analytics.retentionAnalysis.accuracyPct}%` }}
                 className={`h-full rounded-full transition-all duration-700 ${
@@ -451,7 +457,7 @@ export default function StudentAnalyticsDashboard({
               />
             </div>
 
-            <div className="flex items-center justify-between text-slate-300 text-[11px] pt-1">
+            <div className="flex items-center justify-between text-slate-300 text-xs pt-1">
               <span>
                 Correctly Solved: <strong className="text-white font-mono">{analytics.retentionAnalysis.questionsCorrect}</strong>
               </span>
@@ -460,13 +466,13 @@ export default function StudentAnalyticsDashboard({
               </span>
             </div>
 
-            <p className="text-slate-300 leading-relaxed pt-1">
+            <p className="text-slate-300 leading-relaxed pt-1 text-xs">
               {analytics.retentionAnalysis.explanation}
             </p>
           </div>
 
           {/* Exam Pacing Diagnostic */}
-          <div className="p-4 sm:p-5 rounded-2xl border border-white/10 bg-white/[0.02] space-y-3">
+          <div className="p-5 sm:p-6 rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-md space-y-3.5 hover:bg-white/[0.05] transition-all duration-200">
             <div className="flex items-center justify-between">
               <span className="font-bold text-white uppercase text-[11px] tracking-wider flex items-center gap-2">
                 <Timer className="w-4 h-4 text-amber-400" />
@@ -477,13 +483,13 @@ export default function StudentAnalyticsDashboard({
               </span>
             </div>
 
-            <div className="p-3 rounded-xl border border-white/8 bg-black/30 text-[11.5px] text-slate-300 leading-relaxed">
+            <div className="p-3.5 rounded-xl border border-white/8 bg-black/30 text-xs text-slate-300 leading-relaxed">
               {analytics.pacingDiagnosis.message}
             </div>
 
-            <div className="flex items-center justify-between text-slate-400 text-[11px] pt-1">
+            <div className="flex items-center justify-between text-slate-400 text-xs pt-1">
               <span>National Threshold: <strong>{analytics.trackBenchmark.targetMinutesPerQuestion}m</strong></span>
-              <span className={analytics.pacingDiagnosis.status === "Optimal" ? "text-emerald-400" : "text-amber-400"}>
+              <span className={analytics.pacingDiagnosis.status === "Optimal" ? "text-emerald-400 font-medium" : "text-amber-400 font-medium"}>
                 Status: {analytics.pacingDiagnosis.status}
               </span>
             </div>
@@ -493,51 +499,50 @@ export default function StudentAnalyticsDashboard({
 
       {/* ========================================================= */}
       {/* 5. RECOMMENDATIONS                                         */}
-      {/* "Recommendations...."                                      */}
       {/* ========================================================= */}
-      <div className="rounded-3xl border border-cyan-500/30 bg-gradient-to-br from-[#06101f] via-[#09152b] to-[#050c18] p-6 sm:p-7 shadow-2xl space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+      <div className="rounded-[2rem] border border-cyan-500/25 bg-gradient-to-br from-[#061226]/85 via-[#091836]/80 to-[#050e20]/85 backdrop-blur-2xl p-6 sm:p-8 md:p-9 shadow-[0_12px_45px_rgba(0,0,0,0.35)] space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-5">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-cyan-500/20 text-cyan-300 border border-cyan-400/40">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-cyan-500/15 text-cyan-300 border border-cyan-400/30">
                 Actionable Directives
               </span>
               <span className="text-xs text-slate-300">
                 Personalized study guidance for {studentName}
               </span>
             </div>
-            <h3 className="font-display text-lg sm:text-xl font-black text-white mt-1">
+            <h3 className="font-display text-lg sm:text-xl font-bold text-white">
               System Recommendations For Your Study Routine
             </h3>
           </div>
 
-          <span className="text-xs font-mono font-bold text-cyan-300 self-start sm:self-center">
+          <span className="text-xs font-mono font-bold text-cyan-300 px-3.5 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-400/30 self-start sm:self-center">
             {analytics.recommendations.length} Specific Adjustments
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
           {analytics.recommendations.map((rec) => (
             <div
               key={rec.id}
-              className="p-4 sm:p-5 rounded-2xl border border-white/10 bg-white/[0.02] hover:border-cyan-400/30 transition-all space-y-3 flex flex-col justify-between"
+              className="p-5 sm:p-6 rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-md hover:border-cyan-400/40 hover:bg-white/[0.05] transition-all duration-300 space-y-3.5 flex flex-col justify-between"
             >
               <div>
-                <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-400/30">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-400/30">
                     {rec.category}
                   </span>
                 </div>
                 <h4 className="font-display text-sm font-bold text-white">
                   {rec.title}
                 </h4>
-                <p className="text-slate-300 text-[11.5px] leading-relaxed mt-1">
+                <p className="text-slate-300 text-xs leading-relaxed mt-1.5">
                   {rec.description}
                 </p>
               </div>
 
-              <div className="p-2.5 rounded-xl border border-cyan-500/20 bg-cyan-500/[0.04] text-[11.5px] text-cyan-200 font-medium">
-                <strong className="text-cyan-300 block text-[10px] uppercase tracking-wider mb-0.5">
+              <div className="p-3 rounded-xl border border-cyan-500/25 bg-cyan-500/[0.06] text-xs text-cyan-200 font-medium">
+                <strong className="text-cyan-300 block text-[10px] uppercase tracking-wider mb-1">
                   Actionable Step:
                 </strong>
                 {rec.actionableStep}
@@ -549,13 +554,12 @@ export default function StudentAnalyticsDashboard({
 
       {/* ========================================================= */}
       {/* 6. CRITICAL WARNING SYSTEM (Immediately Stop Signals)     */}
-      {/* Normal dark card background, red warning & icon           */}
       {/* ========================================================= */}
-      <div className="rounded-3xl border border-white/10 bg-wisdom-card p-6 sm:p-7 shadow-2xl space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+      <div className="rounded-[2rem] border border-rose-500/25 bg-[#0b1329]/75 backdrop-blur-2xl p-6 sm:p-8 md:p-9 shadow-[0_12px_45px_rgba(0,0,0,0.35)] space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-5">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-rose-500/15 text-rose-400 border border-rose-500/30 flex items-center gap-1.5">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-rose-500/15 text-rose-400 border border-rose-500/30 flex items-center gap-1.5">
                 <AlertOctagon className="w-3.5 h-3.5 text-rose-400" />
                 Critical Warning System
               </span>
@@ -563,40 +567,40 @@ export default function StudentAnalyticsDashboard({
                 Derived directly from your recent study telemetry
               </span>
             </div>
-            <h3 className="font-display text-lg sm:text-xl font-bold text-white mt-1 flex items-center gap-2">
+            <h3 className="font-display text-lg sm:text-xl font-bold text-white flex items-center gap-2">
               Immediately Stop Signals & Habits
             </h3>
           </div>
 
-          <span className="text-xs font-mono font-bold text-rose-300 px-3 py-1 rounded-xl bg-rose-500/10 border border-rose-500/30 self-start sm:self-center">
+          <span className="text-xs font-mono font-bold text-rose-300 px-3.5 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/30 self-start sm:self-center">
             {analytics.immediatelyStopSignals.length} Active Directives
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
           {analytics.immediatelyStopSignals.map((sig) => (
             <div
               key={sig.id}
-              className="p-4 sm:p-5 rounded-2xl border border-white/10 bg-white/[0.02] hover:border-rose-400/40 transition-all space-y-3 flex flex-col justify-between"
+              className="p-5 sm:p-6 rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-md hover:border-rose-400/40 hover:bg-white/[0.05] transition-all duration-300 space-y-3.5 flex flex-col justify-between"
             >
               <div>
-                <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30">
                     {sig.severity} Alert
                   </span>
                 </div>
-                <h4 className="font-display text-sm font-bold text-white flex items-center gap-1.5">
+                <h4 className="font-display text-sm font-bold text-white flex items-center gap-2">
                   <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0" />
-                  {sig.signal}
+                  <span>{sig.signal}</span>
                 </h4>
-                <p className="text-slate-300 text-[11.5px] leading-relaxed mt-1">
+                <p className="text-slate-300 text-xs leading-relaxed mt-1.5">
                   <strong className="text-white">Observed Data: </strong>
                   {sig.observedData}
                 </p>
               </div>
 
-              <div className="p-2.5 rounded-xl border border-white/10 bg-white/[0.03] text-[11.5px] text-slate-200 font-medium">
-                <strong className="text-rose-400 block text-[10px] uppercase tracking-wider mb-0.5">
+              <div className="p-3 rounded-xl border border-white/10 bg-white/[0.03] text-xs text-slate-200 font-medium">
+                <strong className="text-rose-400 block text-[10px] uppercase tracking-wider mb-1">
                   Immediate Corrective Action:
                 </strong>
                 {sig.immediateAction}
@@ -609,39 +613,39 @@ export default function StudentAnalyticsDashboard({
       {/* ========================================================= */}
       {/* 7. WEEKLY READING TIME & DAILY STUDY RHYTHM CHART          */}
       {/* ========================================================= */}
-      <div className="rounded-3xl border border-white/10 bg-wisdom-card p-6 sm:p-7 shadow-xl space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+      <div className="rounded-[2rem] border border-white/10 bg-[#0b1329]/75 backdrop-blur-2xl p-6 sm:p-8 md:p-9 shadow-[0_12px_45px_rgba(0,0,0,0.3)] space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-5">
           <div>
-            <h3 className="font-display text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+            <h3 className="font-display text-lg sm:text-xl font-bold text-white flex items-center gap-2.5">
               <Calendar className="w-5 h-5 text-sky-400" />
               Weekly Reading Time & Daily Study Rhythm
             </h3>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-400 mt-1">
               Verified daily distribution of your reading sessions and question practice (Monday – Sunday).
             </p>
           </div>
 
-          <span className="text-xs font-mono font-bold text-cyan-300 px-3 py-1 rounded-xl bg-cyan-500/10 border border-cyan-400/20 self-start sm:self-center">
+          <span className="text-xs font-mono font-bold text-cyan-300 px-3.5 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-400/30 self-start sm:self-center">
             {analytics.totalStudyHours} hrs logged this week
           </span>
         </div>
 
-        <div className="h-40 flex items-end justify-between gap-2 sm:gap-4 px-2 pt-2">
+        <div className="h-44 flex items-end justify-between gap-2.5 sm:gap-5 px-3 pt-3">
           {analytics.dailyDistribution.map((d) => {
             const max = 120;
             const heightPct = Math.min(100, Math.max(14, Math.round((d.minutes / max) * 100)));
             return (
-              <div key={d.day} className="flex-1 flex flex-col items-center gap-2 group">
-                <span className="text-[10px] font-mono text-cyan-300 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div key={d.day} className="flex-1 flex flex-col items-center gap-2.5 group">
+                <span className="text-[10px] font-mono font-bold text-cyan-300 opacity-0 group-hover:opacity-100 transition-opacity">
                   {d.minutes}m
                 </span>
-                <div className="w-full max-w-[2.5rem] bg-white/5 rounded-t-xl overflow-hidden h-28 flex items-end">
+                <div className="w-full max-w-[2.5rem] bg-white/[0.04] rounded-t-2xl overflow-hidden h-32 flex items-end p-0.5">
                   <div
                     style={{ height: `${heightPct}%` }}
                     className="w-full bg-gradient-to-t from-cyan-600 via-sky-500 to-amber-300 rounded-t-xl transition-all duration-500 group-hover:brightness-110 shadow-sm"
                   />
                 </div>
-                <span className="text-xs font-bold text-slate-300">{d.day}</span>
+                <span className="text-xs font-semibold text-slate-300">{d.day}</span>
               </div>
             );
           })}

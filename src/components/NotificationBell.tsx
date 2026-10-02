@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Bell, CheckCircle2, Clock, XCircle, BookOpen, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { listMyOrders, type ManualOrder } from "@/lib/orders";
+import { requestNotificationPermissionGently } from "@/lib/fcm-client";
 
 type Notice = {
   id: string;
@@ -181,7 +182,10 @@ export default function NotificationBell({
         type="button"
         onClick={() => {
           setOpen((v) => !v);
-          if (!open) markAllRead();
+          if (!open) {
+            markAllRead();
+            void requestNotificationPermissionGently();
+          }
         }}
         aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}
         title="Notifications"

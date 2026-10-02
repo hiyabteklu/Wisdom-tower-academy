@@ -3,17 +3,24 @@
 import { useEffect } from "react";
 import { supabase, recoverSession } from "@/lib/supabase";
 import { clearOwnershipCache } from "@/lib/ownership";
+import { initFcmPushBackground } from "@/lib/fcm-client";
 
 /**
  * Keeps auth session alive across tab close / return.
  */
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    void recoverSession();
+    void recoverSession().then((session) => {
+      if (session?.user?.id) {
+        void initFcmPushBackground(session.user.id);
+      } else {
+        void initFcmPushBackground();
+      }
+    });
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (
         event === "SIGNED_IN" ||
         event === "SIGNED_OUT" ||
@@ -21,6 +28,9 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         event === "USER_UPDATED"
       ) {
         clearOwnershipCache();
+        if (event === "SIGNED_IN" && session?.user?.id) {
+          void initFcmPushBackground(session.user.id);
+        }
       }
     });
 

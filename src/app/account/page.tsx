@@ -14,11 +14,17 @@ import { listMyOrders, type ManualOrder } from "@/lib/orders";
 import type { User } from "@supabase/supabase-js";
 import {
   BookOpen,
+  Check,
   Copy,
+  ExternalLink,
   Inbox,
   LayoutDashboard,
   LogOut,
+  MessageSquarePlus,
+  Send,
   Settings2,
+  ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 
 interface Inquiry {
@@ -34,10 +40,10 @@ interface Inquiry {
 function statusStyle(status: string) {
   const s = (status || "new").toLowerCase();
   if (s === "replied" || s === "closed" || s === "approved") {
-    return "bg-emerald-500/15 text-emerald-400 border-emerald-500/30";
+    return "bg-emerald-500/15 text-emerald-300 border-emerald-500/30";
   }
   if (s === "read" || s === "reviewing") {
-    return "bg-amber-500/15 text-amber-400 border-amber-500/30";
+    return "bg-amber-500/15 text-amber-300 border-amber-500/30";
   }
   return "bg-cyan-500/15 text-cyan-300 border-cyan-400/30";
 }
@@ -143,7 +149,7 @@ export default function AccountPage() {
   if (loading || !user) {
     return (
       <div
-        className="min-h-[65vh] flex flex-col items-center justify-center gap-3"
+        className="min-h-[70vh] flex flex-col items-center justify-center gap-4"
         data-wta-spinner="true"
       >
         <BrandLoader size="lg" label="Loading student command center..." />
@@ -154,12 +160,26 @@ export default function AccountPage() {
   const isAdmin = isAdminEmail(user.email);
 
   return (
-    <div className="py-6 sm:py-10 md:py-14 min-h-[85vh] relative">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+    <div className="relative min-h-[90vh] py-8 sm:py-12 md:py-16 overflow-hidden">
+      {/* Ambient background glows for soft depth and glass surfaces */}
+      <div
+        className="absolute top-12 left-1/2 -translate-x-1/2 w-[42rem] h-[22rem] bg-gradient-to-r from-sky-500/10 via-cyan-500/10 to-indigo-500/10 rounded-full blur-3xl pointer-events-none -z-10"
+        aria-hidden
+      />
+      <div
+        className="absolute top-96 left-1/4 w-80 h-80 bg-cyan-600/5 rounded-full blur-[100px] pointer-events-none -z-10"
+        aria-hidden
+      />
+      <div
+        className="absolute top-[32rem] right-1/4 w-96 h-96 bg-indigo-600/5 rounded-full blur-[120px] pointer-events-none -z-10"
+        aria-hidden
+      />
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 sm:space-y-12">
         {/* ========================================================= */}
-        {/* TOP HERO: OFFICIAL DIGITAL STUDENT ID & TOOLBAR            */}
+        {/* TOP HERO: DIGITAL STUDENT ID & SPACIOUS FLOATING TOOLBAR   */}
         {/* ========================================================= */}
-        <section className="flex flex-col items-center gap-5">
+        <section className="flex flex-col items-center gap-7 sm:gap-8">
           {/* Centered Digital Student ID Card */}
           <div className="w-full max-w-md mx-auto">
             <StudentIdCard
@@ -176,58 +196,64 @@ export default function AccountPage() {
             />
           </div>
 
-          {/* Clean Student Toolbar */}
-          <div className="w-full max-w-xl mx-auto rounded-2xl border border-white/10 bg-wisdom-card p-3.5 sm:p-4 flex flex-wrap items-center justify-between gap-3 shadow-lg">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-wisdom-muted font-mono">
-                Folio: <strong className="text-white">{idData.folioNumber}</strong>
+          {/* Floating Glassmorphic Pill Control Bar */}
+          <div className="w-full max-w-2xl mx-auto rounded-3xl sm:rounded-full border border-white/10 bg-[#0b1329]/75 backdrop-blur-2xl p-3 sm:p-3.5 shadow-[0_12px_40px_rgba(0,0,0,0.35)] flex flex-wrap items-center justify-between gap-3">
+            {/* Folio Pill with Circular Copy Button */}
+            <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/10">
+              <span className="text-[11px] text-slate-400 font-medium">Folio</span>
+              <span className="text-xs font-mono font-bold text-white tracking-wider">
+                {idData.folioNumber}
               </span>
               <button
                 type="button"
                 onClick={handleCopyFolio}
-                className="text-wisdom-muted hover:text-cyan-300 transition-colors p-1"
+                className="w-7 h-7 rounded-full bg-white/5 hover:bg-cyan-500/20 text-slate-400 hover:text-cyan-300 border border-transparent hover:border-cyan-400/30 flex items-center justify-center transition-all duration-200 active:scale-90 cursor-pointer"
                 title="Copy Student Folio"
+                aria-label="Copy Student Folio"
               >
-                <Copy className="w-3.5 h-3.5" />
+                {copiedFolio ? (
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5" />
+                )}
               </button>
-              {copiedFolio && (
-                <span className="text-[10px] text-emerald-400 font-bold">Copied!</span>
-              )}
             </div>
 
+            {/* Pill Action Buttons */}
             <div className="flex flex-wrap items-center gap-2">
               <Link
                 href="/learning"
-                className="btn-primary text-xs px-3.5 py-1.5 flex items-center gap-1.5"
+                className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 rounded-full text-xs font-semibold text-white bg-gradient-to-r from-cyan-500 to-sky-600 hover:from-cyan-400 hover:to-sky-500 shadow-[0_4px_18px_rgba(6,182,212,0.3)] hover:shadow-[0_6px_24px_rgba(6,182,212,0.45)] transition-all duration-200 active:scale-95"
               >
                 <BookOpen className="w-3.5 h-3.5" />
-                Learning Hub
+                <span>Learning Hub</span>
               </Link>
 
               <Link
                 href="/settings"
-                className="px-3.5 py-1.5 rounded-xl text-xs font-bold border border-white/20 bg-white/5 text-white hover:bg-white/10 hover:border-cyan-400/50 flex items-center gap-1.5 transition-all shadow-sm"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold text-slate-200 hover:text-white bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 hover:border-cyan-400/40 shadow-sm transition-all duration-200 active:scale-95"
               >
                 <Settings2 className="w-3.5 h-3.5 text-cyan-300" />
-                Edit Profile
+                <span>Edit Profile</span>
               </Link>
 
               <button
                 type="button"
                 onClick={handleLogout}
-                className="px-3.5 py-1.5 rounded-xl text-xs font-bold border border-rose-500/40 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 hover:border-rose-400 hover:text-white flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold text-rose-300 hover:text-white bg-rose-500/[0.08] hover:bg-rose-500/20 border border-rose-500/20 hover:border-rose-400/40 transition-all duration-200 active:scale-95 cursor-pointer"
                 title="Sign out of your account"
               >
                 <LogOut className="w-3.5 h-3.5 text-rose-400" />
-                Log Out
+                <span>Log Out</span>
               </button>
 
               {isAdmin && (
                 <Link
                   href="/admin"
-                  className="px-3 py-1.5 rounded-xl text-xs font-bold border border-purple-400/40 bg-purple-500/15 text-purple-200 hover:bg-purple-500/25"
+                  className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-semibold text-purple-200 hover:text-white bg-purple-500/15 hover:bg-purple-500/25 border border-purple-400/30 transition-all duration-200 active:scale-95"
                 >
-                  Admin
+                  <ShieldCheck className="w-3.5 h-3.5 text-purple-300" />
+                  <span>Admin</span>
                 </Link>
               )}
             </div>
@@ -235,38 +261,52 @@ export default function AccountPage() {
         </section>
 
         {/* ========================================================= */}
-        {/* TAB NAVIGATION STRIP (2 Clean Tabs)                        */}
+        {/* SEGMENTED PILL TAB SWITCHER                                */}
         {/* ========================================================= */}
-        <div className="flex gap-2 border-b border-white/10 overflow-x-auto pb-1">
-          {[
-            {
-              id: "analytics" as const,
-              label: "Academic Analytics & Progress",
-              icon: LayoutDashboard,
-            },
-            {
-              id: "requests" as const,
-              label: `Inquiries & Support (Need Help?) ${inquiries.length > 0 ? `(${inquiries.length})` : ""}`,
-              icon: Inbox,
-            },
-          ].map((t) => {
-            const Icon = t.icon;
-            const active = tab === t.id;
-            return (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className={`flex items-center gap-2 px-5 py-3 text-xs sm:text-sm font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
-                  active
-                    ? "border-cyan-400 text-cyan-300 bg-cyan-500/[0.04]"
-                    : "border-transparent text-wisdom-muted hover:text-white"
-                }`}
-              >
-                <Icon className={`w-4 h-4 ${active ? "text-cyan-300" : ""}`} />
-                {t.label}
-              </button>
-            );
-          })}
+        <div className="flex justify-center">
+          <div className="p-1.5 rounded-full bg-[#0a1122]/80 backdrop-blur-xl border border-white/10 inline-flex items-center gap-1.5 shadow-[0_8px_30px_rgba(0,0,0,0.3)]">
+            {[
+              {
+                id: "analytics" as const,
+                label: "Academic Analytics & Progress",
+                icon: LayoutDashboard,
+              },
+              {
+                id: "requests" as const,
+                label: "Inquiries & Support",
+                count: inquiries.length,
+                icon: Inbox,
+              },
+            ].map((t) => {
+              const Icon = t.icon;
+              const active = tab === t.id;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => setTab(t.id)}
+                  className={`inline-flex items-center gap-2 px-5 sm:px-7 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer ${
+                    active
+                      ? "bg-gradient-to-r from-cyan-500/20 to-sky-500/20 text-cyan-200 border border-cyan-400/40 shadow-sm"
+                      : "text-slate-400 hover:text-white hover:bg-white/[0.05] border border-transparent"
+                  }`}
+                >
+                  <Icon className={`w-4 h-4 ${active ? "text-cyan-300" : "text-slate-400"}`} />
+                  <span>{t.label}</span>
+                  {typeof t.count === "number" && t.count > 0 && (
+                    <span
+                      className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
+                        active
+                          ? "bg-cyan-400/25 text-cyan-100 border border-cyan-300/30"
+                          : "bg-white/10 text-slate-300"
+                      }`}
+                    >
+                      {t.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* ========================================================= */}
@@ -275,69 +315,109 @@ export default function AccountPage() {
 
         {/* 1. DEDICATED STUDENT PROGRESS TRACKER & ANALYTICS */}
         {tab === "analytics" && (
-          <StudentAnalyticsDashboard
-            userId={user.id}
-            studentName={displayName}
-            educationLevel={profile?.education_level}
-            stream={profile?.stream}
-            userCreatedAt={user?.created_at}
-            dailyGoalMinutes={profile?.daily_study_goal_minutes || 45}
-            enrolledPackageIds={orders.map((o) => o.packageId).filter(Boolean) as string[]}
-          />
+          <div className="transition-opacity duration-300 ease-out">
+            <StudentAnalyticsDashboard
+              userId={user.id}
+              studentName={displayName}
+              educationLevel={profile?.education_level}
+              stream={profile?.stream}
+              userCreatedAt={user?.created_at}
+              dailyGoalMinutes={profile?.daily_study_goal_minutes || 45}
+              enrolledPackageIds={orders.map((o) => o.packageId).filter(Boolean) as string[]}
+            />
+          </div>
         )}
 
-        {/* 4. INQUIRIES & SUPPORT */}
+        {/* 2. INQUIRIES & SUPPORT */}
         {tab === "requests" && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between pb-2">
-              <p className="text-xs sm:text-sm text-wisdom-muted">
-                Your submitted messages, service requests, and inquiry replies.
-              </p>
-              <Link href="/contact" className="btn-secondary text-xs px-3 py-1.5 border-white/15">
-                New message →
+          <div className="space-y-6 transition-opacity duration-300 ease-out max-w-4xl mx-auto">
+            {/* Top Bar for Inquiries */}
+            <div className="rounded-3xl border border-white/10 bg-[#0c1427]/70 backdrop-blur-xl p-6 sm:p-7 shadow-[0_12px_40px_rgba(0,0,0,0.25)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="font-display text-lg font-bold text-white flex items-center gap-2">
+                  <Inbox className="w-5 h-5 text-cyan-400" />
+                  Your Support Inquiries
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                  Submitted requests, course inquiries, and academic counseling messages.
+                </p>
+              </div>
+              <Link
+                href="/contact"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold text-white bg-gradient-to-r from-cyan-500 to-sky-600 hover:from-cyan-400 hover:to-sky-500 shadow-[0_4px_18px_rgba(6,182,212,0.3)] transition-all duration-200 active:scale-95 self-start sm:self-center"
+              >
+                <MessageSquarePlus className="w-3.5 h-3.5" />
+                <span>New Inquiry</span>
               </Link>
             </div>
 
             {dataLoading ? (
-              <p className="text-center text-xs text-wisdom-muted py-10">Loading requests...</p>
+              <div className="rounded-3xl border border-white/10 bg-[#0c1427]/50 backdrop-blur-xl p-12 text-center">
+                <p className="text-sm text-slate-400">Loading your inquiries...</p>
+              </div>
             ) : inquiries.length === 0 ? (
-              <div className="rounded-3xl border border-dashed border-white/15 p-12 text-center">
-                <Inbox className="w-12 h-12 text-wisdom-muted mx-auto mb-3 opacity-40" />
-                <h3 className="font-display text-lg font-bold text-white mb-1">
-                  No inquiries or service requests
-                </h3>
-                <p className="text-xs sm:text-sm text-wisdom-muted mb-6 max-w-md mx-auto">
-                  Have a question about a course, syllabus, or payment? Our academic team is here to help.
-                </p>
-                <Link href="/contact" className="btn-primary text-xs px-6 py-3">
-                  Submit Inquiry
-                </Link>
+              <div className="rounded-3xl border border-dashed border-white/15 bg-[#0c1427]/40 backdrop-blur-xl p-12 sm:p-16 text-center space-y-4">
+                <div className="w-16 h-16 rounded-full bg-white/[0.04] border border-white/10 flex items-center justify-center mx-auto text-slate-400">
+                  <Inbox className="w-8 h-8 opacity-60 text-cyan-400" />
+                </div>
+                <div>
+                  <h4 className="font-display text-lg font-bold text-white mb-1">
+                    No inquiries or service requests yet
+                  </h4>
+                  <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
+                    Have a question about a course, syllabus guide, or package verification? Our academic support desk is ready to help you.
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <Link
+                    href="/contact"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-xs font-semibold text-white bg-gradient-to-r from-cyan-500 to-sky-600 hover:from-cyan-400 hover:to-sky-500 shadow-[0_4px_18px_rgba(6,182,212,0.3)] transition-all duration-200 active:scale-95"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span>Submit Inquiry</span>
+                  </Link>
+                </div>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {inquiries.map((q) => (
                   <div
                     key={q.id}
-                    className="p-5 rounded-2xl border border-white/10 bg-wisdom-card space-y-2"
+                    className="p-6 sm:p-7 rounded-3xl border border-white/10 bg-[#0c1427]/70 backdrop-blur-xl hover:border-cyan-400/30 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.25)] space-y-3"
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-display font-bold text-white text-sm">
-                        {q.service || "General Inquiry"}
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="font-display font-bold text-white text-base">
+                        {q.service || "General Academic Inquiry"}
                       </span>
                       <span
-                        className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${statusStyle(
+                        className={`text-[11px] font-semibold uppercase tracking-wider px-3 py-1 rounded-full border ${statusStyle(
                           q.status
                         )}`}
                       >
                         {q.status}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">
+                    <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">
                       {q.message}
                     </p>
-                    <p className="text-[10px] text-wisdom-muted font-mono">
-                      {new Date(q.created_at).toLocaleString()}
-                    </p>
+                    <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between text-xs text-slate-400">
+                      <span className="font-mono text-[11px]">
+                        {new Date(q.created_at).toLocaleDateString(undefined, {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                      <Link
+                        href="/contact"
+                        className="text-xs text-cyan-300 hover:text-cyan-200 hover:underline flex items-center gap-1"
+                      >
+                        <span>Follow up</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </Link>
+                    </div>
                   </div>
                 ))}
               </div>
