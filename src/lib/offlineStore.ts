@@ -41,11 +41,13 @@ function safeParse<T>(raw: string | null, fallback: T): T {
   }
 }
 
+/** Never overwrite existing cached materials with an empty array */
 export function cacheResources(
   cacheKey: string,
   items: unknown[]
 ): void {
   if (typeof window === "undefined") return;
+  if (!items || items.length === 0) return;
   try {
     const all = safeParse<Record<string, unknown[]>>(
       localStorage.getItem(RESOURCES_KEY),
@@ -58,18 +60,72 @@ export function cacheResources(
   }
 }
 
+function matchesHub(item: unknown, targetHub: string): boolean {
+  if (!targetHub) return true;
+  const it = item as { hub?: string; contentType?: string };
+  const h = String(it.hub || "");
+  if (h === targetHub) return true;
+  if (targetHub === "short-notes" && (h === "references" || it.contentType === "markdown")) return true;
+  if (targetHub === "references" && (h === "short-notes" || it.contentType === "markdown")) return true;
+  if (targetHub === "books" && (h === "books" || it.contentType === "pdf")) return true;
+  if (targetHub === "flashcards" && (h === "flashcards" || it.contentType === "flashcard_deck")) return true;
+  if (targetHub === "question-banks" && (h === "question-banks" || it.contentType === "quiz")) return true;
+  if (targetHub === "exams" && (h === "exams" || it.contentType === "exam")) return true;
+  if (targetHub === "videos" && (h === "videos" || it.contentType === "video_url")) return true;
+  return false;
+}
+
+/**
+ * Resilient reader for cached learning resources.
+ * Supports:
+ * - Direct key match
+ * - Hub alias matching (short-notes <-> references)
+ * - Key shape differences (packageId present vs omitted, publishedOnly flag differences)
+ * - ECE cross-semester swapped keys and course slug matching
+ * - All-hubs list (ResourceHubGrid) extraction when individual hub key isn't cached
+ */
 export function readCachedResources<T>(cacheKey: string): T[] {
   if (typeof window === "undefined") return [];
   const all = safeParse<Record<string, T[]>>(
     localStorage.getItem(RESOURCES_KEY),
     {}
   );
+  if (!all || typeof all !== "object") return [];
+
+  // 1. Direct key match
   if (all[cacheKey]?.length) return all[cacheKey];
 
-  // If this key is for an ECE course, check swapped semester or course slug in localStorage
   const parts = cacheKey.split("|");
   const scopePath = parts[0] || "";
   const hub = parts[1] || "";
+  const packageId = parts[2] || "";
+  const publishedOnly = parts[3] || "1";
+
+  // 2. Hub alias check (short-notes <-> references are interchangeable)
+  if (hub === "short-notes" || hub === "references") {
+    const altHub = hub === "short-notes" ? "references" : "short-notes";
+    const altKey = [scopePath, altHub, packageId, publishedOnly].join("|");
+    if (all[altKey]?.length) return all[altKey];
+  }
+
+  // 3. packageId mismatch check (e.g. key has packageId vs empty, or different publishedOnly flag)
+  for (const [k, items] of Object.entries(all)) {
+    if (!items?.length) continue;
+    const p = k.split("|");
+    const kScope = p[0] || "";
+    const kHub = p[1] || "";
+    if (kScope === scopePath) {
+      if (
+        kHub === hub ||
+        (hub === "short-notes" && kHub === "references") ||
+        (hub === "references" && kHub === "short-notes")
+      ) {
+        return items;
+      }
+    }
+  }
+
+  // 4. ECE cross-semester check
   const eceMatch = scopePath.match(/^ece\/(sem-[12])\/([^/]+)$/);
   if (eceMatch) {
     const otherSem = eceMatch[1] === "sem-1" ? "sem-2" : "sem-1";
@@ -78,8 +134,58 @@ export function readCachedResources<T>(cacheKey: string): T[] {
     if (all[swappedKey]?.length) return all[swappedKey];
 
     for (const [k, val] of Object.entries(all)) {
-      if (k.includes(courseSlug) && (!hub || k.includes(`|${hub}|`)) && val?.length) {
+      if (
+        k.includes(courseSlug) &&
+        (!hub ||
+          k.includes(`|${hub}|`) ||
+          (hub === "short-notes" && k.includes("|references|")) ||
+          (hub === "references" && k.includes("|short-notes|"))) &&
+        val?.length
+      ) {
         return val;
+      }
+    }
+  }
+
+  // 5. Check if all-hubs list was cached for this scopePath (e.g. from ResourceHubGrid: `${scopePath}|||1`)
+  for (const [k, items] of Object.entries(all)) {
+    if (!items?.length) continue;
+    const p = k.split("|");
+    if (p[0] === scopePath && (!p[1] || p[1] === "")) {
+      if (hub) {
+        const filtered = items.filter((it: unknown) => matchesHub(it, hub));
+        if (filtered.length) return filtered;
+      } else {
+        return items;
+      }
+    }
+  }
+
+  // 6. Generic scopePath fallback: any key that starts with `${scopePath}|`
+  for (const [k, items] of Object.entries(all)) {
+    if (!items?.length) continue;
+    if (k.startsWith(`${scopePath}|`)) {
+      if (hub) {
+        const filtered = items.filter((it: unknown) => matchesHub(it, hub));
+        if (filtered.length) return filtered;
+      }
+    }
+  }
+
+  // 7. Freshman subject alias check (mathematics <-> math-natural)
+  if (scopePath.includes("math-natural") || scopePath.includes("mathematics")) {
+    const altScope = scopePath.includes("math-natural")
+      ? scopePath.replace("math-natural", "mathematics")
+      : scopePath.replace("mathematics", "math-natural");
+    for (const [k, items] of Object.entries(all)) {
+      if (!items?.length) continue;
+      if (k.startsWith(`${altScope}|`)) {
+        if (hub) {
+          const filtered = items.filter((it: unknown) => matchesHub(it, hub));
+          if (filtered.length) return filtered;
+        } else {
+          return items;
+        }
       }
     }
   }
@@ -149,7 +255,23 @@ export function writeQueue(q: QueuedSave[]): void {
   localStorage.setItem(QUEUE_KEY, JSON.stringify(q));
 }
 
+let _offlineOverride = false;
+
+export function markOffline(offline: boolean): void {
+  _offlineOverride = offline;
+}
+
 export function isProbablyOffline(): boolean {
+  if (_offlineOverride) return true;
   if (typeof navigator === "undefined") return false;
   return navigator.onLine === false;
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener("online", () => {
+    markOffline(false);
+  });
+  window.addEventListener("offline", () => {
+    markOffline(true);
+  });
 }

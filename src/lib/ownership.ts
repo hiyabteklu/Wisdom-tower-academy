@@ -59,7 +59,17 @@ export async function getOwnedPackageIds(force = false): Promise<OwnershipMap> {
     const {
       data: { session },
     } = await supabase.auth.getSession();
-    const userId = session?.user?.id ?? null;
+    let userId = session?.user?.id ?? null;
+
+    if (!userId && typeof window !== "undefined") {
+      try {
+        const raw = window.localStorage.getItem("wt-academy-auth-v1");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          userId = parsed?.user?.id ?? null;
+        }
+      } catch {}
+    }
 
     if (!userId) {
       cache = null;

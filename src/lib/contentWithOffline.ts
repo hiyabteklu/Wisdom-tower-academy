@@ -26,6 +26,7 @@ import {
   readQueue,
   writeQueue,
   isProbablyOffline,
+  markOffline,
   type QueuedSave,
 } from "@/lib/offlineStore";
 
@@ -52,6 +53,7 @@ export async function listResources(opts: {
 }): Promise<{ items: LearningResource[]; error?: string }> {
   const key = resourceCacheKey(opts);
 
+  // Fast offline path
   if (isProbablyOffline()) {
     const cached = readCachedResources<LearningResource>(key);
     if (cached.length) return { items: cached };
@@ -59,8 +61,24 @@ export async function listResources(opts: {
   }
 
   try {
-    const res = await listResourcesOnline(opts);
-    if (res.items.length) {
+    // Timeout guard (4.5s) to avoid hanging forever on soft-offline or dead cellular connections
+    let timer: NodeJS.Timeout | undefined;
+    const timeoutPromise = new Promise<{ items: LearningResource[]; error?: string }>((resolve) => {
+      timer = setTimeout(() => {
+        markOffline(true);
+        resolve({ items: [], error: "Network timeout" });
+      }, 4500);
+    });
+
+    const res = await Promise.race([
+      listResourcesOnline(opts),
+      timeoutPromise,
+    ]);
+    if (timer) clearTimeout(timer);
+
+    // If online fetch succeeded with items, cache them and return
+    if (res.items && res.items.length > 0) {
+      markOffline(false);
       cacheResources(key, res.items);
       if (opts.scopePath) {
         const eceMatch = opts.scopePath.match(/^ece\/(sem-[12])\/([^/]+)$/);
@@ -73,12 +91,46 @@ export async function listResources(opts: {
           cacheResources(altKey, res.items);
         }
       }
+      return res;
     }
+
+    // Online fetch returned 0 items:
+    // If an error is present (e.g. Supabase network failure, timeout, auth error)
+    // OR device is offline, ALWAYS fall back to cached resources!
+    const isErrorOrFailed = Boolean(
+      res.error ||
+      isProbablyOffline() ||
+      (typeof navigator !== "undefined" && !navigator.onLine)
+    );
+
+    if (isErrorOrFailed) {
+      markOffline(true);
+      const cached = readCachedResources<LearningResource>(key);
+      if (cached.length) return { items: cached };
+      return {
+        items: [],
+        error: "Offline — open this hub once online to cache it.",
+      };
+    }
+
+    // Silent soft-offline protection in Android WebView:
+    // Even if no explicit error was returned, if cache already has entries for this key,
+    // NEVER show an empty list to the user when cached data is available!
+    const cached = readCachedResources<LearningResource>(key);
+    if (cached.length) {
+      return { items: cached };
+    }
+
+    // Truly empty hub online: both online returned 0 rows AND cache has 0 entries
     return res;
   } catch {
+    markOffline(true);
     const cached = readCachedResources<LearningResource>(key);
     if (cached.length) return { items: cached };
-    return { items: [], error: "Network error" };
+    return {
+      items: [],
+      error: "Offline — open this hub once online to cache it.",
+    };
   }
 }
 

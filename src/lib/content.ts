@@ -147,7 +147,14 @@ export async function listResources(opts: {
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      if (!session?.user) {
+      let hasUser = Boolean(session?.user);
+      if (!hasUser && typeof window !== "undefined") {
+        try {
+          const raw = window.localStorage.getItem("wt-academy-auth-v1");
+          if (raw && JSON.parse(raw)?.user) hasUser = true;
+        } catch {}
+      }
+      if (!hasUser) {
         return {
           items: [],
           error: "Sign in required to access learning content.",

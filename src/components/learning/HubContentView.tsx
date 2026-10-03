@@ -101,6 +101,7 @@ export default function HubContentView({
   const pathname = usePathname();
   const [owned, setOwned] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [active, setActive] = useState<LearningResource | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [progressPct, setProgressPct] = useState(0);
@@ -132,6 +133,7 @@ export default function HubContentView({
       });
       if (!cancelled) {
         setItems(res.items);
+        setFetchError(res.error || null);
         setLoading(false);
       }
     })();
@@ -439,7 +441,7 @@ export default function HubContentView({
     return (
       <div className="rounded-2xl border border-white/12 bg-wisdom-card p-8 text-center text-wisdom-muted text-sm">
         <FileText className="w-8 h-8 mx-auto mb-3 opacity-50" />
-        No published materials in this hub yet. Check back soon.
+        {fetchError || "No published materials in this hub yet. Check back soon."}
       </div>
     );
   }
