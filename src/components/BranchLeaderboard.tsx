@@ -127,94 +127,102 @@ export default function BranchLeaderboard({
   const top3 = leaders.slice(0, 3);
   const rest = leaders.slice(3, 10);
 
-  const podiumStyles = [
-    "order-2 sm:order-1 sm:mt-6 border-amber-400/50 bg-gradient-to-b from-amber-500/20 to-transparent",
-    "order-1 sm:order-2 border-yellow-300/60 bg-gradient-to-b from-yellow-400/25 to-transparent scale-105",
-    "order-3 sm:mt-8 border-orange-400/40 bg-gradient-to-b from-orange-500/15 to-transparent",
-  ];
-  const trophyColor = ["text-amber-300", "text-yellow-300", "text-orange-400"];
-
   return (
-    <section className="mb-10 md:mb-12 card-modern shadow-xl shadow-black/20">
-      <div className="w-full px-5 sm:px-7 py-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 border border-amber-400/30">
-            <Trophy className={`w-5 h-5 ${accent}`} />
+    <section className="mb-5 sm:mb-6 card-modern shadow-lg shadow-black/20 w-full overflow-hidden">
+      <div className="w-full px-3.5 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between gap-2 border-b border-white/8">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 border border-amber-400/30">
+            <Trophy className={`w-3.5 h-3.5 ${accent}`} />
           </div>
           <div className="min-w-0">
-            <h2 className="font-display text-lg sm:text-xl font-bold tracking-tight">
+            <h2 className="font-display text-xs sm:text-sm font-bold tracking-tight text-white truncate">
               {branchName} <span className={accent}>Leaderboard</span>
             </h2>
-            <p className="text-xs text-wisdom-muted">
-              {loading ? "…" : fromDb ? "Top performers" : "Leaderboard"}
-            </p>
           </div>
         </div>
+        <span className="text-[10px] font-medium text-wisdom-muted shrink-0">
+          {loading ? "…" : fromDb ? "Live ranks" : "Top scholars"}
+        </span>
       </div>
 
-      <div className="border-t border-white/10">
-        <div className="px-4 sm:px-6 pt-8 pb-4 grid grid-cols-3 gap-2 sm:gap-4 items-end">
+      <div>
+        <div className="p-2 sm:p-3 grid grid-cols-3 gap-1.5 sm:gap-2.5 items-stretch">
           {[top3[1], top3[0], top3[2]].map((entry) => {
             if (!entry) return null;
             const rank = entry.rank;
-            const style =
-              rank === 1 ? podiumStyles[1] : rank === 2 ? podiumStyles[0] : podiumStyles[2];
-            const tColor =
-              rank === 1 ? trophyColor[1] : rank === 2 ? trophyColor[0] : trophyColor[2];
             return (
               <div
                 key={entry.rank}
-                className={`relative rounded-2xl border px-2 sm:px-4 py-4 text-center ${style}`}
+                className={`relative rounded-xl border px-2 py-2 sm:px-3 sm:py-2.5 text-center flex flex-col justify-between min-w-0 transition-all ${
+                  rank === 1
+                    ? "border-amber-400/40 bg-gradient-to-b from-amber-500/15 to-transparent ring-1 ring-amber-400/25 shadow-sm"
+                    : rank === 2
+                      ? "border-slate-300/30 bg-gradient-to-b from-slate-400/10 to-transparent"
+                      : "border-orange-500/30 bg-gradient-to-b from-orange-500/10 to-transparent"
+                }`}
               >
-                <div className={`mx-auto mb-2 flex justify-center ${tColor}`}>
-                  {rank === 1 ? <Trophy className="w-8 h-8" /> : <Medal className="w-7 h-7" />}
+                <div className="flex items-center justify-between gap-1 mb-1">
+                  <span className="flex items-center gap-1 min-w-0">
+                    {rank === 1 ? (
+                      <Trophy className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+                    ) : rank === 2 ? (
+                      <Medal className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+                    ) : (
+                      <Medal className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+                    )}
+                    <span className="text-[11px] font-black font-display text-white">#{rank}</span>
+                  </span>
+                  <span className={`text-[10px] sm:text-[11px] font-bold tabular-nums shrink-0 ${accent}`}>
+                    {entry.score}
+                    <span className="text-[9px] text-wisdom-muted font-normal ml-0.5">pts</span>
+                  </span>
                 </div>
-                <p className="text-2xl sm:text-3xl font-black font-display tabular-nums text-white/90">
-                  {rank}
+                <p className="text-[11px] sm:text-xs font-semibold text-white truncate text-left">
+                  {entry.name}
                 </p>
-                <p className="mt-1 text-xs sm:text-sm font-semibold truncate">{entry.name}</p>
-                <p className={`text-[11px] sm:text-xs font-bold mt-0.5 ${accent}`}>{entry.score} pts</p>
               </div>
             );
           })}
         </div>
 
         {rest.length > 0 && (
-          <div className="px-4 sm:px-6 pb-4">
+          <div className="px-2 sm:px-3 pb-2.5 pt-0.5">
             <button
               type="button"
               onClick={() => setRestOpen((v) => !v)}
-              className="w-full flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-wisdom-dark/30 px-3 py-2.5 text-left hover:bg-white/[0.04] transition-colors"
+              className="w-full flex items-center justify-between gap-2 rounded-lg border border-white/8 bg-wisdom-dark/30 px-2.5 py-1.5 text-left hover:bg-white/[0.04] transition-colors"
               aria-expanded={restOpen}
             >
-              <span className="text-xs sm:text-sm text-wisdom-muted">
+              <span className="text-[11px] text-wisdom-muted font-medium">
                 {restOpen ? "Hide ranks 4–10" : `Show ranks 4–${Math.min(10, 3 + rest.length)}`}
               </span>
               <ChevronDown
-                className={`w-4 h-4 text-wisdom-muted transition-transform duration-300 ${
+                className={`w-3.5 h-3.5 text-wisdom-muted transition-transform duration-200 ${
                   restOpen ? "rotate-180" : ""
                 }`}
               />
             </button>
 
             <div
-              className={`grid transition-[grid-template-rows] duration-300 ease-out ${
+              className={`grid transition-[grid-template-rows] duration-200 ease-out ${
                 restOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
               }`}
             >
               <div className="overflow-hidden">
-                <ul className="pt-2 pb-2 space-y-1.5">
+                <ul className="pt-1.5 pb-1 space-y-1">
                   {rest.map((entry) => (
                     <li
                       key={entry.rank}
-                      className="flex items-center gap-3 rounded-xl border border-white/6 bg-wisdom-dark/40 px-3 py-2.5"
+                      className="flex items-center gap-2 rounded-lg border border-white/[0.04] bg-wisdom-dark/40 px-2.5 py-1"
                     >
-                      <span className="w-7 h-7 shrink-0 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-xs font-bold text-wisdom-muted tabular-nums">
+                      <span className="w-5 h-5 shrink-0 rounded bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-bold text-wisdom-muted tabular-nums">
                         {entry.rank}
                       </span>
-                      <span className="flex-1 text-sm font-medium truncate">{entry.name}</span>
-                      <span className={`text-sm font-semibold tabular-nums ${accent}`}>
-                        {entry.score}
+                      <span className="flex-1 text-xs font-medium text-slate-200 truncate">
+                        {entry.name}
+                      </span>
+                      <span className={`text-[11px] font-semibold tabular-nums ${accent}`}>
+                        {entry.score} pts
                       </span>
                     </li>
                   ))}

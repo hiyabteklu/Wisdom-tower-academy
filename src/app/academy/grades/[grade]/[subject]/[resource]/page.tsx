@@ -46,20 +46,20 @@ export default async function GradeSubjectResourcePage({
         />
       </div>
 
-      <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
+      <div className="relative max-w-3xl mx-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 md:py-10">
         <CategoryBackButton fallback={subjectHref} />
 
-        <div className="mb-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-wisdom-muted mb-2">
+        <div className="mb-4 sm:mb-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-wisdom-muted mb-1">
             {grade.label} · {subject.name} · Learning hub
           </p>
-          <h1 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight mb-2">
+          <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight mb-1.5">
             <span className={resource.accent}>{resource.name}</span>
           </h1>
-          <p className="text-wisdom-muted">{resource.description}</p>
+          <p className="text-xs sm:text-sm text-wisdom-muted">{resource.description}</p>
         </div>
 
-        <div className="mb-8">
+        <div className="mb-6">
           <AcademicResultSaver
             scopeId={trackerScopeId}
             scopeLabel={`${grade.label} · ${subject.name} · ${resource.name}`}

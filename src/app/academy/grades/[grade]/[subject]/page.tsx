@@ -42,22 +42,22 @@ export default async function GradeSubjectPage({
             className={`absolute top-0 right-1/4 w-[28rem] h-[28rem] rounded-full blur-3xl opacity-25 bg-gradient-to-br ${grade.gradient}`}
           />
         </div>
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
+        <div className="relative max-w-6xl mx-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 md:py-10">
           <CategoryBackButton fallback={`/academy/grades/${grade.id}`} />
 
-          <div className="max-w-2xl mx-auto mb-10 text-center animate-fade-up">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-wisdom-muted mb-2">
+          <div className="mb-4 sm:mb-6 animate-fade-up">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-wisdom-muted mb-1">
               {grade.label} Curriculum
             </p>
-            <h1 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-2">
+            <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-1.5">
               <span className={resource.accent}>{resource.name}</span>
             </h1>
-            <p className="text-sm text-wisdom-muted max-w-lg mx-auto">
-              {resource.description}. Select a subject below to access the full {resource.name.toLowerCase()} catalog.
+            <p className="text-xs sm:text-sm text-wisdom-muted max-w-lg">
+              {resource.description}. Select a subject below to access official {resource.name.toLowerCase()}.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {subjects.map((sub) => (
               <Link
                 key={sub.id}
@@ -99,19 +99,19 @@ export default async function GradeSubjectPage({
         />
       </div>
 
-      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
+      <div className="relative max-w-6xl mx-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 md:py-10">
         <CategoryBackButton fallback={`/academy/grades/${grade.id}`} />
 
-        <div className="max-w-2xl mx-auto mb-8 text-center animate-fade-up">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-wisdom-muted mb-2">
+        <div className="mb-4 sm:mb-6 animate-fade-up">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-wisdom-muted mb-1">
             {grade.label} Curriculum · Subject
           </p>
-          <h1 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+          <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
             {subject.name}
           </h1>
         </div>
 
-        <div className="max-w-2xl mx-auto mb-10">
+        <div className="w-full mb-6">
           <AcademicResultSaver
             scopeId={`grade-${grade.id}-${subject.id}`}
             scopeLabel={`${grade.label} · ${subject.name}`}
@@ -120,7 +120,7 @@ export default async function GradeSubjectPage({
           />
         </div>
 
-        <p className="text-sm font-semibold tracking-[0.15em] uppercase text-wisdom-muted mb-4 text-center sm:text-left">
+        <p className="text-xs font-bold tracking-[0.15em] uppercase text-wisdom-muted mb-3 text-left">
           Learning hubs
         </p>
 

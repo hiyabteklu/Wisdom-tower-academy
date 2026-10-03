@@ -13,17 +13,17 @@ const gradeDescriptions: Record<string, string> = {
 export default function GradesPage() {
   return (
     <div className="relative min-h-[80vh]">
-      <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
+      <div className="relative max-w-5xl mx-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-8 md:py-14">
         <CategoryBackButton fallback="/academy" />
 
-        <div className="mb-10 animate-fade-up text-center sm:text-left">
-          <p className="text-xs font-bold tracking-[0.2em] uppercase text-sky-400/90 mb-3">
+        <div className="mb-6 sm:mb-8 animate-fade-up text-left">
+          <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-sky-400/90 mb-1.5">
             Secondary Curriculum
           </p>
-          <h1 className="font-display text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-white">
+          <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight mb-2 text-white">
             Grade <span className="text-sky-400">9–12</span>
           </h1>
-          <p className="text-wisdom-muted text-lg max-w-xl leading-relaxed mx-auto sm:mx-0">
+          <p className="text-wisdom-muted text-sm sm:text-base max-w-xl leading-relaxed">
             Choose your academic grade. Each level features complete course books, chapter short notes, practice question banks, and timed exams.
           </p>
         </div>
