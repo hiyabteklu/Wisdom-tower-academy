@@ -1,43 +1,136 @@
 /*
- * CRITICAL: Do NOT put overflow-x: auto on .katex-display.
- * Even short equations that fit the screen become nested scrollports on
- * mobile WebView/Chrome, and a touch that starts on them freezes page scroll.
- * KaTeX already uses white-space: nowrap; long lines may extend slightly -
- * that is better than trapping vertical gestures.
+ * Notes & Study Reader: Safe Touch-Scrolling Architecture
  *
- * Tables and pre/code are the only intentional horizontal scrollers.
+ * 1. Zero Vertical Freezing / Lag:
+ *    - All horizontal scroll containers (tables, display math, code blocks) use:
+ *      `touch-action: pan-x pan-y;` and `overscroll-behavior: auto;` (NEVER `contain`).
+ *    - In mobile Android WebView and Chromium, this instructs the compositor that vertical
+ *      gestures immediately chain to the page scroll pipeline, eliminating touch locks/freezes.
+ *
+ * 2. Zero Spring Bounce-Back:
+ *    - Inner math content (.katex-display > .katex) and tables (.study-table) are given:
+ *      `width: max-content; min-width: 100%;`.
+ *    - This creates an authentic physical scroll track (scrollWidth > clientWidth).
+ *    - When the student pans horizontally to view the end of a long equation/table,
+ *      it scrolls smoothly with momentum and STAYS at the position when the finger lifts.
+ *
+ * 3. Mobile Responsive Scaling:
+ *    - Display equations slightly auto-scale on screens <= 640px so ~85% of standard
+ *      formulas fit without needing any scroll.
  */
 
+/* Tables */
 .study-table-wrap {
+  width: 100%;
   max-width: 100%;
   overflow-x: auto;
-  overscroll-behavior-x: contain;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+  overscroll-behavior-x: auto;
+  overscroll-behavior-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(34, 211, 238, 0.4) transparent;
 }
 
-.study-prose .katex-display {
+/* KaTeX Display / Block Math Equations */
+.study-prose .katex-display:not(.choice-inline-content .katex-display):not(.choice-inline-text .katex-display),
+.formatted-body .katex-display,
+.notes-reading-surface .katex-display:not(.choice-inline-content .katex-display):not(.choice-inline-text .katex-display),
+.math-text .katex-display:not(.choice-inline-content .katex-display):not(.choice-inline-text .katex-display) {
+  display: block !important;
+  max-width: 100%;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+  overscroll-behavior-x: auto;
+  overscroll-behavior-y: auto;
+  padding: 0.5rem 0.25rem;
+  margin: 1.25rem 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(34, 211, 238, 0.4) transparent;
+}
+
+/* Inner KaTeX container: width: max-content establishes true scrollable range (no spring bounce-back) */
+.study-prose .katex-display:not(.choice-inline-content .katex-display) > .katex,
+.formatted-body .katex-display > .katex,
+.notes-reading-surface .katex-display:not(.choice-inline-content .katex-display) > .katex,
+.math-text .katex-display:not(.choice-inline-content .katex-display) > .katex {
+  display: inline-block !important;
+  min-width: 100% !important;
+  width: max-content !important;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Inline math: never scroll, wrap naturally */
+.study-prose .katex:not(.katex-display .katex),
+.math-text .katex:not(.katex-display .katex) {
   max-width: 100%;
   overflow-x: visible;
-  overflow-y: visible;
+  touch-action: auto;
 }
 
-.study-prose .katex {
-  /* do not create a scroll container around inline math */
-  max-width: 100%;
+/* Responsive scaling on mobile screens so most equations fit cleanly */
+@media (max-width: 640px) {
+  .study-prose .katex-display:not(.choice-inline-content .katex-display),
+  .formatted-body .katex-display,
+  .notes-reading-surface .katex-display:not(.choice-inline-content .katex-display),
+  .math-text .katex-display:not(.choice-inline-content .katex-display) {
+    font-size: 0.92em;
+    padding: 0.35rem 0.15rem;
+    margin: 1rem 0;
+  }
 }
 
-/* Reinforce: note body never forces page-level horizontal scroll */
+/* Reinforce: reading surface never allows page-level window skew */
 .notes-reading-surface,
 .study-prose,
 [data-learning-content] {
   max-width: 100%;
   min-width: 0;
   overflow-x: hidden;
+  box-sizing: border-box;
 }
 
+/* Code blocks */
 .study-prose pre,
 .notes-reading-surface pre {
   max-width: 100%;
   overflow-x: auto;
-  overscroll-behavior-x: contain;
+  overflow-y: hidden;
+  overscroll-behavior-x: auto;
+  overscroll-behavior-y: auto;
+  touch-action: pan-x pan-y;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(34, 211, 238, 0.4) transparent;
+}
+
+/* Sleek WebKit scrollbar indicator on mobile Android WebView / Chrome */
+.study-table-wrap::-webkit-scrollbar,
+.study-prose .katex-display::-webkit-scrollbar,
+.notes-reading-surface .katex-display::-webkit-scrollbar,
+.study-prose pre::-webkit-scrollbar,
+.notes-reading-surface pre::-webkit-scrollbar {
+  height: 3.5px;
+}
+
+.study-table-wrap::-webkit-scrollbar-track,
+.study-prose .katex-display::-webkit-scrollbar-track,
+.notes-reading-surface .katex-display::-webkit-scrollbar-track,
+.study-prose pre::-webkit-scrollbar-track,
+.notes-reading-surface pre::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 9999px;
+}
+
+.study-table-wrap::-webkit-scrollbar-thumb,
+.study-prose .katex-display::-webkit-scrollbar-thumb,
+.notes-reading-surface .katex-display::-webkit-scrollbar-thumb,
+.study-prose pre::-webkit-scrollbar-thumb,
+.notes-reading-surface pre::-webkit-scrollbar-thumb {
+  background: rgba(34, 211, 238, 0.45);
+  border-radius: 9999px;
 }

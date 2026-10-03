@@ -169,7 +169,10 @@
 .study-prose pre code {
   max-width: 100%;
   overflow-x: auto;
-  overscroll-behavior-x: contain;
+  overflow-y: hidden;
+  overscroll-behavior-x: auto;
+  overscroll-behavior-y: auto;
+  touch-action: pan-x pan-y;
   -webkit-overflow-scrolling: touch;
   white-space: pre;
 }
@@ -184,11 +187,16 @@
   width: 100%;
   max-width: 100%;
   overflow-x: auto;
-  overscroll-behavior-x: contain;
+  overflow-y: hidden;
+  overscroll-behavior-x: auto;
+  overscroll-behavior-y: auto;
+  touch-action: pan-x pan-y;
   -webkit-overflow-scrolling: touch;
-  margin: 1rem 0;
+  margin: 1.25rem 0;
   border-radius: 0.75rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(34, 211, 238, 0.4) transparent;
 }
 
 .study-table {
@@ -198,19 +206,23 @@
   font-size: 0.92rem;
 }
 
-.study-table th,
-.study-table td {
+.study-table th {
   border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 0.55rem 0.75rem;
   text-align: left;
   vertical-align: top;
   white-space: nowrap;
-}
-
-.study-table th {
   background: rgba(34, 211, 238, 0.1);
   color: #fff;
   font-weight: 700;
+}
+
+.study-table td {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.55rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+  min-width: 90px;
 }
 
 .study-table tr:nth-child(even) td {
