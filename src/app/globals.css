@@ -443,78 +443,30 @@ html.font-scale-xlarge {
   font-size: 20px;
 }
 
-/* Reading Font Preferences (user setting in Settings — does not override study surfaces) */
+/* Reading Font Preferences (Wisdom Tower Signature Stylized Sans) */
 html.reading-font-default,
-html.reading-font-times,
-html.reading-font-serif {
-  --font-reading: "Times New Roman", Times, Georgia, 'Source Serif 4', serif;
-}
 html.reading-font-sans {
   --font-reading: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-body: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+}
+html.reading-font-times,
+html.reading-font-serif {
+  --font-reading: "Times New Roman", Times, Georgia, serif;
+  --font-body: "Times New Roman", Times, Georgia, serif;
 }
 html.reading-font-mono {
   --font-reading: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
-/* Base study-prose (overridden by signature block below on study surfaces) */
+/* Study content typography - clean, legible, not forced bold/italic */
 .study-prose {
-  font-family: var(--font-reading), "Times New Roman", Times, Georgia, serif;
+  font-family: var(--font-reading), 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   font-weight: 500;
   letter-spacing: -0.01em;
 }
 .study-prose strong,
 .study-prose b {
   font-weight: 700;
-  color: #ffffff;
-}
-
-/* ========================================================================= */
-/* Signature Bold Italic Times New Roman                                     */
-/* Notes · Flashcards · Question banks · Exams · Explanations · Solutions    */
-/* Restored 2026-10-03 — uniform 700 weight (pre-Sep-30 look)                */
-/* ========================================================================= */
-.notes-reading-surface,
-.notes-reading-surface .study-prose,
-.notes-reading-surface p,
-.notes-reading-surface li,
-.fc-face,
-.fc-face .study-prose,
-.fc-face p,
-.fc-face .study-p,
-.quiz-study-card .study-prose,
-.quiz-question-prompt,
-.quiz-question-prompt p,
-.choice-inline-text,
-.choice-inline-content,
-.study-explanation,
-.explanation-text,
-.solution-text,
-[data-learning-content] .study-p,
-[data-learning-content] p,
-[data-learning-content] li,
-.explanation-box {
-  font-family: "Times New Roman", Times, Georgia, serif !important;
-  font-weight: 700 !important;
-  font-style: italic !important;
-}
-
-.notes-reading-surface strong,
-.notes-reading-surface b,
-.fc-face strong,
-.fc-face b,
-.quiz-question-prompt strong,
-.quiz-question-prompt b,
-.choice-inline-text strong,
-.choice-inline-text b,
-.study-explanation strong,
-.study-explanation b,
-.explanation-text strong,
-.explanation-text b,
-.solution-text strong,
-.solution-text b,
-[data-learning-content] strong,
-[data-learning-content] b {
-  font-weight: 700 !important;
   color: #ffffff;
 }
 

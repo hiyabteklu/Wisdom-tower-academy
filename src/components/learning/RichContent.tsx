@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 import MathText from "@/components/MathText";
 import SafeScrollBox from "@/components/learning/SafeScrollBox";
 
@@ -24,8 +24,8 @@ export type TocItem = { id: string; level: number; text: string };
 type Props = {
   body: string;
   className?: string;
-  inline?: boolean;
   onToc?: (items: TocItem[]) => void;
+  inline?: boolean;
 };
 
 function slugify(s: string) {
@@ -44,19 +44,20 @@ const MATH_PLACEHOLDER_RE = /@@WTMATH(\d+)@@/g;
 /**
  * Extract every math span, replace with placeholder, return map for restore.
  * Order: $$ $$ → \[ \] → $ $ → \( \)
+ * Currency Protection: single $ followed by a digit (like $7.48) is preserved as currency.
  */
-function protectMath(raw: string): { text: string; math: string[] } {
+function protectMath(text: string): { text: string; math: string[] } {
   const math: string[] = [];
   const pattern =
-    /\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]|\$([^$\n]+?)\$|\\\(([\s\S]+?)\\\)/g;
+    /\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]|(?<![\\0-9])\$(?!\s|\d)([^$\n]+?)(?<!\s)\$|\\\(([\s\S]+?)\\\)/g;
 
-  const text = raw.replace(pattern, (full) => {
+  const out = text.replace(pattern, (full) => {
     const idx = math.length;
     math.push(full);
     return MATH_PLACEHOLDER(idx);
   });
 
-  return { text, math };
+  return { text: out, math };
 }
 
 function restoreMath(text: string, math: string[]): string {
@@ -100,8 +101,6 @@ function renderInline(text: string, keyPrefix: string): React.ReactNode[] {
   const { text: protectedText, math } = protectMath(text || "");
   const cleaned = sanitizeHighlightMarkers(protectedText);
 
-  // After protection, placeholders have no = so we can use a safer highlight matcher
-  // that allows = inside the span (math already masked).
   const pattern =
     /\[\[([^\]]+)\]\]|==([^\n]+?)==|\*\*([^*]+)\*\*|\*([^*]+)\*|`([^`]+)`/g;
   const nodes: React.ReactNode[] = [];
@@ -160,29 +159,21 @@ function renderInline(text: string, keyPrefix: string): React.ReactNode[] {
   return nodes.length ? nodes : [leaf(cleaned, `${keyPrefix}-empty`)];
 }
 
-export default function RichContent({ body, className = "", inline = false, onToc }: Props) {
+export default function RichContent({
+  body,
+  className = "",
+  onToc,
+  inline = false,
+}: Props) {
   const { blocks, toc } = useMemo(() => parseBlocks(body || ""), [body]);
 
   useMemo(() => {
-    if (!inline) {
-      onToc?.(toc);
-    }
+    onToc?.(toc);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [toc, inline]);
+  }, [toc]);
 
   if (inline) {
-    // Replace block math delimiters ($$ and \[ \]) with inline math ($ and \( \))
-    // to strictly prevent KaTeX display-mode line breaks inside choices
-    const raw = (body || "")
-      .replace(/\$\$/g, "$")
-      .replace(/\\\[/g, "\\(")
-      .replace(/\\\]/g, "\\)")
-      .trim();
-    return (
-      <span className={`inline choice-inline-content ${className}`}>
-        {renderInline(raw, "inline-choice")}
-      </span>
-    );
+    return <span className={className}>{renderInline(body || "", "inl")}</span>;
   }
 
   return (
@@ -252,20 +243,13 @@ export default function RichContent({ body, className = "", inline = false, onTo
             </SafeScrollBox>
           );
         }
-        if (b.type === "math") {
-          return (
-            <SafeScrollBox key={idx} type="math" className="my-2.5">
-              <MathText text={b.text} display />
-            </SafeScrollBox>
-          );
-        }
         if (b.type === "code") {
           return (
-            <SafeScrollBox key={idx} type="code" className="my-3">
+            <div key={idx} className="my-3 overflow-x-auto">
               <pre className="p-3.5 rounded-xl bg-black/60 border border-white/10 text-xs font-mono text-cyan-100 overflow-x-auto leading-relaxed">
                 <code>{b.code}</code>
               </pre>
-            </SafeScrollBox>
+            </div>
           );
         }
         if (b.type === "hr") {
@@ -286,7 +270,6 @@ type Block =
   | { type: "p" | "callout"; text: string }
   | { type: "list"; items: string[] }
   | { type: "table"; headers: string[]; rows: string[][] }
-  | { type: "math"; text: string }
   | { type: "code"; code: string; lang?: string }
   | { type: "hr" };
 
@@ -302,10 +285,6 @@ function isSeparatorRow(line: string): boolean {
   return cells.length > 0 && cells.every((c) => /^:?-+:?$/.test(c) || c === "");
 }
 
-/**
- * True markdown table header: at least 2 cells after split, and next line is separator.
- * Math is already masked, so remaining | are real table pipes.
- */
 function looksLikeTableHeader(line: string): boolean {
   if (!line.includes("|")) return false;
   const cells = splitTableRow(line);
@@ -361,20 +340,7 @@ function parseBlocks(raw: string): { blocks: Block[]; toc: TocItem[] } {
       continue;
     }
 
-    // Standalone block equation
-    const mathMatch = trimmed.match(/^@@WTMATH(\d+)@@$/);
-    if (mathMatch) {
-      const mIdx = Number(mathMatch[1]);
-      const rawFormula = math[mIdx];
-      if (rawFormula && (rawFormula.startsWith("$$") || rawFormula.startsWith("\\["))) {
-        flushPara();
-        blocks.push({ type: "math", text: rawFormula });
-        i++;
-        continue;
-      }
-    }
-
-    // Markdown table: only after math is masked; requires real separator row
+    // Markdown table — only after math is masked; requires real separator row
     if (
       looksLikeTableHeader(trimmed) &&
       i + 1 < lines.length &&

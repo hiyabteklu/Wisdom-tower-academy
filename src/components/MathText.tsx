@@ -12,28 +12,21 @@ type Props = {
 };
 
 /**
- * Renders mixed plain text + LaTeX.
- * Supports: \(...\), \[...\], $...$, $$...$$
- * Safe: invalid TeX falls back to raw source.
+ * Clean any outer math delimiters ($$, \[, $, \() so KaTeX never sees them.
+ * Passing $$ into katex.renderToString throws a ParseError ("Can't use function '$$' in math mode").
  */
-export default function MathText({ text, className = "", display = false }: Props) {
-  const html = useMemo(() => renderMixedMath(text || "", display), [text, display]);
-
-  if (display) {
-    return (
-      <div
-        className={`math-text math-text-display ${className}`}
-        dangerouslySetInnerHTML={{ __html: html }}
-      />
-    );
+function cleanTexDelimiters(src: string): string {
+  let s = src.trim();
+  if (s.startsWith("$$") && s.endsWith("$$") && s.length >= 4) {
+    s = s.slice(2, -2).trim();
+  } else if (s.startsWith("\\[") && s.endsWith("\\]") && s.length >= 4) {
+    s = s.slice(2, -2).trim();
+  } else if (s.startsWith("$") && s.endsWith("$") && s.length >= 2) {
+    s = s.slice(1, -1).trim();
+  } else if (s.startsWith("\\(") && s.endsWith("\\)") && s.length >= 4) {
+    s = s.slice(2, -2).trim();
   }
-
-  return (
-    <span
-      className={`math-text ${className}`}
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
-  );
+  return s;
 }
 
 function escapeHtml(s: string): string {
@@ -45,8 +38,9 @@ function escapeHtml(s: string): string {
 }
 
 function renderTex(src: string, displayMode: boolean): string {
+  const clean = cleanTexDelimiters(src);
   try {
-    return katex.renderToString(src, {
+    return katex.renderToString(clean, {
       throwOnError: false,
       displayMode,
       strict: "ignore",
@@ -59,18 +53,37 @@ function renderTex(src: string, displayMode: boolean): string {
 
 /**
  * Split text into plain / math segments and render.
- * Order of matching: $$ $$ → \[ \] → $ $ → \( \)
+ * Supports: $$...$$, \[...\], $...$, \(...\)
+ *
+ * Currency Protection:
+ * Single $ is only treated as math delimiter if NOT immediately followed by a digit (0-9)
+ * or whitespace. This prevents "$7.48" or "$100" currency values from breaking math parsing.
  */
 function renderMixedMath(input: string, forceDisplay: boolean): string {
   if (!input) return "";
 
-  // If entire string is forced display and looks like pure math, render once
-  if (forceDisplay && !/[\n]/.test(input) && !/[a-zA-Z]{4,}/.test(input.replace(/\\[a-zA-Z]+/g, ""))) {
-    return renderTex(input, true);
+  const trimmed = input.trim();
+
+  // If input is an explicit display block ($$ ... $$ or \[ ... \])
+  if (
+    (trimmed.startsWith("$$") && trimmed.endsWith("$$") && trimmed.length >= 4) ||
+    (trimmed.startsWith("\\[") && trimmed.endsWith("\\]") && trimmed.length >= 4)
+  ) {
+    return renderTex(trimmed, true);
+  }
+
+  // If entire string is forced display and has no inline delimiters, render cleanly in display mode
+  if (
+    forceDisplay &&
+    !trimmed.includes("$") &&
+    !trimmed.includes("\\(") &&
+    !trimmed.includes("\\[")
+  ) {
+    return renderTex(trimmed, true);
   }
 
   const pattern =
-    /\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]|\$([^$\n]+?)\$|\\\(([\s\S]+?)\\\)/g;
+    /\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]|(?<![\\0-9])\$(?!\s|\d)([^$\n]+?)(?<!\s)\$|\\\(([\s\S]+?)\\\)/g;
 
   let out = "";
   let last = 0;
@@ -99,4 +112,24 @@ function renderMixedMath(input: string, forceDisplay: boolean): string {
   }
 
   return out || escapeHtml(input).replace(/\n/g, "<br/>");
+}
+
+export default function MathText({ text, className = "", display = false }: Props) {
+  const html = useMemo(() => renderMixedMath(text || "", display), [text, display]);
+
+  if (display) {
+    return (
+      <div
+        className={`math-text math-text-display ${className}`}
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    );
+  }
+
+  return (
+    <span
+      className={`math-text ${className}`}
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
 }

@@ -86,15 +86,13 @@
   text-align: center;
   font-size: 1.15rem;
   line-height: 1.75;
-  font-family: "Times New Roman", Times, Georgia, serif !important;
-  font-weight: 700 !important;
-  font-style: italic !important;
+  font-family: var(--font-reading), 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-weight: 500;
 }
 .fc-face .study-prose .study-p {
   text-align: center;
-  font-family: "Times New Roman", Times, Georgia, serif !important;
-  font-weight: 700 !important;
-  font-style: italic !important;
+  font-family: var(--font-reading), 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-weight: 500;
 }
 
 .fc-front {
