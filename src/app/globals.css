@@ -443,7 +443,7 @@ html.font-scale-xlarge {
   font-size: 20px;
 }
 
-/* Reading Font Preferences */
+/* Reading Font Preferences (user setting in Settings — does not override study surfaces) */
 html.reading-font-default,
 html.reading-font-times,
 html.reading-font-serif {
@@ -456,7 +456,7 @@ html.reading-font-mono {
   --font-reading: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
-/* Preserve rich bold stylized look on study content */
+/* Base study-prose (overridden by signature block below on study surfaces) */
 .study-prose {
   font-family: var(--font-reading), "Times New Roman", Times, Georgia, serif;
   font-weight: 500;
@@ -469,7 +469,9 @@ html.reading-font-mono {
 }
 
 /* ========================================================================= */
-/* Signature Italics Times New Roman typography for Notes, Flashcards, Question Banks, Exams & Explanations */
+/* Signature Bold Italic Times New Roman                                     */
+/* Notes · Flashcards · Question banks · Exams · Explanations · Solutions    */
+/* Restored 2026-10-03 — uniform 700 weight (pre-Sep-30 look)                */
 /* ========================================================================= */
 .notes-reading-surface,
 .notes-reading-surface .study-prose,
@@ -491,27 +493,9 @@ html.reading-font-mono {
 [data-learning-content] p,
 [data-learning-content] li,
 .explanation-box {
-  font-family: "Times New Roman", Times, Georgia, "Source Serif 4", serif !important;
-  font-style: italic !important;
-}
-
-.quiz-question-prompt,
-.quiz-question-prompt p,
-.fc-face .study-prose {
+  font-family: "Times New Roman", Times, Georgia, serif !important;
   font-weight: 700 !important;
-}
-
-.choice-inline-text,
-.choice-inline-content {
-  font-weight: 600 !important;
-}
-
-.notes-reading-surface p,
-.notes-reading-surface li,
-.explanation-text,
-.solution-text,
-.study-explanation {
-  font-weight: 500 !important;
+  font-style: italic !important;
 }
 
 .notes-reading-surface strong,
@@ -576,6 +560,4 @@ html.reading-font-mono {
   margin: 0 !important;
   padding: 0 !important;
 }
-
-
 
