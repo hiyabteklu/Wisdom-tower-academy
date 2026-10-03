@@ -12,19 +12,22 @@ type Props = {
 };
 
 /**
- * Clean any outer math delimiters ($$, \[, $, \() so KaTeX never sees them.
- * Passing $$ into katex.renderToString throws a ParseError ("Can't use function '$$' in math mode").
+ * Clean outer math delimiters ($$, \[, $, \() only when safe (no internal delimiters).
  */
 function cleanTexDelimiters(src: string): string {
   let s = src.trim();
   if (s.startsWith("$$") && s.endsWith("$$") && s.length >= 4) {
-    s = s.slice(2, -2).trim();
+    const inner = s.slice(2, -2);
+    if (!inner.includes("$$")) s = inner.trim();
   } else if (s.startsWith("\\[") && s.endsWith("\\]") && s.length >= 4) {
-    s = s.slice(2, -2).trim();
+    const inner = s.slice(2, -2);
+    if (!inner.includes("\\[")) s = inner.trim();
   } else if (s.startsWith("$") && s.endsWith("$") && s.length >= 2) {
-    s = s.slice(1, -1).trim();
+    const inner = s.slice(1, -1);
+    if (!inner.includes("$")) s = inner.trim();
   } else if (s.startsWith("\\(") && s.endsWith("\\)") && s.length >= 4) {
-    s = s.slice(2, -2).trim();
+    const inner = s.slice(2, -2);
+    if (!inner.includes("\\(")) s = inner.trim();
   }
   return s;
 }
@@ -52,8 +55,8 @@ function renderTex(src: string, displayMode: boolean): string {
 }
 
 /**
- * Split text into plain / math segments and render.
- * Supports: $$...$$, \[...\], $...$, \(...\)
+ * Split text into plain / math segments and render each segment individually.
+ * Supports multiple consecutive $$...$$ blocks without merging them.
  *
  * Currency Protection:
  * Single $ is only treated as math delimiter if NOT immediately followed by a digit (0-9)
@@ -64,15 +67,7 @@ function renderMixedMath(input: string, forceDisplay: boolean): string {
 
   const trimmed = input.trim();
 
-  // If input is an explicit display block ($$ ... $$ or \[ ... \])
-  if (
-    (trimmed.startsWith("$$") && trimmed.endsWith("$$") && trimmed.length >= 4) ||
-    (trimmed.startsWith("\\[") && trimmed.endsWith("\\]") && trimmed.length >= 4)
-  ) {
-    return renderTex(trimmed, true);
-  }
-
-  // If entire string is forced display and has no inline delimiters, render cleanly in display mode
+  // If entire string is forced display and contains no math delimiters at all, render directly
   if (
     forceDisplay &&
     !trimmed.includes("$") &&
