@@ -107,7 +107,7 @@ export default function NotesViewer({ body, resourceId, onProgress }: Props) {
   return (
     <div className="relative space-y-4 w-full max-w-full" data-scroll-zoom-skip data-learning-content>
       <div
-        className="notes-reading-surface w-full max-w-full rounded-2xl border border-white/10 p-5 sm:p-8 shadow-card-3d"
+        className="notes-reading-surface w-full max-w-full rounded-2xl border border-white/10 p-3.5 sm:p-6 md:p-8 shadow-card-3d"
         data-scroll-zoom-skip
         data-learning-content
       >

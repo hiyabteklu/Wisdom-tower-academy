@@ -19,6 +19,15 @@ type Props = {
 export default function MathText({ text, className = "", display = false }: Props) {
   const html = useMemo(() => renderMixedMath(text || "", display), [text, display]);
 
+  if (display) {
+    return (
+      <div
+        className={`math-text math-text-display ${className}`}
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    );
+  }
+
   return (
     <span
       className={`math-text ${className}`}

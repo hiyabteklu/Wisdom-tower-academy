@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import MathText from "@/components/MathText";
+import SafeScrollBox from "@/components/learning/SafeScrollBox";
 
 /**
  * Advanced study-content renderer.
@@ -227,26 +228,44 @@ export default function RichContent({ body, className = "", inline = false, onTo
         }
         if (b.type === "table") {
           return (
-            <div key={idx} className="study-table-wrap">
-              <table className="study-table">
-                <thead>
-                  <tr>
-                    {b.headers.map((h, j) => (
-                      <th key={j}>{renderInline(h, `th-${idx}-${j}`)}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {b.rows.map((row, r) => (
-                    <tr key={r}>
-                      {row.map((cell, c) => (
-                        <td key={c}>{renderInline(cell, `td-${idx}-${r}-${c}`)}</td>
+            <SafeScrollBox key={idx} type="table" className="my-3">
+              <div className="study-table-wrap">
+                <table className="study-table">
+                  <thead>
+                    <tr>
+                      {b.headers.map((h, j) => (
+                        <th key={j}>{renderInline(h, `th-${idx}-${j}`)}</th>
                       ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {b.rows.map((row, r) => (
+                      <tr key={r}>
+                        {row.map((cell, c) => (
+                          <td key={c}>{renderInline(cell, `td-${idx}-${r}-${c}`)}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </SafeScrollBox>
+          );
+        }
+        if (b.type === "math") {
+          return (
+            <SafeScrollBox key={idx} type="math" className="my-2.5">
+              <MathText text={b.text} display />
+            </SafeScrollBox>
+          );
+        }
+        if (b.type === "code") {
+          return (
+            <SafeScrollBox key={idx} type="code" className="my-3">
+              <pre className="p-3.5 rounded-xl bg-black/60 border border-white/10 text-xs font-mono text-cyan-100 overflow-x-auto leading-relaxed">
+                <code>{b.code}</code>
+              </pre>
+            </SafeScrollBox>
           );
         }
         if (b.type === "hr") {
@@ -267,6 +286,8 @@ type Block =
   | { type: "p" | "callout"; text: string }
   | { type: "list"; items: string[] }
   | { type: "table"; headers: string[]; rows: string[][] }
+  | { type: "math"; text: string }
+  | { type: "code"; code: string; lang?: string }
   | { type: "hr" };
 
 function splitTableRow(line: string): string[] {
@@ -323,6 +344,34 @@ function parseBlocks(raw: string): { blocks: Block[]; toc: TocItem[] } {
       blocks.push({ type: "hr" });
       i++;
       continue;
+    }
+
+    // Code block fences (```)
+    if (trimmed.startsWith("```")) {
+      flushPara();
+      const lang = trimmed.slice(3).trim();
+      i++;
+      const codeLines: string[] = [];
+      while (i < lines.length && !lines[i].trim().startsWith("```")) {
+        codeLines.push(lines[i]);
+        i++;
+      }
+      if (i < lines.length) i++;
+      blocks.push({ type: "code", code: restore(codeLines.join("\n")), lang });
+      continue;
+    }
+
+    // Standalone block equation
+    const mathMatch = trimmed.match(/^@@WTMATH(\d+)@@$/);
+    if (mathMatch) {
+      const mIdx = Number(mathMatch[1]);
+      const rawFormula = math[mIdx];
+      if (rawFormula && (rawFormula.startsWith("$$") || rawFormula.startsWith("\\["))) {
+        flushPara();
+        blocks.push({ type: "math", text: rawFormula });
+        i++;
+        continue;
+      }
     }
 
     // Markdown table: only after math is masked; requires real separator row

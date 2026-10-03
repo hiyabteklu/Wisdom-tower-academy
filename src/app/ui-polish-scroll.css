@@ -2,85 +2,128 @@
  * Notes & Study Reader: Safe Touch-Scrolling Architecture
  *
  * 1. Zero Vertical Freezing / Lag:
- *    - All horizontal scroll containers (tables, display math, code blocks) use:
- *      `touch-action: pan-x pan-y;` and `overscroll-behavior: auto;` (NEVER `contain`).
- *    - In mobile Android WebView and Chromium, this instructs the compositor that vertical
- *      gestures immediately chain to the page scroll pipeline, eliminating touch locks/freezes.
+ *    - All horizontal scroll containers use `touch-action: pan-y;`.
+ *    - In mobile Android WebView and Chromium, `touch-action: pan-y` guarantees that
+ *      vertical swipe gestures immediately pass to the page compositor with 0ms lag.
+ *    - `overflow-y: visible !important;` prevents 2D scroll lock traps.
  *
  * 2. Zero Spring Bounce-Back:
- *    - Inner math content (.katex-display > .katex) and tables (.study-table) are given:
- *      `width: max-content; min-width: 100%;`.
- *    - This creates an authentic physical scroll track (scrollWidth > clientWidth).
- *    - When the student pans horizontally to view the end of a long equation/table,
- *      it scrolls smoothly with momentum and STAYS at the position when the finger lifts.
+ *    - Inner math content (.katex-display > .katex) and tables (.study-table) use:
+ *      `width: max-content !important; min-width: 100% !important; max-width: none !important;`.
+ *    - `text-align: left !important;` starts scrolling at 0 naturally.
+ *    - Coupled with JS touch tracking, scrollLeft stays at the exact position when finger lifts.
  *
- * 3. Mobile Responsive Scaling:
- *    - Display equations slightly auto-scale on screens <= 640px so ~85% of standard
- *      formulas fit without needing any scroll.
+ * 3. Mobile Inline Math Natural Wrapping:
+ *    - Inline formulas wrap at binary operators (+, -, =, etc.) rather than overflowing margins.
  */
+
+/* Safe Scroll Container System */
+.safe-scroll-outer {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.safe-scroll-port {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  overscroll-behavior-x: auto;
+  overscroll-behavior-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(34, 211, 238, 0.45) transparent;
+}
+
+.safe-scroll-inner {
+  display: inline-block;
+  min-width: 100%;
+  width: max-content;
+  max-width: none;
+  text-align: left;
+}
 
 /* Tables */
 .study-table-wrap {
   width: 100%;
   max-width: 100%;
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: visible;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-x pan-y;
-  overscroll-behavior-x: auto;
-  overscroll-behavior-y: auto;
+  touch-action: pan-y;
   scrollbar-width: thin;
   scrollbar-color: rgba(34, 211, 238, 0.4) transparent;
+}
+
+.study-table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
 }
 
 /* KaTeX Display / Block Math Equations */
 .study-prose .katex-display:not(.choice-inline-content .katex-display):not(.choice-inline-text .katex-display),
 .formatted-body .katex-display,
 .notes-reading-surface .katex-display:not(.choice-inline-content .katex-display):not(.choice-inline-text .katex-display),
-.math-text .katex-display:not(.choice-inline-content .katex-display):not(.choice-inline-text .katex-display) {
+.math-text .katex-display:not(.choice-inline-content .katex-display):not(.choice-inline-text .katex-display),
+.math-text-display .katex-display {
   display: block !important;
-  max-width: 100%;
+  width: 100% !important;
+  max-width: 100% !important;
   overflow-x: auto !important;
-  overflow-y: hidden !important;
+  overflow-y: visible !important;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-x pan-y;
+  touch-action: pan-y !important;
   overscroll-behavior-x: auto;
   overscroll-behavior-y: auto;
-  padding: 0.5rem 0.25rem;
-  margin: 1.25rem 0;
+  padding: 0.45rem 0.2rem;
+  margin: 1rem 0;
+  text-align: left !important;
   scrollbar-width: thin;
-  scrollbar-color: rgba(34, 211, 238, 0.4) transparent;
+  scrollbar-color: rgba(34, 211, 238, 0.45) transparent;
 }
 
-/* Inner KaTeX container: width: max-content establishes true scrollable range (no spring bounce-back) */
+/* Inner KaTeX container: true max-content, no max-width clamps */
 .study-prose .katex-display:not(.choice-inline-content .katex-display) > .katex,
 .formatted-body .katex-display > .katex,
 .notes-reading-surface .katex-display:not(.choice-inline-content .katex-display) > .katex,
-.math-text .katex-display:not(.choice-inline-content .katex-display) > .katex {
+.math-text .katex-display:not(.choice-inline-content .katex-display) > .katex,
+.math-text-display .katex-display > .katex {
   display: inline-block !important;
   min-width: 100% !important;
   width: max-content !important;
-  text-align: center;
-  white-space: nowrap;
+  max-width: none !important;
+  text-align: left !important;
+  white-space: nowrap !important;
 }
 
-/* Inline math: never scroll, wrap naturally */
+/* Inline math: wrap naturally on small screens */
 .study-prose .katex:not(.katex-display .katex),
-.math-text .katex:not(.katex-display .katex) {
+.math-text:not(.math-text-display) .katex:not(.katex-display .katex) {
   max-width: 100%;
-  overflow-x: visible;
-  touch-action: auto;
+  white-space: normal !important;
 }
 
-/* Responsive scaling on mobile screens so most equations fit cleanly */
+.study-prose .katex:not(.katex-display .katex) .base,
+.math-text:not(.math-text-display) .katex:not(.katex-display .katex) .base {
+  white-space: normal !important;
+  display: inline !important;
+}
+
+/* Responsive scaling on mobile screens */
 @media (max-width: 640px) {
   .study-prose .katex-display:not(.choice-inline-content .katex-display),
   .formatted-body .katex-display,
   .notes-reading-surface .katex-display:not(.choice-inline-content .katex-display),
-  .math-text .katex-display:not(.choice-inline-content .katex-display) {
-    font-size: 0.92em;
+  .math-text .katex-display:not(.choice-inline-content .katex-display),
+  .math-text-display .katex-display {
+    font-size: 0.94em;
     padding: 0.35rem 0.15rem;
-    margin: 1rem 0;
+    margin: 0.85rem 0;
   }
 }
 
@@ -90,7 +133,6 @@
 [data-learning-content] {
   max-width: 100%;
   min-width: 0;
-  overflow-x: hidden;
   box-sizing: border-box;
 }
 
@@ -99,16 +141,15 @@
 .notes-reading-surface pre {
   max-width: 100%;
   overflow-x: auto;
-  overflow-y: hidden;
-  overscroll-behavior-x: auto;
-  overscroll-behavior-y: auto;
-  touch-action: pan-x pan-y;
+  overflow-y: visible;
+  touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: rgba(34, 211, 238, 0.4) transparent;
 }
 
-/* Sleek WebKit scrollbar indicator on mobile Android WebView / Chrome */
+/* Sleek WebKit scrollbar indicator */
+.safe-scroll-port::-webkit-scrollbar,
 .study-table-wrap::-webkit-scrollbar,
 .study-prose .katex-display::-webkit-scrollbar,
 .notes-reading-surface .katex-display::-webkit-scrollbar,
@@ -117,6 +158,7 @@
   height: 3.5px;
 }
 
+.safe-scroll-port::-webkit-scrollbar-track,
 .study-table-wrap::-webkit-scrollbar-track,
 .study-prose .katex-display::-webkit-scrollbar-track,
 .notes-reading-surface .katex-display::-webkit-scrollbar-track,
@@ -126,6 +168,7 @@
   border-radius: 9999px;
 }
 
+.safe-scroll-port::-webkit-scrollbar-thumb,
 .study-table-wrap::-webkit-scrollbar-thumb,
 .study-prose .katex-display::-webkit-scrollbar-thumb,
 .notes-reading-surface .katex-display::-webkit-scrollbar-thumb,

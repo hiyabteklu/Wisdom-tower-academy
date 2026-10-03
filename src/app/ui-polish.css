@@ -161,18 +161,18 @@
 }
 .theme-light .study-prose strong { color: #0c1a2e; }
 
-.study-prose .katex { font-size: 1.05em; max-width: 100%; }
+.study-prose .katex {
+  font-size: 1.05em;
+}
 
-/* Long code / pre: scroll inside the block only */
+/* Long code / pre: scroll inside the block without locking vertical page touch */
 .study-prose pre,
 .notes-reading-surface pre,
 .study-prose pre code {
   max-width: 100%;
   overflow-x: auto;
-  overflow-y: hidden;
-  overscroll-behavior-x: auto;
-  overscroll-behavior-y: auto;
-  touch-action: pan-x pan-y;
+  overflow-y: visible;
+  touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
   white-space: pre;
 }
@@ -182,15 +182,13 @@
   word-break: break-word;
 }
 
-/* Tables: horizontal scroll inside wrapper only */
+/* Tables: horizontal scroll inside wrapper without locking vertical page touch */
 .study-table-wrap {
   width: 100%;
   max-width: 100%;
   overflow-x: auto;
-  overflow-y: hidden;
-  overscroll-behavior-x: auto;
-  overscroll-behavior-y: auto;
-  touch-action: pan-x pan-y;
+  overflow-y: visible;
+  touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
   margin: 1.25rem 0;
   border-radius: 0.75rem;
@@ -207,22 +205,24 @@
 }
 
 .study-table th {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 0.55rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 0.5rem 0.65rem;
   text-align: left;
   vertical-align: top;
-  white-space: nowrap;
-  background: rgba(34, 211, 238, 0.1);
+  white-space: normal;
+  background: rgba(34, 211, 238, 0.12);
   color: #fff;
   font-weight: 700;
 }
 
 .study-table td {
   border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 0.55rem 0.75rem;
+  padding: 0.5rem 0.65rem;
   text-align: left;
   vertical-align: top;
-  min-width: 90px;
+  min-width: 55px;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
 .study-table tr:nth-child(even) td {
