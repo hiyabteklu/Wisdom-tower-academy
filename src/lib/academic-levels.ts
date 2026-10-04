@@ -7,9 +7,9 @@
  * - Grade 11 -> ["grade-11"]
  * - Grade 12 -> ["grade-12"]
  * - Remedial -> ["remedial"]
- * - Freshman -> ["freshman", "coc"] (both relevant to freshman students)
- * - 3rd Year (ECE) -> ["ece"] (Electrical and Computer Engineering)
- * - Other -> [] (kept empty until user specifies later from Settings)
+ * - Freshman -> ["freshman", "coc"]
+ * - 3rd Year (ECE) -> ["ece"]
+ * - Other -> [] (Keep empty until specified in Settings)
  */
 
 export const ACADEMIC_LEVEL_OPTIONS = [
@@ -23,43 +23,62 @@ export const ACADEMIC_LEVEL_OPTIONS = [
   "Other",
 ] as const;
 
-export type AcademicLevel = (typeof ACADEMIC_LEVEL_OPTIONS)[number];
+export type AcademicLevelOption = (typeof ACADEMIC_LEVEL_OPTIONS)[number];
 
 export const STORAGE_ENROLLED_COURSES = "wt_enrolled_courses_v2";
 
-/**
- * Returns default course package IDs for My Learning based on Academic Level.
- */
-export function getDefaultPackagesForAcademicLevel(level?: string | null): string[] {
-  if (!level) return [];
-  const normalized = level.trim().toLowerCase();
+export function getDefaultPackagesForAcademicLevel(
+  level?: string | null
+): string[] {
+  if (!level) return ["freshman", "coc"];
+  const trimmed = level.trim().toLowerCase();
 
-  if (normalized === "grade 9" || normalized.startsWith("grade 9") || normalized === "g9") {
+  if (trimmed === "grade 9" || trimmed === "grade-9" || trimmed === "g9") {
     return ["grade-9"];
   }
-  if (normalized === "grade 10" || normalized.startsWith("grade 10") || normalized === "g10") {
+  if (trimmed === "grade 10" || trimmed === "grade-10" || trimmed === "g10") {
     return ["grade-10"];
   }
-  if (normalized === "grade 11" || normalized.startsWith("grade 11") || normalized === "g11") {
+  if (trimmed === "grade 11" || trimmed === "grade-11" || trimmed === "g11") {
     return ["grade-11"];
   }
-  if (normalized === "grade 12" || normalized.startsWith("grade 12") || normalized === "g12") {
+  if (trimmed === "grade 12" || trimmed === "grade-12" || trimmed === "g12") {
     return ["grade-12"];
   }
-  if (normalized.includes("remedial")) {
+  if (trimmed === "remedial" || trimmed.includes("remedial")) {
     return ["remedial"];
   }
-  if (normalized.includes("freshman")) {
+  if (trimmed === "freshman" || trimmed.includes("freshman")) {
     return ["freshman", "coc"];
   }
   if (
-    normalized.includes("3rd year") ||
-    normalized.includes("ece") ||
-    normalized.includes("electrical")
+    trimmed === "3rd year (ece)" ||
+    trimmed === "3rd year ece" ||
+    trimmed.includes("ece") ||
+    trimmed.includes("electrical")
   ) {
     return ["ece"];
   }
+  if (trimmed === "other" || trimmed.startsWith("other")) {
+    return [];
+  }
 
-  // "Other" or unspecified custom level: Keep My Learning empty until user specifies later from Settings
+  // If user typed a custom level under "Other", check if it matches any pattern, else empty
   return [];
+}
+
+/**
+ * Persists the default enrolled courses for a given academic level into localStorage.
+ */
+export function applyDefaultPackagesForLevel(level: string): string[] {
+  const pkgs = getDefaultPackagesForAcademicLevel(level);
+  if (typeof window !== "undefined") {
+    try {
+      window.localStorage.setItem(STORAGE_ENROLLED_COURSES, JSON.stringify(pkgs));
+      window.dispatchEvent(new Event("storage"));
+    } catch {
+      /* ignore */
+    }
+  }
+  return pkgs;
 }

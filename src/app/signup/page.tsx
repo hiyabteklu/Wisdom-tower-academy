@@ -4,16 +4,9 @@ import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import BrandLoader from "@/components/BrandLoader";
-import { supabase } from "@/lib/supabase";
-import {
-  looksLikeEmail,
-  authEmailFromIdentifier,
-} from "@/lib/authIdentity";
-import {
-  ACADEMIC_LEVEL_OPTIONS,
-  getDefaultPackagesForAcademicLevel,
-  STORAGE_ENROLLED_COURSES,
-} from "@/lib/academic-levels";
+import BrandLogo from "@/components/BrandLogo";
+import { ACADEMIC_LEVEL_OPTIONS } from "@/lib/academic-levels";
+import { registerScholar } from "@/lib/auth-service";
 import {
   Mail,
   Lock,
@@ -26,8 +19,6 @@ import {
   ChevronDown,
   Check,
 } from "lucide-react";
-
-const EDUCATION_LEVELS = ACADEMIC_LEVEL_OPTIONS;
 
 function SignupForm() {
   const router = useRouter();
@@ -43,7 +34,7 @@ function SignupForm() {
       : "/account";
 
   const [fullName, setFullName] = useState("");
-  const [identifier, setIdentifier] = useState(searchParams.get("identifier") || "");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [educationLevel, setEducationLevel] = useState("Freshman");
@@ -52,198 +43,120 @@ function SignupForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [notice, setNotice] = useState<{
+    text: string;
+    action?: { label: string; href: string };
+  } | null>(null);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
-  const [done, setDone] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setNotice(null);
+
     if (!agreedToTerms) {
-      setError("Please agree to the Terms of Service and Privacy Policy.");
+      setNotice({
+        text: "Please agree to the Terms of Service and Privacy Policy to continue.",
+      });
       return;
     }
-    setError("");
     if (password !== confirm) {
-      setError("Passwords do not match.");
+      setNotice({ text: "Passwords do not match." });
       return;
     }
     if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
+      setNotice({ text: "Password must be at least 6 characters." });
       return;
     }
     if (!educationLevel) {
-      setError("Please select your academic level.");
+      setNotice({ text: "Please select your academic level." });
       return;
     }
-    setLoading(true);
 
     const finalEducationLevel =
       educationLevel === "Other"
         ? customEducationLevel.trim() || "Other"
         : educationLevel;
 
-    // Pre-calculate and prepare default My Learning packages
-    const defaultPackages = getDefaultPackagesForAcademicLevel(finalEducationLevel);
-    const saveLearningDefaults = () => {
-      try {
-        localStorage.setItem(
-          STORAGE_ENROLLED_COURSES,
-          JSON.stringify(defaultPackages)
-        );
-        localStorage.setItem("wt_academic_level", finalEducationLevel);
-      } catch {
-        /* ignore */
-      }
-    };
+    setLoading(true);
 
     try {
-      const identity = authEmailFromIdentifier(identifier);
-      const { email, phone } = identity;
-
-      // First try server-side pre-confirmed registration
-      const regRes = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          password,
-          fullName: fullName.trim(),
-          educationLevel: finalEducationLevel,
-          phone: phone || null,
-        }),
-      });
-
-      if (regRes.ok) {
-        saveLearningDefaults();
-        // Auto sign in
-        const { error: autoSignInErr } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        setLoading(false);
-        if (!autoSignInErr) {
-          router.replace(next);
-          router.refresh();
-          return;
-        }
-        setDone(true);
-        return;
-      }
-
-      const regData = await regRes.json();
-      if (
-        regData.code === "user_already_exists" ||
-        regData.error?.toLowerCase().includes("already registered") ||
-        regData.error?.toLowerCase().includes("already exists")
-      ) {
-        setLoading(false);
-        // Automatically take them to the login page as requested
-        router.replace(
-          `/login?identifier=${encodeURIComponent(identifier)}&notice=exists&next=${encodeURIComponent(next)}`
-        );
-        return;
-      }
-
-      // Fallback to client signUp
-      const { data: signUpData, error: signError } = await supabase.auth.signUp({
-        email,
+      const result = await registerScholar({
+        fullName: fullName.trim(),
+        identifier,
         password,
-        options: {
-          data: {
-            full_name: fullName.trim(),
-            education_level: finalEducationLevel,
-            phone: phone || null,
-          },
-        },
+        educationLevel: finalEducationLevel,
       });
 
       setLoading(false);
-      if (signError) {
-        if (
-          signError.message.toLowerCase().includes("already registered") ||
-          signError.message.toLowerCase().includes("already exists")
-        ) {
-          // Automatically take them to login page
-          router.replace(
-            `/login?identifier=${encodeURIComponent(identifier)}&notice=exists&next=${encodeURIComponent(next)}`
-          );
-          return;
-        }
-        setError(signError.message || "Could not create account.");
-        return;
-      }
 
-      saveLearningDefaults();
-
-      if (signUpData.session) {
+      if (result.success) {
         router.replace(next);
         router.refresh();
-      } else {
-        setDone(true);
+        return;
       }
-    } catch (err) {
+
+      if (result.code === "user_already_exists") {
+        // Automatically direct user to Login page with their credentials prefilled
+        const loginUrl = `/login?identifier=${encodeURIComponent(identifier.trim())}&existing=1&next=${encodeURIComponent(next)}`;
+        router.push(loginUrl);
+        return;
+      }
+
+      setNotice({
+        text: result.message || "Could not complete account creation. Please try again.",
+      });
+    } catch {
       setLoading(false);
-      setError(err instanceof Error ? err.message : "Could not create account.");
+      setNotice({
+        text: "Could not create account. Please check your details and try again.",
+      });
     }
   }
 
   const inputClass =
-    "w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-wisdom-muted focus:outline-none focus:ring-2 focus:ring-cyan-400/40 focus:border-cyan-400/40";
-  const labelClass = "block text-sm font-medium text-white/90 mb-2";
-
-  if (done) {
-    return (
-      <div className="min-h-[100dvh] flex items-center justify-center px-4 py-10">
-        <div className="w-full max-w-md rounded-2xl border border-white/10 bg-wisdom-card/80 p-8 text-center">
-          <h1 className="text-xl font-bold text-white mb-2">Check your email</h1>
-          <p className="text-sm text-wisdom-muted mb-6">
-            We sent a confirmation link if required. You can also try signing in.
-          </p>
-          <Link
-            href={`/login?next=${encodeURIComponent(next)}`}
-            className="inline-flex rounded-xl bg-cyan-400 px-5 py-2.5 text-sm font-bold text-wisdom-dark"
-          >
-            Go to sign in
-          </Link>
-        </div>
-      </div>
-    );
-  }
+    "w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/15 text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400/50 text-sm";
+  const labelClass = "block text-xs font-bold uppercase tracking-wider text-slate-200 mb-1.5";
 
   return (
     <div className="min-h-[100dvh] flex items-start sm:items-center justify-center px-4 py-10 pb-44 overflow-y-auto">
       <div className="w-full max-w-md">
         <div className="text-center mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">Create Account</h1>
-          <p className="text-sm text-wisdom-muted">Join Wisdom Tower Academy</p>
+          <div className="flex justify-center mb-3">
+            <BrandLogo size={60} />
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-display font-black text-white tracking-tight">
+            Wisdom Tower Academy
+          </h1>
         </div>
 
-        {/* Navigation Notice: Quick path for existing users */}
-        <div className="mb-4 p-3.5 rounded-2xl bg-cyan-500/10 border border-cyan-400/25 flex items-center justify-between gap-3 text-xs shadow-sm">
-          <span className="text-slate-200">
-            Already have an account? <span className="font-semibold text-white">Log in here.</span>
-          </span>
-          <Link
-            href={`/login?next=${encodeURIComponent(next)}`}
-            className="shrink-0 px-3.5 py-1.5 rounded-xl font-bold bg-cyan-400 text-slate-950 hover:bg-cyan-300 transition-all shadow-sm"
-          >
-            Log In
-          </Link>
-        </div>
+        <div className="rounded-3xl border border-white/20 bg-gradient-to-b from-[#131f38] via-[#0e172a] to-[#0a101d] p-6 sm:p-8 shadow-[0_25px_60px_rgba(0,0,0,0.85)] relative overflow-hidden">
+          <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-cyan-400 via-sky-300 to-cyan-400" />
 
-        <div className="card-modern p-6 sm:p-8 shadow-2xl">
+          {/* Minimal Navigation Notice at top */}
+          <div className="mb-6 pb-4 border-b border-white/10 text-center">
+            <p className="text-xs sm:text-sm text-slate-400">
+              Already have an account?{" "}
+              <Link
+                href={`/login?next=${encodeURIComponent(next)}`}
+                className="text-cyan-400 hover:text-cyan-300 underline underline-offset-4 font-semibold ml-1"
+              >
+                Sign in
+              </Link>
+            </p>
+          </div>
+
           <form onSubmit={onSubmit} className="space-y-4">
             <div>
-              <label className={labelClass}>Full name</label>
+              <label className={labelClass}>Full Legal Name</label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-wisdom-muted" />
+                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <input
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   className={inputClass}
-                  placeholder="Your name"
+                  placeholder="e.g. Abebe Bikila"
+                  autoFocus
                 />
               </div>
             </div>
@@ -251,10 +164,10 @@ function SignupForm() {
             <div>
               <label className={labelClass}>Email or Phone Number</label>
               <div className="relative">
-                {looksLikeEmail(identifier) ? (
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-wisdom-muted" />
+                {identifier.includes("@") ? (
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 ) : (
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-wisdom-muted" />
+                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 )}
                 <input
                   required
@@ -269,7 +182,7 @@ function SignupForm() {
             <div>
               <label className={labelClass}>Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-wisdom-muted" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <input
                   type={showPassword ? "text" : "password"}
                   required
@@ -281,7 +194,8 @@ function SignupForm() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-wisdom-muted"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -289,9 +203,9 @@ function SignupForm() {
             </div>
 
             <div>
-              <label className={labelClass}>Confirm password</label>
+              <label className={labelClass}>Confirm Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-wisdom-muted" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <input
                   type={showConfirm ? "text" : "password"}
                   required
@@ -303,29 +217,35 @@ function SignupForm() {
                 <button
                   type="button"
                   onClick={() => setShowConfirm(!showConfirm)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-wisdom-muted"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1"
+                  aria-label={showConfirm ? "Hide password" : "Show password"}
                 >
                   {showConfirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
             </div>
 
+            {/* Redesigned Academic Level Picker */}
             <div className="space-y-3">
               <div>
                 <label className={labelClass}>Academic Level</label>
                 <div className="relative">
-                  <GraduationCap className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-300 z-10" />
+                  <GraduationCap className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 z-10 pointer-events-none" />
                   <button
                     type="button"
                     onClick={() => setLevelOpen((o) => !o)}
                     className={`${inputClass} pl-11 pr-10 text-left font-medium flex items-center justify-between cursor-pointer`}
                   >
                     <span className="truncate">{educationLevel || "Select Academic Level"}</span>
-                    <ChevronDown className={`w-4 h-4 text-wisdom-muted transition-transform duration-200 shrink-0 ${levelOpen ? "rotate-180 text-cyan-300" : ""}`} />
+                    <ChevronDown
+                      className={`w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 ${
+                        levelOpen ? "rotate-180 text-cyan-300" : ""
+                      }`}
+                    />
                   </button>
                   {levelOpen && (
-                    <ul className="absolute z-20 mt-1.5 w-full max-h-56 overflow-auto rounded-xl border border-white/15 bg-[#121c2e] shadow-2xl py-1 backdrop-blur-xl">
-                      {EDUCATION_LEVELS.map((level) => {
+                    <ul className="absolute z-20 mt-1.5 w-full max-h-60 overflow-auto rounded-xl border border-white/20 bg-[#10192a] shadow-2xl py-1.5 backdrop-blur-xl">
+                      {ACADEMIC_LEVEL_OPTIONS.map((level) => {
                         const isSelected = educationLevel === level;
                         return (
                           <li key={level}>
@@ -335,10 +255,10 @@ function SignupForm() {
                                 setEducationLevel(level);
                                 setLevelOpen(false);
                               }}
-                              className={`w-full text-left px-4 py-2.5 text-xs sm:text-sm font-semibold flex items-center justify-between transition-colors ${
+                              className={`w-full text-left px-4 py-2.5 text-xs sm:text-sm font-medium flex items-center justify-between transition-colors ${
                                 isSelected
                                   ? "bg-cyan-500/20 text-cyan-300"
-                                  : "text-white/90 hover:bg-white/10"
+                                  : "text-slate-200 hover:bg-white/10 hover:text-white"
                               }`}
                             >
                               <span>{level}</span>
@@ -352,11 +272,12 @@ function SignupForm() {
                 </div>
               </div>
 
+              {/* If 'Other' is selected, show manual input field */}
               {educationLevel === "Other" && (
                 <div className="animate-in fade-in slide-in-from-top-1 duration-200">
-                  <label className={labelClass}>Please specify your academic level</label>
+                  <label className={labelClass}>Specify your academic level</label>
                   <div className="relative">
-                    <GraduationCap className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-300 pointer-events-none" />
+                    <GraduationCap className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
                     <input
                       type="text"
                       required
@@ -371,41 +292,37 @@ function SignupForm() {
               )}
             </div>
 
-            <label
-              className={`flex items-start gap-3 cursor-pointer select-none rounded-xl border px-3 py-3 transition ${
-                agreedToTerms
-                  ? "border-cyan-400/40 bg-cyan-500/10"
-                  : "border-white/15 bg-white/5"
-              }`}
-            >
+            <label className="flex items-start gap-3 cursor-pointer select-none rounded-xl border border-white/10 bg-white/[0.02] px-3.5 py-3 transition-colors">
               <input
                 type="checkbox"
                 checked={agreedToTerms}
                 onChange={(e) => setAgreedToTerms(e.target.checked)}
-                className="mt-0.5 h-5 w-5 shrink-0 rounded border-white/40 bg-wisdom-dark accent-cyan-400"
+                className="mt-0.5 h-4 w-4 shrink-0 rounded border-white/40 bg-slate-900 accent-cyan-400"
               />
-              <span className="text-sm text-white/85 leading-relaxed">
+              <span className="text-xs text-slate-300 leading-relaxed font-normal">
                 I agree to the{" "}
-                <Link href="/terms" className="text-cyan-300 hover:underline font-medium">
+                <Link href="/terms" className="text-cyan-300 hover:underline">
                   Terms of Service
                 </Link>{" "}
                 and{" "}
-                <Link href="/privacy" className="text-cyan-300 hover:underline font-medium">
+                <Link href="/privacy" className="text-cyan-300 hover:underline">
                   Privacy Policy
                 </Link>
+                .
               </span>
             </label>
 
-            {error && (
-              <div className="p-4 rounded-2xl bg-rose-500/15 border border-rose-500/35 text-rose-200 text-xs font-semibold leading-relaxed">
-                {error}
-                {error.toLowerCase().includes("rate limit") && (
-                  <div className="mt-2 pt-2 border-t border-rose-500/20">
+            {/* Minimal Notice (No bright red boxes) */}
+            {notice && (
+              <div className="p-3 rounded-xl bg-slate-900/80 border border-white/10 text-xs text-slate-300 leading-relaxed text-center">
+                <span>{notice.text}</span>
+                {notice.action && (
+                  <div className="mt-1.5">
                     <Link
-                      href="/login"
-                      className="text-amber-300 font-bold hover:underline inline-flex items-center gap-1"
+                      href={notice.action.href}
+                      className="text-cyan-400 hover:text-cyan-300 underline underline-offset-2 font-medium"
                     >
-                      Rate limit active. Try signing in directly →
+                      {notice.action.label} →
                     </Link>
                   </div>
                 )}
@@ -415,7 +332,7 @@ function SignupForm() {
             <button
               type="submit"
               disabled={loading || !agreedToTerms}
-              className="w-full py-3.5 px-6 rounded-xl text-sm sm:text-base font-black bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-slate-950 hover:brightness-110 active:scale-[0.98] transition-all shadow-xl shadow-amber-500/30 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full py-3.5 px-6 rounded-xl text-sm sm:text-base font-bold bg-cyan-400 text-slate-950 hover:bg-cyan-300 active:scale-[0.98] transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {loading ? (
                 <span className="inline-flex items-center gap-2">
@@ -425,18 +342,24 @@ function SignupForm() {
               ) : (
                 <>
                   <span>Create Account</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="w-4 h-4 stroke-[2.5]" />
                 </>
               )}
             </button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-wisdom-muted">
-            Already have an account?{" "}
-            <Link href={`/login?next=${encodeURIComponent(next)}`} className="text-cyan-300 hover:underline font-medium">
-              Log in
-            </Link>
-          </p>
+          {/* Minimal Navigation Notice at bottom */}
+          <div className="mt-6 pt-4 border-t border-white/10 text-center">
+            <p className="text-xs sm:text-sm text-slate-400">
+              Already have an account?{" "}
+              <Link
+                href={`/login?next=${encodeURIComponent(next)}`}
+                className="text-cyan-400 hover:text-cyan-300 underline underline-offset-4 font-semibold ml-1"
+              >
+                Sign in
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

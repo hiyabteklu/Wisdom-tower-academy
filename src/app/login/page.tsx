@@ -6,12 +6,8 @@ import { useState, Suspense, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { authEmailFromIdentifier } from "@/lib/authIdentity";
-import {
-  ACADEMIC_LEVEL_OPTIONS,
-  getDefaultPackagesForAcademicLevel,
-  STORAGE_ENROLLED_COURSES,
-} from "@/lib/academic-levels";
+import { ACADEMIC_LEVEL_OPTIONS } from "@/lib/academic-levels";
+import { loginScholar, registerScholar } from "@/lib/auth-service";
 import {
   Mail,
   Lock,
@@ -19,14 +15,10 @@ import {
   EyeOff,
   ArrowRight,
   Phone,
-  AlertTriangle,
-  CheckCircle2,
   GraduationCap,
   ChevronDown,
   Check,
 } from "lucide-react";
-
-const EDUCATION_LEVEL_OPTIONS = ACADEMIC_LEVEL_OPTIONS;
 
 function LoginForm() {
   const router = useRouter();
@@ -42,10 +34,13 @@ function LoginForm() {
       : "/account";
 
   const requestedMode = searchParams.get("mode");
+  const initialIdentifier = searchParams.get("identifier") || "";
+  const existingNotice = searchParams.get("existing") === "1";
+
   const [mode, setMode] = useState<"signin" | "signup">(
     requestedMode === "signup" ? "signup" : "signin"
   );
-  const [identifier, setIdentifier] = useState(searchParams.get("identifier") || "");
+  const [identifier, setIdentifier] = useState(initialIdentifier);
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [educationLevel, setEducationLevel] = useState("Freshman");
@@ -55,25 +50,20 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
-  const [isRateLimited, setIsRateLimited] = useState(false);
+  const [notice, setNotice] = useState<{
+    type: "info" | "error" | "success";
+    text: string;
+    action?: { label: string; href?: string; onAction?: () => void };
+  } | null>(
+    existingNotice
+      ? {
+          type: "info",
+          text: "An account with this email or phone already exists. Please enter your password to sign in.",
+        }
+      : null
+  );
 
-  useEffect(() => {
-    // Check if redirected from registration because account already exists
-    const notice = searchParams.get("notice");
-    const idParam = searchParams.get("identifier");
-    if (idParam && !identifier) {
-      setIdentifier(idParam);
-    }
-    if (notice === "exists") {
-      setMode("signin");
-      setSuccessMsg(
-        "An account with this email/phone already exists. Please enter your password to sign in."
-      );
-    }
-  }, [searchParams, identifier]);
-
+  // Auto redirect if already signed in
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -91,214 +81,149 @@ function LoginForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!agreedToTerms) {
-      setError("Please accept the Terms of Service to continue.");
-      return;
-    }
-    setError("");
-    setSuccessMsg("");
-    setIsRateLimited(false);
-    setLoading(true);
+    setNotice(null);
 
     const id = identifier.trim();
     if (!id) {
-      setError("Please enter your email or phone number.");
-      setLoading(false);
-      return;
-    }
-
-    let authEmail = id;
-    let phoneNumber: string | null = null;
-
-    try {
-      const identity = authEmailFromIdentifier(id);
-      authEmail = identity.email;
-      phoneNumber = identity.phone;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Invalid email or phone format.");
-      setLoading(false);
+      setNotice({
+        type: "error",
+        text: "Please enter your email or phone number.",
+      });
       return;
     }
 
     // SIGN IN FLOW
     if (mode === "signin") {
-      const { error: signError } = await supabase.auth.signInWithPassword({
-        email: authEmail,
-        password,
-      });
-
-      setLoading(false);
-      if (signError) {
-        const msg = signError.message || "Sign in failed.";
-        if (msg.toLowerCase().includes("rate limit") || (signError as unknown as { status: number }).status === 429) {
-          setIsRateLimited(true);
-          setError("Sign in is temporarily busy. Please wait a moment and try again.");
-        } else if (
-          msg.toLowerCase().includes("invalid login credentials") ||
-          msg.toLowerCase().includes("user not found")
-        ) {
-          setError("Incorrect password or account not found. If you don't have an account, create one below.");
-        } else {
-          setError(msg);
-        }
+      if (!password) {
+        setNotice({
+          type: "error",
+          text: "Please enter your password.",
+        });
         return;
       }
 
-      router.replace(next.startsWith("/") ? next : "/account");
-      router.refresh();
+      setLoading(true);
+      try {
+        const result = await loginScholar(id, password);
+        if (result.success) {
+          router.replace(next.startsWith("/") ? next : "/account");
+          router.refresh();
+          return;
+        }
+
+        setLoading(false);
+        if (result.code === "user_not_found") {
+          setNotice({
+            type: "info",
+            text: "No account found with this email or phone.",
+            action: {
+              label: "Create a free account",
+              onAction: () => {
+                setMode("signup");
+                setNotice(null);
+              },
+            },
+          });
+        } else if (result.code === "invalid_credentials") {
+          setNotice({
+            type: "error",
+            text: "Incorrect password. Please verify and try again.",
+          });
+        } else {
+          setNotice({
+            type: "error",
+            text: result.message || "Sign in could not be completed. Please try again.",
+          });
+        }
+      } catch {
+        setLoading(false);
+        setNotice({
+          type: "error",
+          text: "Sign in error. Please try again.",
+        });
+      }
       return;
     }
 
-    // CREATE ACCOUNT FLOW
+    // SIGN UP FLOW
     if (mode === "signup") {
       if (!fullName.trim()) {
-        setError("Please enter your full legal name.");
-        setLoading(false);
+        setNotice({
+          type: "error",
+          text: "Please enter your full legal name.",
+        });
         return;
       }
       if (password.length < 6) {
-        setError("Password must be at least 6 characters.");
-        setLoading(false);
+        setNotice({
+          type: "error",
+          text: "Password must be at least 6 characters.",
+        });
         return;
       }
       if (password !== confirmPassword) {
-        setError("Passwords do not match.");
-        setLoading(false);
+        setNotice({
+          type: "error",
+          text: "Passwords do not match.",
+        });
+        return;
+      }
+      if (!agreedToTerms) {
+        setNotice({
+          type: "error",
+          text: "Please accept the Terms of Service to continue.",
+        });
         return;
       }
 
-      const finalEducationLevel =
+      const finalLevel =
         educationLevel === "Other"
           ? customEducationLevel.trim() || "Other"
           : educationLevel;
 
-      const defaultPackages = getDefaultPackagesForAcademicLevel(finalEducationLevel);
-      const saveLearningDefaults = () => {
-        try {
-          localStorage.setItem(
-            STORAGE_ENROLLED_COURSES,
-            JSON.stringify(defaultPackages)
-          );
-          localStorage.setItem("wt_academic_level", finalEducationLevel);
-        } catch {
-          /* ignore */
-        }
-      };
-
+      setLoading(true);
       try {
-        // First try server-side pre-confirmed registration to avoid Supabase email rate limits
-        const regRes = await fetch("/api/auth/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: authEmail,
-            password,
-            fullName: fullName.trim(),
-            educationLevel: finalEducationLevel,
-            phone: phoneNumber,
-          }),
-        });
-
-        const regData = await regRes.json();
-
-        if (regRes.ok) {
-          saveLearningDefaults();
-          // Immediately sign the student in with the newly confirmed credentials
-          const { error: autoSignInErr } = await supabase.auth.signInWithPassword({
-            email: authEmail,
-            password,
-          });
-
-          setLoading(false);
-          if (!autoSignInErr) {
-            setSuccessMsg("Account created and verified! Welcome to Wisdom Tower Academy.");
-            setTimeout(() => {
-              router.replace(next.startsWith("/") ? next : "/account");
-              router.refresh();
-            }, 600);
-            return;
-          }
-          setSuccessMsg("Account created! Please enter your password to sign in.");
-          setMode("signin");
-          return;
-        }
-
-        if (
-          regData.code === "user_already_exists" ||
-          regData.error?.toLowerCase().includes("already registered") ||
-          regData.error?.toLowerCase().includes("already exists")
-        ) {
-          setLoading(false);
-          // Automatically take them to login mode with clear notice
-          setMode("signin");
-          setError("");
-          setSuccessMsg("An account with this email/phone already exists. Please enter your password to sign in.");
-          return;
-        }
-
-        // Fallback to client signUp
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email: authEmail,
+        const regResult = await registerScholar({
+          fullName: fullName.trim(),
+          identifier: id,
           password,
-          options: {
-            data: {
-              full_name: fullName.trim(),
-              education_level: finalEducationLevel,
-              phone: phoneNumber,
-            },
-          },
+          educationLevel: finalLevel,
         });
 
         setLoading(false);
-
-        if (signUpError) {
-          const msg = signUpError.message || "Account creation failed.";
-          if (
-            msg.toLowerCase().includes("already registered") ||
-            msg.toLowerCase().includes("already exists")
-          ) {
-            // Automatically take them to login mode with clear notice
-            setMode("signin");
-            setError("");
-            setSuccessMsg("An account with this email/phone already exists. Please enter your password to sign in.");
-            return;
-          }
-
-          if (
-            msg.toLowerCase().includes("rate limit") ||
-            msg.toLowerCase().includes("over_email_send_rate_limit") ||
-            (signUpError as unknown as { status: number }).status === 429
-          ) {
-            setIsRateLimited(true);
-            setError("Account registration is temporarily busy. Please wait a minute or try signing in.");
-          } else {
-            setError(msg);
-          }
+        if (regResult.success) {
+          router.replace(next.startsWith("/") ? next : "/account");
+          router.refresh();
           return;
         }
 
-        saveLearningDefaults();
-
-        if (signUpData.session) {
-          setSuccessMsg("Account created successfully! Redirecting...");
-          setTimeout(() => {
-            router.replace(next.startsWith("/") ? next : "/account");
-            router.refresh();
-          }, 800);
-        } else {
-          setSuccessMsg("Account registered! You can now sign in with your credentials.");
+        if (regResult.code === "user_already_exists") {
           setMode("signin");
+          setNotice({
+            type: "info",
+            text: "An account with this email or phone already exists. Please enter your password to sign in.",
+          });
+          return;
         }
-      } catch (err) {
+
+        setNotice({
+          type: "error",
+          text: regResult.message || "Account creation could not be completed.",
+        });
+      } catch {
         setLoading(false);
-        setError(err instanceof Error ? err.message : "Account registration failed. Please try again.");
+        setNotice({
+          type: "error",
+          text: "Registration error. Please try again.",
+        });
       }
     }
   }
 
   const inputClass =
-    "w-full pl-11 pr-4 py-3.5 rounded-xl bg-slate-950/90 border border-white/25 text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 text-sm font-medium transition-all shadow-inner";
-  const labelClass = "block text-xs font-bold uppercase tracking-wider text-slate-200 mb-1.5";
+    "w-full pl-11 pr-4 py-3.5 rounded-xl bg-slate-950/90 border border-white/20 text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 text-sm font-medium transition-all shadow-inner";
+  const labelClass =
+    "block text-xs font-bold uppercase tracking-wider text-slate-200 mb-1.5";
 
   return (
     <div className="min-h-[100dvh] flex items-start sm:items-center justify-center px-4 py-10 pb-44 overflow-y-auto">
@@ -313,61 +238,23 @@ function LoginForm() {
           </h1>
         </div>
 
-        {/* Navigation Switch Notice Banner */}
-        {mode === "signin" ? (
-          <div className="mb-4 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-400/25 flex items-center justify-between gap-3 text-xs shadow-sm">
-            <span className="text-slate-200">
-              Don&apos;t have an account? <span className="font-semibold text-white">Create a free account.</span>
-            </span>
-            <button
-              type="button"
-              onClick={() => {
-                setMode("signup");
-                setError("");
-                setSuccessMsg("");
-              }}
-              className="shrink-0 px-3.5 py-1.5 rounded-xl font-bold bg-amber-400 text-slate-950 hover:bg-amber-300 transition-all shadow-sm cursor-pointer"
-            >
-              Sign Up Free
-            </button>
-          </div>
-        ) : (
-          <div className="mb-4 p-3.5 rounded-2xl bg-cyan-500/10 border border-cyan-400/25 flex items-center justify-between gap-3 text-xs shadow-sm">
-            <span className="text-slate-200">
-              Already have an account? <span className="font-semibold text-white">Log in here.</span>
-            </span>
-            <button
-              type="button"
-              onClick={() => {
-                setMode("signin");
-                setError("");
-                setSuccessMsg("");
-              }}
-              className="shrink-0 px-3.5 py-1.5 rounded-xl font-bold bg-cyan-400 text-slate-950 hover:bg-cyan-300 transition-all shadow-sm cursor-pointer"
-            >
-              Log In
-            </button>
-          </div>
-        )}
-
         {/* Auth Card */}
-        <div className="rounded-3xl border border-white/25 bg-gradient-to-b from-[#131f38] via-[#0e172a] to-[#0a101d] p-6 sm:p-8 shadow-[0_25px_60px_rgba(0,0,0,0.85)] relative overflow-hidden">
+        <div className="rounded-3xl border border-white/20 bg-gradient-to-b from-[#131f38] via-[#0e172a] to-[#0a101d] p-6 sm:p-8 shadow-[0_25px_60px_rgba(0,0,0,0.85)] relative overflow-hidden">
           {/* Top radiant highlight */}
-          <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-cyan-400 via-amber-300 to-sky-400" />
+          <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-cyan-400 via-sky-300 to-cyan-400" />
 
           {/* Mode Switcher Tabs */}
-          <div className="grid grid-cols-2 p-1.5 rounded-2xl bg-slate-950/90 border border-white/20 mb-6 gap-2">
+          <div className="grid grid-cols-2 p-1 rounded-2xl bg-slate-950/80 border border-white/15 mb-6 gap-1">
             <button
               type="button"
               onClick={() => {
                 setMode("signin");
-                setError("");
-                setSuccessMsg("");
+                setNotice(null);
               }}
-              className={`py-3 px-4 text-xs sm:text-sm font-black rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              className={`py-2.5 px-4 text-xs sm:text-sm font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                 mode === "signin"
-                  ? "bg-cyan-400 text-slate-950 shadow-[0_0_20px_rgba(34,224,255,0.45)] ring-1 ring-white/50"
-                  : "text-slate-300 hover:text-white hover:bg-white/10"
+                  ? "bg-white/15 text-white shadow-sm"
+                  : "text-slate-400 hover:text-white hover:bg-white/5"
               }`}
             >
               Sign In
@@ -376,13 +263,12 @@ function LoginForm() {
               type="button"
               onClick={() => {
                 setMode("signup");
-                setError("");
-                setSuccessMsg("");
+                setNotice(null);
               }}
-              className={`py-3 px-4 text-xs sm:text-sm font-black rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              className={`py-2.5 px-4 text-xs sm:text-sm font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                 mode === "signup"
-                  ? "bg-amber-400 text-slate-950 shadow-[0_0_20px_rgba(245,158,11,0.45)] ring-1 ring-white/50"
-                  : "text-slate-300 hover:text-white hover:bg-white/10"
+                  ? "bg-white/15 text-white shadow-sm"
+                  : "text-slate-400 hover:text-white hover:bg-white/5"
               }`}
             >
               Create Account
@@ -395,7 +281,7 @@ function LoginForm() {
               <div>
                 <label className={labelClass}>Full Legal Name</label>
                 <div className="relative">
-                  <GraduationCap className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-300" />
+                  <GraduationCap className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                   <input
                     type="text"
                     required
@@ -414,9 +300,9 @@ function LoginForm() {
               <label className={labelClass}>Email or Phone Number</label>
               <div className="relative">
                 {identifier.includes("@") ? (
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-300" />
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 ) : (
-                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-300" />
+                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 )}
                 <input
                   type="text"
@@ -440,7 +326,7 @@ function LoginForm() {
                     <button
                       type="button"
                       onClick={() => setLevelPickerOpen((prev) => !prev)}
-                      className="w-full pl-11 pr-10 py-3.5 rounded-xl bg-slate-950/90 border border-white/25 text-white text-left text-sm font-medium transition-all shadow-inner hover:border-cyan-400/60 focus:outline-none focus:ring-2 focus:ring-cyan-400 flex items-center justify-between cursor-pointer"
+                      className="w-full pl-11 pr-10 py-3.5 rounded-xl bg-slate-950/90 border border-white/20 text-white text-left text-sm font-medium transition-all shadow-inner hover:border-cyan-400/50 focus:outline-none focus:ring-2 focus:ring-cyan-400 flex items-center justify-between cursor-pointer"
                     >
                       <span className="truncate">{educationLevel || "Select Academic Level"}</span>
                       <ChevronDown
@@ -449,11 +335,11 @@ function LoginForm() {
                         }`}
                       />
                     </button>
-                    <GraduationCap className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-300 pointer-events-none" />
+                    <GraduationCap className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
 
                     {levelPickerOpen && (
                       <div className="absolute z-30 mt-1.5 w-full rounded-2xl border border-white/20 bg-[#0c1527] shadow-[0_15px_35px_rgba(0,0,0,0.85)] py-1.5 max-h-60 overflow-y-auto backdrop-blur-xl">
-                        {EDUCATION_LEVEL_OPTIONS.map((opt) => {
+                        {ACADEMIC_LEVEL_OPTIONS.map((opt) => {
                           const isSelected = educationLevel === opt;
                           return (
                             <button
@@ -463,7 +349,7 @@ function LoginForm() {
                                 setEducationLevel(opt);
                                 setLevelPickerOpen(false);
                               }}
-                              className={`w-full px-4 py-2.5 text-left text-xs sm:text-sm font-semibold flex items-center justify-between transition-colors ${
+                              className={`w-full px-4 py-2.5 text-left text-xs sm:text-sm font-medium flex items-center justify-between transition-colors ${
                                 isSelected
                                   ? "bg-cyan-500/20 text-cyan-300"
                                   : "text-slate-200 hover:bg-white/10 hover:text-white"
@@ -479,12 +365,12 @@ function LoginForm() {
                   </div>
                 </div>
 
-                {/* If 'Other' is selected, ask them to write it */}
+                {/* If 'Other' is selected, show manual input field */}
                 {educationLevel === "Other" && (
                   <div className="animate-in fade-in slide-in-from-top-1 duration-200">
-                    <label className={labelClass}>Please specify your academic level</label>
+                    <label className={labelClass}>Specify your academic level</label>
                     <div className="relative">
-                      <GraduationCap className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-300 pointer-events-none" />
+                      <GraduationCap className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
                       <input
                         type="text"
                         required
@@ -509,7 +395,7 @@ function LoginForm() {
                 {mode === "signin" && (
                   <Link
                     href="/forgot-password"
-                    className="text-xs font-bold text-cyan-300 hover:text-cyan-200 hover:underline"
+                    className="text-xs font-medium text-slate-400 hover:text-cyan-300 transition-colors"
                   >
                     Forgot password?
                   </Link>
@@ -558,26 +444,20 @@ function LoginForm() {
 
             {/* Terms Agreement Checkbox - only shown on signup */}
             {mode === "signup" && (
-              <label
-                className={`flex items-start gap-3 cursor-pointer select-none rounded-2xl border px-3.5 py-3 transition-colors ${
-                  agreedToTerms
-                    ? "border-amber-400/40 bg-amber-500/10"
-                    : "border-white/15 bg-white/[0.02]"
-                }`}
-              >
+              <label className="flex items-start gap-3 cursor-pointer select-none rounded-xl border border-white/10 bg-white/[0.02] px-3.5 py-3 transition-colors">
                 <input
                   type="checkbox"
                   checked={agreedToTerms}
                   onChange={(e) => setAgreedToTerms(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-white/40 bg-slate-900 accent-amber-400"
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-white/40 bg-slate-900 accent-cyan-400"
                 />
-                <span className="text-xs text-slate-200 leading-relaxed font-medium">
+                <span className="text-xs text-slate-300 leading-relaxed font-normal">
                   I agree to the{" "}
-                  <Link href="/terms" className="text-amber-300 font-bold hover:underline">
+                  <Link href="/terms" className="text-cyan-300 hover:underline">
                     Terms of Service
                   </Link>{" "}
                   and{" "}
-                  <Link href="/privacy" className="text-amber-300 font-bold hover:underline">
+                  <Link href="/privacy" className="text-cyan-300 hover:underline">
                     Privacy Policy
                   </Link>
                   .
@@ -585,52 +465,38 @@ function LoginForm() {
               </label>
             )}
 
-            {/* Error Display with intelligent guidance */}
-            {error && (
-              <div className="p-4 rounded-2xl bg-rose-500/15 border border-rose-500/40 text-rose-200 text-xs font-semibold leading-relaxed flex flex-col gap-2.5 shadow-md">
-                <div className="flex items-start gap-2.5">
-                  <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-                  <span>{error}</span>
-                </div>
-                {mode === "signin" &&
-                  (error.toLowerCase().includes("incorrect password") ||
-                    error.toLowerCase().includes("not found") ||
-                    error.toLowerCase().includes("invalid login")) && (
-                    <div className="pt-2 border-t border-rose-500/25 flex flex-wrap items-center justify-between gap-2">
-                      <span className="text-white/80 font-normal">Need an account?</span>
+            {/* Minimal Smart Notice (No bright red boxes) */}
+            {notice && (
+              <div className="p-3 rounded-xl bg-slate-900/80 border border-white/10 text-xs text-slate-300 leading-relaxed text-center">
+                <span>{notice.text}</span>
+                {notice.action && (
+                  <div className="mt-1.5">
+                    {notice.action.onAction ? (
                       <button
                         type="button"
-                        onClick={() => {
-                          setMode("signup");
-                          setError("");
-                          setSuccessMsg("");
-                        }}
-                        className="px-3 py-1.5 rounded-xl font-bold bg-amber-400 text-slate-950 hover:bg-amber-300 text-xs transition-all shadow-sm cursor-pointer"
+                        onClick={notice.action.onAction}
+                        className="text-cyan-400 hover:text-cyan-300 underline underline-offset-2 font-medium cursor-pointer"
                       >
-                        Create Free Account →
+                        {notice.action.label} →
                       </button>
-                    </div>
-                  )}
+                    ) : notice.action.href ? (
+                      <Link
+                        href={notice.action.href}
+                        className="text-cyan-400 hover:text-cyan-300 underline underline-offset-2 font-medium"
+                      >
+                        {notice.action.label} →
+                      </Link>
+                    ) : null}
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Success Display */}
-            {successMsg && (
-              <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-200 text-xs font-semibold flex items-center gap-2.5 shadow-md">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>{successMsg}</span>
-              </div>
-            )}
-
-            {/* Action Button */}
+            {/* Submit Action Button */}
             <button
               type="submit"
               disabled={loading || (mode === "signup" && !agreedToTerms)}
-              className={`w-full py-4 px-6 rounded-2xl text-base font-black flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-2xl ${
-                mode === "signin"
-                  ? "bg-gradient-to-r from-cyan-400 via-sky-300 to-cyan-400 text-slate-950 hover:brightness-110 shadow-[0_0_25px_rgba(34,224,255,0.45)] ring-2 ring-cyan-400/60"
-                  : "bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-slate-950 hover:brightness-110 shadow-[0_0_25px_rgba(245,158,11,0.45)] ring-2 ring-amber-400/60"
-              } active:scale-[0.98] disabled:opacity-50`}
+              className="w-full py-3.5 px-6 rounded-xl text-sm sm:text-base font-bold flex items-center justify-center gap-2 transition-all cursor-pointer bg-cyan-400 text-slate-950 hover:bg-cyan-300 active:scale-[0.98] disabled:opacity-50 shadow-md"
             >
               {loading ? (
                 <span className="inline-flex items-center gap-2">
@@ -639,12 +505,45 @@ function LoginForm() {
                 </span>
               ) : (
                 <>
-                  <span>{mode === "signin" ? "Sign In to Academy" : "Create Account"}</span>
-                  <ArrowRight className="w-5 h-5 stroke-[2.5]" />
+                  <span>{mode === "signin" ? "Sign In" : "Create Account"}</span>
+                  <ArrowRight className="w-4 h-4 stroke-[2.5]" />
                 </>
               )}
             </button>
           </form>
+
+          {/* Minimal Navigation Notice for Seamless Switching */}
+          <div className="mt-6 pt-4 border-t border-white/10 text-center">
+            {mode === "signin" ? (
+              <p className="text-xs sm:text-sm text-slate-400">
+                Don&apos;t have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("signup");
+                    setNotice(null);
+                  }}
+                  className="text-cyan-400 hover:text-cyan-300 underline underline-offset-4 font-semibold ml-1 cursor-pointer"
+                >
+                  Create a free account
+                </button>
+              </p>
+            ) : (
+              <p className="text-xs sm:text-sm text-slate-400">
+                Already have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("signin");
+                    setNotice(null);
+                  }}
+                  className="text-cyan-400 hover:text-cyan-300 underline underline-offset-4 font-semibold ml-1 cursor-pointer"
+                >
+                  Sign in
+                </button>
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -659,7 +558,7 @@ export default function LoginPage() {
           className="min-h-[100dvh] flex items-start sm:items-center justify-center px-4 py-10 pb-44 overflow-y-auto"
           data-wta-spinner="true"
         >
-          <BrandLoader size="md" label="Loading security portal..." />
+          <BrandLoader size="md" label="Loading portal..." />
         </div>
       }
     >

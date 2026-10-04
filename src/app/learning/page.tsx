@@ -94,19 +94,19 @@ const AVAILABLE_COURSES = [
   },
   {
     id: "coc",
-    title: "COC Occupational Assessment",
-    level: "Center of Competence",
+    title: "COC Comprehensive Package",
+    level: "Professional & University",
     path: "/academy/coc",
     image: packageImages["coc"],
-    desc: "Occupational standard competencies, practical revision guides, and assessment question banks.",
+    desc: "Certificate of Competency exam modules, practical assessments, and freshman university preparation.",
   },
   {
     id: "ece",
-    title: "3rd Year ECE Engineering",
-    level: "Department Track",
-    path: "/academy/special-packages/electrical-computer-engineering",
+    title: "3rd Year (ECE) Engineering",
+    level: "University Special",
+    path: "/academy/special-packages/ece",
     image: "/images/special-packages/ece.jpg",
-    desc: "Senior Electrical & Computer Engineering tracks: Semester 1 & 2 course materials, question banks & solved exams.",
+    desc: "Electrical and Computer Engineering semester modules, laboratory notes, and past exams.",
   },
   {
     id: "grade-12",
@@ -224,23 +224,8 @@ function LearningContent() {
 
   // 1. Initial Load: User Auth & LocalStorage
   useEffect(() => {
-    // Check locally saved enrolled courses first
-    let hasLocalSaved = false;
-    try {
-      const savedEnrolled = localStorage.getItem(STORAGE_ENROLLED_COURSES);
-      if (savedEnrolled !== null) {
-        hasLocalSaved = true;
-        const parsed = JSON.parse(savedEnrolled);
-        if (Array.isArray(parsed)) {
-          setEnrolledCourseIds(parsed);
-        }
-      }
-    } catch {
-      /* ignore */
-    }
-
     // Auth profile
-    supabase.auth.getSession().then(async ({ data }) => {
+    supabase.auth.getSession().then(({ data }) => {
       const user = data.session?.user;
       if (user) {
         setUserId(user.id);
@@ -250,47 +235,41 @@ function LearningContent() {
         const code = user.id.replace(/-/g, "").slice(0, 4).toUpperCase();
         setStudentId(`WTA-${code}`);
 
-        // If no local customized enrolled list exists, check user's academic level to set defaults
-        if (!hasLocalSaved) {
-          const userLevel = user.user_metadata?.education_level;
-          if (userLevel) {
-            const defaults = getDefaultPackagesForAcademicLevel(userLevel);
-            setEnrolledCourseIds(defaults);
-            try {
-              localStorage.setItem(STORAGE_ENROLLED_COURSES, JSON.stringify(defaults));
-            } catch {
-              /* ignore */
-            }
-          } else {
-            // Also try fetching profile from public.profiles
-            const { data: prof } = await supabase
-              .from("profiles")
-              .select("education_level")
-              .eq("id", user.id)
-              .maybeSingle();
-            if (prof?.education_level) {
-              const defaults = getDefaultPackagesForAcademicLevel(prof.education_level);
-              setEnrolledCourseIds(defaults);
-              try {
-                localStorage.setItem(STORAGE_ENROLLED_COURSES, JSON.stringify(defaults));
-              } catch {
-                /* ignore */
-              }
-            }
-          }
+        // If no saved courses in localStorage yet, initialize from user's education_level
+        const savedEnrolled = localStorage.getItem(STORAGE_ENROLLED_COURSES);
+        if (savedEnrolled === null) {
+          const edu = user.user_metadata?.education_level;
+          const defaults = getDefaultPackagesForAcademicLevel(edu);
+          setEnrolledCourseIds(defaults);
+          localStorage.setItem(STORAGE_ENROLLED_COURSES, JSON.stringify(defaults));
         }
       }
     });
 
-    // Listen for storage or academic level updates across tabs / settings
-    const handleStorageUpdate = (e: StorageEvent) => {
-      if (e.key === STORAGE_ENROLLED_COURSES && e.newValue !== null) {
-        try {
-          const parsed = JSON.parse(e.newValue);
-          if (Array.isArray(parsed)) setEnrolledCourseIds(parsed);
-        } catch {
-          /* ignore */
+    // Enrolled courses from localStorage
+    try {
+      const savedEnrolled = localStorage.getItem(STORAGE_ENROLLED_COURSES);
+      if (savedEnrolled !== null) {
+        const parsed = JSON.parse(savedEnrolled);
+        if (Array.isArray(parsed)) {
+          setEnrolledCourseIds(parsed);
         }
+      }
+    } catch {
+      /* ignore */
+    }
+
+    const handleStorageUpdate = (e: StorageEvent) => {
+      if (e.key === STORAGE_ENROLLED_COURSES || e.key === null) {
+        try {
+          const raw = localStorage.getItem(STORAGE_ENROLLED_COURSES);
+          if (raw !== null) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+              setEnrolledCourseIds(parsed);
+            }
+          }
+        } catch {}
       }
     };
     window.addEventListener("storage", handleStorageUpdate);
@@ -797,19 +776,26 @@ function LearningContent() {
               {activeEnrolledList.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-5 text-center">
                   <p className="text-xs sm:text-sm font-semibold text-white/90">
-                    No courses in your learning space yet
+                    No curriculum packages selected
                   </p>
-                  <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-                    You selected &quot;Other&quot; or customized your list. Click below to add courses to My Learning.
+                  <p className="text-[11px] text-slate-400 mt-1 max-w-sm mx-auto">
+                    You can browse all courses, choose packages in the course manager, or update your academic level in Settings.
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => setActiveFeature("courses")}
-                    className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-sky-400 text-slate-950 hover:bg-sky-300 transition-all cursor-pointer"
-                  >
-                    <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                    <span>Select Courses</span>
-                  </button>
+                  <div className="mt-3 flex items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setActiveFeature("courses")}
+                      className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-bold text-white transition-all cursor-pointer"
+                    >
+                      Browse Courses
+                    </button>
+                    <Link
+                      href="/settings?tab=study"
+                      className="px-3 py-1.5 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/10 text-xs font-semibold text-slate-300 hover:text-white transition-all"
+                    >
+                      Settings
+                    </Link>
+                  </div>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
@@ -1262,23 +1248,25 @@ function LearningContent() {
             {activeEnrolledList.length === 0 ? (
               <div className="rounded-3xl border border-dashed border-white/15 bg-white/[0.02] p-8 sm:p-12 text-center max-w-xl mx-auto">
                 <BookOpen className="w-10 h-10 text-slate-500 mx-auto mb-3" />
-                <h3 className="text-base sm:text-lg font-bold text-white">Your Learning Space is Empty</h3>
-                <p className="text-xs sm:text-sm text-slate-300 mt-1.5 leading-relaxed">
-                  You selected &quot;Other&quot; during registration, or have not added courses yet. Click &quot;Manage&quot; above to select your courses, or change your Academic Level from Settings anytime.
+                <h4 className="text-base sm:text-lg font-bold text-white mb-1">
+                  Your My Learning package list is empty
+                </h4>
+                <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto mb-6">
+                  You selected &quot;Other&quot; or customized your list. Click below to pick packages to display or configure your academic level in settings.
                 </p>
-                <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+                <div className="flex flex-wrap items-center justify-center gap-3">
                   <button
                     type="button"
                     onClick={() => setShowCourseManager(true)}
-                    className="px-4 py-2 rounded-full font-bold text-xs bg-sky-400 text-slate-950 hover:bg-sky-300 active:scale-95 transition-all shadow-md cursor-pointer"
+                    className="px-4 py-2.5 rounded-xl bg-white text-slate-950 text-xs font-bold hover:bg-slate-200 transition-all cursor-pointer"
                   >
-                    Choose Courses Now
+                    Select Packages ({AVAILABLE_COURSES.length} Available)
                   </button>
                   <Link
-                    href="/settings"
-                    className="px-4 py-2 rounded-full font-semibold text-xs border border-white/20 bg-white/5 hover:bg-white/10 text-white active:scale-95 transition-all"
+                    href="/settings?tab=study"
+                    className="px-4 py-2.5 rounded-xl bg-white/10 border border-white/15 text-white text-xs font-semibold hover:bg-white/15 transition-all"
                   >
-                    Open Settings
+                    Set Academic Level in Settings
                   </Link>
                 </div>
               </div>

@@ -1,5 +1,6 @@
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
+import { ACADEMIC_LEVEL_OPTIONS, applyDefaultPackagesForLevel } from "@/lib/academic-levels";
 
 export interface UserProfileRecord {
   id: string;
@@ -145,8 +146,6 @@ export const ETHIOPIAN_REGIONS = [
   "Gambela",
 ] as const;
 
-import { ACADEMIC_LEVEL_OPTIONS } from "@/lib/academic-levels";
-
 export const EDUCATION_LEVELS = ACADEMIC_LEVEL_OPTIONS;
 
 export const ACADEMIC_STREAMS = [
@@ -206,9 +205,11 @@ export async function ensureProfile(user: User) {
   }
 }
 
-/** Fetch full profile record from public.profiles */
+/** Fetch full profile record from public.profiles with localStorage fallback */
 export async function getFullProfile(userId: string): Promise<UserProfileRecord | null> {
   if (!userId) return null;
+  
+  // Try remote database first if available
   try {
     const { data, error } = await supabase
       .from("profiles")
@@ -216,15 +217,28 @@ export async function getFullProfile(userId: string): Promise<UserProfileRecord 
       .eq("id", userId)
       .maybeSingle();
 
-    if (error) {
-      console.warn("[getFullProfile]", error.message);
-      return null;
+    if (!error && data) {
+      // Sync to local cache
+      if (typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem(`wt_profile_${userId}`, JSON.stringify(data));
+        } catch {}
+      }
+      return data as UserProfileRecord;
     }
-    return (data as UserProfileRecord) || null;
   } catch (err) {
     console.warn("[getFullProfile] error:", err);
-    return null;
   }
+
+  // Fallback to local profile cache
+  if (typeof window !== "undefined") {
+    try {
+      const raw = window.localStorage.getItem(`wt_profile_${userId}`);
+      if (raw) return JSON.parse(raw) as UserProfileRecord;
+    } catch {}
+  }
+
+  return null;
 }
 
 /** Update profile in public.profiles and auth user metadata synchronously */
@@ -240,15 +254,31 @@ export async function updateFullProfile(
       updated_at: new Date().toISOString(),
     };
 
-    // Update in database table
-    const { error: dbError } = await supabase
-      .from("profiles")
-      .update(cleanedUpdates)
-      .eq("id", userId);
-
-    if (dbError) {
-      console.warn("[updateFullProfile] DB error:", dbError.message);
+    // If education_level is changed, update My Learning packages accordingly
+    if (updates.education_level) {
+      applyDefaultPackagesForLevel(updates.education_level);
     }
+
+    // Always update local cache
+    if (typeof window !== "undefined") {
+      try {
+        const existing = await getFullProfile(userId);
+        const merged = { ...(existing || { id: userId }), ...cleanedUpdates };
+        window.localStorage.setItem(`wt_profile_${userId}`, JSON.stringify(merged));
+      } catch {}
+    }
+
+    // Update in database table
+    try {
+      const { error: dbError } = await supabase
+        .from("profiles")
+        .update(cleanedUpdates)
+        .eq("id", userId);
+
+      if (dbError) {
+        console.warn("[updateFullProfile] DB error:", dbError.message);
+      }
+    } catch {}
 
     // Sync essential metadata to Supabase Auth User object
     const authMeta: Record<string, unknown> = {};
@@ -264,15 +294,15 @@ export async function updateFullProfile(
     if (updates.stream) authMeta.stream = updates.stream;
     if (updates.target_exam) authMeta.target_exam = updates.target_exam;
 
-    if (Object.keys(authMeta).length > 0) {
-      await supabase.auth.updateUser({
-        data: authMeta,
-      });
-    }
+    try {
+      await supabase.auth.updateUser({ data: authMeta });
+    } catch {}
 
     return { success: true };
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to update profile";
-    return { success: false, error: message };
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Profile update failed",
+    };
   }
 }
