@@ -367,7 +367,7 @@ export default function LandingPathways() {
             </div>
           </section>
 
-          <section className="mt-20 md:mt-24" id="partnership">
+          <section className="mt-20 md:mt-24 hide-on-app" id="partnership">
             <div className="max-w-3xl mx-auto">
               <PartnershipPath />
             </div>

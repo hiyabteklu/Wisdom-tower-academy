@@ -329,7 +329,7 @@ export default function AcademyPage() {
             </section>
           )}
 
-          <section className="mt-24 md:mt-28" id="partnership">
+          <section className="mt-24 md:mt-28 hide-on-app" id="partnership">
             <div className="max-w-3xl mx-auto">
               <PartnershipPath />
             </div>

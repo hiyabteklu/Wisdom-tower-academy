@@ -4,10 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Lock, ShoppingBag, X, LogIn, UserPlus } from "lucide-react";
-import { formatEtb, getPackage } from "@/data/packages";
-import { PURCHASE_TITLE, PURCHASE_BODY_FRESHMAN } from "@/data/content-availability";
-import { isFreeForRegistered as checkFreeForRegistered, IS_FREE_MODE } from "@/lib/ownership";
+import { X, LogIn, UserPlus, GraduationCap } from "lucide-react";
 
 type Props = {
   open: boolean;
@@ -27,7 +24,7 @@ function ModalShell({
 }) {
   return (
     <div
-      className="fixed left-0 top-0 z-[9999] flex h-[100dvh] w-screen items-center justify-center p-4"
+      className="fixed left-0 top-0 z-[9999] flex h-[100dvh] w-screen items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200"
       style={{
         paddingTop: "max(1rem, env(safe-area-inset-top))",
         paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
@@ -38,11 +35,11 @@ function ModalShell({
     >
       <button
         type="button"
-        className="absolute inset-0 bg-black/60"
+        className="absolute inset-0 bg-transparent"
         aria-label="Close"
         onClick={onClose}
       />
-      <div className="relative z-10 w-full max-w-[min(24rem,calc(100vw-2rem))] max-h-[min(90dvh,36rem)] overflow-y-auto overscroll-contain rounded-3xl border border-white/15 bg-gradient-to-b from-[#121a2e] to-[#0a0f1a] shadow-2xl shadow-black/50">
+      <div className="relative z-10 w-full max-w-[min(24rem,calc(100vw-2rem))] max-h-[min(90dvh,36rem)] overflow-y-auto overscroll-contain rounded-3xl border border-white/15 bg-gradient-to-b from-[#111a2f] via-[#0c1324] to-[#080d19] shadow-2xl shadow-black/80">
         {children}
       </div>
     </div>
@@ -52,16 +49,10 @@ function ModalShell({
 export default function PurchaseRequiredModal({
   open,
   onClose,
-  packageId,
   hubName,
 }: Props) {
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
-  const pkg = getPackage(packageId);
-  const price = pkg?.priceEtb ?? 300;
-  const name = pkg?.name ?? "this package";
-  const checkoutHref = `/checkout/${packageId}`;
-  const isFreeForRegistered = IS_FREE_MODE || checkFreeForRegistered(packageId);
 
   useEffect(() => {
     setMounted(true);
@@ -86,132 +77,67 @@ export default function PurchaseRequiredModal({
 
   if (!open || !mounted) return null;
 
-  if (isFreeForRegistered) {
-    return createPortal(
-      <ModalShell onClose={onClose} labelledBy="purchase-required-title">
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute right-3 top-3 z-10 rounded-full border border-white/10 p-2 text-wisdom-muted hover:text-white hover:bg-white/5"
-          aria-label="Close dialog"
-        >
-          <X className="w-4 h-4" />
-        </button>
-
-        <div className="relative px-5 pt-9 pb-7 text-center sm:px-8 sm:pt-10 sm:pb-8">
-          <div className="mx-auto mb-4 flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl border border-cyan-400/30 bg-cyan-500/10 text-cyan-300">
-            <LogIn className="w-7 h-7 sm:w-8 sm:h-8" />
-          </div>
-
-          <p className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-cyan-400/25 bg-cyan-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-cyan-300">
-            Sign in
-          </p>
-
-          <h2
-            id="purchase-required-title"
-            className="font-display text-lg sm:text-2xl font-extrabold text-white tracking-tight mb-2 sm:mb-3"
-          >
-            {PURCHASE_TITLE}
-          </h2>
-
-          {hubName && (
-            <p className="text-sm font-semibold text-cyan-300/90 mb-2">{hubName}</p>
-          )}
-
-          <p className="text-sm text-wisdom-muted leading-relaxed max-w-sm mx-auto mb-6">
-            {PURCHASE_BODY_FRESHMAN}
-          </p>
-
-          <div className="flex flex-col gap-2.5">
-            <Link
-              href={`/login?next=${encodeURIComponent(pathname || "/learning")}`}
-              onClick={onClose}
-              className="btn-cyan min-h-[44px] w-full px-6 py-2.5 text-sm"
-            >
-              <LogIn className="w-4 h-4" />
-              Sign In
-            </Link>
-            <Link
-              href={`/login?mode=signup&next=${encodeURIComponent(pathname || "/learning")}`}
-              onClick={onClose}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 min-h-[44px] w-full px-6 py-2.5 text-sm font-semibold text-white hover:bg-white/10 transition-colors"
-            >
-              <UserPlus className="w-4 h-4 text-amber-300" />
-              Create Free Account
-            </Link>
-            <button
-              type="button"
-              onClick={onClose}
-              className="text-xs text-wisdom-muted hover:text-white pt-1"
-            >
-              Keep exploring
-            </button>
-          </div>
-        </div>
-      </ModalShell>,
-      document.body
-    );
-  }
-
-  const body =
-    packageId.startsWith("freshman") || packageId.includes("freshman")
-      ? PURCHASE_BODY_FRESHMAN
-      : `Unlock ${hubName || name} by purchasing the package.`;
+  const targetNext = pathname || "/learning";
 
   return createPortal(
-    <ModalShell onClose={onClose} labelledBy="purchase-required-title">
+    <ModalShell onClose={onClose} labelledBy="unsigned-access-title">
       <button
         type="button"
         onClick={onClose}
-        className="absolute right-3 top-3 z-10 rounded-full border border-white/10 p-2 text-wisdom-muted hover:text-white hover:bg-white/5"
+        className="absolute right-3.5 top-3.5 z-10 rounded-full border border-white/10 p-2 text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
         aria-label="Close dialog"
       >
         <X className="w-4 h-4" />
       </button>
 
-      <div className="relative px-5 pt-9 pb-7 text-center sm:px-8 sm:pt-10 sm:pb-8">
-        <div className="mx-auto mb-4 flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl border border-amber-400/30 bg-amber-500/10 text-amber-300">
-          <Lock className="w-7 h-7 sm:w-8 sm:h-8" />
+      <div className="relative px-6 pt-9 pb-7 text-center sm:px-8 sm:pt-10 sm:pb-8">
+        {/* Soft Cyan Brand Icon */}
+        <div className="mx-auto mb-4 flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl border border-cyan-400/30 bg-cyan-500/10 text-cyan-300 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
+          <GraduationCap className="w-7 h-7 sm:w-8 sm:h-8" />
         </div>
 
-        <p className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-amber-400/25 bg-amber-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-300">
-          Unlock content
+        <p className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-cyan-400/25 bg-cyan-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-cyan-300">
+          Wisdom Tower Academy
         </p>
 
         <h2
-          id="purchase-required-title"
-          className="font-display text-lg sm:text-2xl font-extrabold text-white tracking-tight mb-2 sm:mb-3"
+          id="unsigned-access-title"
+          className="font-display text-xl sm:text-2xl font-black text-white tracking-tight mb-2"
         >
-          {PURCHASE_TITLE}
+          Sign In to Access
         </h2>
 
         {hubName && (
-          <p className="text-sm font-semibold text-cyan-300/90 mb-2">{hubName}</p>
+          <p className="text-xs font-semibold text-cyan-300/90 mb-2">{hubName}</p>
         )}
 
-        <p className="text-sm text-wisdom-muted leading-relaxed max-w-sm mx-auto mb-2">{body}</p>
-        <p className="text-lg font-bold text-amber-300 mb-6">{formatEtb(price)}</p>
+        <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-xs mx-auto mb-6">
+          Sign in or create a free scholar account to view this course and explore all learning hubs.
+        </p>
 
         <div className="flex flex-col gap-2.5">
           <Link
-            href={checkoutHref}
+            href={`/login?next=${encodeURIComponent(targetNext)}`}
             onClick={onClose}
-            className="btn-accent min-h-[44px] w-full px-6 py-2.5 text-sm"
+            className="w-full py-3 px-5 rounded-xl font-bold text-xs sm:text-sm bg-cyan-400 text-slate-950 hover:bg-cyan-300 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-md shadow-cyan-950/40 cursor-pointer"
           >
-            <ShoppingBag className="w-4 h-4" />
-            Buy {name}
+            <LogIn className="w-4 h-4" />
+            <span>Sign In</span>
           </Link>
+
           <Link
-            href="/packages"
+            href={`/login?mode=signup&next=${encodeURIComponent(targetNext)}`}
             onClick={onClose}
-            className="btn-secondary min-h-[40px] w-full text-sm"
+            className="w-full py-3 px-5 rounded-xl font-semibold text-xs sm:text-sm border border-white/15 bg-white/5 hover:bg-white/10 text-white active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
-            View packages
+            <UserPlus className="w-4 h-4 text-cyan-300" />
+            <span>Create Free Account</span>
           </Link>
+
           <button
             type="button"
             onClick={onClose}
-            className="text-xs text-wisdom-muted hover:text-white pt-1"
+            className="text-xs text-slate-400 hover:text-white pt-2 transition-colors cursor-pointer"
           >
             Keep exploring
           </button>

@@ -21,7 +21,7 @@ const GLYPHS = [
 export default function InfinityCard({ visible, delay }: { visible: boolean; delay: number }) {
   return (
     <div
-      className={`stat-card infinity-card group relative overflow-hidden rounded-2xl border border-cyan-400/30 bg-wisdom-card p-6 md:p-8 text-center reveal-item w-full h-full min-h-[12.5rem] md:min-h-[14rem] flex flex-col ${visible ? "is-visible" : ""}`}
+      className={`stat-card infinity-card group relative overflow-hidden rounded-2xl border border-cyan-400/30 bg-wisdom-card p-6 md:p-8 text-center reveal-item w-full h-full min-h-[12.5rem] md:min-h-[14rem] flex flex-col hide-on-app ${visible ? "is-visible" : ""}`}
       style={{ transitionDelay: visible ? `${delay}ms` : undefined }}
     >
       <div className="infinity-field" aria-hidden />

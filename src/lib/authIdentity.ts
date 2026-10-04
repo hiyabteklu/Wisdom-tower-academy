@@ -7,7 +7,7 @@ export function looksLikeEmail(value: string) {
 export function normalizePhone(raw: string): string {
   let d = raw.replace(/\D/g, "");
   if (d.startsWith("0") && d.length === 10) d = "251" + d.slice(1);
-  if (d.startsWith("9") && d.length === 9) d = "251" + d;
+  if ((d.startsWith("9") || d.startsWith("7")) && d.length === 9) d = "251" + d;
   return d;
 }
 

@@ -265,10 +265,10 @@ export default function LandingPage() {
       <section className="pb-20 md:pb-28 relative" ref={statsSection.ref}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6 items-stretch">
-            <div className="hide-on-app lg:col-span-3">
+            <div className="lg:col-span-3">
               <StatsSlider visible={statsSection.inView || reduced} reduced={reduced} />
             </div>
-            <div className="lg:col-span-1 flex">
+            <div className="lg:col-span-1 flex hide-on-app">
               <div className="w-full min-h-[12.5rem] md:min-h-[14rem] flex">
                 <InfinityCard visible={statsSection.inView || reduced} delay={270} />
               </div>

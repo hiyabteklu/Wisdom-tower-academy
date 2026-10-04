@@ -1,40 +1,56 @@
 import CategoryBackButton from "@/components/CategoryBackButton";
-import PackageOfferBanner from "@/components/PackageOfferBanner";
+import BranchLeaderboard from "@/components/BranchLeaderboard";
+import CollapsibleProgress from "@/components/CollapsibleProgress";
+import ResourceHubGrid from "@/components/ResourceHubGrid";
 import { Users, Clock } from "lucide-react";
 
 export default function GatPage() {
   return (
     <div className="relative min-h-[80vh]">
-      <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 right-1/4 w-[28rem] h-[28rem] rounded-full blur-3xl opacity-30 bg-gradient-to-br from-rose-500/25 via-pink-500/10 to-transparent" />
+      </div>
+
+      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 md:py-16">
         <CategoryBackButton fallback="/learning" />
 
-        <div className="mb-8 animate-fade-up text-center sm:text-left">
-          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mb-4">
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-rose-400/30 bg-wisdom-card text-rose-400">
+        {/* Header: Pathway name + icon only */}
+        <div className="mb-6 sm:mb-8 animate-fade-up">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <span className="inline-flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-rose-400/30 bg-rose-500/10 text-rose-400 shrink-0">
               <Users className="w-5 h-5" />
             </span>
-            <p className="text-sm font-semibold tracking-[0.18em] uppercase text-wisdom-muted">
-              Academic branch
-            </p>
+            <div>
+              <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-white leading-tight">
+                GAT
+              </h1>
+            </div>
           </div>
-          <h1 className="font-display text-4xl md:text-5xl font-extrabold tracking-tight mb-3">
-            <span className="text-rose-400">GAT</span>
-          </h1>
         </div>
 
-        <div className="mb-8">
-          <PackageOfferBanner packageId="gat" />
+        {/* Leaderboard + Progress Tracker side-by-side */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-5xl mx-auto mb-8 sm:mb-10">
+          <div>
+            <BranchLeaderboard branchName="GAT" accent="text-rose-400" />
+          </div>
+          <div>
+            <CollapsibleProgress
+              scopeId="gat"
+              scopeLabel="GAT"
+              accent="text-rose-400"
+              defaultOpen={true}
+            />
+          </div>
         </div>
 
-        <div className="rounded-3xl border border-rose-400/25 bg-wisdom-card p-8 sm:p-10 text-center shadow-card-3d">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-rose-400/30 bg-rose-500/10 text-rose-300">
-            <Clock className="w-7 h-7" />
-          </div>
-          <h2 className="font-display text-xl font-bold text-white mb-2">Coming soon</h2>
-          <p className="text-sm text-wisdom-muted leading-relaxed max-w-md mx-auto">
-            Materials for this section are not available yet.
+        {/* Courses / Learning Hubs */}
+        <div className="mb-4">
+          <p className="text-xs sm:text-sm font-semibold tracking-[0.15em] uppercase text-wisdom-muted">
+            Learning Hubs
           </p>
         </div>
+
+        <ResourceHubGrid basePath="/academy/gat" />
       </div>
     </div>
   );

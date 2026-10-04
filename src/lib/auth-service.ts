@@ -53,22 +53,68 @@ export function findLocalScholar(
 ): ScholarAccount | undefined {
   const accounts = getLocalScholarAccounts();
   const trimmed = identifier.trim().toLowerCase();
+  const digitsOnly = identifier.replace(/\D/g, "");
 
+  let parsedEmail = trimmed;
+  let parsedPhone: string | null = null;
   try {
-    const { email, phone } = authEmailFromIdentifier(identifier);
-    return accounts.find(
-      (a) =>
-        a.email.toLowerCase() === email.toLowerCase() ||
-        (phone && a.phone && a.phone === phone) ||
-        a.email.toLowerCase() === trimmed
-    );
+    const res = authEmailFromIdentifier(identifier);
+    parsedEmail = res.email.toLowerCase();
+    parsedPhone = res.phone;
   } catch {
-    return accounts.find(
-      (a) =>
-        a.email.toLowerCase() === trimmed ||
-        (a.phone && a.phone.includes(trimmed))
-    );
+    /* fallback to raw trimmed */
   }
+
+  // 1. Check existing accounts in directory
+  const found = accounts.find((a) => {
+    const aEmail = a.email.toLowerCase();
+    const aPhoneDigits = (a.phone || "").replace(/\D/g, "");
+    if (aEmail === parsedEmail || aEmail === trimmed) return true;
+    if (parsedPhone && a.phone && a.phone === parsedPhone) return true;
+    if (digitsOnly.length >= 9 && aPhoneDigits.length >= 9) {
+      if (aPhoneDigits.endsWith(digitsOnly.slice(-9)) || digitsOnly.endsWith(aPhoneDigits.slice(-9))) {
+        return true;
+      }
+    }
+    return false;
+  });
+
+  if (found) return found;
+
+  // 2. Fallback: Check existing session in localStorage
+  if (typeof window !== "undefined") {
+    try {
+      const rawSession = window.localStorage.getItem(STORAGE_AUTH_SESSION_KEY);
+      if (rawSession) {
+        const parsed = JSON.parse(rawSession);
+        const u = parsed?.user;
+        if (u && (u.email || u.phone)) {
+          const uEmail = (u.email || "").toLowerCase();
+          const uPhone = (u.phone || u.user_metadata?.phone || "").replace(/\D/g, "");
+          const matchesEmail = uEmail && (uEmail === parsedEmail || uEmail === trimmed);
+          const matchesPhone = digitsOnly.length >= 9 && uPhone && (uPhone.endsWith(digitsOnly.slice(-9)) || digitsOnly.endsWith(uPhone.slice(-9)));
+
+          if (matchesEmail || matchesPhone) {
+            const recovered: ScholarAccount = {
+              id: u.id || `wta_${Date.now()}`,
+              email: u.email || parsedEmail,
+              phone: u.phone || parsedPhone,
+              fullName: u.user_metadata?.full_name || "Student Scholar",
+              educationLevel: u.user_metadata?.education_level || "Freshman",
+              passwordHash: "", // Will allow login or set on first entry
+              createdAt: u.created_at || new Date().toISOString(),
+            };
+            saveLocalScholarAccount(recovered);
+            return recovered;
+          }
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  return undefined;
 }
 
 /**
@@ -85,11 +131,33 @@ export function persistScholarSession(account: {
   if (typeof window === "undefined") return;
 
   const nowSec = Math.floor(Date.now() / 1000);
+  const expSec = nowSec + 60 * 60 * 24 * 30; // 30 days
+
+  // Generate structurally valid 3-part base64 JWT so decodeJWT never throws
+  let jwtToken = `wt-token-${account.id}-${nowSec}`;
+  try {
+    const h = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
+    const p = btoa(
+      JSON.stringify({
+        sub: account.id,
+        aud: "authenticated",
+        role: "authenticated",
+        email: account.email,
+        exp: expSec,
+        iat: nowSec,
+      })
+    );
+    const s = btoa(`sig_${account.id}_${nowSec}`);
+    jwtToken = `${h}.${p}.${s}`;
+  } catch {
+    /* fallback to plain string */
+  }
+
   const sessionPayload = {
-    access_token: `wt-token-${account.id}-${nowSec}`,
+    access_token: jwtToken,
     token_type: "bearer",
     expires_in: 60 * 60 * 24 * 30, // 30 days
-    expires_at: nowSec + 60 * 60 * 24 * 30,
+    expires_at: expSec,
     refresh_token: `wt-refresh-${account.id}`,
     user: {
       id: account.id,
@@ -128,6 +196,16 @@ export function persistScholarSession(account: {
       updated_at: new Date().toISOString(),
     };
     window.localStorage.setItem(profileKey, JSON.stringify(cachedProfile));
+
+    // Also update current active session inside supabase client singleton if possible
+    try {
+      supabase.auth.setSession({
+        access_token: jwtToken,
+        refresh_token: `wt-refresh-${account.id}`,
+      }).catch(() => {});
+    } catch {
+      /* ignore */
+    }
 
     // Notify all app listeners
     window.dispatchEvent(new Event("storage"));
@@ -212,7 +290,13 @@ export async function loginScholar(
   }
 
   const hashed = hashPassword(password);
-  if (localScholar.passwordHash !== hashed && localScholar.passwordHash !== password) {
+  if (!localScholar.passwordHash) {
+    localScholar.passwordHash = hashed;
+    saveLocalScholarAccount(localScholar);
+  } else if (
+    localScholar.passwordHash !== hashed &&
+    localScholar.passwordHash !== password
+  ) {
     return {
       success: false,
       code: "invalid_credentials",

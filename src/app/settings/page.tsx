@@ -232,13 +232,24 @@ function SettingsContent() {
   // Load Session and Profile
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!session?.user) {
+      let activeUser = session?.user;
+      if (!activeUser && typeof window !== "undefined") {
+        try {
+          const raw = window.localStorage.getItem("wt-academy-auth-v1");
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed?.user) activeUser = parsed.user;
+          }
+        } catch {}
+      }
+
+      if (!activeUser) {
         router.replace("/login?next=/settings");
         return;
       }
-      setUser(session.user);
-      await ensureProfile(session.user);
-      const data = await getFullProfile(session.user.id);
+      setUser(activeUser);
+      await ensureProfile(activeUser);
+      const data = await getFullProfile(activeUser.id);
       if (data) {
         setProfile({
           ...data,
@@ -254,7 +265,7 @@ function SettingsContent() {
         const { data: progData } = await supabase
           .from("learning_progress")
           .select("resource_id, progress_pct, total_seconds, focus_seconds, last_opened_at, meta")
-          .eq("user_id", session.user.id);
+          .eq("user_id", activeUser.id);
         if (progData) setRawProgress(progData);
       } catch (err) {
         console.warn("[Settings] Could not load progress:", err);

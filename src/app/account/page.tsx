@@ -9,6 +9,7 @@ import { ensureProfile, getFullProfile, type UserProfileRecord } from "@/lib/pro
 import { computeStudentId, persistStudentIdIfNeeded, type StudentIdData } from "@/lib/student-id";
 import StudentIdCard from "@/components/StudentIdCard";
 import StudentAnalyticsDashboard from "@/components/StudentAnalyticsDashboard";
+import ProfileCompletionPanel from "@/components/account/ProfileCompletionPanel";
 import BrandLoader from "@/components/BrandLoader";
 import { listMyOrders, type ManualOrder } from "@/lib/orders";
 import type { User } from "@supabase/supabase-js";
@@ -17,88 +18,63 @@ import {
   Check,
   Copy,
   ExternalLink,
-  Inbox,
   LayoutDashboard,
   LogOut,
-  MessageSquarePlus,
-  Send,
   Settings2,
   ShieldCheck,
+  UserCheck,
 } from "lucide-react";
-
-interface Inquiry {
-  id: string;
-  created_at: string;
-  name: string;
-  email: string;
-  service: string | null;
-  message: string;
-  status: string;
-}
-
-function statusStyle(status: string) {
-  const s = (status || "new").toLowerCase();
-  if (s === "replied" || s === "closed" || s === "approved") {
-    return "bg-emerald-500/15 text-emerald-300 border-emerald-500/30";
-  }
-  if (s === "read" || s === "reviewing") {
-    return "bg-amber-500/15 text-amber-300 border-amber-500/30";
-  }
-  return "bg-cyan-500/15 text-cyan-300 border-cyan-400/30";
-}
 
 export default function AccountPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfileRecord | null>(null);
   const [loading, setLoading] = useState(true);
-  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [orders, setOrders] = useState<ManualOrder[]>([]);
-  const [dataLoading, setDataLoading] = useState(false);
-  const [tab, setTab] = useState<"analytics" | "requests">("analytics");
+  const [tab, setTab] = useState<"analytics" | "profile">("analytics");
   const [copiedFolio, setCopiedFolio] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!session?.user) {
+      let activeUser = session?.user;
+      if (!activeUser && typeof window !== "undefined") {
+        try {
+          const raw = window.localStorage.getItem("wt-academy-auth-v1");
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed?.user) activeUser = parsed.user;
+          }
+        } catch {}
+      }
+
+      if (!activeUser) {
         router.replace("/login?next=/account");
         return;
       }
-      await ensureProfile(session.user);
-      const full = await getFullProfile(session.user.id);
+      await ensureProfile(activeUser);
+      const full = await getFullProfile(activeUser.id);
 
       // Auto-assign and persist student ID if not yet assigned
-      if (session.user.id && !full?.student_id_number) {
-        const assigned = await persistStudentIdIfNeeded(session.user.id, full?.student_id_number);
+      if (activeUser.id && !full?.student_id_number) {
+        const assigned = await persistStudentIdIfNeeded(activeUser.id, full?.student_id_number);
         if (full) full.student_id_number = assigned;
       }
 
-      setUser(session.user);
+      setUser(activeUser);
       setProfile(full);
       setLoading(false);
     });
   }, [router]);
 
   const loadUserData = useCallback(async () => {
-    if (!user?.email || !user?.id) return;
-    setDataLoading(true);
+    if (!user?.id) return;
     try {
-      const [inqRes, myOrders] = await Promise.all([
-        supabase
-          .from("inquiries")
-          .select("*")
-          .eq("email", user.email)
-          .order("created_at", { ascending: false }),
-        listMyOrders(),
-      ]);
-
-      setInquiries((inqRes.data as Inquiry[]) || []);
+      const myOrders = await listMyOrders();
       setOrders(myOrders);
     } catch {
-      setInquiries([]);
+      setOrders([]);
     }
-    setDataLoading(false);
-  }, [user?.email, user?.id]);
+  }, [user?.id]);
 
   useEffect(() => {
     if (user) loadUserData();
@@ -270,10 +246,9 @@ export default function AccountPage() {
                 icon: LayoutDashboard,
               },
               {
-                id: "requests" as const,
-                label: "Inquiries & Support",
-                count: inquiries.length,
-                icon: Inbox,
+                id: "profile" as const,
+                label: "Complete your profile",
+                icon: UserCheck,
               },
             ].map((t) => {
               const Icon = t.icon;
@@ -290,17 +265,6 @@ export default function AccountPage() {
                 >
                   <Icon className={`w-4 h-4 ${active ? "text-cyan-300" : "text-slate-400"}`} />
                   <span>{t.label}</span>
-                  {typeof t.count === "number" && t.count > 0 && (
-                    <span
-                      className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
-                        active
-                          ? "bg-cyan-400/25 text-cyan-100 border border-cyan-300/30"
-                          : "bg-white/10 text-slate-300"
-                      }`}
-                    >
-                      {t.count}
-                    </span>
-                  )}
                 </button>
               );
             })}
@@ -326,101 +290,13 @@ export default function AccountPage() {
           </div>
         )}
 
-        {/* 2. INQUIRIES & SUPPORT */}
-        {tab === "requests" && (
-          <div className="space-y-6 transition-opacity duration-300 ease-out max-w-4xl mx-auto">
-            {/* Top Bar for Inquiries */}
-            <div className="rounded-3xl border border-white/10 bg-[#0c1427]/70 backdrop-blur-xl p-6 sm:p-7 shadow-[0_12px_40px_rgba(0,0,0,0.25)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h3 className="font-display text-lg font-bold text-white flex items-center gap-2">
-                  <Inbox className="w-5 h-5 text-cyan-400" />
-                  Your Support Inquiries
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-400 mt-1">
-                  Submitted requests, course inquiries, and academic counseling messages.
-                </p>
-              </div>
-              <Link
-                href="/contact"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold text-white bg-gradient-to-r from-cyan-500 to-sky-600 hover:from-cyan-400 hover:to-sky-500 shadow-[0_4px_18px_rgba(6,182,212,0.3)] transition-all duration-200 active:scale-95 self-start sm:self-center"
-              >
-                <MessageSquarePlus className="w-3.5 h-3.5" />
-                <span>New Inquiry</span>
-              </Link>
-            </div>
-
-            {dataLoading ? (
-              <div className="rounded-3xl border border-white/10 bg-[#0c1427]/50 backdrop-blur-xl p-12 text-center">
-                <p className="text-sm text-slate-400">Loading your inquiries...</p>
-              </div>
-            ) : inquiries.length === 0 ? (
-              <div className="rounded-3xl border border-dashed border-white/15 bg-[#0c1427]/40 backdrop-blur-xl p-12 sm:p-16 text-center space-y-4">
-                <div className="w-16 h-16 rounded-full bg-white/[0.04] border border-white/10 flex items-center justify-center mx-auto text-slate-400">
-                  <Inbox className="w-8 h-8 opacity-60 text-cyan-400" />
-                </div>
-                <div>
-                  <h4 className="font-display text-lg font-bold text-white mb-1">
-                    No inquiries or service requests yet
-                  </h4>
-                  <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
-                    Have a question about a course, syllabus guide, or package verification? Our academic support desk is ready to help you.
-                  </p>
-                </div>
-                <div className="pt-2">
-                  <Link
-                    href="/contact"
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-xs font-semibold text-white bg-gradient-to-r from-cyan-500 to-sky-600 hover:from-cyan-400 hover:to-sky-500 shadow-[0_4px_18px_rgba(6,182,212,0.3)] transition-all duration-200 active:scale-95"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                    <span>Submit Inquiry</span>
-                  </Link>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {inquiries.map((q) => (
-                  <div
-                    key={q.id}
-                    className="p-6 sm:p-7 rounded-3xl border border-white/10 bg-[#0c1427]/70 backdrop-blur-xl hover:border-cyan-400/30 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.25)] space-y-3"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="font-display font-bold text-white text-base">
-                        {q.service || "General Academic Inquiry"}
-                      </span>
-                      <span
-                        className={`text-[11px] font-semibold uppercase tracking-wider px-3 py-1 rounded-full border ${statusStyle(
-                          q.status
-                        )}`}
-                      >
-                        {q.status}
-                      </span>
-                    </div>
-                    <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">
-                      {q.message}
-                    </p>
-                    <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between text-xs text-slate-400">
-                      <span className="font-mono text-[11px]">
-                        {new Date(q.created_at).toLocaleDateString(undefined, {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                      <Link
-                        href="/contact"
-                        className="text-xs text-cyan-300 hover:text-cyan-200 hover:underline flex items-center gap-1"
-                      >
-                        <span>Follow up</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </Link>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+        {/* 2. COMPLETE YOUR PROFILE */}
+        {tab === "profile" && (
+          <ProfileCompletionPanel
+            user={user}
+            initialProfile={profile}
+            onProfileUpdated={(updated) => setProfile(updated)}
+          />
         )}
       </div>
     </div>

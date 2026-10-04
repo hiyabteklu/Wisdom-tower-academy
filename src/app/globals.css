@@ -375,6 +375,12 @@ body.wta-native-app .animate-fade-up {
   transform: none !important;
 }
 
+/* Native Android App: Hide elements marked with .hide-on-app */
+html.wta-native-app .hide-on-app,
+body.wta-native-app .hide-on-app {
+  display: none !important;
+}
+
 /* Native app WebView: no leftover header gap (was pt-16 under hidden site header) */
 html.wta-native-app main,
 body.wta-native-app main {

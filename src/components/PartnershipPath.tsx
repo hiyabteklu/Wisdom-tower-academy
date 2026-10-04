@@ -108,7 +108,7 @@ export default function PartnershipPath() {
   }, [open]);
 
   return (
-    <div className="rounded-3xl border border-white/12 bg-wisdom-card overflow-hidden shadow-card-3d">
+    <div className="rounded-3xl border border-white/12 bg-wisdom-card overflow-hidden shadow-card-3d hide-on-app">
       {/* 16:9 cover: click to open path */}
       <button
         type="button"

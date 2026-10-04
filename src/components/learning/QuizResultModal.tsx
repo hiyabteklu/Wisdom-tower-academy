@@ -5,7 +5,6 @@ import {
   Trophy,
   CheckCircle2,
   XCircle,
-  Clock,
   RotateCcw,
   ListChecks,
   AlertTriangle,
@@ -20,7 +19,7 @@ type Props = {
   wrong: number;
   skipped: number;
   flagged?: number;
-  elapsedSec: number;
+  elapsedSec?: number;
   isExam?: boolean;
   title?: string;
   onReviewAll: () => void;
@@ -30,16 +29,6 @@ type Props = {
   onClose: () => void;
 };
 
-function formatTime(sec: number) {
-  const m = Math.floor(sec / 60);
-  const s = sec % 60;
-  if (m >= 60) {
-    const h = Math.floor(m / 60);
-    return `${h}h ${m % 60}m`;
-  }
-  return `${m}m ${String(s).padStart(2, "0")}s`;
-}
-
 export default function QuizResultModal({
   isOpen,
   score,
@@ -47,7 +36,6 @@ export default function QuizResultModal({
   wrong,
   skipped,
   flagged = 0,
-  elapsedSec,
   isExam = false,
   title,
   onReviewAll,
@@ -66,7 +54,7 @@ export default function QuizResultModal({
       return;
     }
     const end = pct;
-    const duration = 800;
+    const duration = 700;
     const startTime = performance.now();
 
     function step(now: number) {
@@ -83,7 +71,7 @@ export default function QuizResultModal({
     return () => cancelAnimationFrame(req);
   }, [isOpen, pct]);
 
-  // Tier info
+  // Calm, cohesive Navy / Cyan tier palette
   const tier = useMemo(() => {
     if (pct >= 90) {
       return {
@@ -92,7 +80,7 @@ export default function QuizResultModal({
         border: "border-emerald-400/40",
         bg: "from-emerald-500/20 via-teal-500/10 to-transparent",
         gaugeStroke: "#10b981",
-        caption: "Outstanding! You demonstrated rock-solid mastery of these concepts.",
+        caption: "Outstanding! You demonstrated rock-solid mastery of these questions.",
       };
     }
     if (pct >= 75) {
@@ -108,28 +96,28 @@ export default function QuizResultModal({
     if (pct >= 50) {
       return {
         label: "Good Progress",
-        tone: "text-amber-400",
-        border: "border-amber-400/40",
-        bg: "from-amber-500/20 via-orange-500/10 to-transparent",
-        gaugeStroke: "#f59e0b",
+        tone: "text-sky-300",
+        border: "border-sky-400/40",
+        bg: "from-sky-500/20 via-cyan-500/10 to-transparent",
+        gaugeStroke: "#38bdf8",
         caption: "Solid start. Reviewing the missed questions will quickly boost your score.",
       };
     }
     return {
-      label: "Needs Reinforcement",
-      tone: "text-rose-400",
-      border: "border-rose-400/40",
-      bg: "from-rose-500/20 via-red-500/10 to-transparent",
-      gaugeStroke: "#f43f5e",
-      caption: "Don't worry! Use the step-by-step solutions below to master these questions.",
+      label: "Practice Reinforcement",
+      tone: "text-cyan-300",
+      border: "border-cyan-400/30",
+      bg: "from-cyan-500/15 via-slate-800/20 to-transparent",
+      gaugeStroke: "#06b6d4",
+      caption: "Keep practicing! Step-by-step solutions below will help you master every question.",
     };
   }, [pct]);
 
   if (!isOpen) return null;
 
-  // Gauge calculation
-  const radius = 62;
-  const strokeWidth = 10;
+  // Compact iOS-like radial gauge
+  const radius = 48;
+  const strokeWidth = 8;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (displayPct / 100) * circumference;
 
@@ -137,43 +125,45 @@ export default function QuizResultModal({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-[95] flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md overflow-y-auto overscroll-contain animate-in fade-in duration-200"
+      className="fixed inset-0 z-[95] flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto overscroll-contain animate-in fade-in duration-200"
     >
-      <div className="relative w-full max-w-lg rounded-3xl border border-white/15 bg-[#090f22] p-5 sm:p-7 shadow-[0_20px_60px_rgba(0,0,0,0.8)] overflow-hidden text-center my-auto select-none">
-        {/* Ambient Top Glow */}
+      {/* Centered, tight iOS-like sheet: no wasted space */}
+      <div className="relative w-full max-w-sm rounded-3xl border border-white/15 bg-gradient-to-b from-[#111a2e] via-[#0c1426] to-[#080d19] p-5 sm:p-6 shadow-2xl shadow-black/80 overflow-hidden text-center my-auto select-none">
+        {/* Soft Ambient Glow */}
         <div
-          className={`absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-40 rounded-full blur-3xl opacity-40 bg-gradient-to-b ${tier.bg} pointer-events-none`}
+          className={`absolute -top-16 left-1/2 -translate-x-1/2 w-64 h-32 rounded-full blur-2xl opacity-30 bg-gradient-to-b ${tier.bg} pointer-events-none`}
         />
 
         {/* Close Button */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors z-10 cursor-pointer"
+          className="absolute top-3.5 right-3.5 p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition-colors z-10 cursor-pointer"
           title="Close result modal"
+          aria-label="Close"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4" />
         </button>
 
-        {/* Header Eyebrow */}
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-white/[0.06] border border-white/10 text-slate-300 mb-2">
-          <Trophy className="w-3.5 h-3.5 text-amber-400" />
-          {isExam ? "Exam Result" : "Practice Completed"}
+        {/* Eyebrow badge */}
+        <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-white/[0.06] border border-white/10 text-slate-300 mb-1.5">
+          <Trophy className="w-3 h-3 text-cyan-300" />
+          <span>{isExam ? "Exam Result" : "Practice Completed"}</span>
         </div>
 
         {title && (
-          <h2 className="font-display text-lg sm:text-xl font-bold text-white mb-4 line-clamp-1">
+          <h2 className="font-display text-sm sm:text-base font-bold text-white line-clamp-1 mb-2">
             {title}
           </h2>
         )}
 
-        {/* Score Radial Gauge with Animated Counter */}
-        <div className="relative my-4 flex items-center justify-center">
-          <svg className="w-40 h-40 sm:w-44 sm:h-44 -rotate-90 transform" viewBox="0 0 160 160">
+        {/* Score Radial Gauge */}
+        <div className="relative my-2.5 flex items-center justify-center">
+          <svg className="w-28 h-28 -rotate-90 transform" viewBox="0 0 120 120">
             {/* Background Track */}
             <circle
-              cx="80"
-              cy="80"
+              cx="60"
+              cy="60"
               r={radius}
               stroke="rgba(255, 255, 255, 0.08)"
               strokeWidth={strokeWidth}
@@ -181,8 +171,8 @@ export default function QuizResultModal({
             />
             {/* Animated Progress Arc */}
             <circle
-              cx="80"
-              cy="80"
+              cx="60"
+              cy="60"
               r={radius}
               stroke={tier.gaugeStroke}
               strokeWidth={strokeWidth}
@@ -192,117 +182,107 @@ export default function QuizResultModal({
               fill="transparent"
               className="transition-all duration-300 ease-out"
               style={{
-                filter: `drop-shadow(0 0 10px ${tier.gaugeStroke}60)`,
+                filter: `drop-shadow(0 0 8px ${tier.gaugeStroke}50)`,
               }}
             />
           </svg>
 
           {/* Center Content */}
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="font-display text-4xl sm:text-5xl font-black text-white tracking-tight">
+            <span className="font-display text-3xl font-black text-white tracking-tight leading-none">
               {displayPct}%
             </span>
-            <span className="text-xs sm:text-sm font-semibold text-slate-300 mt-0.5">
+            <span className="text-[11px] font-semibold text-slate-300 mt-1">
               {score} of {total} Correct
             </span>
           </div>
         </div>
 
         {/* Tier Label & Caption */}
-        <div className="mb-6">
-          <p className={`font-display text-base sm:text-lg font-bold ${tier.tone}`}>
+        <div className="mb-4">
+          <p className={`font-display text-sm sm:text-base font-bold ${tier.tone}`}>
             {tier.label}
           </p>
-          <p className="text-xs sm:text-sm text-slate-400 max-w-xs mx-auto mt-1 leading-relaxed">
+          <p className="text-xs text-slate-400 max-w-xs mx-auto mt-0.5 leading-relaxed">
             {tier.caption}
           </p>
         </div>
 
-        {/* Key Metrics Grid */}
-        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 sm:gap-2.5 mb-6 text-left">
-          <div className="rounded-2xl border border-emerald-400/25 bg-emerald-500/10 p-2.5 sm:p-3">
-            <div className="flex items-center gap-1.5 text-emerald-300 text-[11px] font-bold">
-              <CheckCircle2 className="w-3.5 h-3.5" />
+        {/* Key Metrics Grid: 3-column tight cards (Correct, Missed, Skipped) - NO TIMER */}
+        <div className="grid grid-cols-3 gap-2 mb-4 text-center">
+          <div className="rounded-xl border border-emerald-400/20 bg-emerald-500/10 p-2 sm:p-2.5">
+            <div className="flex items-center justify-center gap-1 text-emerald-300 text-[10px] font-bold uppercase tracking-wider">
+              <CheckCircle2 className="w-3 h-3" />
               <span>Correct</span>
             </div>
-            <p className="text-xl sm:text-2xl font-black text-white mt-1">{score}</p>
+            <p className="text-lg font-black text-white mt-0.5">{score}</p>
           </div>
 
-          <div className="rounded-2xl border border-rose-400/25 bg-rose-500/10 p-2.5 sm:p-3">
-            <div className="flex items-center gap-1.5 text-rose-300 text-[11px] font-bold">
-              <XCircle className="w-3.5 h-3.5" />
+          <div className="rounded-xl border border-white/10 bg-white/[0.04] p-2 sm:p-2.5">
+            <div className="flex items-center justify-center gap-1 text-slate-300 text-[10px] font-bold uppercase tracking-wider">
+              <XCircle className="w-3 h-3 text-cyan-300" />
               <span>Missed</span>
             </div>
-            <p className="text-xl sm:text-2xl font-black text-white mt-1">{wrong}</p>
+            <p className="text-lg font-black text-white mt-0.5">{wrong}</p>
           </div>
 
-          <div className="rounded-2xl border border-amber-400/25 bg-amber-500/10 p-2.5 sm:p-3">
-            <div className="flex items-center gap-1.5 text-amber-300 text-[11px] font-bold">
-              <AlertTriangle className="w-3.5 h-3.5" />
+          <div className="rounded-xl border border-white/10 bg-white/[0.04] p-2 sm:p-2.5">
+            <div className="flex items-center justify-center gap-1 text-slate-300 text-[10px] font-bold uppercase tracking-wider">
+              <AlertTriangle className="w-3 h-3 text-amber-300" />
               <span>Skipped</span>
             </div>
-            <p className="text-xl sm:text-2xl font-black text-white mt-1">{skipped}</p>
-          </div>
-
-          <div className="col-span-3 sm:col-span-1 rounded-2xl border border-white/10 bg-white/[0.04] p-2.5 sm:p-3">
-            <div className="flex items-center gap-1.5 text-slate-300 text-[11px] font-bold">
-              <Clock className="w-3.5 h-3.5 text-cyan-300" />
-              <span>Time</span>
-            </div>
-            <p className="text-lg sm:text-xl font-bold text-white mt-1">
-              {formatTime(elapsedSec)}
-            </p>
+            <p className="text-lg font-black text-white mt-0.5">{skipped}</p>
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="space-y-2.5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            {/* Review Missed Only Button */}
+        {/* Calm Action Buttons in Account / Settings Style */}
+        <div className="space-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {/* Review Missed Button */}
             <button
               type="button"
               onClick={onReviewMissed}
               disabled={wrong === 0 && skipped === 0}
-              className={`w-full py-3 px-4 rounded-2xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-md active:scale-[0.98] ${
+              className={`w-full py-2.5 px-3.5 rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5 transition-all ${
                 wrong === 0 && skipped === 0
-                  ? "bg-slate-800 text-slate-500 border border-white/5 cursor-not-allowed"
-                  : "bg-gradient-to-r from-rose-500/90 to-red-600/90 hover:from-rose-500 hover:to-red-600 text-white border border-rose-400/30 shadow-rose-900/30 cursor-pointer"
+                  ? "bg-slate-900/60 text-slate-500 border border-white/5 cursor-not-allowed"
+                  : "border border-white/15 bg-white/5 hover:bg-white/10 text-white active:scale-[0.98] cursor-pointer"
               }`}
             >
-              <AlertTriangle className="w-4 h-4" />
+              <AlertTriangle className="w-3.5 h-3.5 text-cyan-300" />
               <span>Review Missed ({wrong + skipped})</span>
             </button>
 
-            {/* Review All Button */}
+            {/* Review All Button (Cyan primary) */}
             <button
               type="button"
               onClick={onReviewAll}
-              className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md shadow-cyan-900/30 active:scale-[0.98] transition-all cursor-pointer"
+              className="w-full py-2.5 px-3.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm shadow-cyan-950/40 active:scale-[0.98] transition-all cursor-pointer"
             >
-              <ListChecks className="w-4 h-4" />
+              <ListChecks className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>Review All ({total})</span>
             </button>
           </div>
 
-          {/* Optional Review Flagged Button */}
+          {/* Optional Review Flagged */}
           {flagged > 0 && onReviewFlagged && (
             <button
               type="button"
               onClick={onReviewFlagged}
-              className="w-full py-2.5 px-4 rounded-2xl border border-orange-400/40 bg-orange-500/10 hover:bg-orange-500/20 text-orange-200 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
+              className="w-full py-2 px-3.5 rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] text-slate-200 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
             >
-              <Flag className="w-3.5 h-3.5 text-orange-400" />
-              <span>Review Flagged Questions ({flagged})</span>
+              <Flag className="w-3 h-3 text-cyan-300" />
+              <span>Review Flagged ({flagged})</span>
             </button>
           )}
 
-          {/* Retake Practice Button */}
+          {/* Retake Practice / Exam Button */}
           <button
             type="button"
             onClick={onRetake}
-            className="w-full py-2.5 px-4 rounded-2xl border border-amber-400/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-200 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
+            className="w-full py-2 px-3.5 rounded-xl border border-white/10 bg-transparent hover:bg-white/5 text-slate-300 hover:text-white font-medium text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
           >
-            <RotateCcw className="w-4 h-4" />
+            <RotateCcw className="w-3 h-3" />
             <span>Retake {isExam ? "Exam" : "Practice"}</span>
           </button>
         </div>

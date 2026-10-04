@@ -106,8 +106,12 @@ function LoginForm() {
       try {
         const result = await loginScholar(id, password);
         if (result.success) {
-          router.replace(next.startsWith("/") ? next : "/account");
-          router.refresh();
+          const targetUrl = next.startsWith("/") ? next : "/account";
+          if (typeof window !== "undefined") {
+            window.location.href = targetUrl;
+          } else {
+            router.replace(targetUrl);
+          }
           return;
         }
 
@@ -192,8 +196,12 @@ function LoginForm() {
 
         setLoading(false);
         if (regResult.success) {
-          router.replace(next.startsWith("/") ? next : "/account");
-          router.refresh();
+          const targetUrl = next.startsWith("/") ? next : "/account";
+          if (typeof window !== "undefined") {
+            window.location.href = targetUrl;
+          } else {
+            router.replace(targetUrl);
+          }
           return;
         }
 

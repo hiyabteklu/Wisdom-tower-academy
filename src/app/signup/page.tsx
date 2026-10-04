@@ -90,8 +90,11 @@ function SignupForm() {
       setLoading(false);
 
       if (result.success) {
-        router.replace(next);
-        router.refresh();
+        if (typeof window !== "undefined") {
+          window.location.href = next;
+        } else {
+          router.replace(next);
+        }
         return;
       }
 
