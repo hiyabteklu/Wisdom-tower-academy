@@ -264,16 +264,10 @@ export default function AcademyPage() {
           </div>
 
           <section className="mt-20 md:mt-24">
-            <div className="text-center mb-8 md:mb-12">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-white/[0.05] border border-white/10 text-slate-300 mb-3">
-                Academy Directory & Guides
-              </span>
+            <div className="text-center mb-8 md:mb-10">
               <h2 className="font-display text-3xl md:text-4xl font-bold text-white tracking-tight">
                 Other resources
               </h2>
-              <p className="text-slate-400 text-sm max-w-xl mx-auto mt-2">
-                Essential institutional directories, department roadmaps, evidence-based study techniques, and campus life essentials.
-              </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">

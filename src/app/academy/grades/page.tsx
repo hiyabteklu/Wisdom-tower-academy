@@ -2,13 +2,7 @@ import Link from "next/link";
 import { grades } from "@/data/academy";
 import { ArrowRight } from "lucide-react";
 import CategoryBackButton from "@/components/CategoryBackButton";
-
-const gradeDescriptions: Record<string, string> = {
-  "grade-9": "Secondary foundation year. Core sciences, mathematics, language, and foundational problem-solving strategies.",
-  "grade-10": "National assessment milestone. Comprehensive curriculum review, practice banks, and preparation for stream transition.",
-  "grade-11": "Specialized branch studies. In-depth Natural Science and Social Science subject tracks with advanced conceptual depth.",
-  "grade-12": "University entrance exam intensive. Matriculation drills, full-length timed mock exams, and complete syllabus mastery.",
-};
+import { getPackage, packageIdForGrade } from "@/data/packages";
 
 export default function GradesPage() {
   return (
@@ -20,50 +14,54 @@ export default function GradesPage() {
           <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-sky-400/90 mb-1.5">
             Secondary Curriculum
           </p>
-          <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight mb-2 text-white">
+          <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white">
             Grade <span className="text-sky-400">9–12</span>
           </h1>
-          <p className="text-wisdom-muted text-sm sm:text-base max-w-xl leading-relaxed">
-            Choose your academic grade. Each level features complete course books, chapter short notes, practice question banks, and timed exams.
-          </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {grades.map((grade) => (
-            <article
-              key={grade.id}
-              className={`card-modern group flex flex-col ${grade.ring} shadow-lg shadow-black/25`}
-            >
-              <Link href={`/academy/grades/${grade.id}`} className="relative aspect-video w-full overflow-hidden bg-wisdom-navy block">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={grade.image}
-                  alt={grade.label}
-                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
-                  loading="lazy"
-                />
-              </Link>
-              <div className="p-5 sm:p-6 flex flex-col flex-1 border-t border-white/8">
-                <h2
-                  className={`font-display text-xl sm:text-2xl font-bold mb-2 ${grade.accent}`}
-                >
-                  {grade.label}
-                </h2>
-                <p className="text-sm text-slate-300/90 leading-relaxed mb-5 flex-1">
-                  {gradeDescriptions[grade.id] || "Complete syllabus learning hubs, question banks, and timed exams."}
-                </p>
-                <div className="mt-auto pt-2">
-                  <Link
-                    href={`/academy/grades/${grade.id}`}
-                    className="btn-primary w-full text-center"
+          {grades.map((grade) => {
+            const pkg = getPackage(packageIdForGrade(grade.id));
+            const description = pkg?.description;
+
+            return (
+              <article
+                key={grade.id}
+                className={`card-modern group flex flex-col ${grade.ring} shadow-lg shadow-black/25`}
+              >
+                <Link href={`/academy/grades/${grade.id}`} className="relative aspect-video w-full overflow-hidden bg-wisdom-navy block">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={grade.image}
+                    alt={grade.label}
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+                    loading="lazy"
+                  />
+                </Link>
+                <div className="p-5 sm:p-6 flex flex-col flex-1 border-t border-white/8">
+                  <h2
+                    className={`font-display text-xl sm:text-2xl font-bold mb-2 ${grade.accent}`}
                   >
-                    <span>Enter {grade.label}</span>
-                    <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
-                  </Link>
+                    {grade.label}
+                  </h2>
+                  {description && (
+                    <p className="text-sm text-slate-300/90 leading-relaxed mb-5 flex-1 line-clamp-3">
+                      {description}
+                    </p>
+                  )}
+                  <div className="mt-auto pt-2">
+                    <Link
+                      href={`/academy/grades/${grade.id}`}
+                      className="btn-primary w-full text-center"
+                    >
+                      <span>Enter {grade.label}</span>
+                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            </article>
-          ))}
+              </article>
+            );
+          })}
         </div>
       </div>
     </div>

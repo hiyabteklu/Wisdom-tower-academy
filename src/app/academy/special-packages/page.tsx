@@ -27,9 +27,6 @@ export default function SpecialPackagesPage() {
           <h1 className="font-display text-3xl md:text-4xl font-extrabold text-white tracking-tight">
             Special packages
           </h1>
-          <p className="mt-3 text-wisdom-muted max-w-lg mx-auto leading-relaxed text-sm md:text-base">
-            Structured course packs built specifically for your field of study. Choose your department track to access semester materials.
-          </p>
         </header>
 
         <div className="space-y-6">
@@ -52,7 +49,6 @@ export default function SpecialPackagesPage() {
                 <h2 className="font-display text-xl sm:text-2xl font-bold text-white group-hover:text-violet-200 transition-colors">
                   {pkg.name}
                 </h2>
-                <p className="mt-2 text-sm text-slate-300/90 leading-relaxed">{pkg.blurb}</p>
                 <div className="mt-5 pt-4 border-t border-white/8">
                   <span className="btn-primary w-full text-center">
                     <span>Open Department Track</span>

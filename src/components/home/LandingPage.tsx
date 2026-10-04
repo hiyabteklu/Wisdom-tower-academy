@@ -12,7 +12,6 @@ import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { useInView } from "@/hooks/useInView";
 import InfinityCard from "@/components/home/InfinityCard";
 import LandingPathways from "@/components/home/LandingPathways";
-import LandingQuoteCard from "@/components/home/LandingQuoteCard";
 import { DIGITAL_URL } from "@/lib/digital-url";
 import { supabase, recoverSession } from "@/lib/supabase";
 
@@ -261,7 +260,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <LandingQuoteCard />
       <LandingPathways />
 
       <section className="pb-20 md:pb-28 relative" ref={statsSection.ref}>
@@ -300,7 +298,7 @@ export default function LandingPage() {
             {authReady && isSignedIn ? (
               <>
                 <h2 className="font-display text-2xl md:text-3xl font-bold text-white mb-3">Pick up where you left off</h2>
-                <p className="text-wisdom-muted mb-6 max-w-md mx-auto">Your pathways are ready. Jump back into Academy or My Learning.</p>
+                <p className="text-wisdom-muted mb-6 max-w-md mx-auto">Jump back into Academy or My Learning.</p>
                 <div className="flex flex-wrap justify-center gap-3">
                   <Link href="/academy" className="btn-primary px-7 py-3.5">
                     Enter Academy
@@ -315,7 +313,7 @@ export default function LandingPage() {
             ) : (
               <>
                 <h2 className="font-display text-2xl md:text-3xl font-bold text-white mb-3">Ready when you are</h2>
-                <p className="text-wisdom-muted mb-6 max-w-md mx-auto">Create a free account and start with the pathway that fits you.</p>
+                <p className="text-wisdom-muted mb-6 max-w-md mx-auto">Create a free account to get started.</p>
                 <div className="flex flex-wrap justify-center gap-3">
                   <Link href="/signup" className="btn-primary px-8 py-3.5">
                     Get started

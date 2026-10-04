@@ -308,24 +308,8 @@ export default function LandingPathways() {
         suppressHydrationWarning
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div
-            className={`text-center mb-12 md:mb-16 reveal-item ${
-              pathwaysSection.inView ? "is-visible" : ""
-            }`}
-          >
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-400/90 mb-3">
-              Curated Academic Tracks
-            </p>
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-white mb-4">
-              Choose your pathway
-            </h2>
-            <p className="text-wisdom-muted text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
-              Every course, question bank, and exam simulation is tailored to Ethiopian national syllabus and university standards.
-            </p>
-          </div>
-
           {/* All Academic Pathways Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20 md:mb-24">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16 md:mb-20">
             {allPrograms.map((program) => (
               <PathwayCard key={program.id} program={program} />
             ))}
@@ -333,16 +317,10 @@ export default function LandingPathways() {
 
           {/* Academic Other Resources Section */}
           <section className="mb-12">
-            <div className="text-center mb-10 md:mb-12">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-white/[0.05] border border-white/10 text-slate-300 mb-3">
-                Academy Directory & Guides
-              </span>
-              <h3 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3">
+            <div className="text-center mb-8 md:mb-10">
+              <h3 className="font-display text-2xl md:text-3xl font-bold text-white">
                 Other resources
               </h3>
-              <p className="text-slate-400 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
-                Study frameworks, student insights, and university directories available freely to every learner.
-              </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">

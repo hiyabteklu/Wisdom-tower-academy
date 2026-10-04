@@ -37,10 +37,9 @@ export default async function SpecialPackagePage({
         <p className="text-xs font-semibold uppercase tracking-wider text-violet-300/90 mb-2">
           Special packages · {pkg.yearLabel}
         </p>
-        <h1 className="font-display text-3xl md:text-4xl font-extrabold text-white mb-2">
+        <h1 className="font-display text-3xl md:text-4xl font-extrabold text-white mb-6">
           {pkg.name}
         </h1>
-        <p className="text-wisdom-muted text-sm mb-8 max-w-xl">{pkg.blurb}</p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 md:gap-6">
           {pkg.semesters.map((sem) => (

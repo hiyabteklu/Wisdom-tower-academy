@@ -47,12 +47,9 @@ export default async function SemesterPage({
         <p className="text-xs font-semibold uppercase tracking-wider text-violet-300/90 mb-2">
           {pkg.name} · {pkg.yearLabel}
         </p>
-        <h1 className="font-display text-3xl md:text-4xl font-extrabold text-white mb-2">
+        <h1 className="font-display text-3xl md:text-4xl font-extrabold text-white mb-6">
           {sem.label}
         </h1>
-        <p className="text-wisdom-muted text-sm mb-6 max-w-xl">
-          Complete course materials for {pkg.name}, {sem.label}. Master course notes, question banks, flashcards, and official solved exams.
-        </p>
 
         <div className="mb-8 max-w-md">
           <AddToCartButton packageId={sem.packageId} />

@@ -37,9 +37,6 @@ export default async function GradeDetailPage({
                 <span className={grade.accent}>{grade.label}</span>
               </h1>
             </div>
-            <p className="text-xs text-wisdom-muted hidden sm:block">
-              Official syllabus subjects, question banks, flashcards & exams
-            </p>
           </div>
         </div>
 
