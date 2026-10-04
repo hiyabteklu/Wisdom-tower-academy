@@ -145,21 +145,9 @@ export const ETHIOPIAN_REGIONS = [
   "Gambela",
 ] as const;
 
-export const EDUCATION_LEVELS = [
-  "Grade 9",
-  "Grade 10",
-  "Grade 11",
-  "Grade 12",
-  "Remedial",
-  "Freshman - Natural Science",
-  "Freshman - Social Science",
-  "University - Engineering / Tech",
-  "University - Medicine / Health",
-  "University - Business / Economics",
-  "University - Senior (Exit Exam)",
-  "Graduate / Postgrad (GAT)",
-  "Professional (COC)",
-] as const;
+import { ACADEMIC_LEVEL_OPTIONS } from "@/lib/academic-levels";
+
+export const EDUCATION_LEVELS = ACADEMIC_LEVEL_OPTIONS;
 
 export const ACADEMIC_STREAMS = [
   "Natural Science",

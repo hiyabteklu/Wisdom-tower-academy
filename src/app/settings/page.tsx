@@ -23,6 +23,10 @@ import {
 import StudentAvatar from "@/components/StudentAvatar";
 import BrandLoader from "@/components/BrandLoader";
 import CustomSelect from "@/components/ui/CustomSelect";
+import {
+  getDefaultPackagesForAcademicLevel,
+  STORAGE_ENROLLED_COURSES,
+} from "@/lib/academic-levels";
 import { flushOfflineQueue } from "@/lib/contentWithOffline";
 import {
   computeStudentAnalytics,
@@ -108,6 +112,7 @@ function SettingsContent() {
 
   const [showCelebration, setShowCelebration] = useState(false);
   const [hasCelebrated, setHasCelebrated] = useState(false);
+  const [customAcademicLevel, setCustomAcademicLevel] = useState("");
   const [openSub, setOpenSub] = useState<Record<string, boolean>>({
     avatar: true,
     academic: false,
@@ -289,20 +294,41 @@ function SettingsContent() {
       profile.full_name ||
       "";
 
+    const finalEducationLevel =
+      profile.education_level === "Other" && customAcademicLevel.trim()
+        ? customAcademicLevel.trim()
+        : profile.education_level || null;
+
     const updatePayload: Partial<UserProfileRecord> = {
       ...profile,
       full_name: composedName,
+      education_level: finalEducationLevel,
     };
 
     const success = await updateFullProfile(user.id, updatePayload);
     if (success) {
-      setProfile((prev) => ({ ...prev, full_name: composedName }));
+      setProfile((prev) => ({
+        ...prev,
+        full_name: composedName,
+        education_level: finalEducationLevel,
+      }));
       setSavedFlash(true);
       setTimeout(() => setSavedFlash(false), 3000);
 
+      // Align default My Learning packages to user's updated academic level
+      if (finalEducationLevel) {
+        const defaults = getDefaultPackagesForAcademicLevel(finalEducationLevel);
+        try {
+          localStorage.setItem(STORAGE_ENROLLED_COURSES, JSON.stringify(defaults));
+          localStorage.setItem("wt_academic_level", finalEducationLevel);
+        } catch {
+          /* ignore */
+        }
+      }
+
       let score = 0;
       if (composedName) score += 20;
-      if (profile.education_level) score += 20;
+      if (finalEducationLevel) score += 20;
       if (profile.stream) score += 15;
       if (profile.school_name) score += 15;
       if (profile.town_region) score += 10;
@@ -841,12 +867,19 @@ function SettingsContent() {
                         {/* Education Level & Stream */}
                         <div className="grid sm:grid-cols-2 gap-4">
                           <CustomSelect
-                            label="Education Level"
+                            label="Academic Level"
                             placeholder="Select your academic level"
-                            value={profile.education_level || ""}
-                            onChange={(val) =>
-                              setProfile((prev) => ({ ...prev, education_level: val }))
+                            value={
+                              (EDUCATION_LEVELS as readonly string[]).includes(profile.education_level || "")
+                                ? profile.education_level || ""
+                                : profile.education_level
+                                ? "Other"
+                                : ""
                             }
+                            onChange={(val) => {
+                              setProfile((prev) => ({ ...prev, education_level: val }));
+                              if (val !== "Other") setCustomAcademicLevel("");
+                            }}
                             options={EDUCATION_LEVELS}
                             searchable={false}
                           />
@@ -862,6 +895,31 @@ function SettingsContent() {
                             searchable={false}
                           />
                         </div>
+
+                        {/* If Other or custom level is selected, show manual specification field */}
+                        {(profile.education_level === "Other" ||
+                          (!(EDUCATION_LEVELS as readonly string[]).includes(profile.education_level || "") &&
+                            Boolean(profile.education_level))) && (
+                          <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+                            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                              Please specify your academic level
+                            </label>
+                            <input
+                              type="text"
+                              value={
+                                customAcademicLevel ||
+                                (!(EDUCATION_LEVELS as readonly string[]).includes(profile.education_level || "")
+                                  ? profile.education_level || ""
+                                  : "")
+                              }
+                              onChange={(e) => {
+                                setCustomAcademicLevel(e.target.value);
+                              }}
+                              placeholder="e.g. Master's, College Diploma, Self-learner..."
+                              className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/[0.04] text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-white/30"
+                            />
+                          </div>
+                        )}
 
                         {/* School Name & Ethiopian Region */}
                         <div className="grid sm:grid-cols-2 gap-4">

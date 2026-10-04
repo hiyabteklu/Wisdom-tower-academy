@@ -28,6 +28,10 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { packageImages } from "@/data/packages";
+import {
+  STORAGE_ENROLLED_COURSES,
+  getDefaultPackagesForAcademicLevel,
+} from "@/lib/academic-levels";
 import PomodoroTimer from "@/components/learning/PomodoroTimer";
 import StudyPlanner from "@/components/learning/StudyPlanner";
 import StudentAnalyticsDashboard from "@/components/StudentAnalyticsDashboard";
@@ -75,7 +79,6 @@ export type FeatureKey =
   | "analytics"
   | "courses";
 
-const STORAGE_ENROLLED_COURSES = "wt_enrolled_courses_v2";
 const STORAGE_NOTEBOOK_KEY = "wt_student_notebook_v5";
 const STORAGE_GOALS_KEY = "wt_student_goals_v5";
 
@@ -88,6 +91,22 @@ const AVAILABLE_COURSES = [
     path: "/academy/freshman",
     image: packageImages["freshman"],
     desc: "All 17 first-year university subjects with official textbooks, lecture notes & model exams.",
+  },
+  {
+    id: "coc",
+    title: "COC Occupational Assessment",
+    level: "Center of Competence",
+    path: "/academy/coc",
+    image: packageImages["coc"],
+    desc: "Occupational standard competencies, practical revision guides, and assessment question banks.",
+  },
+  {
+    id: "ece",
+    title: "3rd Year ECE Engineering",
+    level: "Department Track",
+    path: "/academy/special-packages/electrical-computer-engineering",
+    image: "/images/special-packages/ece.jpg",
+    desc: "Senior Electrical & Computer Engineering tracks: Semester 1 & 2 course materials, question banks & solved exams.",
   },
   {
     id: "grade-12",
@@ -182,11 +201,10 @@ function LearningContent() {
   const [studentId, setStudentId] = useState("WTA-7749");
   const [streakDays, setStreakDays] = useState(1);
 
-  // Enrolled courses state
+  // Enrolled courses state (defaults to Freshman + COC or level-specific)
   const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>([
     "freshman",
-    "grade-12",
-    "uat",
+    "coc",
   ]);
   const [showCourseManager, setShowCourseManager] = useState(false);
 
@@ -206,8 +224,23 @@ function LearningContent() {
 
   // 1. Initial Load: User Auth & LocalStorage
   useEffect(() => {
+    // Check locally saved enrolled courses first
+    let hasLocalSaved = false;
+    try {
+      const savedEnrolled = localStorage.getItem(STORAGE_ENROLLED_COURSES);
+      if (savedEnrolled !== null) {
+        hasLocalSaved = true;
+        const parsed = JSON.parse(savedEnrolled);
+        if (Array.isArray(parsed)) {
+          setEnrolledCourseIds(parsed);
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+
     // Auth profile
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
       const user = data.session?.user;
       if (user) {
         setUserId(user.id);
@@ -216,21 +249,51 @@ function LearningContent() {
         if (user.email) setUserEmail(user.email);
         const code = user.id.replace(/-/g, "").slice(0, 4).toUpperCase();
         setStudentId(`WTA-${code}`);
+
+        // If no local customized enrolled list exists, check user's academic level to set defaults
+        if (!hasLocalSaved) {
+          const userLevel = user.user_metadata?.education_level;
+          if (userLevel) {
+            const defaults = getDefaultPackagesForAcademicLevel(userLevel);
+            setEnrolledCourseIds(defaults);
+            try {
+              localStorage.setItem(STORAGE_ENROLLED_COURSES, JSON.stringify(defaults));
+            } catch {
+              /* ignore */
+            }
+          } else {
+            // Also try fetching profile from public.profiles
+            const { data: prof } = await supabase
+              .from("profiles")
+              .select("education_level")
+              .eq("id", user.id)
+              .maybeSingle();
+            if (prof?.education_level) {
+              const defaults = getDefaultPackagesForAcademicLevel(prof.education_level);
+              setEnrolledCourseIds(defaults);
+              try {
+                localStorage.setItem(STORAGE_ENROLLED_COURSES, JSON.stringify(defaults));
+              } catch {
+                /* ignore */
+              }
+            }
+          }
+        }
       }
     });
 
-    // Enrolled courses
-    try {
-      const savedEnrolled = localStorage.getItem(STORAGE_ENROLLED_COURSES);
-      if (savedEnrolled) {
-        const parsed = JSON.parse(savedEnrolled);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setEnrolledCourseIds(parsed);
+    // Listen for storage or academic level updates across tabs / settings
+    const handleStorageUpdate = (e: StorageEvent) => {
+      if (e.key === STORAGE_ENROLLED_COURSES && e.newValue !== null) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed)) setEnrolledCourseIds(parsed);
+        } catch {
+          /* ignore */
         }
       }
-    } catch {
-      /* ignore */
-    }
+    };
+    window.addEventListener("storage", handleStorageUpdate);
 
     // Daily Goals
     try {
@@ -335,15 +398,16 @@ function LearningContent() {
     } catch {
       /* ignore */
     }
+
+    return () => {
+      window.removeEventListener("storage", handleStorageUpdate);
+    };
   }, []);
 
   // Course Enrollment Helpers
   const toggleCourseEnrollment = (courseId: string) => {
     let next: string[];
     if (enrolledCourseIds.includes(courseId)) {
-      if (enrolledCourseIds.length <= 1) {
-        return;
-      }
       next = enrolledCourseIds.filter((id) => id !== courseId);
     } else {
       next = [...enrolledCourseIds, courseId];
@@ -730,35 +794,54 @@ function LearningContent() {
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                {activeEnrolledList.slice(0, 3).map((course) => (
-                  <Link
-                    key={course.id}
-                    href={course.path}
-                    className="flex items-center gap-3 p-3 rounded-2xl border border-white/[0.08] bg-[#091222]/80 hover:bg-[#0f1d35] hover:border-white/20 active:scale-95 transition-all duration-200 shadow-md group"
+              {activeEnrolledList.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-5 text-center">
+                  <p className="text-xs sm:text-sm font-semibold text-white/90">
+                    No courses in your learning space yet
+                  </p>
+                  <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                    You selected &quot;Other&quot; or customized your list. Click below to add courses to My Learning.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setActiveFeature("courses")}
+                    className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-sky-400 text-slate-950 hover:bg-sky-300 transition-all cursor-pointer"
                   >
-                    <div className="relative h-12 w-14 shrink-0 overflow-hidden rounded-xl bg-slate-900 border border-white/10">
-                      <Image
-                        src={course.image}
-                        alt={course.title}
-                        fill
-                        className="object-cover"
-                        sizes="56px"
-                        referrerPolicy="no-referrer"
-                      />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold text-white truncate group-hover:text-sky-300 transition-colors">
-                        {course.title}
-                      </p>
-                      <span className="text-[10px] font-semibold text-slate-400 block mt-0.5">
-                        {course.level}
-                      </span>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-white group-hover:translate-x-0.5 transition-all shrink-0" />
-                  </Link>
-                ))}
-              </div>
+                    <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                    <span>Select Courses</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {activeEnrolledList.slice(0, 3).map((course) => (
+                    <Link
+                      key={course.id}
+                      href={course.path}
+                      className="flex items-center gap-3 p-3 rounded-2xl border border-white/[0.08] bg-[#091222]/80 hover:bg-[#0f1d35] hover:border-white/20 active:scale-95 transition-all duration-200 shadow-md group"
+                    >
+                      <div className="relative h-12 w-14 shrink-0 overflow-hidden rounded-xl bg-slate-900 border border-white/10">
+                        <Image
+                          src={course.image}
+                          alt={course.title}
+                          fill
+                          className="object-cover"
+                          sizes="56px"
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold text-white truncate group-hover:text-sky-300 transition-colors">
+                          {course.title}
+                        </p>
+                        <span className="text-[10px] font-semibold text-slate-400 block mt-0.5">
+                          {course.level}
+                        </span>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-white group-hover:translate-x-0.5 transition-all shrink-0" />
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -1176,74 +1259,99 @@ function LearningContent() {
             )}
 
             {/* Active Enrolled Courses Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {activeEnrolledList.map((course) => (
-                <div
-                  key={course.id}
-                  className="group rounded-3xl border border-white/[0.08] bg-[#0c1626]/80 backdrop-blur-2xl p-4 sm:p-5 flex flex-col justify-between hover:border-white/20 transition-all duration-200 shadow-xl"
-                >
-                  <div>
-                    <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl mb-3 border border-white/10 bg-slate-900 shadow-lg">
-                      <Image
-                        src={course.image}
-                        alt={course.title}
-                        fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
-                        sizes="(max-width: 768px) 100vw, 50vw"
-                        priority
-                        referrerPolicy="no-referrer"
-                      />
-                      <div className="absolute inset-x-0 bottom-0 px-3.5 py-2 bg-slate-950/80 backdrop-blur-sm border-t border-white/10">
-                        <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
-                          {course.title}
-                        </h3>
-                        <span className="text-[10px] font-mono text-sky-400 uppercase tracking-wider font-semibold">
-                          {course.level}
-                        </span>
+            {activeEnrolledList.length === 0 ? (
+              <div className="rounded-3xl border border-dashed border-white/15 bg-white/[0.02] p-8 sm:p-12 text-center max-w-xl mx-auto">
+                <BookOpen className="w-10 h-10 text-slate-500 mx-auto mb-3" />
+                <h3 className="text-base sm:text-lg font-bold text-white">Your Learning Space is Empty</h3>
+                <p className="text-xs sm:text-sm text-slate-300 mt-1.5 leading-relaxed">
+                  You selected &quot;Other&quot; during registration, or have not added courses yet. Click &quot;Manage&quot; above to select your courses, or change your Academic Level from Settings anytime.
+                </p>
+                <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowCourseManager(true)}
+                    className="px-4 py-2 rounded-full font-bold text-xs bg-sky-400 text-slate-950 hover:bg-sky-300 active:scale-95 transition-all shadow-md cursor-pointer"
+                  >
+                    Choose Courses Now
+                  </button>
+                  <Link
+                    href="/settings"
+                    className="px-4 py-2 rounded-full font-semibold text-xs border border-white/20 bg-white/5 hover:bg-white/10 text-white active:scale-95 transition-all"
+                  >
+                    Open Settings
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {activeEnrolledList.map((course) => (
+                  <div
+                    key={course.id}
+                    className="group rounded-3xl border border-white/[0.08] bg-[#0c1626]/80 backdrop-blur-2xl p-4 sm:p-5 flex flex-col justify-between hover:border-white/20 transition-all duration-200 shadow-xl"
+                  >
+                    <div>
+                      <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl mb-3 border border-white/10 bg-slate-900 shadow-lg">
+                        <Image
+                          src={course.image}
+                          alt={course.title}
+                          fill
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
+                          sizes="(max-width: 768px) 100vw, 50vw"
+                          priority
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="absolute inset-x-0 bottom-0 px-3.5 py-2 bg-slate-950/80 backdrop-blur-sm border-t border-white/10">
+                          <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                            {course.title}
+                          </h3>
+                          <span className="text-[10px] font-mono text-sky-400 uppercase tracking-wider font-semibold">
+                            {course.level}
+                          </span>
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed mb-3">
+                        {course.desc}
+                      </p>
+                    </div>
+
+                    <div>
+                      {/* Fast Navigation Hub Links */}
+                      <div className="grid grid-cols-4 gap-1.5 pt-3 border-t border-white/[0.08]">
+                        <Link
+                          href={`${course.path}#textbooks`}
+                          className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-full font-semibold text-[11px] bg-white/[0.06] hover:bg-white/[0.12] active:scale-95 text-slate-200 hover:text-white border border-white/[0.08] transition-all text-center"
+                        >
+                          <BookOpen className="w-3 h-3 shrink-0" />
+                          <span>Books</span>
+                        </Link>
+                        <Link
+                          href={`${course.path}#notes`}
+                          className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-full font-semibold text-[11px] bg-white/[0.06] hover:bg-white/[0.12] active:scale-95 text-slate-200 hover:text-white border border-white/[0.08] transition-all text-center"
+                        >
+                          <FileText className="w-3 h-3 shrink-0" />
+                          <span>Notes</span>
+                        </Link>
+                        <Link
+                          href={`${course.path}#flashcards`}
+                          className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-full font-semibold text-[11px] bg-white/[0.06] hover:bg-white/[0.12] active:scale-95 text-slate-200 hover:text-white border border-white/[0.08] transition-all text-center"
+                        >
+                          <Layers className="w-3 h-3 shrink-0" />
+                          <span>Cards</span>
+                        </Link>
+                        <Link
+                          href={`${course.path}#exams`}
+                          className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-full font-semibold text-[11px] bg-white/[0.06] hover:bg-white/[0.12] active:scale-95 text-slate-200 hover:text-white border border-white/[0.08] transition-all text-center"
+                        >
+                          <Award className="w-3 h-3 shrink-0" />
+                          <span>Exams</span>
+                        </Link>
                       </div>
                     </div>
-
-                    <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed mb-3">
-                      {course.desc}
-                    </p>
                   </div>
-
-                  <div>
-                    {/* Fast Navigation Hub Links */}
-                    <div className="grid grid-cols-4 gap-1.5 pt-3 border-t border-white/[0.08]">
-                      <Link
-                        href={`${course.path}#textbooks`}
-                        className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-full font-semibold text-[11px] bg-white/[0.06] hover:bg-white/[0.12] active:scale-95 text-slate-200 hover:text-white border border-white/[0.08] transition-all text-center"
-                      >
-                        <BookOpen className="w-3 h-3 shrink-0" />
-                        <span>Books</span>
-                      </Link>
-                      <Link
-                        href={`${course.path}#notes`}
-                        className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-full font-semibold text-[11px] bg-white/[0.06] hover:bg-white/[0.12] active:scale-95 text-slate-200 hover:text-white border border-white/[0.08] transition-all text-center"
-                      >
-                        <FileText className="w-3 h-3 shrink-0" />
-                        <span>Notes</span>
-                      </Link>
-                      <Link
-                        href={`${course.path}#flashcards`}
-                        className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-full font-semibold text-[11px] bg-white/[0.06] hover:bg-white/[0.12] active:scale-95 text-slate-200 hover:text-white border border-white/[0.08] transition-all text-center"
-                      >
-                        <Layers className="w-3 h-3 shrink-0" />
-                        <span>Cards</span>
-                      </Link>
-                      <Link
-                        href={`${course.path}#exams`}
-                        className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-full font-semibold text-[11px] bg-white/[0.06] hover:bg-white/[0.12] active:scale-95 text-slate-200 hover:text-white border border-white/[0.08] transition-all text-center"
-                      >
-                        <Award className="w-3 h-3 shrink-0" />
-                        <span>Exams</span>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </section>
         )}
       </div>

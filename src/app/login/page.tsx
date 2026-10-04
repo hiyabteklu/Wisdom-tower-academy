@@ -8,6 +8,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { authEmailFromIdentifier } from "@/lib/authIdentity";
 import {
+  ACADEMIC_LEVEL_OPTIONS,
+  getDefaultPackagesForAcademicLevel,
+  STORAGE_ENROLLED_COURSES,
+} from "@/lib/academic-levels";
+import {
   Mail,
   Lock,
   Eye,
@@ -17,22 +22,11 @@ import {
   AlertTriangle,
   CheckCircle2,
   GraduationCap,
-  ShieldCheck,
   ChevronDown,
   Check,
 } from "lucide-react";
 
-const EDUCATION_LEVEL_OPTIONS = [
-  "Freshman University",
-  "Grade 12 (Matriculation)",
-  "Grade 11",
-  "Grade 10",
-  "Grade 9",
-  "University Aptitude (UAT / GAT)",
-  "COC / Exit Exam",
-  "University (Senior / Advanced)",
-  "Other",
-];
+const EDUCATION_LEVEL_OPTIONS = ACADEMIC_LEVEL_OPTIONS;
 
 function LoginForm() {
   const router = useRouter();
@@ -51,10 +45,10 @@ function LoginForm() {
   const [mode, setMode] = useState<"signin" | "signup">(
     requestedMode === "signup" ? "signup" : "signin"
   );
-  const [identifier, setIdentifier] = useState("");
+  const [identifier, setIdentifier] = useState(searchParams.get("identifier") || "");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [educationLevel, setEducationLevel] = useState("Freshman University");
+  const [educationLevel, setEducationLevel] = useState("Freshman");
   const [customEducationLevel, setCustomEducationLevel] = useState("");
   const [levelPickerOpen, setLevelPickerOpen] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -64,6 +58,21 @@ function LoginForm() {
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [isRateLimited, setIsRateLimited] = useState(false);
+
+  useEffect(() => {
+    // Check if redirected from registration because account already exists
+    const notice = searchParams.get("notice");
+    const idParam = searchParams.get("identifier");
+    if (idParam && !identifier) {
+      setIdentifier(idParam);
+    }
+    if (notice === "exists") {
+      setMode("signin");
+      setSuccessMsg(
+        "An account with this email/phone already exists. Please enter your password to sign in."
+      );
+    }
+  }, [searchParams, identifier]);
 
   useEffect(() => {
     let cancelled = false;
@@ -124,8 +133,11 @@ function LoginForm() {
         if (msg.toLowerCase().includes("rate limit") || (signError as unknown as { status: number }).status === 429) {
           setIsRateLimited(true);
           setError("Sign in is temporarily busy. Please wait a moment and try again.");
-        } else if (msg.toLowerCase().includes("invalid login credentials")) {
-          setError("Incorrect password or account not found. If new, please switch to 'Create Account'.");
+        } else if (
+          msg.toLowerCase().includes("invalid login credentials") ||
+          msg.toLowerCase().includes("user not found")
+        ) {
+          setError("Incorrect password or account not found. If you don't have an account, create one below.");
         } else {
           setError(msg);
         }
@@ -160,8 +172,21 @@ function LoginForm() {
           ? customEducationLevel.trim() || "Other"
           : educationLevel;
 
+      const defaultPackages = getDefaultPackagesForAcademicLevel(finalEducationLevel);
+      const saveLearningDefaults = () => {
+        try {
+          localStorage.setItem(
+            STORAGE_ENROLLED_COURSES,
+            JSON.stringify(defaultPackages)
+          );
+          localStorage.setItem("wt_academic_level", finalEducationLevel);
+        } catch {
+          /* ignore */
+        }
+      };
+
       try {
-        // First try server-side pre-confirmed registration to completely avoid Supabase email rate limits
+        // First try server-side pre-confirmed registration to avoid Supabase email rate limits
         const regRes = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -177,6 +202,7 @@ function LoginForm() {
         const regData = await regRes.json();
 
         if (regRes.ok) {
+          saveLearningDefaults();
           // Immediately sign the student in with the newly confirmed credentials
           const { error: autoSignInErr } = await supabase.auth.signInWithPassword({
             email: authEmail,
@@ -197,14 +223,20 @@ function LoginForm() {
           return;
         }
 
-        if (regData.code === "user_already_exists") {
+        if (
+          regData.code === "user_already_exists" ||
+          regData.error?.toLowerCase().includes("already registered") ||
+          regData.error?.toLowerCase().includes("already exists")
+        ) {
           setLoading(false);
-          setError("An account with this email/phone already exists. Please sign in below.");
+          // Automatically take them to login mode with clear notice
           setMode("signin");
+          setError("");
+          setSuccessMsg("An account with this email/phone already exists. Please enter your password to sign in.");
           return;
         }
 
-        // If server returned another error, attempt standard client signUp as fallback
+        // Fallback to client signUp
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email: authEmail,
           password,
@@ -222,6 +254,17 @@ function LoginForm() {
         if (signUpError) {
           const msg = signUpError.message || "Account creation failed.";
           if (
+            msg.toLowerCase().includes("already registered") ||
+            msg.toLowerCase().includes("already exists")
+          ) {
+            // Automatically take them to login mode with clear notice
+            setMode("signin");
+            setError("");
+            setSuccessMsg("An account with this email/phone already exists. Please enter your password to sign in.");
+            return;
+          }
+
+          if (
             msg.toLowerCase().includes("rate limit") ||
             msg.toLowerCase().includes("over_email_send_rate_limit") ||
             (signUpError as unknown as { status: number }).status === 429
@@ -233,6 +276,8 @@ function LoginForm() {
           }
           return;
         }
+
+        saveLearningDefaults();
 
         if (signUpData.session) {
           setSuccessMsg("Account created successfully! Redirecting...");
@@ -266,17 +311,51 @@ function LoginForm() {
           <h1 className="text-2xl sm:text-3xl font-display font-black text-white tracking-tight">
             Wisdom Tower Academy
           </h1>
-          <p className="text-xs sm:text-sm text-cyan-300 font-medium mt-1">
-            Ethiopian National Curriculum & University Hub
-          </p>
         </div>
+
+        {/* Navigation Switch Notice Banner */}
+        {mode === "signin" ? (
+          <div className="mb-4 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-400/25 flex items-center justify-between gap-3 text-xs shadow-sm">
+            <span className="text-slate-200">
+              Don&apos;t have an account? <span className="font-semibold text-white">Create a free account.</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setMode("signup");
+                setError("");
+                setSuccessMsg("");
+              }}
+              className="shrink-0 px-3.5 py-1.5 rounded-xl font-bold bg-amber-400 text-slate-950 hover:bg-amber-300 transition-all shadow-sm cursor-pointer"
+            >
+              Sign Up Free
+            </button>
+          </div>
+        ) : (
+          <div className="mb-4 p-3.5 rounded-2xl bg-cyan-500/10 border border-cyan-400/25 flex items-center justify-between gap-3 text-xs shadow-sm">
+            <span className="text-slate-200">
+              Already have an account? <span className="font-semibold text-white">Log in here.</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setMode("signin");
+                setError("");
+                setSuccessMsg("");
+              }}
+              className="shrink-0 px-3.5 py-1.5 rounded-xl font-bold bg-cyan-400 text-slate-950 hover:bg-cyan-300 transition-all shadow-sm cursor-pointer"
+            >
+              Log In
+            </button>
+          </div>
+        )}
 
         {/* Auth Card */}
         <div className="rounded-3xl border border-white/25 bg-gradient-to-b from-[#131f38] via-[#0e172a] to-[#0a101d] p-6 sm:p-8 shadow-[0_25px_60px_rgba(0,0,0,0.85)] relative overflow-hidden">
           {/* Top radiant highlight */}
           <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-cyan-400 via-amber-300 to-sky-400" />
 
-          {/* Mode Switcher Tabs (High Contrast & Clickable) */}
+          {/* Mode Switcher Tabs */}
           <div className="grid grid-cols-2 p-1.5 rounded-2xl bg-slate-950/90 border border-white/20 mb-6 gap-2">
             <button
               type="button"
@@ -332,7 +411,7 @@ function LoginForm() {
 
             {/* Email or Phone */}
             <div>
-              <label className={labelClass}>Email or Ethiopian Phone</label>
+              <label className={labelClass}>Email or Phone Number</label>
               <div className="relative">
                 {identifier.includes("@") ? (
                   <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-300" />
@@ -350,12 +429,9 @@ function LoginForm() {
                   autoFocus={mode === "signin"}
                 />
               </div>
-              <p className="text-[11px] text-slate-400 mt-1 pl-1">
-                Accepts Gmail, university emails, or mobile numbers (e.g. 0911...).
-              </p>
             </div>
 
-            {/* Education Level for Signup */}
+            {/* Academic Level for Signup */}
             {mode === "signup" && (
               <div className="space-y-3">
                 <div>
@@ -509,11 +585,32 @@ function LoginForm() {
               </label>
             )}
 
-            {/* Error Display */}
+            {/* Error Display with intelligent guidance */}
             {error && (
-              <div className="p-4 rounded-2xl bg-rose-500/15 border border-rose-500/40 text-rose-200 text-xs font-semibold leading-relaxed flex items-start gap-2.5 shadow-md">
-                <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-                <span>{error}</span>
+              <div className="p-4 rounded-2xl bg-rose-500/15 border border-rose-500/40 text-rose-200 text-xs font-semibold leading-relaxed flex flex-col gap-2.5 shadow-md">
+                <div className="flex items-start gap-2.5">
+                  <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                  <span>{error}</span>
+                </div>
+                {mode === "signin" &&
+                  (error.toLowerCase().includes("incorrect password") ||
+                    error.toLowerCase().includes("not found") ||
+                    error.toLowerCase().includes("invalid login")) && (
+                    <div className="pt-2 border-t border-rose-500/25 flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-white/80 font-normal">Need an account?</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMode("signup");
+                          setError("");
+                          setSuccessMsg("");
+                        }}
+                        className="px-3 py-1.5 rounded-xl font-bold bg-amber-400 text-slate-950 hover:bg-amber-300 text-xs transition-all shadow-sm cursor-pointer"
+                      >
+                        Create Free Account →
+                      </button>
+                    </div>
+                  )}
               </div>
             )}
 
@@ -525,7 +622,7 @@ function LoginForm() {
               </div>
             )}
 
-            {/* Radiant High-Contrast Action Button */}
+            {/* Action Button */}
             <button
               type="submit"
               disabled={loading || (mode === "signup" && !agreedToTerms)}
@@ -542,18 +639,12 @@ function LoginForm() {
                 </span>
               ) : (
                 <>
-                  <span>{mode === "signin" ? "Sign In to Academy" : "Create Scholar Account"}</span>
+                  <span>{mode === "signin" ? "Sign In to Academy" : "Create Account"}</span>
                   <ArrowRight className="w-5 h-5 stroke-[2.5]" />
                 </>
               )}
             </button>
           </form>
-
-          {/* Footer Security Badge */}
-          <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-center gap-2 text-[11px] text-slate-400">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Secure 256-Bit SSL Scholar Authentication</span>
-          </div>
         </div>
       </div>
     </div>

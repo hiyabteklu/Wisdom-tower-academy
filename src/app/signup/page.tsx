@@ -10,6 +10,11 @@ import {
   authEmailFromIdentifier,
 } from "@/lib/authIdentity";
 import {
+  ACADEMIC_LEVEL_OPTIONS,
+  getDefaultPackagesForAcademicLevel,
+  STORAGE_ENROLLED_COURSES,
+} from "@/lib/academic-levels";
+import {
   Mail,
   Lock,
   User,
@@ -22,17 +27,7 @@ import {
   Check,
 } from "lucide-react";
 
-const EDUCATION_LEVELS = [
-  "Freshman University",
-  "Grade 12 (Matriculation)",
-  "Grade 11",
-  "Grade 10",
-  "Grade 9",
-  "University Aptitude (UAT / GAT)",
-  "COC / Exit Exam",
-  "University (Senior / Advanced)",
-  "Other",
-];
+const EDUCATION_LEVELS = ACADEMIC_LEVEL_OPTIONS;
 
 function SignupForm() {
   const router = useRouter();
@@ -48,10 +43,10 @@ function SignupForm() {
       : "/account";
 
   const [fullName, setFullName] = useState("");
-  const [identifier, setIdentifier] = useState("");
+  const [identifier, setIdentifier] = useState(searchParams.get("identifier") || "");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [educationLevel, setEducationLevel] = useState("Freshman University");
+  const [educationLevel, setEducationLevel] = useState("Freshman");
   const [customEducationLevel, setCustomEducationLevel] = useState("");
   const [levelOpen, setLevelOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -77,7 +72,7 @@ function SignupForm() {
       return;
     }
     if (!educationLevel) {
-      setError("Please select your education level.");
+      setError("Please select your academic level.");
       return;
     }
     setLoading(true);
@@ -86,6 +81,20 @@ function SignupForm() {
       educationLevel === "Other"
         ? customEducationLevel.trim() || "Other"
         : educationLevel;
+
+    // Pre-calculate and prepare default My Learning packages
+    const defaultPackages = getDefaultPackagesForAcademicLevel(finalEducationLevel);
+    const saveLearningDefaults = () => {
+      try {
+        localStorage.setItem(
+          STORAGE_ENROLLED_COURSES,
+          JSON.stringify(defaultPackages)
+        );
+        localStorage.setItem("wt_academic_level", finalEducationLevel);
+      } catch {
+        /* ignore */
+      }
+    };
 
     try {
       const identity = authEmailFromIdentifier(identifier);
@@ -105,6 +114,7 @@ function SignupForm() {
       });
 
       if (regRes.ok) {
+        saveLearningDefaults();
         // Auto sign in
         const { error: autoSignInErr } = await supabase.auth.signInWithPassword({
           email,
@@ -122,9 +132,16 @@ function SignupForm() {
       }
 
       const regData = await regRes.json();
-      if (regData.code === "user_already_exists") {
+      if (
+        regData.code === "user_already_exists" ||
+        regData.error?.toLowerCase().includes("already registered") ||
+        regData.error?.toLowerCase().includes("already exists")
+      ) {
         setLoading(false);
-        setError("An account with this email/phone already exists. Please sign in below.");
+        // Automatically take them to the login page as requested
+        router.replace(
+          `/login?identifier=${encodeURIComponent(identifier)}&notice=exists&next=${encodeURIComponent(next)}`
+        );
         return;
       }
 
@@ -143,9 +160,21 @@ function SignupForm() {
 
       setLoading(false);
       if (signError) {
+        if (
+          signError.message.toLowerCase().includes("already registered") ||
+          signError.message.toLowerCase().includes("already exists")
+        ) {
+          // Automatically take them to login page
+          router.replace(
+            `/login?identifier=${encodeURIComponent(identifier)}&notice=exists&next=${encodeURIComponent(next)}`
+          );
+          return;
+        }
         setError(signError.message || "Could not create account.");
         return;
       }
+
+      saveLearningDefaults();
 
       if (signUpData.session) {
         router.replace(next);
@@ -185,9 +214,22 @@ function SignupForm() {
   return (
     <div className="min-h-[100dvh] flex items-start sm:items-center justify-center px-4 py-10 pb-44 overflow-y-auto">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-white mb-1">Create account</h1>
+        <div className="text-center mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">Create Account</h1>
           <p className="text-sm text-wisdom-muted">Join Wisdom Tower Academy</p>
+        </div>
+
+        {/* Navigation Notice: Quick path for existing users */}
+        <div className="mb-4 p-3.5 rounded-2xl bg-cyan-500/10 border border-cyan-400/25 flex items-center justify-between gap-3 text-xs shadow-sm">
+          <span className="text-slate-200">
+            Already have an account? <span className="font-semibold text-white">Log in here.</span>
+          </span>
+          <Link
+            href={`/login?next=${encodeURIComponent(next)}`}
+            className="shrink-0 px-3.5 py-1.5 rounded-xl font-bold bg-cyan-400 text-slate-950 hover:bg-cyan-300 transition-all shadow-sm"
+          >
+            Log In
+          </Link>
         </div>
 
         <div className="card-modern p-6 sm:p-8 shadow-2xl">
@@ -207,7 +249,7 @@ function SignupForm() {
             </div>
 
             <div>
-              <label className={labelClass}>Email or phone</label>
+              <label className={labelClass}>Email or Phone Number</label>
               <div className="relative">
                 {looksLikeEmail(identifier) ? (
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-wisdom-muted" />
@@ -219,7 +261,7 @@ function SignupForm() {
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   className={inputClass}
-                  placeholder="you@email.com or 09xxxxxxxx"
+                  placeholder="name@email.com or 09xxxxxxxx"
                 />
               </div>
             </div>
@@ -270,7 +312,7 @@ function SignupForm() {
 
             <div className="space-y-3">
               <div>
-                <label className={labelClass}>Education level</label>
+                <label className={labelClass}>Academic Level</label>
                 <div className="relative">
                   <GraduationCap className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-300 z-10" />
                   <button
@@ -278,7 +320,7 @@ function SignupForm() {
                     onClick={() => setLevelOpen((o) => !o)}
                     className={`${inputClass} pl-11 pr-10 text-left font-medium flex items-center justify-between cursor-pointer`}
                   >
-                    <span className="truncate">{educationLevel || "Select level"}</span>
+                    <span className="truncate">{educationLevel || "Select Academic Level"}</span>
                     <ChevronDown className={`w-4 h-4 text-wisdom-muted transition-transform duration-200 shrink-0 ${levelOpen ? "rotate-180 text-cyan-300" : ""}`} />
                   </button>
                   {levelOpen && (
@@ -382,7 +424,7 @@ function SignupForm() {
                 </span>
               ) : (
                 <>
-                  <span>Create Scholar Account</span>
+                  <span>Create Account</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -392,7 +434,7 @@ function SignupForm() {
           <p className="mt-6 text-center text-sm text-wisdom-muted">
             Already have an account?{" "}
             <Link href={`/login?next=${encodeURIComponent(next)}`} className="text-cyan-300 hover:underline font-medium">
-              Sign in
+              Log in
             </Link>
           </p>
         </div>
