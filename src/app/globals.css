@@ -375,9 +375,13 @@ body.wta-native-app .animate-fade-up {
   transform: none !important;
 }
 
-/* Native Android App: Hide elements marked with .hide-on-app */
+/* Native Android App: Hide elements marked with .hide-on-app and marketing stats/infinity cards */
 html.wta-native-app .hide-on-app,
-body.wta-native-app .hide-on-app {
+body.wta-native-app .hide-on-app,
+html.wta-native-app .stat-card,
+body.wta-native-app .stat-card,
+html.wta-native-app .infinity-card,
+body.wta-native-app .infinity-card {
   display: none !important;
 }
 

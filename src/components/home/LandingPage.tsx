@@ -88,13 +88,13 @@ function StatsSlider({ visible, reduced }: { visible: boolean; reduced: boolean 
   }, [reduced, visible]);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-5">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-5 hide-on-app">
       {stats.map((stat, i) => {
         const active = reduced ? visible : visible && i === index;
         return (
           <div
             key={stat.label}
-            className={`relative overflow-hidden rounded-2xl border border-white/12 bg-wisdom-navy min-h-[12.5rem] md:min-h-[14rem] transition-all duration-500 ${
+            className={`stat-card relative overflow-hidden rounded-2xl border border-white/12 bg-wisdom-navy min-h-[12.5rem] md:min-h-[14rem] transition-all duration-500 hide-on-app ${
               active ? "opacity-100 scale-100" : "opacity-90 scale-[0.99]"
             }`}
           >
@@ -262,10 +262,10 @@ export default function LandingPage() {
 
       <LandingPathways />
 
-      <section className="pb-20 md:pb-28 relative" ref={statsSection.ref}>
+      <section className="pb-20 md:pb-28 relative hide-on-app" ref={statsSection.ref}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6 items-stretch">
-            <div className="lg:col-span-3">
+            <div className="lg:col-span-3 hide-on-app">
               <StatsSlider visible={statsSection.inView || reduced} reduced={reduced} />
             </div>
             <div className="lg:col-span-1 flex hide-on-app">
