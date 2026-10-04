@@ -41,6 +41,7 @@ export const PARENT_OF: Record<string, string> = {
   "/academy/freshman": "/learning",
   "/academy/remedial": "/learning",
   "/academy/special-packages": "/learning",
+  "/academy/special-packages/electrical-computer-engineering": "/learning",
   "/academy/uat": "/learning",
   "/academy/gat": "/learning",
   "/academy/coc": "/learning",

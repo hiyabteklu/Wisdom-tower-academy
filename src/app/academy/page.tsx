@@ -33,6 +33,16 @@ type ProgramCard = {
 
 const programs: ProgramCard[] = [
   {
+    id: "special",
+    href: "/academy/special-packages/electrical-computer-engineering",
+    name: "ELECTRICAL & COMPUTER ENGINEERING",
+    category: "Department Track",
+    image: "/images/special-packages/ece.jpg",
+    accent: "text-violet-300",
+    border: "hover:border-violet-400/40",
+    description: "Senior Electrical and Computer Engineering, Semester 1 & Semester 2. Course material written for your department with chapter question banks, flashcards, and official solved exams.",
+  },
+  {
     id: "freshman",
     href: "/academy/freshman",
     name: "Freshman",
@@ -53,14 +63,14 @@ const programs: ProgramCard[] = [
     description: "National secondary curriculum with chapter-by-chapter drills and matriculation practice.",
   },
   {
-    id: "special",
-    href: "/academy/special-packages",
-    name: "Special Packages",
-    category: "Department Tracks",
-    image: SPECIAL_PACKAGES_HUB_IMAGE,
-    accent: "text-violet-300",
-    border: "hover:border-violet-400/40",
-    description: "Undergraduate department engineering courses, chapter exercises, and technical problem sets.",
+    id: "coc",
+    href: "/academy/coc",
+    name: "COC",
+    category: "Occupational Assessment",
+    image: packageImages.coc,
+    accent: "text-indigo-400",
+    border: "hover:border-indigo-400/40",
+    description: "Center of Competence assessment question banks and applied practical revision guides.",
   },
   {
     id: "uat",
@@ -81,16 +91,6 @@ const programs: ProgramCard[] = [
     accent: "text-rose-400",
     border: "hover:border-rose-400/40",
     description: "Graduate Admission Test practice sets, analytical reasoning drills, and timed simulations.",
-  },
-  {
-    id: "coc",
-    href: "/academy/coc",
-    name: "COC",
-    category: "Occupational Assessment",
-    image: packageImages.coc,
-    accent: "text-indigo-400",
-    border: "hover:border-indigo-400/40",
-    description: "Center of Competence assessment question banks and applied practical revision guides.",
   },
   {
     id: "exit-exam",

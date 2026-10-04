@@ -34,7 +34,7 @@ export type SpecialPackage = {
 };
 
 export const SPECIAL_PACKAGES_HUB_IMAGE =
-  "/images/special-packages/special-packages.jpg";
+  "/images/special-packages/ece.jpg";
 
 export const ECE_SEMESTER_PRICE_ETB = 300;
 

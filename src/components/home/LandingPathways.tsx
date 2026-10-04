@@ -45,6 +45,22 @@ const remedialPkg = getPackage("remedial");
 
 const allPrograms: ProgramCard[] = [
   {
+    id: "special",
+    href: "/academy/special-packages/electrical-computer-engineering",
+    name: "ELECTRICAL & COMPUTER ENGINEERING",
+    category: "Department Track",
+    image: "/images/special-packages/ece.jpg",
+    accent: "text-violet-300",
+    border: "hover:border-violet-400/40",
+    description:
+      "Senior Electrical and Computer Engineering, Semester 1 & Semester 2. Course material written for your department, not generic engineering notes. Each course carries its own question bank, flashcards, and practice exams with solutions.",
+    includes: [
+      "All 7 Year 3 Semester 1 engineering courses",
+      "All 7 Year 3 Semester 2 engineering courses",
+      ...CORE_PACKAGE_INCLUDES,
+    ],
+  },
+  {
     id: "freshman",
     href: "/academy/freshman",
     name: "Freshman",
@@ -78,18 +94,18 @@ const allPrograms: ProgramCard[] = [
     ],
   },
   {
-    id: "special",
-    href: "/academy/special-packages",
-    name: "Special Packages (ECE 1 & 2)",
-    category: "Department Tracks",
-    image: SPECIAL_PACKAGES_HUB_IMAGE,
-    accent: "text-violet-300",
-    border: "hover:border-violet-400/40",
+    id: "coc",
+    href: "/academy/coc",
+    name: "COC",
+    category: "Competency Certification",
+    image: packageImages.coc,
+    accent: "text-indigo-400",
+    border: "hover:border-indigo-400/40",
     description:
-      "Senior Electrical and Computer Engineering, Semester 1 & Semester 2. Course material written for your department, not generic engineering notes. Each course carries its own question bank, flashcards, and practice exams with solutions.",
-    includes: [
-      "All 7 Year 3 Semester 1 engineering courses",
-      "All 7 Year 3 Semester 2 engineering courses",
+      cocPkg?.description ||
+      "Certificate of Competency prep with clear notes, chapter practice, flashcards, and solved exams. Material aimed at the skills and judgment the assessment rewards.",
+    includes: cocPkg?.includes || [
+      "Occupational standard competencies & evaluation prep",
       ...CORE_PACKAGE_INCLUDES,
     ],
   },
@@ -122,22 +138,6 @@ const allPrograms: ProgramCard[] = [
       "Graduate Admission Test resources organized the way the exam expects you to think. Notes on core GAT material, chapter questions, flashcards, and practice exams with solutions.",
     includes: gatPkg?.includes || [
       "Postgraduate GAT analytical & quantitative problem tracks",
-      ...CORE_PACKAGE_INCLUDES,
-    ],
-  },
-  {
-    id: "coc",
-    href: "/academy/coc",
-    name: "COC",
-    category: "Competency Certification",
-    image: packageImages.coc,
-    accent: "text-indigo-400",
-    border: "hover:border-indigo-400/40",
-    description:
-      cocPkg?.description ||
-      "Certificate of Competency prep with clear notes, chapter practice, flashcards, and solved exams. Material aimed at the skills and judgment the assessment rewards.",
-    includes: cocPkg?.includes || [
-      "Occupational standard competencies & evaluation prep",
       ...CORE_PACKAGE_INCLUDES,
     ],
   },

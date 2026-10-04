@@ -32,10 +32,10 @@ export default async function SpecialPackagePage({
   return (
     <div className="relative min-h-[70vh] py-14 md:py-20">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <CategoryBackButton fallback="/academy/special-packages" />
+        <CategoryBackButton fallback="/learning" />
 
         <p className="text-xs font-semibold uppercase tracking-wider text-violet-300/90 mb-2">
-          Special packages · {pkg.yearLabel}
+          Department track · {pkg.yearLabel}
         </p>
         <h1 className="font-display text-3xl md:text-4xl font-extrabold text-white mb-6">
           {pkg.name}
@@ -48,8 +48,12 @@ export default async function SpecialPackagePage({
         </div>
 
         <p className="mt-10 text-sm text-wisdom-muted">
-          <Link href="/academy/special-packages" className="text-amber-400 hover:underline">
-            ← All special packages
+          <Link href="/academy" className="text-amber-400 hover:underline">
+            ← Back to Academy
+          </Link>
+          {" · "}
+          <Link href="/packages" className="text-cyan-400 hover:underline">
+            All packages
           </Link>
         </p>
       </div>
