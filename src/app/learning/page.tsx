@@ -157,6 +157,24 @@ function LearningContent() {
     return initialFeature && valid.includes(initialFeature) ? initialFeature : null;
   });
 
+  useEffect(() => {
+    if (activeFeature) {
+      window.__wtaInPageBack = () => {
+        setActiveFeature(null);
+        return true;
+      };
+    } else {
+      if (typeof window !== "undefined" && window.__wtaInPageBack) {
+        window.__wtaInPageBack = undefined;
+      }
+    }
+    return () => {
+      if (typeof window !== "undefined" && window.__wtaInPageBack) {
+        window.__wtaInPageBack = undefined;
+      }
+    };
+  }, [activeFeature]);
+
   // User details
   const [userId, setUserId] = useState<string | null>(null);
   const [userName, setUserName] = useState("Scholar");

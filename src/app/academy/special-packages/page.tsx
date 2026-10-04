@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Layers } from "lucide-react";
 import SafeCoverImage from "@/components/SafeCoverImage";
+import CategoryBackButton from "@/components/CategoryBackButton";
 import { specialPackages } from "@/data/special-packages";
 
 export const metadata = {
@@ -17,6 +18,8 @@ export default function SpecialPackagesPage() {
       </div>
 
       <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <CategoryBackButton fallback="/learning" />
+
         <header className="text-center mb-8 md:mb-10">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-300/90 mb-3">
             Department tracks

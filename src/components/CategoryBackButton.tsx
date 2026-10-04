@@ -3,12 +3,11 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { parentLabel, structuralParent, canPreferHistory } from "@/lib/nav-parent";
+import { parentLabel, structuralParent } from "@/lib/nav-parent";
 
 /**
  * Structural back: always one level up the site tree.
- * Prefers browser history when the user arrived from the parent,
- * else navigates structurally (ensures deep routes never jump to Home).
+ * Uses structural navigation only (never full chronological history).
  *
  * Pass `fallback` when the parent is not the path's previous segment.
  */
@@ -36,11 +35,11 @@ export default function CategoryBackButton({
     // Preserve standard browser actions for modified clicks (e.g. Cmd/Ctrl+Click to open in new tab)
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
     e.preventDefault();
-    if (canPreferHistory(href)) {
-      window.history.back();
-    } else {
-      router.push(href);
+    if (typeof window !== "undefined" && window.__wtaInPageBack) {
+      const handled = window.__wtaInPageBack();
+      if (handled) return;
     }
+    router.push(href);
   };
 
   return (

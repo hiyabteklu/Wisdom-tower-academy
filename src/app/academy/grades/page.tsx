@@ -14,7 +14,7 @@ export default function GradesPage() {
   return (
     <div className="relative min-h-[80vh]">
       <div className="relative max-w-5xl mx-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-8 md:py-14">
-        <CategoryBackButton fallback="/academy" />
+        <CategoryBackButton fallback="/learning" />
 
         <div className="mb-6 sm:mb-8 animate-fade-up text-left">
           <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-sky-400/90 mb-1.5">

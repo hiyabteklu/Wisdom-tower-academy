@@ -1,12 +1,16 @@
 /**
- * Bulletproof structural navigation parent mapping and history utilities.
- * Every deep path parents up one level only (strip last segment).
- * Home ("/") is the parent ONLY at the true top of site sections.
+ * Bulletproof structural navigation parent mapping.
+ * Every step moves exactly one level up the application hierarchy.
+ * NEVER full chronological history rewind.
+ * Home ("/") is reached ONLY at the true root.
  */
 
 export const ROOT = "/";
 
-/** Explicit immediate one-level parents for known hub and section roots */
+/**
+ * Explicit immediate one-level parents for known hub and section roots.
+ * No entry skips levels to / or top hub when a closer list parent exists.
+ */
 export const PARENT_OF: Record<string, string> = {
   // Top-level sections (parent is Home)
   "/academy": ROOT,
@@ -18,29 +22,31 @@ export const PARENT_OF: Record<string, string> = {
   "/login": ROOT,
   "/signup": ROOT,
 
-  // Commerce & learning (parent is Academy or Cart, never /)
+  // Learning root -> parent is top Academy hub
   "/learning": "/academy",
-  "/packages": "/academy",
+
+  // Packages & Commerce
+  "/packages": "/learning",
   "/cart": "/packages",
   "/checkout": "/cart",
 
-  // Admin & user sub-hubs (parent is Account, never /)
+  // Admin & user account sub-sections -> parent is Account
   "/admin": "/account",
   "/settings": "/account",
   "/notifications": "/account",
   "/orders": "/account",
 
-  // Academy primary curriculum branches (parent is Academy)
-  "/academy/grades": "/academy",
-  "/academy/freshman": "/academy",
-  "/academy/uat": "/academy",
-  "/academy/gat": "/academy",
-  "/academy/coc": "/academy",
-  "/academy/exit-exam": "/academy",
-  "/academy/remedial": "/academy",
-  "/academy/special-packages": "/academy",
+  // Academic track roots -> parent is Learning root (/learning), never / or /academy directly
+  "/academy/grades": "/learning",
+  "/academy/freshman": "/learning",
+  "/academy/remedial": "/learning",
+  "/academy/special-packages": "/learning",
+  "/academy/uat": "/learning",
+  "/academy/gat": "/learning",
+  "/academy/coc": "/learning",
+  "/academy/exit-exam": "/learning",
 
-  // Academy guidance and free resources
+  // Academy guidance and resources
   "/academy/universities": "/academy",
   "/academy/departments": "/academy",
   "/academy/campus-life": "/academy",
@@ -71,28 +77,46 @@ export function normalizePath(pathname: string): string {
 }
 
 /**
- * Computes the parent path in the site hierarchy for the current URL.
- * Every deep path goes up exactly one level (strip last segment).
- * Never jumps straight to Home unless already at a true top-level section.
+ * Computes the structural parent path for any route in the application.
+ * Hierarchy:
+ * - Opened note / material / flashcard -> list of notes / flashcards for that subject
+ * - Resource list -> subject page
+ * - Subject page -> track page
+ * - Track page -> learning root (/learning)
+ * - Learning root -> top hub (/academy)
+ * - Top hub -> Home (/)
+ * - Nested admin page -> parent admin section -> /admin -> /account -> /
  */
 export function structuralParent(pathname: string, explicitFallback?: string): string {
-  if (explicitFallback) {
-    const normFallback = normalizePath(explicitFallback);
-    const normPath = normalizePath(pathname);
-    if (normFallback !== normPath) {
-      return normFallback;
+  if (!pathname) return ROOT;
+
+  // Check if pathname has an active item query param (e.g. ?item=... or ?note=... or ?id=...)
+  if (pathname.includes("?")) {
+    const [base, query] = pathname.split("?");
+    const params = new URLSearchParams(query);
+    if (params.has("item") || params.has("note") || params.has("deck") || params.has("id")) {
+      // Opened note / material / flashcards -> list of notes / flashcards for that subject
+      return normalizePath(base);
     }
   }
 
   const path = normalizePath(pathname);
   if (path === ROOT) return ROOT;
 
-  // 1. Direct match in PARENT_OF table
+  // 1. Direct match in PARENT_OF table (takes priority over fallbacks that skip levels)
   if (PARENT_OF[path]) {
     return PARENT_OF[path];
   }
 
-  // 2. Admin subroutes: strip last segment, always ending at /admin, never /
+  // 2. If fallback provided and is a valid closer parent that doesn't skip levels:
+  if (explicitFallback) {
+    const normFallback = normalizePath(explicitFallback);
+    if (normFallback !== path) {
+      return normFallback;
+    }
+  }
+
+  // 3. Admin subroutes: strip last segment, always ending at /admin, never skipping
   if (path === "/admin") {
     return "/account";
   }
@@ -103,7 +127,7 @@ export function structuralParent(pathname: string, explicitFallback?: string): s
     return parent || "/admin";
   }
 
-  // 3. Learning subroutes: strip last segment, always ending at /learning, never /
+  // 4. Learning subroutes: strip last segment, always ending at /learning, never skipping
   if (path === "/learning") {
     return "/academy";
   }
@@ -114,12 +138,12 @@ export function structuralParent(pathname: string, explicitFallback?: string): s
     return parent || "/learning";
   }
 
-  // 4. Checkout subroutes (e.g. /checkout/[id], /checkout/multi) -> /cart
+  // 5. Checkout subroutes (e.g. /checkout/[id], /checkout/multi) -> /cart
   if (path.startsWith("/checkout/")) {
     return "/cart";
   }
 
-  // 5. Account subroutes: strip last segment, ending at /account
+  // 6. Account subroutes: strip last segment, ending at /account
   if (path.startsWith("/settings/")) {
     const parts = path.split("/").filter(Boolean);
     parts.pop();
@@ -136,10 +160,9 @@ export function structuralParent(pathname: string, explicitFallback?: string): s
     return parts.length > 0 ? "/" + parts.join("/") : "/account";
   }
 
-  // 6. Generic deep path: strip last segment to go exactly one level up
+  // 7. Generic deep path: strip last segment to go exactly one level up
   const parts = path.split("/").filter(Boolean);
   if (parts.length <= 1) {
-    // Top-level 1-segment route not explicitly matched: default to Home
     return ROOT;
   }
 
@@ -183,52 +206,4 @@ export function parentLabel(parentPath: string): string {
   if (parentPath.startsWith("/admin/")) return "Admin";
   if (parentPath.startsWith("/learning/")) return "Learning";
   return "Back";
-}
-
-/**
- * Records route navigation in sessionStorage to track whether the previous
- * page visited within the session matches the structural parent.
- */
-export function recordNavigation(pathname: string): void {
-  if (typeof window === "undefined") return;
-  try {
-    const norm = normalizePath(pathname);
-    const curr = sessionStorage.getItem("wta_nav_curr");
-    if (curr && curr !== norm) {
-      sessionStorage.setItem("wta_nav_prev", curr);
-    }
-    sessionStorage.setItem("wta_nav_curr", norm);
-  } catch {
-    /* ignore session errors */
-  }
-}
-
-/**
- * Checks if browser history can be safely used to go back:
- * Only returns true if the previous entry in navigation history matches the
- * structural parent, avoiding jumping straight to Home on deep entries.
- */
-export function canPreferHistory(targetParent: string): boolean {
-  if (typeof window === "undefined") return false;
-  try {
-    if (window.history.length <= 1) return false;
-
-    const normTarget = normalizePath(targetParent);
-    const prev = sessionStorage.getItem("wta_nav_prev");
-    if (prev) {
-      const normPrev = normalizePath(prev);
-      return normPrev === normTarget;
-    }
-
-    if (document.referrer) {
-      const url = new URL(document.referrer, window.location.origin);
-      if (url.origin === window.location.origin) {
-        return normalizePath(url.pathname) === normTarget;
-      }
-    }
-
-    return false;
-  } catch {
-    return false;
-  }
 }

@@ -16,7 +16,7 @@ export default function FreshmanPage() {
         </div>
 
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
-          <CategoryBackButton fallback="/academy" />
+          <CategoryBackButton fallback="/learning" />
 
           <div className="mb-10 md:mb-12 animate-fade-up">
             <div className="flex flex-wrap items-center gap-3 mb-4">

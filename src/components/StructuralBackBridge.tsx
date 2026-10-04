@@ -2,24 +2,20 @@
 
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import {
-  structuralParent,
-  normalizePath,
-  canPreferHistory,
-  recordNavigation,
-} from "@/lib/nav-parent";
+import { structuralParent, normalizePath } from "@/lib/nav-parent";
 import { isAndroidWebView } from "@/lib/native-app";
 
 declare global {
   interface Window {
     __wtaStructuralBack?: () => boolean;
     __wtaHardRefresh?: () => void;
+    __wtaInPageBack?: () => boolean;
   }
 }
 
 /**
- * Exposes structural back for the Android WebView and browser environment.
- * Back goes up one site layer: prefer history when valid, else structural parent.
+ * Exposes structural back for the Android WebView and website navigation.
+ * Back goes up one site layer: ALWAYS structural parent only, NEVER full chronological history.
  * __wtaStructuralBack returns false ONLY at true root ("/").
  */
 export default function StructuralBackBridge() {
@@ -29,30 +25,39 @@ export default function StructuralBackBridge() {
   useEffect(() => {
     isAndroidWebView();
 
-    const current = pathname || (typeof window !== "undefined" ? window.location.pathname : "/");
-    recordNavigation(current);
-
     window.__wtaStructuralBack = () => {
       try {
+        // 1. If an opened note/flashcard/item is active in-page, step back to the list level first
+        if (typeof window !== "undefined" && window.__wtaInPageBack) {
+          const handled = window.__wtaInPageBack();
+          if (handled) return true;
+        }
+
+        const fullPath =
+          typeof window !== "undefined"
+            ? window.location.pathname + window.location.search
+            : pathname || "/";
+
         const path = normalizePath(pathname || window.location.pathname || "/");
-        // Must return false ONLY at true root ("/")
+
+        // Return false ONLY at true root ("/")
         if (path === "/" || path === "") {
           return false;
         }
 
-        const parent = structuralParent(path);
-        if (!parent || parent === path) {
+        // Structural parent evaluation
+        const parent = structuralParent(fullPath);
+        if (!parent || parent === fullPath || parent === path) {
           if (path !== "/") {
+            const upOne = structuralParent(path);
+            if (upOne && upOne !== path) {
+              router.push(upOne);
+              return true;
+            }
             router.push("/");
             return true;
           }
           return false;
-        }
-
-        // Prefer history when possible (previous entry in history was the parent)
-        if (canPreferHistory(parent)) {
-          window.history.back();
-          return true;
         }
 
         router.push(parent);

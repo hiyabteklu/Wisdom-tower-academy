@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import CategoryBackButton from "@/components/CategoryBackButton";
 import SpecialSemesterCard from "@/components/SpecialSemesterCard";
 import { getSpecialPackage, specialPackages } from "@/data/special-packages";
 
@@ -31,6 +32,8 @@ export default async function SpecialPackagePage({
   return (
     <div className="relative min-h-[70vh] py-14 md:py-20">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <CategoryBackButton fallback="/academy/special-packages" />
+
         <p className="text-xs font-semibold uppercase tracking-wider text-violet-300/90 mb-2">
           Special packages · {pkg.yearLabel}
         </p>

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import SafeCoverImage from "@/components/SafeCoverImage";
 import AddToCartButton from "@/components/AddToCartButton";
+import CategoryBackButton from "@/components/CategoryBackButton";
 import { getSemester, specialPackages } from "@/data/special-packages";
 
 export function generateStaticParams() {
@@ -41,6 +42,8 @@ export default async function SemesterPage({
   return (
     <div className="relative min-h-[70vh] py-14 md:py-20">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <CategoryBackButton fallback={`/academy/special-packages/${pkg.slug}`} />
+
         <p className="text-xs font-semibold uppercase tracking-wider text-violet-300/90 mb-2">
           {pkg.name} · {pkg.yearLabel}
         </p>

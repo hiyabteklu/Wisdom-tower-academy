@@ -178,6 +178,24 @@ export default function HubContentView({
     return () => window.clearInterval(id);
   }, [active, owned, progressPct, progMeta.video?.watchSeconds]);
 
+  useEffect(() => {
+    if (active) {
+      window.__wtaInPageBack = () => {
+        backToItems();
+        return true;
+      };
+    } else {
+      if (typeof window !== "undefined" && window.__wtaInPageBack) {
+        window.__wtaInPageBack = undefined;
+      }
+    }
+    return () => {
+      if (typeof window !== "undefined" && window.__wtaInPageBack) {
+        window.__wtaInPageBack = undefined;
+      }
+    };
+  }, [active]);
+
   async function openItem(item: LearningResource) {
     markResourceSeen(item.id);
     setSeenIds(getSeenResourceIds());
