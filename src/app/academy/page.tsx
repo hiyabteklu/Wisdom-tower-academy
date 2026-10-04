@@ -222,11 +222,11 @@ export default function AcademyPage() {
             </h1>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
             {programs.map((program) => (
               <article
                 key={program.id}
-                className={`card-modern group flex flex-col ${program.border} shadow-lg shadow-black/25`}
+                className={`card-modern group flex flex-col ${program.border} shadow-lg shadow-black/25 overflow-hidden`}
               >
                 <Link href={program.href} className="relative aspect-video w-full overflow-hidden bg-wisdom-navy block">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -237,27 +237,19 @@ export default function AcademyPage() {
                     loading="lazy"
                   />
                 </Link>
-                <div className="p-5 sm:p-6 flex flex-col flex-1 border-t border-white/8">
-                  <span className="text-xs font-semibold text-wisdom-muted tracking-wide mb-1.5">
-                    {program.category}
-                  </span>
+                <div className="p-2.5 sm:p-3.5 flex items-center justify-between gap-2 border-t border-white/8 flex-1">
                   <h2
-                    className={`font-display text-xl font-bold tracking-tight mb-2 ${program.accent}`}
+                    className={`font-display text-xs sm:text-sm md:text-base font-bold tracking-tight text-white ${program.accent} line-clamp-2 min-w-0 flex-1`}
                   >
                     {program.name}
                   </h2>
-                  <p className="text-sm text-slate-300/90 leading-relaxed mb-5 flex-1 line-clamp-3">
-                    {program.description}
-                  </p>
-                  <div className="mt-auto pt-2">
-                    <Link
-                      href={program.href}
-                      className="btn-primary w-full text-center"
-                    >
-                      <span>Explore {program.name}</span>
-                      <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
-                    </Link>
-                  </div>
+                  <Link
+                    href={program.href}
+                    className="shrink-0 inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold text-cyan-300 bg-cyan-500/10 border border-cyan-400/25 px-2 py-1 sm:px-2.5 sm:py-1 rounded-lg hover:bg-cyan-400 hover:text-slate-950 transition-all"
+                  >
+                    <span>Open</span>
+                    <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                  </Link>
                 </div>
               </article>
             ))}

@@ -4,7 +4,7 @@ import { getGrade, grades } from "@/data/academy";
 import CategoryBackButton from "@/components/CategoryBackButton";
 import BranchLeaderboard from "@/components/BranchLeaderboard";
 import GradeStreamsPanel from "@/components/GradeStreamsPanel";
-import CollapsibleProgress from "@/components/CollapsibleProgress";
+import AcademicResultSaver from "@/components/AcademicResultSaver";
 
 export function generateStaticParams() {
   return grades.map((g) => ({ grade: g.id }));
@@ -44,23 +44,22 @@ export default async function GradeDetailPage({
           <BranchLeaderboard branchName={grade.label} scopeId={scopeId} accent={grade.accent} />
         </div>
 
+        {/* Progress tracker uncollapsed on top globally */}
+        <div className="w-full mb-6">
+          <AcademicResultSaver
+            scopeId={scopeId}
+            scopeLabel={grade.label}
+            accent={grade.accent}
+          />
+        </div>
+
         <div className="mb-3 flex items-center justify-between">
           <p className="text-xs font-bold tracking-[0.18em] uppercase text-wisdom-muted">
             Subjects
           </p>
-          <span className="text-[11px] text-wisdom-muted">Select a subject</span>
         </div>
 
         <GradeStreamsPanel gradeId={grade.id} />
-
-        <div className="w-full mt-6 sm:mt-8">
-          <CollapsibleProgress
-            scopeId={scopeId}
-            scopeLabel={grade.label}
-            accent={grade.accent}
-            defaultOpen={false}
-          />
-        </div>
 
         <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-white/10">
           <p className="text-xs sm:text-sm text-wisdom-muted mb-3 font-medium text-center sm:text-left">

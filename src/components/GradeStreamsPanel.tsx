@@ -9,28 +9,30 @@ export default function GradeStreamsPanel({ gradeId }: { gradeId: string }) {
   const subjects = subjectsForGrade(gradeId);
 
   return (
-    <div className="perspective-scene grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 stagger-children">
+    <div className="perspective-scene grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5 stagger-children">
       {subjects.map((sub) => (
         <Link
           key={sub.id}
           href={`/academy/grades/${gradeId}/${sub.id}`}
-          className="card-3d group flex items-start gap-3.5 rounded-2xl border border-white/12 bg-wisdom-card px-4 py-4 sm:px-5 sm:py-4.5 hover:border-sky-400/35 transition-colors shadow-lg"
+          prefetch={true}
+          className="card-modern group flex flex-col shadow-md shadow-black/20 hover:border-sky-400/35 transition-all overflow-hidden"
         >
-          <span className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-sky-400/25 bg-sky-400/10 text-sky-300">
-            <GradeSubjectIcon name={sub.icon} className="w-5 h-5" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="font-semibold text-white text-sm sm:text-base leading-snug group-hover:text-sky-100 transition-colors">
+          {/* Big native icon container representing the subject */}
+          <div className="relative aspect-video w-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-wisdom-navy to-slate-900 border-b border-white/8 group-hover:from-slate-900 group-hover:to-sky-950/50 transition-colors">
+            <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl border border-sky-400/30 bg-sky-500/10 text-sky-300 group-hover:scale-110 group-hover:border-sky-400/50 group-hover:bg-sky-500/20 group-hover:text-sky-200 transition-all duration-300 shadow-inner">
+              <GradeSubjectIcon name={sub.icon} className="w-6 h-6 sm:w-7 sm:h-7 stroke-[2]" />
+            </div>
+          </div>
+
+          {/* Title + Open button side-by-side, no junk texts */}
+          <div className="p-2.5 sm:p-3.5 flex items-center justify-between gap-2 flex-1">
+            <h3 className="text-xs sm:text-sm md:text-base font-bold text-white group-hover:text-sky-200 transition-colors truncate min-w-0 flex-1">
               {sub.name}
-            </p>
-            {sub.hint ? (
-              <p className="text-xs text-wisdom-muted mt-1 leading-relaxed line-clamp-2">
-                {sub.hint}
-              </p>
-            ) : null}
-            <span className="mt-2.5 inline-flex items-center gap-0.5 text-xs font-semibold text-sky-400">
-              Open hubs
-              <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+            </h3>
+
+            <span className="shrink-0 inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold text-sky-300 bg-sky-500/10 border border-sky-400/25 px-2 py-1 rounded-lg group-hover:bg-sky-400 group-hover:text-slate-950 transition-all">
+              <span>Open</span>
+              <ChevronRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 transition-transform group-hover:translate-x-0.5" />
             </span>
           </div>
         </Link>
