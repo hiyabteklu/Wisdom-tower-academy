@@ -104,7 +104,7 @@ export default function SpecialSemesterCard({
         )}
 
         <div className="mt-auto pt-2">
-          <AddToCartButton packageId={sem.packageId} variant="ghost" />
+          <AddToCartButton packageId={sem.packageId} variant="ghost" hideIfAccessible />
         </div>
       </div>
     </div>

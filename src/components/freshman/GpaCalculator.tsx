@@ -1,12 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import {
   Calculator,
   Plus,
   Trash2,
   BookOpen,
   Info,
+  ChevronDown,
+  Check,
 } from "lucide-react";
 import { freshmanSubjects } from "@/data/freshman";
 import {
@@ -20,7 +22,12 @@ import {
   type GradeBand,
 } from "@/data/gpa-scale";
 
-type InputMode = "percent" | "letter" | "points";
+// Physical Fitness is pass/fail only, excluded from GPA scale
+const GPA_FRESHMAN_SUBJECTS = freshmanSubjects.filter(
+  (s) => s.id !== "physical-fitness"
+);
+
+type InputMode = "letter" | "percent" | "points";
 
 type Row = {
   id: string;
@@ -37,7 +44,7 @@ function newRow(subjectId = ""): Row {
     id: `r-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     subjectId,
     credits: 3,
-    mode: "percent",
+    mode: "letter",
     percent: "",
     letter: "A",
     points: "4",
@@ -59,14 +66,89 @@ function resolveBand(row: Row): GradeBand | null {
 }
 
 function subjectName(id: string) {
-  return freshmanSubjects.find((s) => s.id === id)?.name ?? "-";
+  return GPA_FRESHMAN_SUBJECTS.find((s) => s.id === id)?.name ?? "-";
+}
+
+/** Custom native-designed dark popover subject picker matching website aesthetic */
+function NativeSubjectPicker({
+  value,
+  onChange,
+  available,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  available: { id: string; name: string }[];
+}) {
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    if (open) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [open]);
+
+  const selected = GPA_FRESHMAN_SUBJECTS.find((s) => s.id === value);
+
+  return (
+    <div className="relative w-full" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between gap-1 px-2 sm:px-2.5 py-1.5 rounded-xl border border-white/15 bg-white/[0.04] hover:bg-white/[0.08] hover:border-purple-400/40 text-left text-xs text-white transition-all cursor-pointer"
+      >
+        <span className="truncate flex-1 font-medium">
+          {selected ? selected.name : "Select course…"}
+        </span>
+        <ChevronDown
+          className={`w-3.5 h-3.5 text-wisdom-muted shrink-0 transition-transform ${
+            open ? "rotate-180 text-purple-300" : ""
+          }`}
+        />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 top-full mt-1.5 z-50 w-full min-w-[13rem] sm:min-w-[16rem] max-h-56 overflow-y-auto rounded-xl border border-purple-400/30 bg-[#0d1627] backdrop-blur-2xl shadow-2xl p-1 animate-in fade-in zoom-in-95 duration-150">
+          {available.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => {
+                onChange(s.id);
+                setOpen(false);
+              }}
+              className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs transition-colors flex items-center justify-between ${
+                s.id === value
+                  ? "bg-purple-500/25 text-purple-200 font-bold"
+                  : "text-slate-200 hover:bg-white/[0.08] hover:text-white"
+              }`}
+            >
+              <span className="truncate">{s.name}</span>
+              {s.id === value && (
+                <Check className="w-3.5 h-3.5 text-purple-300 shrink-0 ml-1.5" />
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function GpaCalculator() {
   const [rows, setRows] = useState<Row[]>([newRow()]);
   const [showScale, setShowScale] = useState(false);
 
-  const usedIds = useMemo(() => new Set(rows.map((r) => r.subjectId).filter(Boolean)), [rows]);
+  const usedIds = useMemo(
+    () => new Set(rows.map((r) => r.subjectId).filter(Boolean)),
+    [rows]
+  );
 
   const computed = useMemo(() => {
     const lines: {
@@ -118,55 +200,53 @@ export default function GpaCalculator() {
   return (
     <section className="rounded-3xl border border-purple-400/25 bg-gradient-to-br from-purple-500/[0.08] via-wisdom-card to-wisdom-card overflow-hidden shadow-card-3d">
       {/* Header */}
-      <div className="px-5 sm:px-7 py-5 border-b border-white/10 bg-gradient-to-r from-purple-500/15 via-transparent to-pink-500/10">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="flex items-start gap-3">
-            <div className="p-2.5 rounded-2xl border border-purple-400/30 bg-purple-500/15 text-purple-300">
-              <Calculator className="w-5 h-5" />
+      <div className="px-4 sm:px-6 py-4 border-b border-white/10 bg-gradient-to-r from-purple-500/15 via-transparent to-pink-500/10">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl border border-purple-400/30 bg-purple-500/15 text-purple-300 shrink-0">
+              <Calculator className="w-4 h-4" />
             </div>
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-purple-300/90">
-                Freshman tool
-              </p>
-              <h2 className="font-display text-xl sm:text-2xl font-bold text-white tracking-tight">
+              <h2 className="font-display text-base sm:text-lg font-bold text-white tracking-tight">
                 GPA calculator
               </h2>
-              <p className="text-sm text-wisdom-muted mt-1 max-w-lg leading-relaxed">
-                Build your semester from the course list, enter percent, letter, or fixed points: we
-                map everything to the official scale.
+              <p className="text-[11px] text-wisdom-muted hidden sm:block">
+                Add courses and grades; calculated with the official national scale.
               </p>
             </div>
           </div>
           <button
             type="button"
             onClick={() => setShowScale((v) => !v)}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-300 border border-purple-400/30 rounded-xl px-3 py-2 hover:bg-purple-500/10"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-purple-300 border border-purple-400/30 rounded-xl px-2.5 py-1.5 hover:bg-purple-500/10 transition-colors"
           >
             <Info className="w-3.5 h-3.5" />
-            {showScale ? "Hide scale" : "Grade scale"}
+            <span>{showScale ? "Hide scale" : "Grade scale"}</span>
           </button>
         </div>
       </div>
 
-      {/* Scale table */}
+      {/* Grade scale reference */}
       {showScale && (
-        <div className="px-4 sm:px-6 py-4 border-b border-white/10 overflow-x-auto">
-          <table className="w-full min-w-[32rem] text-left text-xs sm:text-sm">
+        <div className="px-3 sm:px-6 py-3 border-b border-white/10 overflow-x-auto bg-[#0a1120]">
+          <table className="w-full min-w-[28rem] text-left text-xs">
             <thead>
               <tr className="text-wisdom-muted border-b border-white/10">
-                <th className="py-2 pr-3 font-semibold">Interval %</th>
-                <th className="py-2 pr-3 font-semibold">Letter</th>
-                <th className="py-2 pr-3 font-semibold">Points</th>
-                <th className="py-2 font-semibold">Status</th>
+                <th className="py-1.5 pr-2 font-semibold">Interval %</th>
+                <th className="py-1.5 pr-2 font-semibold">Letter</th>
+                <th className="py-1.5 pr-2 font-semibold">Points</th>
+                <th className="py-1.5 font-semibold">Status</th>
               </tr>
             </thead>
             <tbody>
               {GRADE_BANDS.map((b) => (
-                <tr key={b.letter} className="border-b border-white/5 text-white/90">
-                  <td className="py-2 pr-3 font-mono text-white/70">{intervalLabel(b)}</td>
-                  <td className="py-2 pr-3 font-bold text-purple-200">{b.letter}</td>
-                  <td className="py-2 pr-3 tabular-nums">{b.points.toFixed(2)}</td>
-                  <td className="py-2 text-wisdom-muted">{b.status}</td>
+                <tr key={b.letter} className="border-b border-white/5 text-white/80">
+                  <td className="py-1 pr-2 font-mono text-[11px] text-wisdom-muted">
+                    {intervalLabel(b)}
+                  </td>
+                  <td className="py-1 pr-2 font-bold text-purple-300">{b.letter}</td>
+                  <td className="py-1 pr-2 tabular-nums">{b.points.toFixed(2)}</td>
+                  <td className="py-1 text-wisdom-muted">{b.status}</td>
                 </tr>
               ))}
             </tbody>
@@ -174,57 +254,40 @@ export default function GpaCalculator() {
         </div>
       )}
 
-      <div className="p-4 sm:p-6 space-y-4">
-        {/* Rows */}
-        {rows.map((row, index) => {
-          const band = resolveBand(row);
-          const available = freshmanSubjects.filter(
-            (s) => s.id === row.subjectId || !usedIds.has(s.id)
-          );
+      <div className="p-3 sm:p-5 space-y-3">
+        {/* Table column headers */}
+        <div className="grid grid-cols-12 gap-1.5 sm:gap-2 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-wisdom-muted">
+          <div className="col-span-6 sm:col-span-5">Course</div>
+          <div className="col-span-2 text-center">Cr</div>
+          <div className="col-span-3 sm:col-span-3">Grade</div>
+          <div className="hidden sm:block sm:col-span-1 text-center">Pts</div>
+          <div className="col-span-1 text-right"></div>
+        </div>
 
-          return (
-            <div
-              key={row.id}
-              className="rounded-2xl border border-white/10 bg-wisdom-dark/40 p-3 sm:p-4 space-y-3"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-wisdom-muted">
-                  Course {index + 1}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => remove(row.id)}
-                  disabled={rows.length <= 1}
-                  className="p-1.5 rounded-lg text-wisdom-muted hover:text-rose-400 hover:bg-rose-500/10 disabled:opacity-30"
-                  aria-label="Remove course"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
+        {/* Compact, single-row courses on mobile & desktop */}
+        <div className="space-y-1.5">
+          {rows.map((row) => {
+            const band = resolveBand(row);
+            const available = GPA_FRESHMAN_SUBJECTS.filter(
+              (s) => s.id === row.subjectId || !usedIds.has(s.id)
+            );
 
-              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-                <label className="sm:col-span-5 block">
-                  <span className="text-[10px] text-wisdom-muted uppercase tracking-wider">
-                    Subject
-                  </span>
-                  <select
+            return (
+              <div
+                key={row.id}
+                className="grid grid-cols-12 gap-1.5 sm:gap-2 items-center p-1.5 sm:p-2 rounded-xl border border-white/10 bg-wisdom-dark/40 hover:border-white/20 transition-all"
+              >
+                {/* 1. Subject Picker */}
+                <div className="col-span-6 sm:col-span-5 min-w-0">
+                  <NativeSubjectPicker
                     value={row.subjectId}
-                    onChange={(e) => update(row.id, { subjectId: e.target.value })}
-                    className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-card px-3 py-2.5 text-sm text-white outline-none focus:border-purple-400/50"
-                  >
-                    <option value="">Select course…</option>
-                    {available.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    onChange={(val) => update(row.id, { subjectId: val })}
+                    available={available}
+                  />
+                </div>
 
-                <label className="sm:col-span-2 block">
-                  <span className="text-[10px] text-wisdom-muted uppercase tracking-wider">
-                    Credits
-                  </span>
+                {/* 2. Credits Input */}
+                <div className="col-span-2">
                   <input
                     type="number"
                     min={0.5}
@@ -234,48 +297,18 @@ export default function GpaCalculator() {
                     onChange={(e) =>
                       update(row.id, { credits: parseFloat(e.target.value) || 0 })
                     }
-                    className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-card px-3 py-2.5 text-sm text-white outline-none focus:border-purple-400/50"
+                    placeholder="3"
+                    className="w-full text-center rounded-xl border border-white/15 bg-white/[0.04] px-1 py-1.5 text-xs text-white font-semibold outline-none focus:border-purple-400/50"
                   />
-                </label>
+                </div>
 
-                <label className="sm:col-span-2 block">
-                  <span className="text-[10px] text-wisdom-muted uppercase tracking-wider">
-                    Input
-                  </span>
-                  <select
-                    value={row.mode}
-                    onChange={(e) =>
-                      update(row.id, { mode: e.target.value as InputMode })
-                    }
-                    className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-card px-3 py-2.5 text-sm text-white outline-none focus:border-purple-400/50"
-                  >
-                    <option value="percent">%</option>
-                    <option value="letter">Letter</option>
-                    <option value="points">Points</option>
-                  </select>
-                </label>
-
-                <div className="sm:col-span-3">
-                  <span className="text-[10px] text-wisdom-muted uppercase tracking-wider">
-                    Grade
-                  </span>
-                  {row.mode === "percent" && (
-                    <input
-                      type="number"
-                      min={0}
-                      max={100}
-                      step={0.5}
-                      placeholder="0–100"
-                      value={row.percent}
-                      onChange={(e) => update(row.id, { percent: e.target.value })}
-                      className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-card px-3 py-2.5 text-sm text-white outline-none focus:border-purple-400/50"
-                    />
-                  )}
-                  {row.mode === "letter" && (
+                {/* 3. Grade Input + Mode Toggle */}
+                <div className="col-span-3 flex items-center gap-1">
+                  {row.mode === "letter" ? (
                     <select
                       value={row.letter}
                       onChange={(e) => update(row.id, { letter: e.target.value })}
-                      className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-card px-3 py-2.5 text-sm text-white outline-none focus:border-purple-400/50"
+                      className="w-full text-center rounded-xl border border-white/15 bg-[#0d1627] px-1 py-1.5 text-xs text-purple-200 font-bold outline-none focus:border-purple-400/50 cursor-pointer"
                     >
                       {LETTER_OPTIONS.map((L) => (
                         <option key={L} value={L}>
@@ -283,12 +316,11 @@ export default function GpaCalculator() {
                         </option>
                       ))}
                     </select>
-                  )}
-                  {row.mode === "points" && (
+                  ) : row.mode === "points" ? (
                     <select
                       value={row.points}
                       onChange={(e) => update(row.id, { points: e.target.value })}
-                      className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-card px-3 py-2.5 text-sm text-white outline-none focus:border-purple-400/50"
+                      className="w-full text-center rounded-xl border border-white/15 bg-[#0d1627] px-1 py-1.5 text-xs text-purple-200 font-bold outline-none focus:border-purple-400/50 cursor-pointer"
                     >
                       {POINT_OPTIONS.map((p) => (
                         <option key={p} value={String(p)}>
@@ -296,110 +328,103 @@ export default function GpaCalculator() {
                         </option>
                       ))}
                     </select>
+                  ) : (
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      step={0.5}
+                      placeholder="%"
+                      value={row.percent}
+                      onChange={(e) => update(row.id, { percent: e.target.value })}
+                      className="w-full text-center rounded-xl border border-white/15 bg-white/[0.04] px-1 py-1.5 text-xs text-white font-semibold outline-none focus:border-purple-400/50"
+                    />
                   )}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const nextMode: InputMode =
+                        row.mode === "letter"
+                          ? "percent"
+                          : row.mode === "percent"
+                            ? "points"
+                            : "letter";
+                      update(row.id, { mode: nextMode });
+                    }}
+                    title={`Grade mode: ${row.mode} (click to toggle)`}
+                    className="text-[9px] font-bold text-wisdom-muted hover:text-purple-300 px-1 py-1 rounded border border-white/10 bg-white/[0.04] shrink-0 uppercase"
+                  >
+                    {row.mode === "letter" ? "L" : row.mode === "percent" ? "%" : "Pt"}
+                  </button>
+                </div>
+
+                {/* 4. Points display (Desktop) */}
+                <div className="hidden sm:flex sm:col-span-1 items-center justify-center">
+                  <span className="text-xs font-bold text-purple-300 tabular-nums">
+                    {band ? band.points.toFixed(1) : "-"}
+                  </span>
+                </div>
+
+                {/* 5. Remove Row Button */}
+                <div className="col-span-1 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => remove(row.id)}
+                    disabled={rows.length <= 1}
+                    className="p-1 rounded-lg text-wisdom-muted hover:text-rose-400 hover:bg-rose-500/10 disabled:opacity-20 transition-colors"
+                    aria-label="Remove course"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
+            );
+          })}
+        </div>
 
-              {band && row.subjectId && (
-                <div className="flex flex-wrap gap-2 text-[11px]">
-                  <span className="rounded-md border border-purple-400/30 bg-purple-500/10 px-2 py-0.5 text-purple-200 font-semibold">
-                    {band.letter}
-                  </span>
-                  <span className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-white/80 tabular-nums">
-                    {band.points.toFixed(2)} pts
-                  </span>
-                  <span className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-wisdom-muted">
-                    {band.status}
-                  </span>
-                </div>
-              )}
-            </div>
-          );
-        })}
+        {/* Add Course Button */}
+        <div className="pt-1">
+          <button
+            type="button"
+            onClick={addRow}
+            disabled={rows.length >= GPA_FRESHMAN_SUBJECTS.length}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl border border-dashed border-purple-400/40 text-purple-200 text-xs font-semibold hover:bg-purple-500/10 disabled:opacity-40 transition-colors cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add course</span>
+          </button>
+        </div>
 
-        <button
-          type="button"
-          onClick={addRow}
-          disabled={rows.length >= freshmanSubjects.length}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-purple-400/40 text-purple-200 text-sm font-semibold hover:bg-purple-500/10 disabled:opacity-40"
-        >
-          <Plus className="w-4 h-4" />
-          Add course
-        </button>
-
-        {/* Results */}
-        <div className="rounded-2xl border border-white/12 bg-wisdom-dark/50 overflow-hidden">
-          <div className="px-4 sm:px-5 py-3 border-b border-white/10 flex items-center gap-2">
-            <Calculator className="w-4 h-4 text-purple-300" />
-            <h3 className="font-display font-bold text-white text-sm sm:text-base">
-              Semester result
-            </h3>
-          </div>
-
+        {/* Results summary */}
+        <div className="mt-3 rounded-2xl border border-white/12 bg-wisdom-dark/60 overflow-hidden">
           {computed.lines.length === 0 ? (
-            <div className="px-5 py-10 text-center">
-              <BookOpen className="w-8 h-8 text-white/15 mx-auto mb-2" />
-              <p className="text-sm text-wisdom-muted">
-                Select courses and enter grades to see your GPA table.
+            <div className="px-4 py-6 text-center">
+              <BookOpen className="w-6 h-6 text-white/15 mx-auto mb-1.5" />
+              <p className="text-xs text-wisdom-muted">
+                Select courses and enter grades to calculate your semester GPA.
               </p>
             </div>
           ) : (
-            <>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[36rem] text-left text-xs sm:text-sm">
-                  <thead>
-                    <tr className="text-wisdom-muted border-b border-white/10">
-                      <th className="px-4 py-2.5 font-semibold">Course</th>
-                      <th className="px-3 py-2.5 font-semibold">Cr</th>
-                      <th className="px-3 py-2.5 font-semibold">Letter</th>
-                      <th className="px-3 py-2.5 font-semibold">Points</th>
-                      <th className="px-3 py-2.5 font-semibold">Status</th>
-                      <th className="px-4 py-2.5 font-semibold text-right">Quality</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {computed.lines.map(({ row, band, name }) => {
-                      const cr = Math.max(0.5, row.credits || 0);
-                      const quality = band.points * cr;
-                      return (
-                        <tr key={row.id} className="border-b border-white/5 text-white/90">
-                          <td className="px-4 py-2.5 font-medium">{name}</td>
-                          <td className="px-3 py-2.5 tabular-nums">{cr}</td>
-                          <td className="px-3 py-2.5 font-bold text-purple-200">{band.letter}</td>
-                          <td className="px-3 py-2.5 tabular-nums">{band.points.toFixed(2)}</td>
-                          <td className="px-3 py-2.5 text-wisdom-muted">{band.status}</td>
-                          <td className="px-4 py-2.5 text-right tabular-nums text-white/80">
-                            {quality.toFixed(2)}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+            <div className="px-4 py-3 bg-gradient-to-r from-purple-500/15 to-transparent flex items-center justify-between gap-4">
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-wisdom-muted font-bold">
+                  Total credits
+                </p>
+                <p className="text-base font-bold text-white tabular-nums">
+                  {computed.creditSum.toFixed(1)}
+                </p>
               </div>
 
-              <div className="px-4 sm:px-5 py-4 bg-gradient-to-r from-purple-500/15 to-transparent flex flex-wrap items-end justify-between gap-4">
-                <div>
-                  <p className="text-[10px] uppercase tracking-wider text-wisdom-muted">
-                    Total credits
-                  </p>
-                  <p className="text-lg font-bold text-white tabular-nums">
-                    {computed.creditSum.toFixed(1)}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[10px] uppercase tracking-wider text-wisdom-muted">
-                    Semester GPA
-                  </p>
-                  <p className={`text-3xl sm:text-4xl font-black tabular-nums ${gpaColor}`}>
-                    {computed.gpa != null ? computed.gpa.toFixed(2) : "-"}
-                  </p>
-                  <p className="text-[11px] text-wisdom-muted mt-0.5">
-                    Σ (points × credits) ÷ total credits
-                  </p>
-                </div>
+              <div className="text-right">
+                <p className="text-[10px] uppercase tracking-wider text-wisdom-muted font-bold">
+                  Semester GPA
+                </p>
+                <p className={`text-2xl sm:text-3xl font-black tabular-nums ${gpaColor}`}>
+                  {computed.gpa != null ? computed.gpa.toFixed(2) : "-"}
+                </p>
               </div>
-            </>
+            </div>
           )}
         </div>
       </div>

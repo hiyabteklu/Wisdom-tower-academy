@@ -52,7 +52,7 @@ export default async function SemesterPage({
         </h1>
 
         <div className="mb-8 max-w-md">
-          <AddToCartButton packageId={sem.packageId} />
+          <AddToCartButton packageId={sem.packageId} hideIfAccessible />
         </div>
 
         {sem.courses.length === 0 ? (

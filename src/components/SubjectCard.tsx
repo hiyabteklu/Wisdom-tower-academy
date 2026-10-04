@@ -20,7 +20,7 @@ export default function SubjectCard({ href, name, image, ready = false }: Props)
     <Link
       href={href}
       prefetch={true}
-      className="card-modern group flex flex-col shadow-md shadow-black/20 hover:border-cyan-400/35 transition-all"
+      className="card-modern group flex flex-col shadow-md shadow-black/20 hover:border-cyan-400/35 transition-all overflow-hidden"
     >
       <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
         {!imgFailed ? (
@@ -35,25 +35,24 @@ export default function SubjectCard({ href, name, image, ready = false }: Props)
             onError={() => setImgFailed(true)}
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-wisdom-card p-4">
-            <span className="text-center text-sm font-semibold text-white/80 leading-snug">
+          <div className="absolute inset-0 flex items-center justify-center bg-wisdom-card p-3">
+            <span className="text-center text-xs sm:text-sm font-semibold text-white/80 leading-snug">
               {name}
             </span>
           </div>
         )}
       </div>
 
-      <div className="p-4 sm:p-5 flex flex-col flex-1 border-t border-white/8">
-        <h3 className="text-base sm:text-lg font-bold leading-snug text-white group-hover:text-cyan-200 transition-colors">
+      {/* Side-by-side title and Open button to prevent vertical space waste */}
+      <div className="p-2.5 sm:p-3.5 flex items-center justify-between gap-2 border-t border-white/8">
+        <h3 className="text-xs sm:text-sm md:text-base font-bold leading-snug text-white group-hover:text-cyan-200 transition-colors line-clamp-2 min-w-0 flex-1">
           {name}
         </h3>
 
-        <div className="mt-auto pt-4 flex items-center justify-between border-t border-white/5 text-xs font-semibold">
-          <span className="text-cyan-300 group-hover:text-cyan-200 transition-colors">
-            Explore
-          </span>
-          <ChevronRight className="w-4 h-4 text-wisdom-muted transition-transform duration-200 group-hover:translate-x-1 group-hover:text-white" />
-        </div>
+        <span className="shrink-0 inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold text-cyan-300 bg-cyan-500/10 border border-cyan-400/25 px-2 py-1 rounded-lg group-hover:bg-cyan-400 group-hover:text-slate-950 transition-all">
+          <span>Open</span>
+          <ChevronRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 transition-transform group-hover:translate-x-0.5" />
+        </span>
       </div>
     </Link>
   );

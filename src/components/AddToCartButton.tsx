@@ -24,12 +24,14 @@ type Props = {
   packageId: string;
   variant?: "primary" | "ghost" | "compact";
   className?: string;
+  hideIfAccessible?: boolean;
 };
 
 export default function AddToCartButton({
   packageId,
   variant = "primary",
   className = "",
+  hideIfAccessible = false,
 }: Props) {
   const pathname = usePathname();
   const [inCart, setInCart] = useState(false);
@@ -106,6 +108,7 @@ export default function AddToCartButton({
   /* Free for registered: never show cart */
   if (freeForRegistered) {
     if (owned || signedIn) {
+      if (hideIfAccessible || variant === "ghost") return null;
       return (
         <div className={`flex flex-wrap items-center gap-2 ${className}`}>
           <Link
@@ -119,6 +122,8 @@ export default function AddToCartButton({
       );
     }
 
+    if (hideIfAccessible || variant === "ghost") return null;
+
     return (
       <Link
         href={`/login?next=${encodeURIComponent(pathname || "/learning")}`}
@@ -131,6 +136,7 @@ export default function AddToCartButton({
   }
 
   if (owned) {
+    if (hideIfAccessible || variant === "ghost") return null;
     return (
       <div className={`flex flex-wrap items-center gap-2 ${className}`}>
         <Link

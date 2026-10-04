@@ -46,27 +46,25 @@ export default function ResourceHubCard({
         />
       </div>
 
-      <div className="p-4 sm:p-5 flex flex-col flex-1 border-t border-white/8">
-        <div className="flex items-center justify-between gap-2 mb-1.5">
-          <h2 className="font-display text-lg sm:text-xl font-bold tracking-tight text-white group-hover:text-cyan-200 transition-colors">
-            {hub.name}
-          </h2>
-        </div>
+      <div className="p-2.5 sm:p-4 flex flex-col flex-1 border-t border-white/8">
+        <h2 className="font-display text-xs sm:text-base md:text-lg font-bold tracking-tight text-white group-hover:text-cyan-200 transition-colors line-clamp-2">
+          {hub.name}
+        </h2>
 
         {hub.description && (
-          <p className="text-xs sm:text-sm text-wisdom-muted leading-relaxed line-clamp-2 mb-3">
+          <p className="hidden sm:block text-xs text-wisdom-muted leading-relaxed line-clamp-2 mt-1 mb-2">
             {hub.description}
           </p>
         )}
 
-        <div className="mt-auto pt-3 flex items-center justify-between border-t border-white/5">
-          <span className="text-xs sm:text-sm font-semibold flex items-center gap-1.5 text-cyan-300">
+        <div className="mt-auto pt-2 flex items-center justify-between border-t border-white/5">
+          <span className="text-[11px] sm:text-xs font-semibold flex items-center gap-1 text-cyan-300">
             {owned || lockMode === "open"
-              ? "Open hub"
+              ? "Open"
               : lockMode === "require_purchase"
-                ? "Unlock hub"
+                ? "Unlock"
                 : "Preview"}
-            <ChevronRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
+            <ChevronRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
           </span>
         </div>
       </div>
@@ -81,7 +79,7 @@ export default function ResourceHubCard({
           onClick={() =>
             lockMode === "require_purchase" ? setBuyOpen(true) : setSoonOpen(true)
           }
-          className="card-modern group flex flex-col text-left w-full cursor-pointer hover:border-cyan-400/40 shadow-lg"
+          className="card-modern group flex flex-col text-left w-full cursor-pointer hover:border-cyan-400/40 shadow-lg overflow-hidden"
         >
           {body}
         </button>
@@ -100,7 +98,7 @@ export default function ResourceHubCard({
     <Link
       href={href}
       prefetch={true}
-      className="card-modern group flex flex-col shadow-lg hover:border-cyan-400/30 transition-all"
+      className="card-modern group flex flex-col shadow-lg hover:border-cyan-400/30 transition-all overflow-hidden"
     >
       {body}
     </Link>
