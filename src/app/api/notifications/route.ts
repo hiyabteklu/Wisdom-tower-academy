@@ -5,6 +5,8 @@ import {
   deleteNotification,
 } from "@/lib/notifications";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = req.nextUrl;
