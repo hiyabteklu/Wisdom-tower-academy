@@ -35,6 +35,15 @@ export default function AccountPage() {
   const [copiedFolio, setCopiedFolio] = useState(false);
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("tab") === "profile") {
+        setTab("profile");
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       let activeUser = session?.user;
       if (!activeUser && typeof window !== "undefined") {
@@ -208,7 +217,7 @@ export default function AccountPage() {
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold text-slate-200 hover:text-white bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 hover:border-cyan-400/40 shadow-sm transition-all duration-200 active:scale-95"
               >
                 <Settings2 className="w-3.5 h-3.5 text-cyan-300" />
-                <span>Edit Profile</span>
+                <span>Preferences</span>
               </Link>
 
               <button

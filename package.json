@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev -p 3000 -H 0.0.0.0",
     "prebuild": "node scripts/restore-ui-polish.mjs && node scripts/restore-rich-content.mjs",
-    "build": "node scripts/restore-ui-polish.mjs && node scripts/restore-rich-content.mjs && next build",
+    "build": "node scripts/restore-ui-polish.mjs && node scripts/restore-rich-content.mjs && NODE_OPTIONS=\"--max-old-space-size=1536\" next build",
     "start": "next start",
     "lint": "next lint",
     "cap:sync": "npx cap sync android",

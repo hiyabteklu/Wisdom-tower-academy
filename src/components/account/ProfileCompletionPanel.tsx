@@ -63,10 +63,14 @@ export default function ProfileCompletionPanel({
   const [savedFlash, setSavedFlash] = useState(false);
   const [hasCelebrated, setHasCelebrated] = useState(false);
 
+  // Gauge details collapsible (default collapsed for sleek horizontal presence)
+  const [openGauge, setOpenGauge] = useState(false);
+
+  // Forms collapsed by default for clean horizontal card presentation
   const [openSub, setOpenSub] = useState<Record<string, boolean>>({
-    avatar: true,
-    academic: true,
-    contact: true,
+    avatar: false,
+    academic: false,
+    contact: false,
   });
 
   const toggleSub = (key: string) => {
@@ -124,100 +128,120 @@ export default function ProfileCompletionPanel({
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto transition-opacity duration-300">
-      {/* Top Completion Gauge Card */}
-      <div className="rounded-3xl border border-white/10 bg-[#0c1427]/80 backdrop-blur-xl p-6 sm:p-7 shadow-[0_12px_40px_rgba(0,0,0,0.3)]">
-        <div className="flex flex-col sm:flex-row items-center gap-6">
-          {/* Circular Progress Gauge */}
-          <div className="relative shrink-0 w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center">
-            <svg
-              className="w-full h-full -rotate-90 transform"
-              viewBox="0 0 100 100"
-            >
-              <circle
-                cx="50"
-                cy="50"
-                r="40"
-                className="stroke-white/[0.08]"
-                strokeWidth="8"
-                fill="transparent"
-              />
-              <circle
-                cx="50"
-                cy="50"
-                r="40"
-                className={`transition-all duration-1000 ease-out ${
-                  profileCompletion >= 100
-                    ? "stroke-amber-400"
-                    : "stroke-cyan-400"
-                }`}
-                strokeWidth="8"
-                strokeDasharray={251.327}
-                strokeDashoffset={
-                  251.327 - (251.327 * profileCompletion) / 100
-                }
-                strokeLinecap="round"
-                fill="transparent"
-              />
-            </svg>
+    <div className="space-y-4 max-w-4xl mx-auto transition-opacity duration-300">
+      {/* Top Completion Gauge Card — sleek compact horizontal card with collapsible checklist */}
+      <div className="rounded-2xl border border-white/10 bg-[#0c1427]/80 backdrop-blur-xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.25)] transition-all">
+        <button
+          type="button"
+          onClick={() => setOpenGauge((prev) => !prev)}
+          className="w-full p-3.5 sm:p-4.5 flex items-center justify-between text-left hover:bg-white/[0.02] cursor-pointer"
+        >
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+            {/* Compact Circular Progress Gauge */}
+            <div className="relative shrink-0 w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center">
+              <svg
+                className="w-full h-full -rotate-90 transform"
+                viewBox="0 0 100 100"
+              >
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  className="stroke-white/[0.08]"
+                  strokeWidth="8"
+                  fill="transparent"
+                />
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  className={`transition-all duration-1000 ease-out ${
+                    profileCompletion >= 100
+                      ? "stroke-amber-400"
+                      : "stroke-cyan-400"
+                  }`}
+                  strokeWidth="8"
+                  strokeDasharray={251.327}
+                  strokeDashoffset={
+                    251.327 - (251.327 * profileCompletion) / 100
+                  }
+                  strokeLinecap="round"
+                  fill="transparent"
+                />
+              </svg>
 
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center select-none">
-              {profileCompletion >= 100 ? (
-                <>
-                  <Crown className="w-4 h-4 text-amber-300 fill-amber-400 mb-0.5" />
-                  <span className="text-base font-black text-amber-300 font-display leading-none">
-                    100%
-                  </span>
-                  <span className="text-[7.5px] font-bold text-amber-400/90 tracking-widest uppercase mt-0.5">
-                    CROWNED
-                  </span>
-                </>
-              ) : (
-                <>
-                  <span className="text-lg font-bold text-white font-display leading-none">
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center select-none">
+                {profileCompletion >= 100 ? (
+                  <Crown className="w-3.5 h-3.5 text-amber-300 fill-amber-400" />
+                ) : (
+                  <span className="text-[11px] sm:text-xs font-bold text-white font-display leading-none">
                     {profileCompletion}%
                   </span>
-                  <span className="text-[8px] font-semibold text-slate-400 tracking-wider uppercase mt-0.5">
-                    COMPLETE
-                  </span>
-                </>
-              )}
+                )}
+              </div>
+            </div>
+
+            {/* Gauge Details Header */}
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <h3 className="text-xs sm:text-sm font-bold text-white truncate">
+                  {profileCompletion >= 100 ? (
+                    <span className="flex items-center gap-1.5 text-amber-300">
+                      <Award className="w-4 h-4 shrink-0" />
+                      Scholar Profile Verified
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1.5 text-white">
+                      <Sparkles className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                      Scholar Profile Verification
+                    </span>
+                  )}
+                </h3>
+
+                <span
+                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${
+                    profileCompletion >= 100
+                      ? "bg-amber-400/20 text-amber-300 border border-amber-400/40"
+                      : "bg-cyan-500/20 text-cyan-300 border border-cyan-400/30"
+                  }`}
+                >
+                  {profileCompletion}% Complete
+                </span>
+              </div>
+
+              <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                {profileCompletion >= 100
+                  ? "👑 Golden Scholar Crown active on student ID"
+                  : "Avatar, academic track, institution & phone required"}
+              </p>
             </div>
           </div>
 
-          {/* Gauge Details */}
-          <div className="min-w-0 flex-1 text-center sm:text-left space-y-2">
-            <div className="flex flex-wrap items-center justify-center sm:justify-between gap-2">
-              <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
-                {profileCompletion >= 100 ? (
-                  <>
-                    <Award className="w-4 h-4 text-amber-300" />
-                    <span>Golden Scholar Crown Unlocked</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 text-cyan-400" />
-                    <span>Complete Your Scholar Profile</span>
-                  </>
-                )}
-              </h3>
+          <div className="flex items-center gap-2 shrink-0 ml-3">
+            {savedFlash && (
+              <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                <Check className="w-3 h-3 text-emerald-300" />
+                Saved
+              </span>
+            )}
+            <ChevronDown
+              className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
+                openGauge ? "rotate-180 text-white" : ""
+              }`}
+            />
+          </div>
+        </button>
 
-              {savedFlash && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                  <Check className="w-3.5 h-3.5 text-emerald-300" />
-                  Saved
-                </span>
-              )}
-            </div>
-
-            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+        {openGauge && (
+          <div className="px-4 sm:px-5 pb-4 pt-1 border-t border-white/10 space-y-2.5 bg-white/[0.01]">
+            <p className="text-xs text-slate-300 leading-relaxed">
               {profileCompletion >= 100
-                ? "Your academic profile is complete and verified! The Golden Crown appears live on your Digital Student ID Card."
-                : "Fill in your curriculum, track, institution, and contact details to verify your account and unlock your Golden Scholar badge."}
+                ? "Academic profile verified! Golden Crown badge active on your Student ID card."
+                : "Fill out the sections below to complete your scholar profile and activate the verified student ID crown."}
             </p>
 
             {/* Checklist Pills */}
-            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 pt-1">
+            <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
               {[
                 {
                   label: "Legal Name",
@@ -248,7 +272,7 @@ export default function ProfileCompletionPanel({
               ))}
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Profile Form */}

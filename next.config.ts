@@ -10,8 +10,13 @@ const DIGITAL =
 const nextConfig: NextConfig = {
   output: "standalone",
   devIndicators: false,
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   experimental: {
     devtoolSegmentExplorer: false,
+    cpus: 1,
+    webpackMemoryOptimizations: true,
   },
   async redirects() {
     return [
