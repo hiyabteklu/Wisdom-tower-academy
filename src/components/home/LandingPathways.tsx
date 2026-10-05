@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -10,10 +9,6 @@ import {
   Library,
   GraduationCap as GradCap,
   Trees,
-  FileText,
-  CheckCircle2,
-  ChevronDown,
-  Info,
 } from "lucide-react";
 import { useInView } from "@/hooks/useInView";
 import PartnershipPath from "@/components/PartnershipPath";
@@ -233,8 +228,6 @@ const freeResources = [
 ];
 
 function PathwayCard({ program }: { program: ProgramCard }) {
-  const [expanded, setExpanded] = useState(false);
-
   return (
     <article
       className={`card-modern group flex flex-col ${program.border} shadow-md shadow-black/25 transition-all overflow-hidden rounded-xl sm:rounded-2xl`}
@@ -249,49 +242,19 @@ function PathwayCard({ program }: { program: ProgramCard }) {
         />
       </Link>
 
-      <div className="p-2 sm:p-3.5 flex flex-col flex-1 justify-between gap-2 border-t border-white/8">
-        {/* Program name only — no category/tagline junk */}
-        <h3 className="font-display text-xs sm:text-base font-bold tracking-tight text-white truncate">
+      {/* One content row: title on left, Open button on right */}
+      <div className="p-2 sm:p-3 flex items-center justify-between gap-1.5 sm:gap-2 border-t border-white/8">
+        <h3 className="font-display text-xs sm:text-sm md:text-base font-bold tracking-tight text-white truncate min-w-0">
           {program.name}
         </h3>
 
-        {/* One row of two buttons side by side (mobile & desktop) */}
-        <div className="grid grid-cols-2 gap-1 sm:gap-2">
-          <Link
-            href={program.href}
-            className="flex items-center justify-center gap-1 py-1.5 px-1 sm:px-2 rounded-lg text-[11px] sm:text-xs font-bold bg-sky-500 hover:bg-sky-400 active:scale-95 text-white shadow-sm transition-all text-center"
-          >
-            <span>Open</span>
-            <ArrowRight className="w-3 h-3" />
-          </Link>
-
-          <button
-            type="button"
-            onClick={() => setExpanded(!expanded)}
-            className="flex items-center justify-center gap-0.5 sm:gap-1 py-1.5 px-1 sm:px-2 rounded-lg text-[10px] sm:text-xs font-semibold border border-white/15 bg-white/5 text-cyan-300 hover:bg-white/10 hover:border-cyan-400/40 active:scale-95 transition-all cursor-pointer"
-          >
-            <span className="truncate">What&apos;s inside</span>
-            <ChevronDown
-              className={`w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0 transition-transform duration-200 ${
-                expanded ? "rotate-180 text-cyan-400" : ""
-              }`}
-            />
-          </button>
-        </div>
-
-        {/* Collapsed bullets only when expanded */}
-        {expanded && program.includes.length > 0 && (
-          <div className="pt-2 border-t border-white/10 animate-in fade-in duration-200">
-            <ul className="space-y-1">
-              {program.includes.map((line) => (
-                <li key={line} className="flex items-start gap-1.5 text-[10px] sm:text-xs text-slate-300 leading-snug">
-                  <CheckCircle2 className="w-3 h-3 text-cyan-400 shrink-0 mt-0.5" />
-                  <span>{line}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        <Link
+          href={program.href}
+          className="shrink-0 inline-flex items-center justify-center gap-1 py-1 sm:py-1.5 px-2.5 sm:px-3 rounded-lg text-[11px] sm:text-xs font-bold bg-sky-500 hover:bg-sky-400 active:scale-95 text-white shadow-sm transition-all text-center"
+        >
+          <span>Open</span>
+          <ArrowRight className="w-3 h-3" />
+        </Link>
       </div>
     </article>
   );
@@ -315,7 +278,7 @@ export default function LandingPathways() {
             ))}
           </div>
 
-          {/* Academic Other Resources Section: tight 2 columns on mobile, 2 on tablet, 3 on desktop */}
+          {/* Academic Other Resources Section: icon + title only, 2 columns on mobile */}
           <section className="mb-12">
             <div className="text-center mb-5 sm:mb-8">
               <h3 className="font-display text-lg sm:text-2xl md:text-3xl font-bold text-white">
@@ -323,45 +286,31 @@ export default function LandingPathways() {
               </h3>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-5">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
               {freeResources.map((item) => {
                 const Icon = item.icon;
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="group relative rounded-xl sm:rounded-2xl border border-white/[0.08] bg-[#0c1328]/70 hover:bg-[#0f1833]/85 backdrop-blur-xl p-2.5 sm:p-4 transition-all duration-300 shadow-[0_8px_30px_rgb(0_0_0/0.18)] hover:scale-[1.01] hover:border-white/20 active:scale-[0.99] flex flex-col justify-between"
+                    className="group relative rounded-xl sm:rounded-2xl border border-white/[0.08] bg-[#0c1328]/70 hover:bg-[#0f1833]/85 backdrop-blur-xl p-2.5 sm:p-3.5 transition-all duration-300 shadow-[0_8px_30px_rgb(0_0_0/0.18)] hover:scale-[1.01] hover:border-white/20 active:scale-[0.99] flex items-center justify-between gap-2"
                   >
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <div
-                          className={`w-7 h-7 sm:w-10 sm:h-10 rounded-full border flex items-center justify-center transition-transform duration-300 group-hover:scale-105 shadow-sm ${item.iconBg}`}
-                        >
-                          <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        </div>
-                        <span className="w-5 h-5 sm:w-7 sm:h-7 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-slate-400 group-hover:text-white group-hover:bg-white/[0.08] transition-colors">
-                          <ArrowRight className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
-                        </span>
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                      <div
+                        className={`w-7 h-7 sm:w-9 sm:h-9 shrink-0 rounded-full border flex items-center justify-center transition-transform duration-300 group-hover:scale-105 shadow-sm ${item.iconBg}`}
+                      >
+                        <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       </div>
                       <h4
-                        className={`font-display text-xs sm:text-base font-bold mb-0.5 transition-colors truncate ${item.accent}`}
+                        className={`font-display text-xs sm:text-sm md:text-base font-bold transition-colors truncate text-white ${item.accent}`}
                       >
                         {item.name}
                       </h4>
-                      <p className="text-[10px] sm:text-xs text-slate-400 leading-tight sm:leading-snug font-normal line-clamp-2">
-                        {item.blurb}
-                      </p>
                     </div>
 
-                    <div className="mt-2 sm:mt-3 pt-1.5 sm:pt-2 border-t border-white/[0.06] flex items-center justify-between">
-                      <span className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-400 truncate">
-                        Guide
-                      </span>
-                      <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-semibold text-slate-300 group-hover:text-cyan-300 transition-colors shrink-0">
-                        Open
-                        <ArrowRight className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                      </span>
-                    </div>
+                    <span className="shrink-0 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-slate-400 group-hover:text-white group-hover:bg-white/[0.08] transition-colors">
+                      <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
+                    </span>
                   </Link>
                 );
               })}
