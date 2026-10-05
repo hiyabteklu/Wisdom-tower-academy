@@ -233,29 +233,41 @@ export default function LandingPage() {
                 </>
               ) : null}
             </p>
+          </div>
 
-            {/* Welcome image as primary hero visual */}
-            <div className="mt-8 max-w-5xl">
-              <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-white/12 bg-wisdom-navy shadow-2xl shadow-black/40">
-                <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy min-h-[12rem] sm:min-h-[16rem]">
-                  {imgOk ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={ACADEMY_IMAGE}
-                      alt="Wisdom Tower Academy Learning Environment"
-                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 hover:scale-[1.02]"
-                      loading="eager"
-                      decoding="async"
-                      onError={() => setImgOk(false)}
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-wisdom-navy via-cyan-950/40 to-wisdom-dark">
-                      <p className="font-display text-xl sm:text-2xl font-bold text-white/90">Wisdom Tower Academy</p>
-                    </div>
-                  )}
+          {/* Welcome image as primary hero visual — stays full width on all screen sizes and links to Learning */}
+          <div className="mt-8 sm:mt-10 w-full">
+            <Link
+              href="/learning"
+              aria-label="Open Wisdom Tower Academy Learning Suite"
+              className="group block relative overflow-hidden rounded-2xl sm:rounded-3xl border border-white/15 bg-wisdom-navy shadow-2xl shadow-black/40 cursor-pointer active:scale-[0.99] hover:border-cyan-400/40 hover:shadow-cyan-950/25 transition-all duration-300"
+            >
+              <div className="relative aspect-video sm:aspect-[21/9] w-full overflow-hidden bg-wisdom-navy min-h-[12rem] sm:min-h-[16rem]">
+                {imgOk ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={ACADEMY_IMAGE}
+                    alt="Wisdom Tower Academy Learning Environment - Tap to open Learning"
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+                    loading="eager"
+                    decoding="async"
+                    onError={() => setImgOk(false)}
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-wisdom-navy via-cyan-950/40 to-wisdom-dark">
+                    <p className="font-display text-xl sm:text-2xl font-bold text-white/90">Wisdom Tower Academy</p>
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent pointer-events-none" />
+
+                {/* Obvious tappable indicator badge */}
+                <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-10 flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-slate-950/85 backdrop-blur-md border border-white/20 text-[11px] sm:text-xs font-bold text-white shadow-xl group-hover:border-cyan-400/60 group-hover:bg-cyan-950/90 group-hover:text-cyan-200 transition-all">
+                  <GraduationCap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400" />
+                  <span>Open Learning</span>
+                  <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-cyan-400 transition-transform duration-200 group-hover:translate-x-0.5" />
                 </div>
               </div>
-            </div>
+            </Link>
           </div>
         </div>
       </section>
