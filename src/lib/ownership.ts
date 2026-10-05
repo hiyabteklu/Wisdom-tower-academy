@@ -56,10 +56,15 @@ function allCatalogIds(): string[] {
 
 export async function getOwnedPackageIds(force = false): Promise<OwnershipMap> {
   try {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    let userId = session?.user?.id ?? null;
+    let userId: string | null = null;
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      userId = session?.user?.id ?? null;
+    } catch {
+      /* ignore crypto/jwt error */
+    }
 
     if (!userId && typeof window !== "undefined") {
       try {

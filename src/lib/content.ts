@@ -1,6 +1,10 @@
 /** Learning content CRUD + progress (Supabase metadata + hybrid storage). */
 
-import { supabase } from "@/lib/supabase";
+import {
+  supabase,
+  cleanCorruptAuthTokens,
+  getAnonSupabaseClient,
+} from "@/lib/supabase";
 import { scopeUsesAppwrite } from "@/data/admin-nav";
 
 export type HubId =
@@ -135,6 +139,22 @@ function rowToResource(row: Record<string, unknown>): LearningResource {
   };
 }
 
+function isCryptoOrTokenError(msg?: string): boolean {
+  if (!msg) return false;
+  const m = msg.toLowerCase();
+  return (
+    m.includes("no suitable key") ||
+    m.includes("wrong key type") ||
+    m.includes("crypto") ||
+    m.includes("jwt") ||
+    m.includes("token") ||
+    m.includes("key type") ||
+    m.includes("pgrst301") ||
+    m.includes("jwk") ||
+    m.includes("signature")
+  );
+}
+
 export async function listResources(opts: {
   scopePath?: string;
   hub?: HubId;
@@ -144,10 +164,15 @@ export async function listResources(opts: {
 }): Promise<{ items: LearningResource[]; error?: string }> {
   try {
     if (!opts.skipAuthCheck) {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      let hasUser = Boolean(session?.user);
+      let hasUser = false;
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        hasUser = Boolean(session?.user);
+      } catch {
+        cleanCorruptAuthTokens();
+      }
       if (!hasUser && typeof window !== "undefined") {
         try {
           const raw = window.localStorage.getItem("wt-academy-auth-v1");
@@ -172,6 +197,11 @@ export async function listResources(opts: {
         const otherSem = eceMatch[1] === "sem-1" ? "sem-2" : "sem-1";
         const swappedPath = `ece/${otherSem}/${eceMatch[2]}`;
         q = q.in("scope_path", [opts.scopePath, swappedPath]);
+      } else if (
+        opts.scopePath === "freshman/math-natural" ||
+        opts.scopePath === "freshman/mathematics"
+      ) {
+        q = q.in("scope_path", ["freshman/math-natural", "freshman/mathematics"]);
       } else {
         q = q.eq("scope_path", opts.scopePath);
       }
@@ -192,6 +222,55 @@ export async function listResources(opts: {
 
     let { data, error } = await q;
 
+    // If PostgREST rejected because of a corrupt/invalid JWT token, retry with clean anonymous client
+    if (error && isCryptoOrTokenError(error.message)) {
+      cleanCorruptAuthTokens();
+      try {
+        const anon = getAnonSupabaseClient();
+        let retryQ = anon.from("learning_resources").select("*").order("sort_order", {
+          ascending: true,
+        });
+        if (opts.scopePath) {
+          if (eceMatch) {
+            const otherSem = eceMatch[1] === "sem-1" ? "sem-2" : "sem-1";
+            const swappedPath = `ece/${otherSem}/${eceMatch[2]}`;
+            retryQ = retryQ.in("scope_path", [opts.scopePath, swappedPath]);
+          } else if (
+            opts.scopePath === "freshman/math-natural" ||
+            opts.scopePath === "freshman/mathematics"
+          ) {
+            retryQ = retryQ.in("scope_path", ["freshman/math-natural", "freshman/mathematics"]);
+          } else {
+            retryQ = retryQ.eq("scope_path", opts.scopePath);
+          }
+        }
+        if (opts.hub === "short-notes") {
+          retryQ = retryQ.in("hub", ["short-notes", "references"]);
+        } else if (opts.hub) {
+          retryQ = retryQ.eq("hub", opts.hub);
+        }
+        if (opts.packageId) {
+          if (opts.packageId === "ece-y3-sem-1" || opts.packageId === "ece-y3-sem-2") {
+            retryQ = retryQ.in("package_id", ["ece-y3-sem-1", "ece-y3-sem-2"]);
+          } else {
+            retryQ = retryQ.eq("package_id", opts.packageId);
+          }
+        }
+        if (opts.publishedOnly) retryQ = retryQ.eq("published", true);
+
+        const retryRes = await retryQ;
+        if (retryRes.data && retryRes.data.length > 0) {
+          data = retryRes.data;
+          error = null;
+        } else if (!retryRes.error) {
+          data = retryRes.data || [];
+          error = null;
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+
     // Fallback: If no items found for an ECE course, search by course slug
     if ((!data || data.length === 0) && eceMatch) {
       const courseSlug = eceMatch[2];
@@ -208,31 +287,87 @@ export async function listResources(opts: {
       }
       if (opts.publishedOnly) fallbackQ = fallbackQ.eq("published", true);
 
-      const fallbackRes = await fallbackQ;
+      let fallbackRes = await fallbackQ;
+      if (fallbackRes.error && isCryptoOrTokenError(fallbackRes.error.message)) {
+        cleanCorruptAuthTokens();
+        try {
+          const anon = getAnonSupabaseClient();
+          let anonFallbackQ = anon
+            .from("learning_resources")
+            .select("*")
+            .ilike("scope_path", `%${courseSlug}%`)
+            .order("sort_order", { ascending: true });
+          if (opts.hub === "short-notes") {
+            anonFallbackQ = anonFallbackQ.in("hub", ["short-notes", "references"]);
+          } else if (opts.hub) {
+            anonFallbackQ = anonFallbackQ.eq("hub", opts.hub);
+          }
+          if (opts.publishedOnly) anonFallbackQ = anonFallbackQ.eq("published", true);
+          fallbackRes = await anonFallbackQ;
+        } catch {
+          /* ignore */
+        }
+      }
       if (fallbackRes.data && fallbackRes.data.length > 0) {
         data = fallbackRes.data;
         error = null;
       }
     }
 
-    if (error) return { items: [], error: error.message };
+    // Server-side API fallback: if client queries returned 0 items or errored, fetch via same-origin route
+    if ((!data || data.length === 0 || error) && typeof window !== "undefined") {
+      try {
+        const params = new URLSearchParams();
+        if (opts.scopePath) params.set("scopePath", opts.scopePath);
+        if (opts.hub) params.set("hub", opts.hub);
+        if (opts.packageId) params.set("packageId", opts.packageId);
+        if (opts.publishedOnly) params.set("publishedOnly", "true");
+        const apiRes = await fetch(`/api/content/resources?${params.toString()}`);
+        if (apiRes.ok) {
+          const json = await apiRes.json();
+          if (Array.isArray(json?.items) && json.items.length > 0) {
+            return { items: json.items };
+          }
+        }
+      } catch {
+        /* ignore fetch failure */
+      }
+    }
+
+    if (error) {
+      if (isCryptoOrTokenError(error.message)) {
+        cleanCorruptAuthTokens();
+        return {
+          items: [],
+          error: "Unable to load materials right now. Tap Retry to reconnect.",
+        };
+      }
+      return {
+        items: [],
+        error: "Unable to load materials right now. Please check your connection and retry.",
+      };
+    }
 
     // Auto-heal in background: if any ECE items still had the old scope_path or package_id, normalize them
     if (data && data.length > 0 && eceMatch && opts.scopePath) {
-      const targetScope = opts.scopePath;
-      const targetPackage = eceMatch[1] === "sem-1" ? "ece-y3-sem-1" : "ece-y3-sem-2";
-      for (const row of data) {
-        const r = row as Record<string, unknown>;
-        if (r.scope_path !== targetScope || r.package_id !== targetPackage) {
-          void supabase
-            .from("learning_resources")
-            .update({
-              scope_path: targetScope,
-              package_id: targetPackage,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", r.id);
+      try {
+        const targetScope = opts.scopePath;
+        const targetPackage = eceMatch[1] === "sem-1" ? "ece-y3-sem-1" : "ece-y3-sem-2";
+        for (const row of data) {
+          const r = row as Record<string, unknown>;
+          if (r.scope_path !== targetScope || r.package_id !== targetPackage) {
+            void supabase
+              .from("learning_resources")
+              .update({
+                scope_path: targetScope,
+                package_id: targetPackage,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", r.id);
+          }
         }
+      } catch {
+        /* background heal is non-critical */
       }
     }
 
@@ -247,21 +382,55 @@ export async function listResources(opts: {
       }),
     };
   } catch (e) {
-    return { items: [], error: e instanceof Error ? e.message : "Failed" };
+    const msg = e instanceof Error ? e.message : "Failed";
+    if (isCryptoOrTokenError(msg)) {
+      cleanCorruptAuthTokens();
+      return {
+        items: [],
+        error: "Unable to load materials right now. Tap Retry to reconnect.",
+      };
+    }
+    return {
+      items: [],
+      error: "Unable to load materials right now. Please check your connection and retry.",
+    };
   }
 }
 
 export async function getResourceById(
   id: string
 ): Promise<{ item?: LearningResource; error?: string }> {
-  const { data, error } = await supabase
-    .from("learning_resources")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
-  if (error) return { error: error.message };
-  if (!data) return {};
-  return { item: rowToResource(data as Record<string, unknown>) };
+  try {
+    let { data, error } = await supabase
+      .from("learning_resources")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (error && isCryptoOrTokenError(error.message)) {
+      cleanCorruptAuthTokens();
+      try {
+        const anon = getAnonSupabaseClient();
+        const retryRes = await anon
+          .from("learning_resources")
+          .select("*")
+          .eq("id", id)
+          .maybeSingle();
+        if (retryRes.data) {
+          data = retryRes.data;
+          error = null;
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+
+    if (error) return { error: "Unable to load item." };
+    if (!data) return {};
+    return { item: rowToResource(data as Record<string, unknown>) };
+  } catch {
+    return { error: "Unable to load item." };
+  }
 }
 
 export async function upsertResource(
@@ -579,10 +748,16 @@ export async function getScopeStats(opts: {
     streakDays: 0,
   };
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session?.user) return { stats: empty };
+  let sessionUser = null;
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    sessionUser = session?.user || null;
+  } catch {
+    cleanCorruptAuthTokens();
+  }
+  if (!sessionUser) return { stats: empty };
 
   const eceMatch = opts.scopePath?.match(/^ece\/(sem-[12])\/([^/]+)$/);
   let rq = supabase
@@ -604,6 +779,34 @@ export async function getScopeStats(opts: {
 
   let { data: resources, error: rErr } = await rq;
 
+  if (rErr && isCryptoOrTokenError(rErr.message)) {
+    cleanCorruptAuthTokens();
+    try {
+      const anon = getAnonSupabaseClient();
+      let retryRq = anon
+        .from("learning_resources")
+        .select("id, title, hub, content_type, scope_path");
+      if (eceMatch) {
+        const otherSem = eceMatch[1] === "sem-1" ? "sem-2" : "sem-1";
+        retryRq = retryRq.in("scope_path", [opts.scopePath, `ece/${otherSem}/${eceMatch[2]}`]);
+      } else {
+        retryRq = retryRq.eq("scope_path", opts.scopePath);
+      }
+      if (opts.hub === "short-notes") {
+        retryRq = retryRq.in("hub", ["short-notes", "references"]);
+      } else if (opts.hub) {
+        retryRq = retryRq.eq("hub", opts.hub);
+      }
+      const retryRes = await retryRq;
+      if (retryRes.data?.length) {
+        resources = retryRes.data;
+        rErr = null;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
   if ((!resources || resources.length === 0) && eceMatch) {
     const courseSlug = eceMatch[2];
     let fallbackRq = supabase
@@ -622,7 +825,7 @@ export async function getScopeStats(opts: {
       rErr = null;
     }
   }
-  if (rErr) return { stats: empty, error: rErr.message };
+  if (rErr) return { stats: empty };
   if (!resources?.length) return { stats: empty };
 
   const ids = resources.map((r) => String(r.id));
@@ -646,7 +849,7 @@ export async function getScopeStats(opts: {
     .select(
       "resource_id, progress_pct, total_seconds, focus_seconds, last_opened_at, meta"
     )
-    .eq("user_id", session.user.id)
+    .eq("user_id", sessionUser.id)
     .in("resource_id", ids);
 
   if (pErr) return { stats: empty, error: pErr.message };

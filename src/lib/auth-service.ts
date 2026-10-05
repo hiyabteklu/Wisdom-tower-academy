@@ -121,44 +121,44 @@ export function findLocalScholar(
  * Creates and writes a Supabase-compatible session directly to localStorage
  * so that supabase.auth.getSession(), AccountPage, Settings, and Learning immediately recognize the active session.
  */
-export function persistScholarSession(account: {
-  id: string;
-  email: string;
-  fullName: string;
-  educationLevel: string;
-  phone?: string | null;
-}) {
+export function persistScholarSession(
+  account: {
+    id: string;
+    email: string;
+    fullName: string;
+    educationLevel: string;
+    phone?: string | null;
+  },
+  realTokens?: {
+    access_token?: string;
+    refresh_token?: string;
+    expires_at?: number;
+    expires_in?: number;
+  }
+) {
   if (typeof window === "undefined") return;
 
   const nowSec = Math.floor(Date.now() / 1000);
-  const expSec = nowSec + 60 * 60 * 24 * 30; // 30 days
+  const expSec = realTokens?.expires_at ?? nowSec + 60 * 60 * 24 * 30; // 30 days
 
-  // Generate structurally valid 3-part base64 JWT so decodeJWT never throws
-  let jwtToken = `wt-token-${account.id}-${nowSec}`;
-  try {
-    const h = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-    const p = btoa(
-      JSON.stringify({
-        sub: account.id,
-        aud: "authenticated",
-        role: "authenticated",
-        email: account.email,
-        exp: expSec,
-        iat: nowSec,
-      })
-    );
-    const s = btoa(`sig_${account.id}_${nowSec}`);
-    jwtToken = `${h}.${p}.${s}`;
-  } catch {
-    /* fallback to plain string */
-  }
+  // Use real JWT token from Supabase Auth if available.
+  // CRITICAL: NEVER invent synthetic HMAC signatures (e.g. btoa("sig_...")) as that triggers
+  // PostgREST 401 "No suitable key or wrong key type" on every database query.
+  const hasValidRealToken =
+    typeof realTokens?.access_token === "string" &&
+    realTokens.access_token.split(".").length === 3 &&
+    !realTokens.access_token.includes("sig_") &&
+    !realTokens.access_token.includes("c2lnX");
+
+  const accessToken = hasValidRealToken ? realTokens!.access_token! : "";
+  const refreshToken = realTokens?.refresh_token || "";
 
   const sessionPayload = {
-    access_token: jwtToken,
+    access_token: accessToken,
     token_type: "bearer",
-    expires_in: 60 * 60 * 24 * 30, // 30 days
+    expires_in: realTokens?.expires_in ?? 60 * 60 * 24 * 30,
     expires_at: expSec,
-    refresh_token: `wt-refresh-${account.id}`,
+    refresh_token: refreshToken,
     user: {
       id: account.id,
       aud: "authenticated",
@@ -197,14 +197,18 @@ export function persistScholarSession(account: {
     };
     window.localStorage.setItem(profileKey, JSON.stringify(cachedProfile));
 
-    // Also update current active session inside supabase client singleton if possible
-    try {
-      supabase.auth.setSession({
-        access_token: jwtToken,
-        refresh_token: `wt-refresh-${account.id}`,
-      }).catch(() => {});
-    } catch {
-      /* ignore */
+    // Only set session in Supabase if we have a real, cryptographically valid token
+    if (hasValidRealToken) {
+      try {
+        supabase.auth
+          .setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          })
+          .catch(() => {});
+      } catch {
+        /* ignore */
+      }
     }
 
     // Notify all app listeners
@@ -264,14 +268,22 @@ export async function loginScholar(
         const user = data.session.user;
         const education =
           (user.user_metadata?.education_level as string) || "Freshman";
-        persistScholarSession({
-          id: user.id,
-          email: user.email || authEmail,
-          fullName:
-            (user.user_metadata?.full_name as string) || "Student Scholar",
-          educationLevel: education,
-          phone: phoneNum || (user.user_metadata?.phone as string) || null,
-        });
+        persistScholarSession(
+          {
+            id: user.id,
+            email: user.email || authEmail,
+            fullName:
+              (user.user_metadata?.full_name as string) || "Student Scholar",
+            educationLevel: education,
+            phone: phoneNum || (user.user_metadata?.phone as string) || null,
+          },
+          {
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
+            expires_at: data.session.expires_at,
+            expires_in: data.session.expires_in,
+          }
+        );
         return { success: true, user: user as unknown as Partial<User> };
       }
     } catch {
@@ -374,6 +386,15 @@ export async function registerScholar(params: {
     createdAt: new Date().toISOString(),
   };
 
+  let sessionTokens:
+    | {
+        access_token?: string;
+        refresh_token?: string;
+        expires_at?: number;
+        expires_in?: number;
+      }
+    | undefined = undefined;
+
   // Try server-side or Supabase sign-up in background/best-effort
   if (isSupabaseConfigured()) {
     try {
@@ -402,6 +423,23 @@ export async function registerScholar(params: {
           },
         })
         .catch(() => null);
+
+      // Attempt immediate sign in to obtain real JWT tokens from Supabase Auth
+      const { data: signInData } = await supabase.auth
+        .signInWithPassword({
+          email: authEmail,
+          password,
+        })
+        .catch(() => ({ data: null }));
+
+      if (signInData?.session?.access_token) {
+        sessionTokens = {
+          access_token: signInData.session.access_token,
+          refresh_token: signInData.session.refresh_token,
+          expires_at: signInData.session.expires_at,
+          expires_in: signInData.session.expires_in,
+        };
+      }
     } catch {
       /* ignore */
     }
@@ -411,13 +449,16 @@ export async function registerScholar(params: {
   saveLocalScholarAccount(newAccount);
 
   // Set active session in localStorage
-  persistScholarSession({
-    id: newAccount.id,
-    email: newAccount.email,
-    fullName: newAccount.fullName,
-    educationLevel: newAccount.educationLevel,
-    phone: newAccount.phone,
-  });
+  persistScholarSession(
+    {
+      id: newAccount.id,
+      email: newAccount.email,
+      fullName: newAccount.fullName,
+      educationLevel: newAccount.educationLevel,
+      phone: newAccount.phone,
+    },
+    sessionTokens
+  );
 
   // Apply default My Learning packages based on the academic level!
   applyDefaultPackagesForLevel(educationLevel);

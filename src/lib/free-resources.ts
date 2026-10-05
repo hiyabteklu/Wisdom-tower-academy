@@ -1,6 +1,10 @@
 /** Free resource pages + individual items (success stories, scholarships, admin notes). */
 
-import { supabase } from "@/lib/supabase";
+import {
+  supabase,
+  cleanCorruptAuthTokens,
+  getAnonSupabaseClient,
+} from "@/lib/supabase";
 
 export type FreeResourceSlug =
   | "success-stories"
@@ -205,25 +209,6 @@ function writeCachedFreeItems(slug: string, items: FreeResourceItem[]): void {
   } catch {}
 }
 
-function cleanCorruptAuthTokensIfCryptoError(errText: string) {
-  if (typeof window === "undefined") return;
-  const isCryptoErr =
-    errText.includes("No suitable key") ||
-    errText.includes("wrong key type") ||
-    errText.includes("crypto") ||
-    errText.includes("key type");
-  if (isCryptoErr) {
-    try {
-      for (let i = localStorage.length - 1; i >= 0; i--) {
-        const k = localStorage.key(i);
-        if (k && (k.startsWith("sb-") && k.endsWith("-auth-token"))) {
-          localStorage.removeItem(k);
-        }
-      }
-    } catch {}
-  }
-}
-
 export async function getFreeResourcePage(
   slug: FreeResourceSlug,
   opts?: { publishedOnly?: boolean }
@@ -231,17 +216,32 @@ export async function getFreeResourcePage(
   try {
     let q = supabase.from("free_resource_pages").select("*").eq("slug", slug);
     if (opts?.publishedOnly) q = q.eq("published", true);
-    const { data, error } = await q.maybeSingle();
+    let { data, error } = await q.maybeSingle();
+
     if (error) {
-      cleanCorruptAuthTokensIfCryptoError(error.message);
-      return { error: error.message.includes("key") ? "Unable to load page" : error.message };
+      cleanCorruptAuthTokens();
+      try {
+        const anon = getAnonSupabaseClient();
+        let retryQ = anon.from("free_resource_pages").select("*").eq("slug", slug);
+        if (opts?.publishedOnly) retryQ = retryQ.eq("published", true);
+        const retryRes = await retryQ.maybeSingle();
+        if (retryRes.data) {
+          data = retryRes.data;
+          error = null;
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+
+    if (error) {
+      return { error: "Unable to load page" };
     }
     if (!data) return {};
     return { item: rowToPage(data as Record<string, unknown>) };
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "Failed";
-    cleanCorruptAuthTokensIfCryptoError(msg);
-    return { error: msg.includes("key") ? "Unable to load page" : msg };
+    cleanCorruptAuthTokens();
+    return { error: "Unable to load page" };
   }
 }
 
@@ -286,28 +286,37 @@ export async function listFreeResourceItems(opts: {
       .order("created_at", { ascending: false });
     if (opts.publishedOnly) q = q.eq("published", true);
     if (opts.kind) q = q.eq("kind", opts.kind);
-    const { data, error } = await q;
+    let { data, error } = await q;
 
     if (error) {
-      cleanCorruptAuthTokensIfCryptoError(error.message);
+      cleanCorruptAuthTokens();
       const cached = readCachedFreeItems(opts.pageSlug);
       if (cached.length) return { items: cached };
 
-      // Retry once after purging corrupt auth key
-      const retry = await q;
-      if (retry.data && retry.data.length > 0) {
-        const mapped = retry.data.map((r) => rowToItem(r as Record<string, unknown>));
-        writeCachedFreeItems(opts.pageSlug, mapped);
-        return { items: mapped };
+      // Retry once using isolated anonymous client without broken tokens
+      try {
+        const anon = getAnonSupabaseClient();
+        let retryQ = anon
+          .from("free_resource_items")
+          .select("*")
+          .eq("page_slug", opts.pageSlug)
+          .order("sort_order", { ascending: true })
+          .order("created_at", { ascending: false });
+        if (opts.publishedOnly) retryQ = retryQ.eq("published", true);
+        if (opts.kind) retryQ = retryQ.eq("kind", opts.kind);
+        const retryRes = await retryQ;
+        if (retryRes.data && retryRes.data.length > 0) {
+          const mapped = retryRes.data.map((r) => rowToItem(r as Record<string, unknown>));
+          writeCachedFreeItems(opts.pageSlug, mapped);
+          return { items: mapped };
+        }
+      } catch {
+        /* ignore */
       }
 
-      const isCrypto =
-        error.message.includes("key") ||
-        error.message.includes("crypto") ||
-        error.message.includes("token");
       return {
         items: [],
-        error: isCrypto ? "Unable to load items right now." : error.message,
+        error: "Unable to load items right now.",
       };
     }
 
@@ -321,16 +330,13 @@ export async function listFreeResourceItems(opts: {
     }
     return { items };
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "Failed";
-    cleanCorruptAuthTokensIfCryptoError(msg);
+    cleanCorruptAuthTokens();
     const cached = readCachedFreeItems(opts.pageSlug);
     if (cached.length) return { items: cached };
 
-    const isCrypto =
-      msg.includes("key") || msg.includes("crypto") || msg.includes("token");
     return {
       items: [],
-      error: isCrypto ? "Unable to load items right now." : msg,
+      error: "Unable to load items right now.",
     };
   }
 }

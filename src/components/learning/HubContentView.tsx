@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -14,6 +14,7 @@ import {
 } from "@/lib/contentWithOffline";
 import { getSeenResourceIds, markResourceSeen } from "@/lib/seenItems";
 import { isFreeForRegistered, isPackageOwned } from "@/lib/ownership";
+import { cleanCorruptAuthTokens } from "@/lib/supabase";
 import {
   BookOpen,
   Clock,
@@ -116,31 +117,32 @@ export default function HubContentView({
     setSeenIds(getSeenResourceIds());
   }, []);
 
+  const loadHubData = useCallback(async () => {
+    const has = await isPackageOwned(packageId);
+    setOwned(has);
+    if (!has) {
+      setLoading(false);
+      return;
+    }
+    const res = await listResources({
+      scopePath,
+      hub,
+      publishedOnly: true,
+    });
+    setItems(res.items);
+    setFetchError(res.error || null);
+    setLoading(false);
+  }, [scopePath, hub, packageId]);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const has = await isPackageOwned(packageId);
-      if (cancelled) return;
-      setOwned(has);
-      if (!has) {
-        setLoading(false);
-        return;
-      }
-      const res = await listResources({
-        scopePath,
-        hub,
-        publishedOnly: true,
-      });
-      if (!cancelled) {
-        setItems(res.items);
-        setFetchError(res.error || null);
-        setLoading(false);
-      }
+      await loadHubData();
     })();
     return () => {
       cancelled = true;
     };
-  }, [scopePath, hub, packageId]);
+  }, [loadHubData]);
 
   useEffect(() => {
     if (!active || !owned) return;
@@ -457,23 +459,52 @@ export default function HubContentView({
 
   if (items.length === 0) {
     const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
+    const isTechnical =
+      Boolean(fetchError) &&
+      (fetchError!.toLowerCase().includes("key") ||
+        fetchError!.toLowerCase().includes("crypto") ||
+        fetchError!.toLowerCase().includes("token") ||
+        fetchError!.toLowerCase().includes("pgrst") ||
+        fetchError!.toLowerCase().includes("jwt") ||
+        fetchError!.toLowerCase().includes("syntax") ||
+        fetchError!.toLowerCase().includes("relation") ||
+        fetchError!.toLowerCase().includes("exception") ||
+        fetchError!.toLowerCase().includes("undefined"));
+
+    const displayMsg = isTechnical
+      ? "Unable to load materials right now. Tap Retry to reconnect."
+      : fetchError ||
+        (isOffline
+          ? "You are currently offline. Connect to the internet to load materials."
+          : "No published materials in this hub yet. Check back soon.");
+
     return (
       <div className="rounded-2xl border border-white/12 bg-wisdom-card p-8 text-center text-wisdom-muted text-sm space-y-3">
         <FileText className="w-8 h-8 mx-auto mb-1 opacity-50" />
-        <p className="max-w-md mx-auto leading-relaxed">
-          {fetchError ||
-            (isOffline
-              ? "You are currently offline. Connect to the internet to load materials."
-              : "No published materials in this hub yet. Check back soon.")}
-        </p>
+        <p className="max-w-md mx-auto leading-relaxed">{displayMsg}</p>
         {fetchError && (
-          <div className="pt-2">
+          <div className="pt-2 flex items-center justify-center gap-2">
             <button
               type="button"
-              onClick={() => window.location.reload()}
+              onClick={() => {
+                cleanCorruptAuthTokens();
+                setLoading(true);
+                setFetchError(null);
+                void loadHubData();
+              }}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-white transition-colors cursor-pointer"
             >
               Retry
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                cleanCorruptAuthTokens();
+                window.location.reload();
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-transparent hover:bg-white/5 text-[11px] text-wisdom-muted hover:text-white transition-colors cursor-pointer"
+            >
+              Refresh page
             </button>
           </div>
         )}

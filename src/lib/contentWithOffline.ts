@@ -17,6 +17,7 @@ import {
   type ProgressMeta,
   type HubId,
 } from "@/lib/content";
+import { cleanCorruptAuthTokens } from "@/lib/supabase";
 import {
   cacheResources,
   readCachedResources,
@@ -99,6 +100,19 @@ export async function listResources(opts: {
 
     // If online fetch returned an error (e.g. network failure, timeout, auth issue)
     if (res.error) {
+      const isKeyOrCrypto =
+        res.error.toLowerCase().includes("key") ||
+        res.error.toLowerCase().includes("crypto") ||
+        res.error.toLowerCase().includes("token") ||
+        res.error.toLowerCase().includes("pgrst") ||
+        res.error.toLowerCase().includes("jwt") ||
+        res.error.toLowerCase().includes("syntax") ||
+        res.error.toLowerCase().includes("relation");
+
+      if (isKeyOrCrypto) {
+        cleanCorruptAuthTokens();
+      }
+
       // ALWAYS check cache first — prefer cache over empty error
       const cached = readCachedResources<LearningResource>(key);
       if (cached.length) {
@@ -112,7 +126,9 @@ export async function listResources(opts: {
       }
       return {
         items: [],
-        error: res.error,
+        error: isKeyOrCrypto
+          ? "Unable to load materials right now. Tap Retry to reconnect."
+          : res.error,
       };
     }
 
@@ -126,6 +142,20 @@ export async function listResources(opts: {
     // Truly empty hub online: both online returned 0 rows AND cache has 0 entries
     return { items: [] };
   } catch (err) {
+    const rawMsg = err instanceof Error ? err.message : "Failed";
+    const isKeyOrCrypto =
+      rawMsg.toLowerCase().includes("key") ||
+      rawMsg.toLowerCase().includes("crypto") ||
+      rawMsg.toLowerCase().includes("token") ||
+      rawMsg.toLowerCase().includes("pgrst") ||
+      rawMsg.toLowerCase().includes("jwt") ||
+      rawMsg.toLowerCase().includes("syntax") ||
+      rawMsg.toLowerCase().includes("relation");
+
+    if (isKeyOrCrypto) {
+      cleanCorruptAuthTokens();
+    }
+
     const cached = readCachedResources<LearningResource>(key);
     if (cached.length) return { items: cached };
     if (typeof navigator !== "undefined" && !navigator.onLine) {
@@ -136,7 +166,7 @@ export async function listResources(opts: {
     }
     return {
       items: [],
-      error: err instanceof Error ? err.message : "Unable to load materials. Please check your connection and retry.",
+      error: "Unable to load materials right now. Tap Retry to reconnect.",
     };
   }
 }
