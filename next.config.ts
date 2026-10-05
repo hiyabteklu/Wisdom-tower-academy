@@ -66,6 +66,16 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
       {
+        source: "/academy/special-packages/ece",
+        destination: "/academy/special-packages/electrical-computer-engineering",
+        permanent: false,
+      },
+      {
+        source: "/academy/special-packages/ece/:path*",
+        destination: "/academy/special-packages/electrical-computer-engineering/:path*",
+        permanent: false,
+      },
+      {
         source: "/digital",
         destination: DIGITAL,
         permanent: false,

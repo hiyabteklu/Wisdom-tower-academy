@@ -9,6 +9,7 @@ import {
   Layers,
   FileText,
   Award,
+  HelpCircle,
   Timer,
   Calendar,
   CheckSquare,
@@ -104,7 +105,7 @@ const AVAILABLE_COURSES = [
     id: "ece",
     title: "3rd Year (ECE) Engineering",
     level: "University Special",
-    path: "/academy/special-packages/ece",
+    path: "/academy/special-packages/electrical-computer-engineering",
     image: "/images/special-packages/ece.jpg",
     desc: "Electrical and Computer Engineering semester modules, laboratory notes, and past exams.",
   },
@@ -1305,31 +1306,38 @@ function LearningContent() {
 
                     <div>
                       {/* Fast Navigation Hub Links */}
-                      <div className="grid grid-cols-4 gap-1.5 pt-3 border-t border-white/[0.08]">
+                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 pt-3 border-t border-white/[0.08]">
                         <Link
-                          href={`${course.path}#textbooks`}
+                          href={`${course.path}/books`}
                           className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-full font-semibold text-[11px] bg-white/[0.06] hover:bg-white/[0.12] active:scale-95 text-slate-200 hover:text-white border border-white/[0.08] transition-all text-center"
                         >
                           <BookOpen className="w-3 h-3 shrink-0" />
                           <span>Books</span>
                         </Link>
                         <Link
-                          href={`${course.path}#notes`}
+                          href={`${course.path}/short-notes`}
                           className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-full font-semibold text-[11px] bg-white/[0.06] hover:bg-white/[0.12] active:scale-95 text-slate-200 hover:text-white border border-white/[0.08] transition-all text-center"
                         >
                           <FileText className="w-3 h-3 shrink-0" />
                           <span>Notes</span>
                         </Link>
                         <Link
-                          href={`${course.path}#flashcards`}
+                          href={`${course.path}/flashcards`}
                           className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-full font-semibold text-[11px] bg-white/[0.06] hover:bg-white/[0.12] active:scale-95 text-slate-200 hover:text-white border border-white/[0.08] transition-all text-center"
                         >
                           <Layers className="w-3 h-3 shrink-0" />
                           <span>Cards</span>
                         </Link>
                         <Link
-                          href={`${course.path}#exams`}
+                          href={`${course.path}/question-banks`}
                           className="flex items-center justify-center gap-1 py-1.5 px-1 rounded-full font-semibold text-[11px] bg-white/[0.06] hover:bg-white/[0.12] active:scale-95 text-slate-200 hover:text-white border border-white/[0.08] transition-all text-center"
+                        >
+                          <HelpCircle className="w-3 h-3 shrink-0" />
+                          <span>Banks</span>
+                        </Link>
+                        <Link
+                          href={`${course.path}/exams`}
+                          className="col-span-2 sm:col-span-1 flex items-center justify-center gap-1 py-1.5 px-1 rounded-full font-semibold text-[11px] bg-white/[0.06] hover:bg-white/[0.12] active:scale-95 text-slate-200 hover:text-white border border-white/[0.08] transition-all text-center"
                         >
                           <Award className="w-3 h-3 shrink-0" />
                           <span>Exams</span>

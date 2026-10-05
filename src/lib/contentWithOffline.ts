@@ -36,9 +36,10 @@ function resourceCacheKey(opts: {
   packageId?: string;
   publishedOnly?: boolean;
 }) {
+  const normHub = (opts.hub as string) === "references" ? "short-notes" : opts.hub;
   return [
     opts.scopePath || "",
-    opts.hub || "",
+    normHub || "",
     opts.packageId || "",
     opts.publishedOnly ? "1" : "0",
   ].join("|");
@@ -53,21 +54,23 @@ export async function listResources(opts: {
 }): Promise<{ items: LearningResource[]; error?: string }> {
   const key = resourceCacheKey(opts);
 
-  // Fast offline path
+  // Fast offline path if navigator specifically reports offline
   if (isProbablyOffline()) {
     const cached = readCachedResources<LearningResource>(key);
     if (cached.length) return { items: cached };
-    return { items: [], error: "Offline — open this hub once online to cache it." };
+    return {
+      items: [],
+      error: "You are currently offline. Connect to the internet to load and cache materials.",
+    };
   }
 
   try {
-    // Timeout guard (4.5s) to avoid hanging forever on soft-offline or dead cellular connections
+    // Tolerant timeout guard (10s) to handle slower 3G/cellular networks without prematurely failing
     let timer: NodeJS.Timeout | undefined;
     const timeoutPromise = new Promise<{ items: LearningResource[]; error?: string }>((resolve) => {
       timer = setTimeout(() => {
-        markOffline(true);
-        resolve({ items: [], error: "Network timeout" });
-      }, 4500);
+        resolve({ items: [], error: "Network timeout. Please retry." });
+      }, 10000);
     });
 
     const res = await Promise.race([
@@ -94,42 +97,46 @@ export async function listResources(opts: {
       return res;
     }
 
-    // Online fetch returned 0 items:
-    // If an error is present (e.g. Supabase network failure, timeout, auth error)
-    // OR device is offline, ALWAYS fall back to cached resources!
-    const isErrorOrFailed = Boolean(
-      res.error ||
-      isProbablyOffline() ||
-      (typeof navigator !== "undefined" && !navigator.onLine)
-    );
-
-    if (isErrorOrFailed) {
-      markOffline(true);
+    // If online fetch returned an error (e.g. network failure, timeout, auth issue)
+    if (res.error) {
+      // ALWAYS check cache first — prefer cache over empty error
       const cached = readCachedResources<LearningResource>(key);
-      if (cached.length) return { items: cached };
+      if (cached.length) {
+        return { items: cached };
+      }
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        return {
+          items: [],
+          error: "You are currently offline. Connect to the internet to load this hub.",
+        };
+      }
       return {
         items: [],
-        error: "Offline — open this hub once online to cache it.",
+        error: res.error,
       };
     }
 
-    // Silent soft-offline protection in Android WebView:
-    // Even if no explicit error was returned, if cache already has entries for this key,
-    // NEVER show an empty list to the user when cached data is available!
+    // Online fetch returned 0 items cleanly (no error):
+    // Check if cache already has entries for this key (silent soft-offline protection)
     const cached = readCachedResources<LearningResource>(key);
     if (cached.length) {
       return { items: cached };
     }
 
     // Truly empty hub online: both online returned 0 rows AND cache has 0 entries
-    return res;
-  } catch {
-    markOffline(true);
+    return { items: [] };
+  } catch (err) {
     const cached = readCachedResources<LearningResource>(key);
     if (cached.length) return { items: cached };
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      return {
+        items: [],
+        error: "You are currently offline. Connect to the internet to load this hub.",
+      };
+    }
     return {
       items: [],
-      error: "Offline — open this hub once online to cache it.",
+      error: err instanceof Error ? err.message : "Unable to load materials. Please check your connection and retry.",
     };
   }
 }

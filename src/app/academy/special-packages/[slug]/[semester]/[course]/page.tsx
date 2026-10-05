@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getCourse, specialPackages } from "@/data/special-packages";
+import { ChevronRight } from "lucide-react";
+import { getCourse, getSemester, specialPackages } from "@/data/special-packages";
+import { getResource, resourceHubs } from "@/data/academy";
 import CategoryBackButton from "@/components/CategoryBackButton";
 import AcademicResultSaver from "@/components/AcademicResultSaver";
 import ResourceHubGrid from "@/components/ResourceHubGrid";
@@ -13,6 +15,9 @@ export function generateStaticParams() {
       for (const c of sem.courses) {
         params.push({ slug: pkg.slug, semester: sem.id, course: c.slug });
       }
+      for (const r of resourceHubs) {
+        params.push({ slug: pkg.slug, semester: sem.id, course: r.id });
+      }
     }
   }
   return params;
@@ -24,6 +29,13 @@ export async function generateMetadata({
   params: Promise<{ slug: string; semester: string; course: string }>;
 }) {
   const { slug, semester, course } = await params;
+  const resource = getResource(course);
+  if (resource) {
+    const semFound = getSemester(slug, semester);
+    return {
+      title: `${resource.name} · ${semFound?.sem.label || "Semester"} · ${semFound?.pkg.name || "Special Packages"}`,
+    };
+  }
   const found = getCourse(slug, semester, course);
   if (!found) return { title: "Course" };
   return {
@@ -37,6 +49,52 @@ export default async function CoursePage({
   params: Promise<{ slug: string; semester: string; course: string }>;
 }) {
   const { slug, semester, course: courseSlug } = await params;
+
+  // If user requested a learning hub directly, e.g. /academy/special-packages/electrical-computer-engineering/sem-1/books
+  const resource = getResource(courseSlug);
+  const semFound = getSemester(slug, semester);
+  if (resource && semFound) {
+    const { pkg, sem } = semFound;
+    return (
+      <div className="relative min-h-[80vh]">
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
+          <CategoryBackButton fallback={`/academy/special-packages/${pkg.slug}/${sem.id}`} />
+
+          <div className="max-w-2xl mx-auto mb-10 text-center animate-fade-up">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-300 mb-2">
+              {pkg.name} · {sem.label}
+            </p>
+            <h1 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-2">
+              <span className={resource.accent}>{resource.name}</span>
+            </h1>
+            <p className="text-sm text-wisdom-muted max-w-lg mx-auto">
+              {resource.description}. Choose an engineering course below to open official {resource.name.toLowerCase()}.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+            {sem.courses.map((c) => (
+              <Link
+                key={c.code}
+                href={`/academy/special-packages/${pkg.slug}/${sem.id}/${c.slug}/${resource.id}`}
+                className="group flex items-center justify-between p-4 sm:p-5 rounded-2xl border border-white/10 bg-wisdom-card hover:border-violet-400/40 hover:bg-white/[0.04] transition-all shadow-lg"
+              >
+                <div className="min-w-0 pr-3">
+                  <span className="text-[11px] font-mono text-violet-300/80 mb-0.5 block">{c.code}</span>
+                  <h3 className="font-semibold text-white group-hover:text-violet-300 transition-colors truncate">
+                    {c.title}
+                  </h3>
+                  <p className="text-xs text-wisdom-muted">{sem.label}</p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-cyan-300 transition-colors shrink-0" />
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const found = getCourse(slug, semester, courseSlug);
   if (!found) notFound();
   const { pkg, sem, course } = found;

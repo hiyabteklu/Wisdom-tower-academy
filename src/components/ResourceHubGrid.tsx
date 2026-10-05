@@ -47,14 +47,39 @@ function inferPackageAndScope(basePath: string): {
     scopePath = `grade/${grade[1]}/${grade[2]}`;
   }
 
+  // /academy/remedial/{subject}
+  const rem = basePath.match(/\/academy\/remedial\/([^/]+)/);
+  if (rem) {
+    packageId = packageId || "remedial";
+    scopePath = `remedial/${rem[1]}`;
+  }
+
   // /academy/special-packages/.../sem-1/{course}
   const ece = basePath.match(
-    /\/special-packages\/electrical-computer-engineering\/(sem-[12])\/([^/]+)/
+    /\/special-packages\/(?:electrical-computer-engineering|ece)\/(sem-[12])\/([^/]+)/
   );
   if (ece) {
     packageId =
       packageId || (ece[1] === "sem-1" ? "ece-y3-sem-1" : "ece-y3-sem-2");
     scopePath = `ece/${ece[1]}/${ece[2]}`;
+  }
+
+  // Branch root paths
+  if (basePath.endsWith("/academy/coc")) {
+    packageId = packageId || "coc";
+    scopePath = scopePath || "coc";
+  }
+  if (basePath.endsWith("/academy/uat")) {
+    packageId = packageId || "uat";
+    scopePath = scopePath || "uat";
+  }
+  if (basePath.endsWith("/academy/gat")) {
+    packageId = packageId || "gat";
+    scopePath = scopePath || "gat";
+  }
+  if (basePath.endsWith("/academy/exit-exam")) {
+    packageId = packageId || "exit-exam";
+    scopePath = scopePath || "exit-exam";
   }
 
   return { packageId, scopePath };

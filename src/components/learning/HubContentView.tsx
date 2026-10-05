@@ -456,10 +456,27 @@ export default function HubContentView({
   }
 
   if (items.length === 0) {
+    const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
     return (
-      <div className="rounded-2xl border border-white/12 bg-wisdom-card p-8 text-center text-wisdom-muted text-sm">
-        <FileText className="w-8 h-8 mx-auto mb-3 opacity-50" />
-        {fetchError || "No published materials in this hub yet. Check back soon."}
+      <div className="rounded-2xl border border-white/12 bg-wisdom-card p-8 text-center text-wisdom-muted text-sm space-y-3">
+        <FileText className="w-8 h-8 mx-auto mb-1 opacity-50" />
+        <p className="max-w-md mx-auto leading-relaxed">
+          {fetchError ||
+            (isOffline
+              ? "You are currently offline. Connect to the internet to load materials."
+              : "No published materials in this hub yet. Check back soon.")}
+        </p>
+        {fetchError && (
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-white transition-colors cursor-pointer"
+            >
+              Retry
+            </button>
+          </div>
+        )}
       </div>
     );
   }

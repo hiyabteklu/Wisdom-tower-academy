@@ -26,6 +26,16 @@ function hubImg(id: ResourceType) {
 /** Legacy hub URL/id → current id */
 export const HUB_ALIASES: Record<string, ResourceType> = {
   references: "short-notes",
+  notes: "short-notes",
+  "short-note": "short-notes",
+  textbooks: "books",
+  textbook: "books",
+  book: "books",
+  cards: "flashcards",
+  flashcard: "flashcards",
+  "question-bank": "question-banks",
+  questions: "question-banks",
+  exam: "exams",
 };
 
 export function resolveHubId(id: string): string {

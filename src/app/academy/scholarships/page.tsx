@@ -301,8 +301,19 @@ export default function ScholarshipsPage() {
         )}
 
         {!loading && error && (
-          <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-            Could not load scholarships. {error}
+          <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 p-4 text-sm text-rose-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <span>
+              {error.includes("key") || error.includes("crypto") || error.includes("token")
+                ? "Unable to load scholarship opportunities right now."
+                : `Could not load scholarships: ${error}`}
+            </span>
+            <button
+              type="button"
+              onClick={() => void load()}
+              className="inline-flex items-center justify-center px-4 py-1.5 rounded-full bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/40 text-xs font-semibold text-rose-100 transition-colors self-start sm:self-auto cursor-pointer"
+            >
+              Retry
+            </button>
           </div>
         )}
 

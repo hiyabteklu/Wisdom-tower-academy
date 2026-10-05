@@ -108,7 +108,8 @@ export const specialPackages: SpecialPackage[] = [
 ];
 
 export function getSpecialPackage(slug: string): SpecialPackage | undefined {
-  return specialPackages.find((p) => p.slug === slug);
+  if (slug === "ece" || slug === "ece-y3") return specialPackages[0];
+  return specialPackages.find((p) => p.slug === slug || p.id === slug);
 }
 
 export function getSemester(

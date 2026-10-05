@@ -184,6 +184,46 @@ export async function listFreeResourcePages(): Promise<{
   }
 }
 
+const FREE_CACHE_PREFIX = "wta_free_items_v1_";
+
+function readCachedFreeItems(slug: string): FreeResourceItem[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(`${FREE_CACHE_PREFIX}${slug}`);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeCachedFreeItems(slug: string, items: FreeResourceItem[]): void {
+  if (typeof window === "undefined" || !items.length) return;
+  try {
+    localStorage.setItem(`${FREE_CACHE_PREFIX}${slug}`, JSON.stringify(items));
+  } catch {}
+}
+
+function cleanCorruptAuthTokensIfCryptoError(errText: string) {
+  if (typeof window === "undefined") return;
+  const isCryptoErr =
+    errText.includes("No suitable key") ||
+    errText.includes("wrong key type") ||
+    errText.includes("crypto") ||
+    errText.includes("key type");
+  if (isCryptoErr) {
+    try {
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const k = localStorage.key(i);
+        if (k && (k.startsWith("sb-") && k.endsWith("-auth-token"))) {
+          localStorage.removeItem(k);
+        }
+      }
+    } catch {}
+  }
+}
+
 export async function getFreeResourcePage(
   slug: FreeResourceSlug,
   opts?: { publishedOnly?: boolean }
@@ -192,11 +232,16 @@ export async function getFreeResourcePage(
     let q = supabase.from("free_resource_pages").select("*").eq("slug", slug);
     if (opts?.publishedOnly) q = q.eq("published", true);
     const { data, error } = await q.maybeSingle();
-    if (error) return { error: error.message };
+    if (error) {
+      cleanCorruptAuthTokensIfCryptoError(error.message);
+      return { error: error.message.includes("key") ? "Unable to load page" : error.message };
+    }
     if (!data) return {};
     return { item: rowToPage(data as Record<string, unknown>) };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Failed" };
+    const msg = e instanceof Error ? e.message : "Failed";
+    cleanCorruptAuthTokensIfCryptoError(msg);
+    return { error: msg.includes("key") ? "Unable to load page" : msg };
   }
 }
 
@@ -242,10 +287,51 @@ export async function listFreeResourceItems(opts: {
     if (opts.publishedOnly) q = q.eq("published", true);
     if (opts.kind) q = q.eq("kind", opts.kind);
     const { data, error } = await q;
-    if (error) return { items: [], error: error.message };
-    return { items: (data || []).map((r) => rowToItem(r as Record<string, unknown>)) };
+
+    if (error) {
+      cleanCorruptAuthTokensIfCryptoError(error.message);
+      const cached = readCachedFreeItems(opts.pageSlug);
+      if (cached.length) return { items: cached };
+
+      // Retry once after purging corrupt auth key
+      const retry = await q;
+      if (retry.data && retry.data.length > 0) {
+        const mapped = retry.data.map((r) => rowToItem(r as Record<string, unknown>));
+        writeCachedFreeItems(opts.pageSlug, mapped);
+        return { items: mapped };
+      }
+
+      const isCrypto =
+        error.message.includes("key") ||
+        error.message.includes("crypto") ||
+        error.message.includes("token");
+      return {
+        items: [],
+        error: isCrypto ? "Unable to load items right now." : error.message,
+      };
+    }
+
+    const items = (data || []).map((r) => rowToItem(r as Record<string, unknown>));
+    if (items.length > 0) {
+      writeCachedFreeItems(opts.pageSlug, items);
+    } else {
+      // If server returned 0 items, check if cache has items
+      const cached = readCachedFreeItems(opts.pageSlug);
+      if (cached.length) return { items: cached };
+    }
+    return { items };
   } catch (e) {
-    return { items: [], error: e instanceof Error ? e.message : "Failed" };
+    const msg = e instanceof Error ? e.message : "Failed";
+    cleanCorruptAuthTokensIfCryptoError(msg);
+    const cached = readCachedFreeItems(opts.pageSlug);
+    if (cached.length) return { items: cached };
+
+    const isCrypto =
+      msg.includes("key") || msg.includes("crypto") || msg.includes("token");
+    return {
+      items: [],
+      error: isCrypto ? "Unable to load items right now." : msg,
+    };
   }
 }
 

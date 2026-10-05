@@ -106,12 +106,12 @@ function overallGrade(score: number): {
       message: "Open materials and complete quick drills to establish your baseline.",
     };
   return {
-    label: "Baseline · Ready to Track",
+    label: "Ready to Track",
     colorClass: "text-cyan-300",
     badgeBorder: "border-cyan-400/30",
     badgeBg: "bg-cyan-500/10 text-cyan-300",
     tone: "#22d3ee",
-    message: "Tracking architecture is active at baseline (0). Open any reading note, quiz, or deck to record your progress.",
+    message: "Start learning to record your reading time, quiz scores, and practice progress.",
   };
 }
 
@@ -867,24 +867,18 @@ export default function AcademicResultSaver({
         </div>
       )}
 
-      {/* Guest or Newcomer Information Strip */}
+      {/* Minimal Guest Sign-in Strip */}
       {!user ? (
-        <div className="px-4 py-2.5 bg-cyan-500/[0.04] border-t border-white/[0.06] flex flex-wrap items-center justify-between gap-2 text-xs">
-          <p className="text-slate-300 text-[11px] sm:text-xs">
-            <span className="text-cyan-300 font-semibold">Active Tracker Architecture:</span> Open any lesson to log your stats. Sign in to preserve your progress across devices.
+        <div className="px-4 py-2.5 bg-white/[0.02] border-t border-white/[0.06] flex items-center justify-between gap-3 text-xs">
+          <p className="text-slate-400 text-[11px] sm:text-xs">
+            Sign in to sync your study progress across devices.
           </p>
           <Link
             href={`/login?next=${encodeURIComponent(pathname || "/learning")}`}
-            className="inline-flex items-center gap-1 font-semibold text-cyan-300 hover:text-cyan-200 underline text-[11px] shrink-0"
+            className="inline-flex items-center gap-1 font-semibold text-cyan-300 hover:text-cyan-200 text-xs shrink-0"
           >
-            <LogIn className="w-3.5 h-3.5" /> Sign In / Register
+            <LogIn className="w-3.5 h-3.5" /> Sign In
           </Link>
-        </div>
-      ) : !hasAnything ? (
-        <div className="px-4 py-2 bg-white/[0.02] border-t border-white/[0.06] text-center">
-          <p className="text-[11px] text-slate-400">
-            All metrics active at baseline (0). Your reading time, quiz scores, and card reviews sync here automatically.
-          </p>
         </div>
       ) : null}
     </section>

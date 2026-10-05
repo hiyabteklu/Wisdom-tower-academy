@@ -255,23 +255,29 @@ export function writeQueue(q: QueuedSave[]): void {
   localStorage.setItem(QUEUE_KEY, JSON.stringify(q));
 }
 
-let _offlineOverride = false;
+let _offlineOverride: boolean | null = null;
 
 export function markOffline(offline: boolean): void {
-  _offlineOverride = offline;
+  _offlineOverride = offline ? true : null;
 }
 
 export function isProbablyOffline(): boolean {
-  if (_offlineOverride) return true;
-  if (typeof navigator === "undefined") return false;
-  return navigator.onLine === false;
+  if (typeof navigator !== "undefined" && navigator.onLine === false) {
+    return true;
+  }
+  // If navigator is explicitly online, always prefer trying online
+  if (typeof navigator !== "undefined" && navigator.onLine === true) {
+    _offlineOverride = null;
+    return false;
+  }
+  return _offlineOverride === true;
 }
 
 if (typeof window !== "undefined") {
   window.addEventListener("online", () => {
-    markOffline(false);
+    _offlineOverride = null;
   });
   window.addEventListener("offline", () => {
-    markOffline(true);
+    _offlineOverride = true;
   });
 }

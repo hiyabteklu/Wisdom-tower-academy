@@ -11,6 +11,7 @@ export const PURCHASABLE_PACKAGE_IDS = new Set([
   "freshman",
   "uat",
   "coc",
+  "remedial",
   "ece-y3-sem-1",
   "ece-y3-sem-2",
 ]);
@@ -39,7 +40,11 @@ export function unlockPackageIdsForPath(basePath: string): string[] {
   if (basePath.includes("/academy/grades/12")) return ["grade-12"];
   if (basePath.includes("/academy/uat")) return ["uat"];
   if (basePath.includes("/academy/coc")) return ["coc"];
-  if (basePath.includes("/special-packages/electrical-computer-engineering")) {
+  if (basePath.includes("/academy/remedial")) return ["remedial"];
+  if (
+    basePath.includes("/special-packages/electrical-computer-engineering") ||
+    basePath.includes("/special-packages/ece")
+  ) {
     return ["ece-y3-sem-1", "ece-y3-sem-2"];
   }
   return [];
@@ -52,7 +57,11 @@ export function getHubLockMode(basePath: string): HubLockMode {
   // Grades 9–12: free for every registered user (ownership grants grade-* automatically)
   if (basePath.includes("/academy/grades/")) return "require_purchase";
   if (basePath.includes("/academy/freshman")) return "require_purchase";
-  if (basePath.includes("/academy/uat") || basePath.includes("/academy/coc")) {
+  if (
+    basePath.includes("/academy/uat") ||
+    basePath.includes("/academy/coc") ||
+    basePath.includes("/academy/remedial")
+  ) {
     return "require_purchase";
   }
   if (basePath.includes("/special-packages") && (basePath.includes("/sem-1") || basePath.includes("/sem-2"))) {
