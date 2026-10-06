@@ -222,13 +222,13 @@ export default function AcademyPage() {
             </h1>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4 md:gap-6">
             {programs.map((program) => (
               <article
                 key={program.id}
-                className={`card-modern group flex flex-col ${program.border} shadow-lg shadow-black/25 overflow-hidden`}
+                className="card-modern group flex flex-col h-full justify-between shadow-md shadow-black/25 overflow-hidden rounded-xl sm:rounded-2xl"
               >
-                <Link href={program.href} className="relative aspect-video w-full overflow-hidden bg-wisdom-navy block">
+                <Link href={program.href} className="card-media-wrap aspect-video block">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={program.image}
@@ -237,7 +237,7 @@ export default function AcademyPage() {
                     loading="lazy"
                   />
                 </Link>
-                <div className="p-2.5 sm:p-3.5 flex items-center justify-between gap-2 border-t border-white/8 flex-1">
+                <div className="p-2 sm:p-2.5 md:p-3.5 flex items-center justify-between gap-1.5 sm:gap-2 border-t border-white/8 flex-1">
                   <h2
                     className={`font-display text-xs sm:text-sm md:text-base font-bold tracking-tight text-white ${program.accent} line-clamp-2 min-w-0 flex-1`}
                   >
@@ -245,59 +245,59 @@ export default function AcademyPage() {
                   </h2>
                   <Link
                     href={program.href}
-                    className="shrink-0 inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold text-cyan-300 bg-cyan-500/10 border border-cyan-400/25 px-2 py-1 sm:px-2.5 sm:py-1 rounded-lg hover:bg-cyan-400 hover:text-slate-950 transition-all"
+                    className="btn-open shrink-0"
                   >
                     <span>Open</span>
-                    <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                    <ArrowRight className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                   </Link>
                 </div>
               </article>
             ))}
           </div>
 
-          <section className="mt-20 md:mt-24">
-            <div className="text-center mb-8 md:mb-10">
-              <h2 className="font-display text-3xl md:text-4xl font-bold text-white tracking-tight">
+          <section className="mt-16 sm:mt-20 md:mt-24">
+            <div className="text-center mb-6 sm:mb-8 md:mb-10">
+              <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight">
                 Other resources
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4 md:gap-5">
               {freeResources.map((item) => {
                 const Icon = item.icon;
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="group relative rounded-3xl border border-white/[0.08] bg-[#0c1328]/70 hover:bg-[#0f1833]/85 backdrop-blur-xl p-5 sm:p-6 transition-all duration-300 shadow-[0_8px_30px_rgb(0_0_0/0.18)] hover:scale-[1.01] hover:border-white/20 active:scale-[0.99] flex flex-col justify-between"
+                    className="card-modern group p-3 sm:p-5 flex flex-col justify-between h-full rounded-xl sm:rounded-2xl"
                   >
                     <div>
-                      <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center justify-between mb-2.5 sm:mb-4">
                         <div
-                          className={`w-12 h-12 rounded-full border flex items-center justify-center transition-transform duration-300 group-hover:scale-105 shadow-sm ${item.iconBg}`}
+                          className={`w-8 h-8 sm:w-11 sm:h-11 rounded-xl border flex items-center justify-center transition-transform duration-300 group-hover:scale-105 shadow-sm ${item.iconBg}`}
                         >
-                          <Icon className="w-5 h-5" />
+                          <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
                         </div>
-                        <span className="w-8 h-8 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-slate-400 group-hover:text-white group-hover:bg-white/[0.08] transition-colors">
-                          <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+                        <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-slate-400 group-hover:text-white group-hover:bg-white/[0.08] transition-colors">
+                          <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
                         </span>
                       </div>
                       <h3
-                        className={`font-display text-lg sm:text-xl font-bold mb-1.5 transition-colors ${item.accent}`}
+                        className={`font-display text-xs sm:text-base md:text-lg font-bold mb-1 transition-colors ${item.accent}`}
                       >
                         {item.name}
                       </h3>
-                      <p className="text-xs sm:text-sm text-slate-400 leading-relaxed font-normal">
+                      <p className="hidden sm:block text-xs sm:text-sm text-slate-400 leading-relaxed font-normal line-clamp-2">
                         {item.blurb}
                       </p>
                     </div>
 
-                    <div className="mt-5 pt-3 border-t border-white/[0.06] flex items-center justify-between">
-                      <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                        Resource Guide
+                    <div className="mt-3 sm:mt-5 pt-2 sm:pt-3 border-t border-white/[0.06] flex items-center justify-between">
+                      <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                        Guide
                       </span>
-                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-300 group-hover:text-cyan-300 transition-colors">
-                        Open Guide
+                      <span className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-semibold text-cyan-300 transition-colors">
+                        Open
                       </span>
                     </div>
                   </Link>

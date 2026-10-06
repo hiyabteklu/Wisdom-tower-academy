@@ -19,13 +19,13 @@ export default function GradesPage() {
           </h1>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:gap-6">
           {grades.map((grade) => (
             <article
               key={grade.id}
-              className={`card-modern group flex flex-col ${grade.ring} shadow-lg shadow-black/25 overflow-hidden`}
+              className="card-modern group flex flex-col h-full justify-between shadow-md shadow-black/25 overflow-hidden rounded-xl sm:rounded-2xl"
             >
-              <Link href={`/academy/grades/${grade.id}`} className="relative aspect-video w-full overflow-hidden bg-wisdom-navy block">
+              <Link href={`/academy/grades/${grade.id}`} className="card-media-wrap aspect-video block">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={grade.image}
@@ -34,7 +34,7 @@ export default function GradesPage() {
                   loading="lazy"
                 />
               </Link>
-              <div className="p-2.5 sm:p-3.5 flex items-center justify-between gap-2 border-t border-white/8 flex-1">
+              <div className="p-2 sm:p-2.5 md:p-3.5 flex items-center justify-between gap-1.5 sm:gap-2 border-t border-white/8 flex-1">
                 <h2
                   className={`font-display text-xs sm:text-sm md:text-base font-bold ${grade.accent} truncate min-w-0 flex-1`}
                 >
@@ -42,10 +42,10 @@ export default function GradesPage() {
                 </h2>
                 <Link
                   href={`/academy/grades/${grade.id}`}
-                  className="shrink-0 inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold text-sky-300 bg-sky-500/10 border border-sky-400/25 px-2 py-1 sm:px-2.5 sm:py-1 rounded-lg hover:bg-sky-400 hover:text-slate-950 transition-all"
+                  className="btn-open shrink-0"
                 >
                   <span>Open</span>
-                  <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                  <ArrowRight className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                 </Link>
               </div>
             </article>

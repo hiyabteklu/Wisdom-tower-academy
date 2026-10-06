@@ -30,43 +30,46 @@ export default function SpecialSemesterCard({
   ];
 
   return (
-    <div className="card-modern flex flex-col shadow-xl transition-all">
+    <div className="card-modern flex flex-col h-full justify-between shadow-xl overflow-hidden rounded-xl sm:rounded-2xl">
       <Link
         href={`/academy/special-packages/${pkg.slug}/${sem.id}`}
         className="group flex flex-col"
       >
-        <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
+        <div className="card-media-wrap aspect-video">
           <SafeCoverImage src={sem.image} alt={sem.label} />
         </div>
       </Link>
 
-      <div className="p-4 sm:p-5 flex flex-col flex-1 border-t border-white/8 space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 text-xs text-slate-300">
-            <BookOpen className="w-3.5 h-3.5 text-cyan-400" />
-            <span>{sem.courses.length} courses</span>
+      <div className="p-2.5 sm:p-4 md:p-5 flex flex-col flex-1 border-t border-white/8 space-y-2 sm:space-y-3 justify-between">
+        <div>
+          <div className="flex items-center justify-between gap-1.5 sm:gap-2 mb-1">
+            <div className="flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs text-slate-300">
+              <BookOpen className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-cyan-400" />
+              <span>{sem.courses.length} courses</span>
+            </div>
+            {!IS_FREE_MODE && (
+              <span className="font-display font-bold text-cyan-300 text-xs sm:text-sm md:text-base">
+                {formatEtb(sem.priceEtb)}
+              </span>
+            )}
           </div>
-          {!IS_FREE_MODE && (
-            <span className="font-display font-bold text-cyan-300 text-sm sm:text-base">
-              {formatEtb(sem.priceEtb)}
-            </span>
-          )}
+
+          <h2 className="font-display text-sm sm:text-lg md:text-xl font-bold text-white line-clamp-1 sm:line-clamp-none">
+            {sem.label}
+          </h2>
         </div>
 
-        <h2 className="font-display text-lg sm:text-xl font-bold text-white">
-          {sem.label}
-        </h2>
-
         {/* Action buttons: What's included + Open */}
-        <div className="grid grid-cols-2 gap-2 pt-1">
+        <div className="grid grid-cols-2 gap-1.5 sm:gap-2 pt-1">
           <button
             type="button"
             onClick={() => setExpanded(!expanded)}
-            className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-semibold border border-white/10 bg-white/[0.05] text-slate-200 hover:bg-white/[0.1] hover:border-white/20 transition-all cursor-pointer"
+            className="flex items-center justify-center gap-1 py-1.5 px-2 sm:py-2.5 sm:px-3 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-semibold border border-white/10 bg-white/[0.05] text-slate-200 hover:bg-white/[0.1] active:scale-95 transition-all cursor-pointer"
           >
-            <span>What&apos;s included</span>
+            <span className="hidden sm:inline">What&apos;s </span>
+            <span>included</span>
             <ChevronDown
-              className={`w-3.5 h-3.5 transition-transform duration-200 ${
+              className={`w-3 h-3 sm:w-3.5 sm:h-3.5 transition-transform duration-200 ${
                 expanded ? "rotate-180 text-cyan-300" : ""
               }`}
             />
@@ -74,10 +77,10 @@ export default function SpecialSemesterCard({
 
           <Link
             href={`/academy/special-packages/${pkg.slug}/${sem.id}`}
-            className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-cyan-400 hover:bg-cyan-300 text-slate-950 shadow-sm transition-all text-center"
+            className="btn-open w-full text-center py-1.5 px-2 sm:py-2.5 sm:px-3 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-semibold"
           >
             <span>Open</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <ArrowRight className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5" />
           </Link>
         </div>
 

@@ -30,8 +30,8 @@ function PackageCatalogCard({ pkg }: { pkg: AcademyPackage }) {
   };
 
   return (
-    <article className="card-modern group flex flex-col shadow-lg shadow-black/25 transition-all">
-      <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
+    <article className="card-modern group flex flex-col h-full justify-between shadow-lg shadow-black/25 overflow-hidden rounded-xl sm:rounded-2xl">
+      <div className="card-media-wrap aspect-video">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={pkg.image}
@@ -41,29 +41,32 @@ function PackageCatalogCard({ pkg }: { pkg: AcademyPackage }) {
         />
       </div>
 
-      <div className="p-4 sm:p-5 flex flex-col flex-1 border-t border-white/8 space-y-3">
-        {/* Title with price */}
-        <div className="flex items-baseline justify-between gap-3">
-          <h2 className="font-display text-lg font-bold text-white leading-snug truncate">
-            {pkg.name}
-          </h2>
-          {!IS_FREE_MODE && (
-            <span className="shrink-0 font-display font-bold text-cyan-300 text-base">
-              {formatEtb(pkg.priceEtb)}
-            </span>
-          )}
+      <div className="p-2.5 sm:p-4 flex flex-col flex-1 border-t border-white/8 space-y-2 sm:space-y-3 justify-between">
+        <div>
+          {/* Title with price */}
+          <div className="flex items-baseline justify-between gap-1.5 sm:gap-3">
+            <h2 className="font-display text-xs sm:text-base md:text-lg font-bold text-white leading-snug truncate flex-1">
+              {pkg.name}
+            </h2>
+            {!IS_FREE_MODE && (
+              <span className="shrink-0 font-display font-bold text-cyan-300 text-xs sm:text-sm md:text-base">
+                {formatEtb(pkg.priceEtb)}
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* Two clean buttons side by side */}
-        <div className="grid grid-cols-2 gap-2 pt-1">
+        {/* Action buttons side by side */}
+        <div className="grid grid-cols-2 gap-1.5 sm:gap-2 pt-1">
           <button
             type="button"
             onClick={() => setExpanded(!expanded)}
-            className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-semibold border border-white/10 bg-white/[0.05] text-slate-200 hover:bg-white/[0.1] hover:border-white/20 transition-all cursor-pointer"
+            className="flex items-center justify-center gap-1 py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-semibold border border-white/10 bg-white/[0.05] text-slate-200 hover:bg-white/[0.1] active:scale-95 transition-all cursor-pointer"
           >
-            <span>What&apos;s included</span>
+            <span className="hidden sm:inline">What&apos;s </span>
+            <span>included</span>
             <ChevronDown
-              className={`w-3.5 h-3.5 transition-transform duration-200 ${
+              className={`w-3 h-3 sm:w-3.5 sm:h-3.5 transition-transform duration-200 ${
                 expanded ? "rotate-180 text-cyan-300" : ""
               }`}
             />
@@ -73,33 +76,33 @@ function PackageCatalogCard({ pkg }: { pkg: AcademyPackage }) {
             owned ? (
               <Link
                 href={pkg.href || "/learning"}
-                className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-cyan-400 hover:bg-cyan-300 text-slate-950 shadow-sm transition-all text-center active:scale-[0.98]"
+                className="btn-open w-full text-center py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-semibold"
               >
-                <BookOpen className="w-3.5 h-3.5" />
-                <span>Start Learning</span>
+                <BookOpen className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                <span className="truncate">Learning</span>
               </Link>
             ) : (
               <Link
                 href={`/login?next=${encodeURIComponent(pkg.href || "/packages")}`}
-                className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-cyan-400 hover:bg-cyan-300 text-slate-950 shadow-sm transition-all text-center active:scale-[0.98]"
+                className="btn-open w-full text-center py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-semibold"
               >
-                <LogIn className="w-3.5 h-3.5" />
+                <LogIn className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 <span>Sign In</span>
               </Link>
             )
           ) : owned ? (
             <Link
               href={pkg.href || "/learning"}
-              className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-semibold bg-white/[0.08] text-white border border-white/15 hover:bg-white/[0.14] transition-all text-center"
+              className="flex items-center justify-center gap-1 py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-semibold bg-white/[0.08] text-white border border-white/15 hover:bg-white/[0.14] transition-all text-center"
             >
-              <Check className="w-3.5 h-3.5 text-cyan-400" />
+              <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-cyan-400" />
               <span>Owned</span>
             </Link>
           ) : (
             <button
               type="button"
               onClick={handlePurchase}
-              className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-cyan-400 hover:bg-cyan-300 text-slate-950 shadow-sm transition-all cursor-pointer active:scale-[0.98]"
+              className="btn-open w-full text-center py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-semibold cursor-pointer"
             >
               <span>Purchase</span>
             </button>
@@ -108,14 +111,14 @@ function PackageCatalogCard({ pkg }: { pkg: AcademyPackage }) {
 
         {/* In What's included: collapsed bullets only */}
         {expanded && pkg.includes.length > 0 && (
-          <div className="pt-3 border-t border-white/10 space-y-2 animate-in fade-in duration-200">
-            <ul className="space-y-1.5">
+          <div className="pt-2 sm:pt-3 border-t border-white/10 space-y-1.5 animate-in fade-in duration-200">
+            <ul className="space-y-1 sm:space-y-1.5">
               {pkg.includes.map((line) => (
                 <li
                   key={line}
-                  className="flex items-start gap-2 text-xs text-slate-300 leading-snug"
+                  className="flex items-start gap-1.5 text-[11px] sm:text-xs text-slate-300 leading-snug"
                 >
-                  <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-3 h-3 text-cyan-400 shrink-0 mt-0.5" />
                   <span>{line}</span>
                 </li>
               ))}
@@ -130,7 +133,7 @@ function PackageCatalogCard({ pkg }: { pkg: AcademyPackage }) {
 function PackageGrid({ list }: { list: AcademyPackage[] }) {
   if (list.length === 0) return null;
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4 md:gap-6">
       {list.map((pkg) => (
         <PackageCatalogCard key={pkg.id} pkg={pkg} />
       ))}

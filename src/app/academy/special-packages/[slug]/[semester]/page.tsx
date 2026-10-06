@@ -75,21 +75,21 @@ export default async function SemesterPage({
                   <h2 className="text-xs font-bold uppercase tracking-wider text-violet-300 mb-3 px-1">
                     {s.label}
                   </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4 md:gap-5">
                     {s.courses.map((c) => (
                       <Link
                         key={c.code}
                         href={`/academy/special-packages/${hubPkg.slug}/${s.id}/${c.slug}/${resource.id}`}
-                        className="group flex items-center justify-between p-4 sm:p-5 rounded-2xl border border-white/10 bg-wisdom-card hover:border-violet-400/40 hover:bg-white/[0.04] transition-all shadow-lg"
+                        className="group flex items-center justify-between p-3 sm:p-4 md:p-5 rounded-xl sm:rounded-2xl border border-white/10 bg-wisdom-card hover:border-violet-400/40 hover:bg-white/[0.04] transition-all shadow-md"
                       >
-                        <div className="min-w-0 pr-3">
-                          <span className="text-[11px] font-mono text-violet-300/80 mb-0.5 block">{c.code}</span>
-                          <h3 className="font-semibold text-white group-hover:text-violet-300 transition-colors truncate">
+                        <div className="min-w-0 pr-2">
+                          <span className="text-[10px] sm:text-[11px] font-mono text-violet-300/80 mb-0.5 block">{c.code}</span>
+                          <h3 className="font-semibold text-xs sm:text-sm text-white group-hover:text-violet-300 transition-colors truncate">
                             {c.title}
                           </h3>
-                          <p className="text-xs text-wisdom-muted">{s.label}</p>
+                          <p className="text-[10px] sm:text-xs text-wisdom-muted truncate">{s.label}</p>
                         </div>
-                        <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-cyan-300 transition-colors shrink-0" />
+                        <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-cyan-300 transition-colors shrink-0" />
                       </Link>
                     ))}
                   </div>
@@ -127,24 +127,28 @@ export default async function SemesterPage({
             Courses for this semester will appear here when published.
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4 md:gap-5">
             {sem.courses.map((c) => (
               <Link
                 key={c.code}
                 href={`/academy/special-packages/${pkg.slug}/${sem.id}/${c.slug}`}
-                className="card-modern group flex flex-col hover:border-violet-400/40 shadow-md"
+                className="card-modern group flex flex-col h-full justify-between shadow-md overflow-hidden rounded-xl sm:rounded-2xl"
               >
-                <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
+                <div className="card-media-wrap aspect-video">
                   <SafeCoverImage src={c.image} alt="" />
                 </div>
-                <div className="p-4 sm:p-5 border-t border-white/8 flex flex-col flex-1">
-                  <span className="text-[11px] font-mono text-violet-300/80 mb-1">{c.code}</span>
-                  <h2 className="font-display text-base font-bold text-white group-hover:text-violet-200 leading-snug line-clamp-2">
-                    {c.title}
-                  </h2>
-                  <div className="mt-auto pt-3 flex items-center justify-between border-t border-white/5 text-xs font-bold text-violet-300">
-                    <span>View course hubs</span>
-                    <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-1" />
+                <div className="p-2 sm:p-2.5 md:p-4 border-t border-white/8 flex flex-col flex-1 justify-between">
+                  <div>
+                    <span className="text-[10px] sm:text-[11px] font-mono text-violet-300/80 mb-0.5 block">{c.code}</span>
+                    <h2 className="font-display text-xs sm:text-sm md:text-base font-bold text-white group-hover:text-violet-200 leading-snug line-clamp-2">
+                      {c.title}
+                    </h2>
+                  </div>
+                  <div className="mt-2 pt-2 flex items-center justify-between border-t border-white/5">
+                    <span className="btn-open">
+                      <span>Open</span>
+                      <ArrowRight className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                    </span>
                   </div>
                 </div>
               </Link>

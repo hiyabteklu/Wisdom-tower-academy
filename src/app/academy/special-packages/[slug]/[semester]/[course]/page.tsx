@@ -72,21 +72,21 @@ export default async function CoursePage({
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4 md:gap-5">
             {sem.courses.map((c) => (
               <Link
                 key={c.code}
                 href={`/academy/special-packages/${pkg.slug}/${sem.id}/${c.slug}/${resource.id}`}
-                className="group flex items-center justify-between p-4 sm:p-5 rounded-2xl border border-white/10 bg-wisdom-card hover:border-violet-400/40 hover:bg-white/[0.04] transition-all shadow-lg"
+                className="group flex items-center justify-between p-3 sm:p-4 md:p-5 rounded-xl sm:rounded-2xl border border-white/10 bg-wisdom-card hover:border-violet-400/40 hover:bg-white/[0.04] transition-all shadow-md"
               >
-                <div className="min-w-0 pr-3">
-                  <span className="text-[11px] font-mono text-violet-300/80 mb-0.5 block">{c.code}</span>
-                  <h3 className="font-semibold text-white group-hover:text-violet-300 transition-colors truncate">
+                <div className="min-w-0 pr-2">
+                  <span className="text-[10px] sm:text-[11px] font-mono text-violet-300/80 mb-0.5 block">{c.code}</span>
+                  <h3 className="font-semibold text-xs sm:text-sm text-white group-hover:text-violet-300 transition-colors truncate">
                     {c.title}
                   </h3>
-                  <p className="text-xs text-wisdom-muted">{sem.label}</p>
+                  <p className="text-[10px] sm:text-xs text-wisdom-muted truncate">{sem.label}</p>
                 </div>
-                <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-cyan-300 transition-colors shrink-0" />
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-cyan-300 transition-colors shrink-0" />
               </Link>
             ))}
           </div>

@@ -27,7 +27,7 @@ export default function SpecialPackagesPage() {
         </header>
 
         {/* Two semesters directly inside ECE, no intermediate replicate card */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 md:gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-2 gap-2.5 sm:gap-5 md:gap-6">
           {pkg.semesters.map((sem) => (
             <SpecialSemesterCard key={sem.id} pkg={pkg} sem={sem} />
           ))}

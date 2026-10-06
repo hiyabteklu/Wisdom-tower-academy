@@ -34,7 +34,7 @@ export default function ResourceHubCard({
 
   const body = (
     <>
-      <div className="relative aspect-video w-full overflow-hidden bg-wisdom-navy">
+      <div className="card-media-wrap aspect-video">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={hub.image}
@@ -46,25 +46,29 @@ export default function ResourceHubCard({
         />
       </div>
 
-      <div className="p-2.5 sm:p-4 flex flex-col flex-1 border-t border-white/8">
-        <h2 className="font-display text-xs sm:text-base md:text-lg font-bold tracking-tight text-white group-hover:text-cyan-200 transition-colors line-clamp-2">
-          {hub.name}
-        </h2>
+      <div className="p-2 sm:p-2.5 md:p-3.5 flex flex-col flex-1 border-t border-white/8 justify-between">
+        <div>
+          <h2 className="font-display text-xs sm:text-base md:text-lg font-bold tracking-tight text-white group-hover:text-cyan-200 transition-colors line-clamp-2">
+            {hub.name}
+          </h2>
 
-        {hub.description && (
-          <p className="hidden sm:block text-xs text-wisdom-muted leading-relaxed line-clamp-2 mt-1 mb-2">
-            {hub.description}
-          </p>
-        )}
+          {hub.description && (
+            <p className="hidden sm:block text-xs text-wisdom-muted leading-relaxed line-clamp-2 mt-1 mb-2">
+              {hub.description}
+            </p>
+          )}
+        </div>
 
         <div className="mt-auto pt-2 flex items-center justify-between border-t border-white/5">
-          <span className="text-[11px] sm:text-xs font-semibold flex items-center gap-1 text-cyan-300">
-            {owned || lockMode === "open"
-              ? "Open"
-              : lockMode === "require_purchase"
-                ? "Unlock"
-                : "Preview"}
-            <ChevronRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+          <span className="btn-open">
+            <span>
+              {owned || lockMode === "open"
+                ? "Open"
+                : lockMode === "require_purchase"
+                  ? "Unlock"
+                  : "Preview"}
+            </span>
+            <ChevronRight className="w-2.5 h-2.5 sm:w-3 sm:h-3 transition-transform duration-200 group-hover:translate-x-0.5" />
           </span>
         </div>
       </div>
@@ -79,7 +83,7 @@ export default function ResourceHubCard({
           onClick={() =>
             lockMode === "require_purchase" ? setBuyOpen(true) : setSoonOpen(true)
           }
-          className="card-modern group flex flex-col text-left w-full cursor-pointer hover:border-cyan-400/40 shadow-lg overflow-hidden"
+          className="card-modern group flex flex-col h-full justify-between text-left w-full cursor-pointer shadow-md overflow-hidden rounded-xl sm:rounded-2xl"
         >
           {body}
         </button>
@@ -98,7 +102,7 @@ export default function ResourceHubCard({
     <Link
       href={href}
       prefetch={true}
-      className="card-modern group flex flex-col shadow-lg hover:border-cyan-400/30 transition-all overflow-hidden"
+      className="card-modern group flex flex-col h-full justify-between shadow-md overflow-hidden rounded-xl sm:rounded-2xl"
     >
       {body}
     </Link>

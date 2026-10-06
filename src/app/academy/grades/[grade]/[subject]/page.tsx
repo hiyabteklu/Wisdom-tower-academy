@@ -57,25 +57,25 @@ export default async function GradeSubjectPage({
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4">
             {subjects.map((sub) => (
               <Link
                 key={sub.id}
                 href={`/academy/grades/${grade.id}/${sub.id}/${resource.id}`}
-                className="group flex items-center justify-between p-4 sm:p-5 rounded-2xl border border-white/10 bg-wisdom-card hover:border-sky-400/40 hover:bg-white/[0.04] transition-all shadow-lg"
+                className="group flex items-center justify-between p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-white/10 bg-wisdom-card hover:border-sky-400/40 hover:bg-white/[0.04] transition-all shadow-md"
               >
-                <div className="flex items-center gap-3.5">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-sky-400/25 bg-sky-400/10 text-sky-300">
-                    <GradeSubjectIcon name={sub.icon} className="w-5 h-5" />
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0 pr-1">
+                  <span className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg sm:rounded-xl border border-sky-400/25 bg-sky-400/10 text-sky-300">
+                    <GradeSubjectIcon name={sub.icon} className="w-4 h-4 sm:w-5 sm:h-5" />
                   </span>
-                  <div>
-                    <h3 className="font-semibold text-white group-hover:text-sky-300 transition-colors">
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-xs sm:text-sm text-white group-hover:text-sky-300 transition-colors truncate">
                       {sub.name}
                     </h3>
-                    <p className="text-xs text-wisdom-muted">Open {resource.name}</p>
+                    <p className="text-[10px] sm:text-xs text-wisdom-muted truncate">Open {resource.name}</p>
                   </div>
                 </div>
-                <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-cyan-300 transition-colors" />
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-cyan-300 transition-colors shrink-0" />
               </Link>
             ))}
           </div>

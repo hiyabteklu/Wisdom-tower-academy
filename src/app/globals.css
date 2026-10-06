@@ -113,27 +113,103 @@ h1, h2, h3, h4, .font-display {
 .card-modern {
   position: relative;
   overflow: hidden;
-  border-radius: 1.25rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(28, 40, 60, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: linear-gradient(180deg, rgba(22, 33, 52, 0.92) 0%, rgba(14, 22, 36, 0.97) 100%);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
+    0 4px 16px -2px rgba(0, 0, 0, 0.4),
+    0 1px 2px 0 rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: transform 0.14s cubic-bezier(0.2, 0.8, 0.2, 1),
+              opacity 0.14s ease,
+              box-shadow 0.2s ease,
+              border-color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
 }
 @media (min-width: 640px) {
   .card-modern {
-    border-radius: 1.5rem;
+    border-radius: 1.25rem;
   }
 }
-.card-modern:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.18);
-  box-shadow: 0 16px 36px -12px rgba(0, 0, 0, 0.45);
+@media (hover: hover) and (pointer: fine) {
+  .card-modern:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.18);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.16),
+      0 12px 28px -6px rgba(0, 0, 0, 0.5);
+  }
 }
 .card-modern:active {
-  transform: scale(0.99);
+  transform: scale(0.978);
+  opacity: 0.93;
+  transition-duration: 0.08s;
+}
+.card-modern:focus,
+.card-modern:focus-visible {
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Card image container with organic depth blend (eliminates raw screenshot cutout look) */
+.card-media-wrap {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background-color: var(--card, #0f172a);
+}
+.card-media-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.04) 0%, transparent 40%, rgba(8, 14, 24, 0.55) 100%);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Refined Open Button: Navy/Cyan palette with subtle fill & crisp contrast */
+.btn-open {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.6875rem;
+  line-height: 0.875rem;
+  letter-spacing: 0.01em;
+  color: #cffafe;
+  background: rgba(14, 116, 144, 0.28);
+  border: 1px solid rgba(34, 211, 238, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition: all 0.12s ease;
+  user-select: none;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+@media (min-width: 640px) {
+  .btn-open {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    border-radius: 0.625rem;
+  }
+}
+@media (hover: hover) and (pointer: fine) {
+  .btn-open:hover {
+    background: rgba(14, 116, 144, 0.42);
+    border-color: rgba(34, 211, 238, 0.45);
+    color: #ffffff;
+  }
+}
+.btn-open:active {
+  transform: scale(0.94);
+  background: rgba(14, 116, 144, 0.55);
+  opacity: 0.9;
 }
 
 /* Unified Button Design System (iOS-inspired tactile feel) */
