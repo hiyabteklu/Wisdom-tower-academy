@@ -3,14 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Shield, ChevronDown, Check, BookOpen, LogIn } from "lucide-react";
+import { Shield, BookOpen } from "lucide-react";
 import { formatEtb, type AcademyPackage } from "@/data/packages";
 import { listSellablePackages } from "@/lib/catalog";
 import { isPackageOwned, IS_FREE_MODE } from "@/lib/ownership";
 import { addToCart } from "@/lib/cart";
 
 function PackageCatalogCard({ pkg }: { pkg: AcademyPackage }) {
-  const [expanded, setExpanded] = useState(false);
   const [owned, setOwned] = useState(false);
   const router = useRouter();
 
@@ -56,75 +55,26 @@ function PackageCatalogCard({ pkg }: { pkg: AcademyPackage }) {
           </div>
         </div>
 
-        {/* Action buttons side by side */}
-        <div className="grid grid-cols-2 gap-1.5 sm:gap-2 pt-1">
-          <button
-            type="button"
-            onClick={() => setExpanded(!expanded)}
-            className="flex items-center justify-center gap-1 py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-semibold border border-white/10 bg-white/[0.05] text-slate-200 hover:bg-white/[0.1] active:scale-95 transition-all cursor-pointer"
-          >
-            <span className="hidden sm:inline">What&apos;s </span>
-            <span>included</span>
-            <ChevronDown
-              className={`w-3 h-3 sm:w-3.5 sm:h-3.5 transition-transform duration-200 ${
-                expanded ? "rotate-180 text-cyan-300" : ""
-              }`}
-            />
-          </button>
-
-          {IS_FREE_MODE ? (
-            owned ? (
-              <Link
-                href={pkg.href || "/learning"}
-                className="btn-open w-full text-center py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-semibold"
-              >
-                <BookOpen className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                <span className="truncate">Learning</span>
-              </Link>
-            ) : (
-              <Link
-                href={`/login?next=${encodeURIComponent(pkg.href || "/packages")}`}
-                className="btn-open w-full text-center py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-semibold"
-              >
-                <LogIn className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                <span>Sign In</span>
-              </Link>
-            )
-          ) : owned ? (
+        {/* Single clear action to start learning (full label, not truncated) */}
+        <div className="pt-1">
+          {IS_FREE_MODE || owned ? (
             <Link
               href={pkg.href || "/learning"}
-              className="flex items-center justify-center gap-1 py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-semibold bg-white/[0.08] text-white border border-white/15 hover:bg-white/[0.14] transition-all text-center"
+              className="btn-open w-full text-center py-2 sm:py-2.5 px-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 shadow-sm"
             >
-              <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-cyan-400" />
-              <span>Owned</span>
+              <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-300 shrink-0" />
+              <span>Start Learning</span>
             </Link>
           ) : (
             <button
               type="button"
               onClick={handlePurchase}
-              className="btn-open w-full text-center py-1.5 px-2 sm:py-2 sm:px-3 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-semibold cursor-pointer"
+              className="btn-open w-full text-center py-2 sm:py-2.5 px-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
             >
-              <span>Purchase</span>
+              <span>Purchase ({formatEtb(pkg.priceEtb)})</span>
             </button>
           )}
         </div>
-
-        {/* In What's included: collapsed bullets only */}
-        {expanded && pkg.includes.length > 0 && (
-          <div className="pt-2 sm:pt-3 border-t border-white/10 space-y-1.5 animate-in fade-in duration-200">
-            <ul className="space-y-1 sm:space-y-1.5">
-              {pkg.includes.map((line) => (
-                <li
-                  key={line}
-                  className="flex items-start gap-1.5 text-[11px] sm:text-xs text-slate-300 leading-snug"
-                >
-                  <CheckCircle2 className="w-3 h-3 text-cyan-400 shrink-0 mt-0.5" />
-                  <span>{line}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
       </div>
     </article>
   );
