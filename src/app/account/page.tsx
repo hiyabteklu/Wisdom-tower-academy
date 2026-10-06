@@ -8,7 +8,6 @@ import { isAdminEmail } from "@/lib/admin";
 import { ensureProfile, getFullProfile, type UserProfileRecord } from "@/lib/profile";
 import { computeStudentId, persistStudentIdIfNeeded, type StudentIdData } from "@/lib/student-id";
 import StudentIdCard from "@/components/StudentIdCard";
-import StudentAnalyticsDashboard from "@/components/StudentAnalyticsDashboard";
 import ProfileCompletionPanel from "@/components/account/ProfileCompletionPanel";
 import BrandLoader from "@/components/BrandLoader";
 import { listMyOrders, type ManualOrder } from "@/lib/orders";
@@ -18,11 +17,10 @@ import {
   Check,
   Copy,
   ExternalLink,
-  LayoutDashboard,
   LogOut,
   Settings2,
   ShieldCheck,
-  UserCheck,
+  TrendingUp,
 } from "lucide-react";
 
 export default function AccountPage() {
@@ -31,17 +29,7 @@ export default function AccountPage() {
   const [profile, setProfile] = useState<UserProfileRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<ManualOrder[]>([]);
-  const [tab, setTab] = useState<"analytics" | "profile">("analytics");
   const [copiedFolio, setCopiedFolio] = useState(false);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("tab") === "profile") {
-        setTab("profile");
-      }
-    }
-  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -205,6 +193,14 @@ export default function AccountPage() {
             {/* Pill Action Buttons */}
             <div className="flex flex-wrap items-center gap-2">
               <Link
+                href="/learning?tool=analytics"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold text-cyan-200 hover:text-white bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-400/30 hover:border-cyan-400/50 shadow-sm transition-all duration-200 active:scale-95"
+              >
+                <TrendingUp className="w-3.5 h-3.5 text-cyan-300" />
+                <span>Your status</span>
+              </Link>
+
+              <Link
                 href="/learning"
                 className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-xs font-bold text-slate-950 bg-cyan-400 hover:bg-cyan-300 shadow-sm transition-all duration-200 active:scale-95"
               >
@@ -244,69 +240,13 @@ export default function AccountPage() {
         </section>
 
         {/* ========================================================= */}
-        {/* SEGMENTED PILL TAB SWITCHER                                */}
+        {/* COMPLETE YOUR PROFILE                                     */}
         {/* ========================================================= */}
-        <div className="flex justify-center">
-          <div className="p-1.5 rounded-full bg-[#0a1122]/80 backdrop-blur-xl border border-white/10 inline-flex items-center gap-1.5 shadow-[0_8px_30px_rgba(0,0,0,0.3)]">
-            {[
-              {
-                id: "analytics" as const,
-                label: "Academic Analytics & Progress",
-                icon: LayoutDashboard,
-              },
-              {
-                id: "profile" as const,
-                label: "Complete your profile",
-                icon: UserCheck,
-              },
-            ].map((t) => {
-              const Icon = t.icon;
-              const active = tab === t.id;
-              return (
-                <button
-                  key={t.id}
-                  onClick={() => setTab(t.id)}
-                  className={`inline-flex items-center gap-2 px-5 sm:px-7 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer ${
-                    active
-                      ? "bg-gradient-to-r from-cyan-500/20 to-sky-500/20 text-cyan-200 border border-cyan-400/40 shadow-sm"
-                      : "text-slate-400 hover:text-white hover:bg-white/[0.05] border border-transparent"
-                  }`}
-                >
-                  <Icon className={`w-4 h-4 ${active ? "text-cyan-300" : "text-slate-400"}`} />
-                  <span>{t.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* ========================================================= */}
-        {/* TAB PANES                                                 */}
-        {/* ========================================================= */}
-
-        {/* 1. DEDICATED STUDENT PROGRESS TRACKER & ANALYTICS */}
-        {tab === "analytics" && (
-          <div className="transition-opacity duration-300 ease-out">
-            <StudentAnalyticsDashboard
-              userId={user.id}
-              studentName={displayName}
-              educationLevel={profile?.education_level}
-              stream={profile?.stream}
-              userCreatedAt={user?.created_at}
-              dailyGoalMinutes={profile?.daily_study_goal_minutes || 45}
-              enrolledPackageIds={orders.map((o) => o.packageId).filter(Boolean) as string[]}
-            />
-          </div>
-        )}
-
-        {/* 2. COMPLETE YOUR PROFILE */}
-        {tab === "profile" && (
-          <ProfileCompletionPanel
-            user={user}
-            initialProfile={profile}
-            onProfileUpdated={(updated) => setProfile(updated)}
-          />
-        )}
+        <ProfileCompletionPanel
+          user={user}
+          initialProfile={profile}
+          onProfileUpdated={(updated) => setProfile(updated)}
+        />
       </div>
     </div>
   );

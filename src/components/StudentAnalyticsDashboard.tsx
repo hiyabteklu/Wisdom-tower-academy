@@ -124,14 +124,14 @@ export default function StudentAnalyticsDashboard({
   return (
     <div className={`space-y-5 sm:space-y-7 ${className}`}>
       {/* ========================================================= */}
-      {/* 1. EXECUTIVE SYSTEM VERIFICATION BANNER                    */}
+      {/* 1. STUDENT STATUS HEADER & TRACK BENCHMARK                */}
       {/* ========================================================= */}
       <div className="rounded-2xl sm:rounded-3xl border border-sky-500/20 bg-gradient-to-br from-[#071124]/85 via-[#0b1730]/80 to-[#060e1d]/85 backdrop-blur-2xl p-4 sm:p-6 md:p-7 shadow-[0_10px_35px_rgba(0,0,0,0.3)] space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
           <div className="flex flex-wrap items-center gap-2.5">
             <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-sky-500/15 text-sky-300 border border-sky-400/30">
               <GraduationCap className="w-4 h-4 text-sky-400" />
-              Verified Academic Analytics
+              Your status
             </span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono font-medium text-slate-300 bg-white/[0.04] border border-white/10">
               Standing: <strong className="text-cyan-300 font-bold">{analytics.masteryTier}</strong>
@@ -151,14 +151,14 @@ export default function StudentAnalyticsDashboard({
           </div>
         </div>
 
-        {/* The Exact "According to your records and our system..." statement */}
+        {/* Study progress summary */}
         <div className="p-3.5 sm:p-4.5 rounded-xl sm:rounded-2xl border border-sky-400/20 bg-sky-500/[0.06] backdrop-blur-md space-y-1.5">
           <p className="text-[11px] font-bold uppercase tracking-wider text-sky-300 flex items-center gap-1.5">
             <Activity className="w-3.5 h-3.5 text-sky-400" />
-            <span>System Executive Assessment</span>
+            <span>Study progress summary</span>
           </p>
           <p className="text-xs sm:text-sm text-slate-100 font-normal leading-relaxed">
-            According to your verified study records and our academic system, your cumulative study time is{" "}
+            Your cumulative study time is{" "}
             <strong className="text-white font-semibold">{analytics.studyTimeAnalysis.totalStudyHours} hours</strong> (
             {analytics.studyTimeAnalysis.totalStudyMinutes} minutes). You are tracking at{" "}
             <strong className="text-cyan-300 font-semibold">{analytics.weeklyProgressPct}%</strong> of your{" "}
@@ -505,19 +505,19 @@ export default function StudentAnalyticsDashboard({
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-cyan-500/15 text-cyan-300 border border-cyan-400/30">
-                Actionable Directives
+                Study Recommendations
               </span>
               <span className="text-xs text-slate-300">
                 Personalized study guidance for {studentName}
               </span>
             </div>
             <h3 className="font-display text-base sm:text-lg font-bold text-white">
-              System Recommendations For Your Study Routine
+              Recommended Study Routine Adjustments
             </h3>
           </div>
 
           <span className="text-xs font-mono font-bold text-cyan-300 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-400/30 self-start sm:self-center">
-            {analytics.recommendations.length} Specific Adjustments
+            {analytics.recommendations.length} Recommendations
           </span>
         </div>
 
@@ -553,7 +553,7 @@ export default function StudentAnalyticsDashboard({
       </div>
 
       {/* ========================================================= */}
-      {/* 6. CRITICAL WARNING SYSTEM (Immediately Stop Signals)     */}
+      {/* 6. STUDY ALERTS & HABIT ADJUSTMENTS                       */}
       {/* ========================================================= */}
       <div className="rounded-2xl sm:rounded-3xl border border-rose-500/20 bg-[#0b1329]/75 backdrop-blur-xl p-4 sm:p-6 md:p-7 shadow-[0_10px_35px_rgba(0,0,0,0.25)] space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
@@ -561,19 +561,19 @@ export default function StudentAnalyticsDashboard({
             <div className="flex items-center gap-2 mb-1">
               <span className="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-rose-500/15 text-rose-400 border border-rose-500/30 flex items-center gap-1.5">
                 <AlertOctagon className="w-3.5 h-3.5 text-rose-400" />
-                Critical Warning System
+                Study Alerts
               </span>
               <span className="text-xs text-slate-400">
-                Derived directly from your recent study telemetry
+                Based on your recent study patterns
               </span>
             </div>
             <h3 className="font-display text-base sm:text-lg font-bold text-white flex items-center gap-2">
-              Immediately Stop Signals & Habits
+              Habits & Pacing to Adjust
             </h3>
           </div>
 
           <span className="text-xs font-mono font-bold text-rose-300 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/30 self-start sm:self-center">
-            {analytics.immediatelyStopSignals.length} Active Directives
+            {analytics.immediatelyStopSignals.length} Alerts
           </span>
         </div>
 

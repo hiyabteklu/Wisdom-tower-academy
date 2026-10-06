@@ -33,6 +33,7 @@ import {
   STORAGE_ENROLLED_COURSES,
   getDefaultPackagesForAcademicLevel,
 } from "@/lib/academic-levels";
+import { getFullProfile, type UserProfileRecord } from "@/lib/profile";
 import PomodoroTimer from "@/components/learning/PomodoroTimer";
 import StudyPlanner from "@/components/learning/StudyPlanner";
 import StudentAnalyticsDashboard from "@/components/StudentAnalyticsDashboard";
@@ -169,7 +170,9 @@ const AVAILABLE_COURSES = [
 
 function LearningContent() {
   const searchParams = useSearchParams();
-  const initialFeature = (searchParams.get("tool") || searchParams.get("tab")) as FeatureKey | null;
+  const rawParam = searchParams.get("tool") || searchParams.get("tab") || searchParams.get("feature");
+  const normalizedParam = rawParam === "status" ? "analytics" : rawParam;
+  const initialFeature = normalizedParam as FeatureKey | null;
 
   // Selected tool feature (null = Hub Cards Deck; string = Opened Tool View)
   const [activeFeature, setActiveFeature] = useState<FeatureKey | null>(() => {
@@ -201,6 +204,7 @@ function LearningContent() {
   const [userEmail, setUserEmail] = useState("");
   const [studentId, setStudentId] = useState("WTA-7749");
   const [streakDays, setStreakDays] = useState(1);
+  const [userProfile, setUserProfile] = useState<UserProfileRecord | null>(null);
 
   // Enrolled courses state (defaults to Freshman + COC or level-specific)
   const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>([
@@ -235,6 +239,10 @@ function LearningContent() {
         if (user.email) setUserEmail(user.email);
         const code = user.id.replace(/-/g, "").slice(0, 4).toUpperCase();
         setStudentId(`WTA-${code}`);
+
+        getFullProfile(user.id).then((p) => {
+          if (p) setUserProfile(p);
+        });
 
         // If no saved courses in localStorage yet, initialize from user's education_level
         const savedEnrolled = localStorage.getItem(STORAGE_ENROLLED_COURSES);
@@ -587,7 +595,7 @@ function LearningContent() {
     },
     {
       key: "analytics" as FeatureKey,
-      title: "Radar",
+      title: "Your status",
       icon: TrendingUp,
     },
     {
@@ -729,9 +737,6 @@ function LearningContent() {
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
                   Study Tools
                 </span>
-                <span className="text-[11px] text-slate-500">
-                  1-Tap Launch
-                </span>
               </div>
 
               {/* Phone-like Nav / Toolbar Grid */}
@@ -829,6 +834,34 @@ function LearningContent() {
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* ── Your status ── */}
+            <div className="pt-3">
+              <div className="flex items-center justify-between mb-3 px-1">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <TrendingUp className="w-3.5 h-3.5 text-sky-400" />
+                  <span>Your status</span>
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setActiveFeature("analytics")}
+                  className="text-xs font-semibold text-sky-400 hover:text-sky-300 flex items-center gap-1 rounded-full px-3 py-1 bg-white/[0.04] border border-white/[0.08] active:scale-95 transition-all cursor-pointer"
+                >
+                  <span>Detailed view</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <StudentAnalyticsDashboard
+                userId={userId || "guest"}
+                studentName={userName}
+                educationLevel={userProfile?.education_level}
+                stream={userProfile?.stream}
+                userCreatedAt={userProfile?.created_at}
+                dailyGoalMinutes={userProfile?.daily_study_goal_minutes || 45}
+                enrolledPackageIds={enrolledCourseIds}
+              />
             </div>
           </div>
         )}
@@ -1146,12 +1179,17 @@ function LearningContent() {
           </section>
         )}
 
-        {/* ── 5. ACADEMIC PERFORMANCE RADAR ──────────────────────────── */}
+        {/* ── 5. YOUR STATUS ────────────────────────────────────────── */}
         {activeFeature === "analytics" && (
           <section className="animate-fade-up max-w-5xl mx-auto space-y-4">
             <StudentAnalyticsDashboard
               userId={userId || "guest"}
               studentName={userName}
+              educationLevel={userProfile?.education_level}
+              stream={userProfile?.stream}
+              userCreatedAt={userProfile?.created_at}
+              dailyGoalMinutes={userProfile?.daily_study_goal_minutes || 45}
+              enrolledPackageIds={enrolledCourseIds}
             />
           </section>
         )}
