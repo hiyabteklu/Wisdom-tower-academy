@@ -1,12 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Timer } from "lucide-react";
 import {
   FOCUS_EVENT,
-  formatFocusClock,
   pickNudge,
   readFocusState,
   remainingSec,
@@ -14,11 +11,11 @@ import {
 } from "@/lib/focus-timer";
 
 /**
- * Floating bar while a focus session is active: survives leaving My Learning.
+ * Focus session monitor: prevents accidental navigation away while timer runs.
+ * Note: floating countdown chip overlay removed per user request.
  */
 export default function GlobalFocusBar() {
   const pathname = usePathname() || "/";
-  const [left, setLeft] = useState(0);
   const [running, setRunning] = useState(false);
   const [leaveNudge, setLeaveNudge] = useState<ReturnType<typeof pickNudge> | null>(null);
   const [pendingHref, setPendingHref] = useState<string | null>(null);
@@ -26,7 +23,6 @@ export default function GlobalFocusBar() {
   const sync = useCallback(() => {
     const s = readFocusState();
     const r = remainingSec(s);
-    setLeft(r);
     setRunning(Boolean(s.running && r > 0));
     if (s.running && r <= 0) {
       resetFocus(s.totalSec);
@@ -69,28 +65,10 @@ export default function GlobalFocusBar() {
     return () => document.removeEventListener("click", onClick, true);
   }, [running, pathname]);
 
-  if (!running && !leaveNudge) return null;
+  if (!leaveNudge) return null;
 
   return (
     <>
-      {running ? (
-        <Link
-          href="/learning"
-          className="fixed bottom-4 right-4 z-[60] flex items-center gap-2.5 rounded-2xl border border-amber-400/40 bg-wisdom-card/95 px-3.5 py-2.5 shadow-lg shadow-black/40 backdrop-blur-md hover:border-amber-300/60 transition-colors"
-          title="Focus timer running"
-        >
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500/20 text-amber-300">
-            <Timer className="w-4 h-4" />
-          </span>
-          <span className="font-display text-base font-black tabular-nums text-white">
-            {formatFocusClock(left)}
-          </span>
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-200/80 hidden sm:inline">
-            Focus
-          </span>
-        </Link>
-      ) : null}
-
       {leaveNudge && (
         <div
           className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-4 bg-black/70 backdrop-blur-sm"

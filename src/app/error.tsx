@@ -36,19 +36,10 @@ export default function GlobalError({
           Something went wrong
         </h1>
 
-        <p className="text-sm text-wisdom-muted leading-relaxed max-w-md mx-auto mb-6">
-          An unexpected client-side error occurred while rendering this page. Your study sessions,
+        <p className="text-sm text-wisdom-muted leading-relaxed max-w-md mx-auto mb-8">
+          An unexpected issue occurred while rendering this view. Your study sessions,
           progress, and account data remain completely safe.
         </p>
-
-        {error?.message && (
-          <div className="rounded-xl border border-white/10 bg-slate-950/60 p-3.5 text-left mb-6 font-mono text-xs text-rose-200/80 break-words line-clamp-3">
-            <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider mb-1">
-              Error detail
-            </span>
-            {error.message}
-          </div>
-        )}
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <button
@@ -76,12 +67,6 @@ export default function GlobalError({
             Home
           </Link>
         </div>
-
-        {error?.digest && (
-          <p className="mt-6 text-[10px] font-mono text-slate-500">
-            Digest: {error.digest}
-          </p>
-        )}
       </div>
     </div>
   );

@@ -69,8 +69,55 @@ const VALID_TABS: AcademyTab[] = [
   "database",
 ];
 
-function parseTab(raw: string | null): AcademyTab {
-  if (raw && (VALID_TABS as string[]).includes(raw)) return raw as AcademyTab;
+const ADMIN_TAB_STORAGE_KEY = "wt-admin-active-tab";
+
+const TAB_ALIASES: Record<string, AcademyTab> = {
+  overview: "overview",
+  notifications: "notifications",
+  notification: "notifications",
+  users: "users",
+  user: "users",
+  payments: "payments",
+  payment: "payments",
+  grants: "grants",
+  grant: "grants",
+  content: "content",
+  contents: "content",
+  locks: "locks",
+  lock: "locks",
+  catalog: "catalog",
+  pricing: "catalog",
+  "free-resources": "free-resources",
+  "free-resource": "free-resources",
+  free: "free-resources",
+  inquiries: "inquiries",
+  inquiry: "inquiries",
+  database: "database",
+  db: "database",
+};
+
+function parseTab(raw: string | null | undefined): AcademyTab | null {
+  if (!raw) return null;
+  const normalized = raw.trim().toLowerCase();
+  if (normalized in TAB_ALIASES) return TAB_ALIASES[normalized];
+  if ((VALID_TABS as string[]).includes(normalized)) return normalized as AcademyTab;
+  return null;
+}
+
+function resolveInitialTab(urlParam: string | null): AcademyTab {
+  const parsedParam = parseTab(urlParam);
+  if (parsedParam) return parsedParam;
+  if (typeof window !== "undefined") {
+    try {
+      const windowTab = new URLSearchParams(window.location.search).get("tab");
+      const parsedWindow = parseTab(windowTab);
+      if (parsedWindow) return parsedWindow;
+
+      const stored = window.localStorage.getItem(ADMIN_TAB_STORAGE_KEY);
+      const parsedStored = parseTab(stored);
+      if (parsedStored) return parsedStored;
+    } catch {}
+  }
   return "overview";
 }
 
@@ -79,7 +126,9 @@ function AdminDashboardInner() {
   const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [academyTab, setAcademyTab] = useState<AcademyTab>("overview");
+  const [academyTab, setAcademyTab] = useState<AcademyTab>(() =>
+    resolveInitialTab(searchParams.get("tab"))
+  );
   const [tabSearch, setTabSearch] = useState("");
 
   // Live badges for pending items
@@ -87,17 +136,46 @@ function AdminDashboardInner() {
   const [newInquiriesCount, setNewInquiriesCount] = useState<number>(0);
   const [usersCount, setUsersCount] = useState<number>(0);
 
-  // Sync tab from URL on load / browser back-forward
+  // Sync tab from URL on load / browser back-forward / refresh
   useEffect(() => {
-    setAcademyTab(parseTab(searchParams.get("tab")));
-  }, [searchParams]);
+    const fromUrl = parseTab(searchParams.get("tab"));
+    if (fromUrl) {
+      setAcademyTab(fromUrl);
+      try {
+        window.localStorage.setItem(ADMIN_TAB_STORAGE_KEY, fromUrl);
+      } catch {}
+    } else {
+      // If refreshed on /admin without ?tab=, keep active section from storage
+      try {
+        const stored = window.localStorage.getItem(ADMIN_TAB_STORAGE_KEY);
+        const parsedStored = parseTab(stored);
+        if (parsedStored && parsedStored !== "overview") {
+          setAcademyTab(parsedStored);
+          const params = new URLSearchParams(searchParams.toString());
+          params.set("tab", parsedStored);
+          const newUrl = `/admin?${params.toString()}`;
+          if (typeof window !== "undefined") {
+            window.history.replaceState(null, "", newUrl);
+          }
+          router.replace(newUrl, { scroll: false });
+        }
+      } catch {}
+    }
+  }, [searchParams, router]);
 
   const goTab = useCallback(
     (id: AcademyTab) => {
       setAcademyTab(id);
+      try {
+        window.localStorage.setItem(ADMIN_TAB_STORAGE_KEY, id);
+      } catch {}
       const params = new URLSearchParams(searchParams.toString());
       params.set("tab", id);
-      router.replace(`/admin?${params.toString()}`, { scroll: false });
+      const newUrl = `/admin?${params.toString()}`;
+      if (typeof window !== "undefined") {
+        window.history.replaceState(null, "", newUrl);
+      }
+      router.replace(newUrl, { scroll: false });
     },
     [router, searchParams]
   );
