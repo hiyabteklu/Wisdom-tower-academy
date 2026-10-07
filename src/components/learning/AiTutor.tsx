@@ -10,6 +10,8 @@ import {
   Bot,
   User,
   GraduationCap,
+  Sparkles,
+  Square,
 } from "lucide-react";
 import RichContent from "@/components/learning/RichContent";
 import "katex/dist/katex.min.css";
@@ -19,6 +21,7 @@ type Message = {
   role: "user" | "assistant";
   content: string;
   timestamp: string;
+  suggestions?: string[];
 };
 
 type Props = {
@@ -29,22 +32,46 @@ type Props = {
   courseContext?: string;
 };
 
+const STORAGE_KEY = "wt_ai_tutor_chat_v2";
+
+const DEFAULT_WELCOME: Message = {
+  id: "welcome",
+  role: "assistant",
+  content:
+    "👋 Welcome! I am your **Wisdom Tower AI Tutor** — your friendly academic coach.\n\nWhether you're tackling **Grade 9–12** secondary concepts, navigating **Freshman university** courses (Calculus, Physics, C++, Logic...), or diving into **Senior Engineering (ECE)** and national entrance exams (**UAT, GAT, COC, Exit Exams**), I'm here to break down problems step-by-step with clear derivations.\n\nWhat concept, formula, or problem are we conquering today?",
+  timestamp: "Just now",
+  suggestions: [
+    "How to calculate Ethiopian university GPA?",
+    "Explain Newton's Laws with examples",
+    "Derivative power rule step-by-step",
+  ],
+};
+
 export default function AiTutor({
   isOpen,
   onClose,
   courseContext,
 }: Props) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      content:
-        "👋 Welcome! I am your **Wisdom Tower AI Tutor**.\n\nAsk me any concept, formula, homework problem, or practice question from your high school, freshman, or engineering tracks. How can I help your studies today?",
-      timestamp: "Just now",
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = window.localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed;
+          }
+        }
+      } catch {}
+    }
+    return [DEFAULT_WELCOME];
+  });
+
   const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
+  // isThinking is true ONLY while waiting for the very first token
+  const [isThinking, setIsThinking] = useState(false);
+  // isStreaming is true while tokens are actively streaming in
+  const [isStreaming, setIsStreaming] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Dynamic visual viewport positioning for mobile/Android WebViews
@@ -52,8 +79,18 @@ export default function AiTutor({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Track visualViewport so the composer stays strictly pinned above the mobile keyboard
+  // Persist messages in localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined" && messages.length > 0) {
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+      } catch {}
+    }
+  }, [messages]);
+
+  // Track visualViewport so the composer stays strictly pinned above mobile keyboard
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -116,23 +153,24 @@ export default function AiTutor({
 
   const handleInputFocus = useCallback(() => {
     keepInputVisible();
-    // Re-verify after virtual keyboard transitions finish on Android/iOS
     setTimeout(keepInputVisible, 150);
     setTimeout(keepInputVisible, 320);
   }, [keepInputVisible]);
 
-  // Scroll to bottom when new messages arrive
+  // Scroll to bottom when new messages arrive or stream updates
   useEffect(() => {
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [isOpen, messages]);
+  }, [isOpen, messages, isThinking]);
 
   if (!isOpen) return null;
 
-  async function sendMessage() {
-    const q = input.trim();
-    if (!q || loading) return;
+  const isBusy = isThinking || isStreaming;
+
+  async function sendMessage(textOverride?: string) {
+    const q = (textOverride !== undefined ? textOverride : input).trim();
+    if (!q || isBusy) return;
 
     const userMsg: Message = {
       id: "user-" + Date.now(),
@@ -141,12 +179,23 @@ export default function AiTutor({
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
-    setMessages((prev) => [...prev, userMsg]);
+    const nextHistory = [...messages, userMsg];
+    setMessages(nextHistory);
     setInput("");
-    setLoading(true);
+    setIsThinking(true);
+    setIsStreaming(false);
+
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
+    const botMessageId = "bot-" + Date.now();
+    const botTimestamp = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+    let accumulatedText = "";
+    let hasReceivedFirstToken = false;
 
     try {
-      const history = [...messages, userMsg].map((m) => ({
+      const historyPayload = nextHistory.map((m) => ({
         role: m.role,
         content: m.content,
       }));
@@ -155,39 +204,148 @@ export default function AiTutor({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: history,
+          messages: historyPayload,
           courseContext,
         }),
+        signal: abortController.signal,
       });
 
-      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(`Server status ${res.status}`);
+      }
 
-      const botReply =
-        data?.reply ||
-        "The Wisdom Tower AI Tutor is currently experiencing high demand. Please wait a moment and try asking your question again.";
+      if (!res.body) {
+        throw new Error("Missing response body stream");
+      }
 
-      const botMsg: Message = {
-        id: "bot-" + Date.now(),
-        role: "assistant",
-        content: botReply,
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      };
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let buffer = "";
 
-      setMessages((prev) => [...prev, botMsg]);
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: "err-" + Date.now(),
-          role: "assistant",
-          content:
-            "The Wisdom Tower AI Tutor is currently experiencing high demand. Please wait a moment and try asking your question again.",
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        },
-      ]);
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const blocks = buffer.split("\n\n");
+        buffer = blocks.pop() || "";
+
+        for (const block of blocks) {
+          const trimmed = block.trim();
+          if (!trimmed.startsWith("data:")) continue;
+          const jsonStr = trimmed.slice(5).trim();
+          if (!jsonStr) continue;
+
+          try {
+            const data = JSON.parse(jsonStr);
+
+            if (data.type === "chunk" && data.text) {
+              if (!hasReceivedFirstToken) {
+                hasReceivedFirstToken = true;
+                setIsThinking(false); // Stop "Thinking" immediately upon first token!
+                setIsStreaming(true);
+                accumulatedText = data.text;
+
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    id: botMessageId,
+                    role: "assistant",
+                    content: accumulatedText,
+                    timestamp: botTimestamp,
+                  },
+                ]);
+              } else {
+                accumulatedText += data.text;
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === botMessageId ? { ...m, content: accumulatedText } : m
+                  )
+                );
+              }
+            } else if (data.type === "suggestions" && Array.isArray(data.suggestions)) {
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === botMessageId ? { ...m, suggestions: data.suggestions } : m
+                )
+              );
+            }
+          } catch {
+            // Ignore incomplete chunks
+          }
+        }
+      }
+    } catch (err: any) {
+      if (err?.name === "AbortError") {
+        console.log("[AI Tutor] Stream aborted by user");
+        // Keep partial text if already generated
+        if (!hasReceivedFirstToken) {
+          // If stopped before any token arrived, show clean notice
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: botMessageId,
+              role: "assistant",
+              content: "Response stopped. What would you like to explore instead?",
+              timestamp: botTimestamp,
+              suggestions: [
+                "Give me a practice problem",
+                "Explain the formula step-by-step",
+                "What are common exam pitfalls?",
+              ],
+            },
+          ]);
+        }
+      } else {
+        console.warn("[AI Tutor] Request failed:", err?.message || err);
+        const calmNotice =
+          "The Wisdom Tower AI Tutor is currently experiencing high demand. Please wait a moment and try asking your question again.";
+
+        if (!hasReceivedFirstToken) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: "err-" + Date.now(),
+              role: "assistant",
+              content: calmNotice,
+              timestamp: botTimestamp,
+              suggestions: [
+                "Try asking again",
+                "Explain in simpler terms",
+                "Give me an example",
+              ],
+            },
+          ]);
+        } else {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === botMessageId
+                ? {
+                    ...m,
+                    content: m.content + "\n\n*(Response stopped due to high server demand. You can ask to continue.)*",
+                    suggestions: ["Please continue where you left off", "Summarize this topic"],
+                  }
+                : m
+            )
+          );
+        }
+      }
     } finally {
-      setLoading(false);
+      setIsThinking(false);
+      setIsStreaming(false);
+      abortControllerRef.current = null;
     }
+  }
+
+  function handleStop() {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setIsThinking(false);
+    setIsStreaming(false);
+    // User can type again immediately
+    inputRef.current?.focus();
   }
 
   function handleCopy(id: string, text: string) {
@@ -199,14 +357,32 @@ export default function AiTutor({
   }
 
   function handleClear() {
-    setMessages([
-      {
-        id: "welcome-" + Date.now(),
-        role: "assistant",
-        content: "Chat cleared. What concept or problem would you like to explore next?",
-        timestamp: "Just now",
-      },
-    ]);
+    if (isBusy) {
+      handleStop();
+    }
+    const freshWelcome: Message = {
+      ...DEFAULT_WELCOME,
+      id: "welcome-" + Date.now(),
+      content: "Chat cleared. What concept or problem would you like to explore next?",
+      timestamp: "Just now",
+      suggestions: [
+        "Review high school physics formula",
+        "Freshman calculus limit problem",
+        "Common Ethiopian matriculation traps",
+      ],
+    };
+    setMessages([freshWelcome]);
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify([freshWelcome]));
+      } catch {}
+    }
+    inputRef.current?.focus();
+  }
+
+  function handleSuggestionClick(prompt: string) {
+    if (isBusy) return;
+    sendMessage(prompt);
   }
 
   return (
@@ -225,25 +401,24 @@ export default function AiTutor({
               Wisdom Tower AI Tutor
             </h3>
             <p className="text-[10px] sm:text-xs text-slate-400 truncate">
-              Academic Problem Solver
+              Ethiopian Academic Study Coach
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {/* Clear conversation */}
-          {messages.length > 1 && (
-            <button
-              type="button"
-              onClick={handleClear}
-              title="Clear conversation"
-              className="p-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 active:scale-95 transition-all cursor-pointer"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          )}
+          {/* Clear conversation button */}
+          <button
+            type="button"
+            onClick={handleClear}
+            title="Clear chat history"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 text-xs font-semibold active:scale-95 transition-all cursor-pointer"
+          >
+            <Trash2 className="w-3.5 h-3.5 text-slate-400" />
+            <span className="hidden sm:inline">Clear chat</span>
+          </button>
 
-          {/* Prominent, always-reachable Close button */}
+          {/* Close button */}
           <button
             type="button"
             onClick={onClose}
@@ -259,76 +434,99 @@ export default function AiTutor({
 
       {/* ── Scrollable Messages Container ── */}
       <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3.5 sm:p-5 space-y-4">
-        {messages.map((m) => {
+        {messages.map((m, index) => {
           const isBot = m.role === "assistant";
-          return (
-            <div
-              key={m.id}
-              className={`flex gap-2.5 sm:gap-3 ${isBot ? "items-start" : "items-end justify-end"}`}
-            >
-              {isBot && (
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-500/20 to-indigo-500/20 border border-cyan-400/30 flex items-center justify-center text-cyan-300 shrink-0 mt-0.5 shadow-sm">
-                  <Bot className="w-4 h-4" />
-                </div>
-              )}
+          const isLatestBot = isBot && index === messages.length - 1;
 
+          return (
+            <div key={m.id} className="space-y-2.5">
               <div
-                className={`group relative rounded-2xl p-3.5 sm:p-4 text-sm sm:text-base leading-relaxed ${
-                  isBot
-                    ? "w-full max-w-full sm:max-w-[92%] bg-[#0c1628]/95 border border-white/10 text-slate-100 shadow-md"
-                    : "max-w-[90%] sm:max-w-[80%] bg-gradient-to-r from-cyan-500 to-blue-500 text-slate-950 font-medium rounded-br-xs shadow-md shadow-cyan-500/20"
-                }`}
+                className={`flex gap-2.5 sm:gap-3 ${isBot ? "items-start" : "items-end justify-end"}`}
               >
-                {/* KaTeX and Markdown parsed rich mathematical body */}
-                <div className="break-words font-sans">
-                  <RichContent
-                    body={m.content}
-                    className={
-                      isBot
-                        ? "text-slate-100 study-prose text-sm sm:text-base"
-                        : "text-slate-950 font-medium text-sm sm:text-base"
-                    }
-                  />
-                </div>
+                {isBot && (
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-500/20 to-indigo-500/20 border border-cyan-400/30 flex items-center justify-center text-cyan-300 shrink-0 mt-0.5 shadow-sm">
+                    <Bot className="w-4 h-4" />
+                  </div>
+                )}
 
                 <div
-                  className={`mt-2 flex items-center justify-between gap-3 text-[11px] ${
-                    isBot ? "text-slate-400" : "text-slate-900/75"
+                  className={`group relative rounded-2xl p-3.5 sm:p-4 text-sm sm:text-base leading-relaxed ${
+                    isBot
+                      ? "w-full max-w-full sm:max-w-[92%] bg-[#0c1628]/95 border border-white/10 text-slate-100 shadow-md"
+                      : "max-w-[90%] sm:max-w-[80%] bg-gradient-to-r from-cyan-500 to-blue-500 text-slate-950 font-medium rounded-br-xs shadow-md shadow-cyan-500/20"
                   }`}
                 >
-                  <span>{m.timestamp}</span>
+                  {/* KaTeX and Markdown parsed rich mathematical body */}
+                  <div className="break-words font-sans">
+                    <RichContent
+                      body={m.content}
+                      className={
+                        isBot
+                          ? "text-slate-100 study-prose text-sm sm:text-base"
+                          : "text-slate-950 font-medium text-sm sm:text-base"
+                      }
+                    />
+                  </div>
 
-                  {isBot && (
-                    <button
-                      type="button"
-                      onClick={() => handleCopy(m.id, m.content)}
-                      className="opacity-70 sm:opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-white/10 transition-opacity cursor-pointer inline-flex items-center gap-1 text-slate-400 hover:text-white"
-                      title="Copy text"
-                    >
-                      {copiedId === m.id ? (
-                        <>
-                          <Check className="w-3.5 h-3.5 text-emerald-400" />
-                          <span className="text-[11px] text-emerald-400">Copied</span>
-                        </>
-                      ) : (
-                        <Copy className="w-3.5 h-3.5" />
-                      )}
-                    </button>
-                  )}
+                  <div
+                    className={`mt-2 flex items-center justify-between gap-3 text-[11px] ${
+                      isBot ? "text-slate-400" : "text-slate-900/75"
+                    }`}
+                  >
+                    <span>{m.timestamp}</span>
+
+                    {isBot && (
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(m.id, m.content)}
+                        className="opacity-70 sm:opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-white/10 transition-opacity cursor-pointer inline-flex items-center gap-1 text-slate-400 hover:text-white"
+                        title="Copy text"
+                      >
+                        {copiedId === m.id ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                            <span className="text-[11px] text-emerald-400">Copied</span>
+                          </>
+                        ) : (
+                          <Copy className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                    )}
+                  </div>
                 </div>
+
+                {!isBot && (
+                  <div className="w-8 h-8 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white shrink-0 mb-0.5">
+                    <User className="w-4 h-4" />
+                  </div>
+                )}
               </div>
 
-              {!isBot && (
-                <div className="w-8 h-8 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white shrink-0 mb-0.5">
-                  <User className="w-4 h-4" />
+              {/* ── Follow-up Suggestions Chips (up to 3 short tappable prompts) ── */}
+              {isBot && m.suggestions && m.suggestions.length > 0 && (!isBusy || !isLatestBot) && (
+                <div className="pl-10 sm:pl-11 pr-2 animate-in fade-in duration-200">
+                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                    {m.suggestions.slice(0, 3).map((sug, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => handleSuggestionClick(sug)}
+                        disabled={isBusy}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-cyan-500/10 hover:bg-cyan-500/20 active:bg-cyan-500/30 text-cyan-200 hover:text-white border border-cyan-400/25 hover:border-cyan-400/50 transition-all active:scale-95 text-left cursor-pointer shadow-xs disabled:opacity-40 disabled:pointer-events-none"
+                      >
+                        <Sparkles className="w-3 h-3 text-cyan-300 shrink-0" />
+                        <span>{sug}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
           );
         })}
 
-        {/* ── Compact Academy Brand "Thinking" Indicator ── */}
-        {loading && (
+        {/* ── Compact Academy Brand "Thinking" Indicator (Active ONLY until first token) ── */}
+        {isThinking && (
           <div className="flex items-start gap-2.5 sm:gap-3 animate-in fade-in duration-150">
             {/* Tutor avatar with brand glow */}
             <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-500/20 to-indigo-500/20 border border-cyan-400/30 flex items-center justify-center text-cyan-300 shrink-0 mt-0.5 shadow-sm">
@@ -382,21 +580,39 @@ export default function AiTutor({
             }}
             onFocus={handleInputFocus}
             onClick={handleInputFocus}
-            placeholder="Ask a question, formula, or problem…"
-            disabled={loading}
+            placeholder={
+              isBusy
+                ? "AI Tutor is responding (click Stop to cancel)..."
+                : "Ask a concept, formula, or problem…"
+            }
             autoComplete="off"
             autoCorrect="on"
             enterKeyHint="send"
             className="flex-1 bg-[#060b17] border border-white/15 focus:border-cyan-400 rounded-2xl px-3.5 py-2.5 sm:py-3 text-base text-white placeholder-slate-400 focus:outline-none transition-colors"
           />
-          <button
-            type="submit"
-            disabled={!input.trim() || loading}
-            className="p-2.5 sm:p-3 rounded-2xl bg-cyan-400 text-slate-950 hover:bg-cyan-300 disabled:opacity-40 disabled:hover:bg-cyan-400 font-bold transition-all active:scale-95 cursor-pointer shadow-md shadow-cyan-500/25 shrink-0 flex items-center justify-center"
-            aria-label="Send question"
-          >
-            <Send className="w-4 h-4 sm:w-5 sm:h-5" />
-          </button>
+
+          {/* Abort button when loading/streaming, Send button otherwise */}
+          {isBusy ? (
+            <button
+              type="button"
+              onClick={handleStop}
+              className="px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-2xl bg-amber-500/25 hover:bg-amber-500/35 text-amber-200 hover:text-white border border-amber-400/40 text-xs sm:text-sm font-bold transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 shrink-0 shadow-md"
+              aria-label="Stop generating"
+              title="Stop generating"
+            >
+              <Square className="w-3.5 h-3.5 fill-current" />
+              <span>Stop</span>
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={!input.trim()}
+              className="p-2.5 sm:p-3 rounded-2xl bg-cyan-400 text-slate-950 hover:bg-cyan-300 disabled:opacity-40 disabled:hover:bg-cyan-400 font-bold transition-all active:scale-95 cursor-pointer shadow-md shadow-cyan-500/25 shrink-0 flex items-center justify-center"
+              aria-label="Send question"
+            >
+              <Send className="w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
+          )}
         </form>
       </footer>
     </div>
