@@ -37,12 +37,14 @@ export default function QuizDemoPage() {
           enableAiExplain
         />
 
-        <p className="mt-8 text-center text-xs text-wisdom-muted">
-          Real subject banks will replace this demo.{" "}
-          <Link href="/academy" className="text-cyan-400 hover:underline">
-            Back to Academy
+        <div className="mt-8 text-center">
+          <Link
+            href="/academy"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-xs font-semibold text-slate-300 hover:text-white transition-all active:scale-95"
+          >
+            ← Academy Pathways
           </Link>
-        </p>
+        </div>
       </div>
     </div>
   );

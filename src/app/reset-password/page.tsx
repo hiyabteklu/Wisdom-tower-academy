@@ -248,15 +248,20 @@ export default function ResetPasswordPage() {
             </form>
           )}
 
-          <p className="mt-6 text-center text-sm text-wisdom-muted">
-            <Link href="/login" className="text-wisdom-cyan hover:underline">
+          <div className="mt-6 flex items-center justify-center gap-3">
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-xs font-semibold text-slate-300 hover:text-white transition-all active:scale-95"
+            >
               Back to Sign In
             </Link>
-            {" · "}
-            <Link href="/forgot-password" className="text-wisdom-cyan hover:underline">
+            <Link
+              href="/forgot-password"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-xs font-semibold text-slate-300 hover:text-white transition-all active:scale-95"
+            >
               Request new link
             </Link>
-          </p>
+          </div>
         </div>
       </div>
     </div>

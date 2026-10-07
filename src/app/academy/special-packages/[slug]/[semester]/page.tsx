@@ -156,14 +156,14 @@ export default async function SemesterPage({
           </div>
         )}
 
-        <p className="mt-10 text-sm text-wisdom-muted">
+        <div className="mt-10 pt-6 border-t border-white/5 flex items-center gap-3">
           <Link
             href={`/academy/special-packages/${pkg.slug}`}
-            className="text-amber-400 hover:underline"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 transition-all active:scale-95"
           >
-            ← {pkg.name}
+            All {pkg.name} Semesters
           </Link>
-        </p>
+        </div>
       </div>
     </div>
   );

@@ -43,13 +43,18 @@ export default function CategoryBackButton({
   };
 
   return (
-    <Link
-      href={href}
-      onClick={handleClick}
-      className="inline-flex items-center gap-2 mb-6 sm:mb-8 rounded-full border border-white/10 bg-[#0c1328]/70 hover:bg-[#0f1833]/85 backdrop-blur-md px-4 py-2 text-xs sm:text-sm font-semibold text-slate-300 hover:text-white hover:border-white/20 transition-all shadow-sm active:scale-95"
-    >
-      <ArrowLeft className="w-4 h-4" />
-      {text}
-    </Link>
+    <div className="flex items-center gap-2.5 mb-5 sm:mb-7 select-none touch-manipulation">
+      <Link
+        href={href}
+        onClick={handleClick}
+        className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-[#0c1429]/80 hover:bg-[#111c38] backdrop-blur-xl px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-200 hover:text-white hover:border-cyan-400/40 transition-all shadow-md active:scale-95 cursor-pointer"
+        aria-label={`Go back to ${text}`}
+      >
+        <span className="flex items-center justify-center w-5 h-5 rounded-full bg-white/10 text-cyan-300 -ml-0.5">
+          <ArrowLeft className="w-3.5 h-3.5 stroke-[2.5]" />
+        </span>
+        <span className="tracking-tight">{text}</span>
+      </Link>
+    </div>
   );
 }

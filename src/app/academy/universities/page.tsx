@@ -16,6 +16,7 @@ import {
   Filter,
   Star,
   ArrowRight,
+  ArrowLeft,
   Route,
   Mountain,
   Target,
@@ -591,10 +592,10 @@ function UniversitiesContent() {
         <div className="mt-12 text-center">
           <Link
             href="/academy"
-            className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-sky-400 hover:text-sky-300 transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-xs sm:text-sm font-bold text-white transition-all active:scale-95 shadow-sm"
           >
-            <ArrowRight className="w-4 h-4 rotate-180" />
-            Back to Academy Other Resources
+            <ArrowLeft className="w-4 h-4 text-cyan-300" />
+            <span>Academy Pathways</span>
           </Link>
         </div>
       </div>
