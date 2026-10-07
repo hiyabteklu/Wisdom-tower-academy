@@ -244,12 +244,12 @@ export default function AiTutor({
       ref={cardRef}
       className={
         isFullScreen
-          ? "fixed inset-0 z-[140] bg-[#050914] flex flex-col animate-in fade-in duration-200"
+          ? "fixed inset-0 z-[160] bg-[#050914] flex flex-col h-[100dvh] overflow-hidden animate-in fade-in duration-200"
           : isEmbedded
-            ? "w-full h-[620px] max-h-[85vh] rounded-3xl border border-cyan-400/30 bg-[#091122]/95 backdrop-blur-2xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-cyan-500/20"
+            ? "fixed inset-0 z-[150] sm:relative sm:inset-auto sm:z-auto w-full h-[100dvh] sm:h-[680px] max-h-none sm:max-h-[85vh] sm:max-w-4xl sm:mx-auto sm:rounded-3xl border-0 sm:border border-cyan-400/30 bg-[#091122] sm:bg-[#091122]/95 backdrop-blur-2xl shadow-2xl flex flex-col overflow-hidden ring-0 sm:ring-1 sm:ring-cyan-500/20"
             : pos
-              ? "fixed z-[130] w-[min(26rem,calc(100vw-1.25rem))] h-[min(36rem,calc(100dvh-8rem))] rounded-3xl border border-cyan-400/30 bg-[#091122]/95 backdrop-blur-2xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-cyan-500/20 animate-in fade-in"
-              : "fixed inset-x-2.5 sm:inset-x-auto sm:right-5 top-16 sm:top-auto sm:bottom-20 z-[130] w-auto sm:w-[26rem] h-[calc(100dvh-9rem)] sm:h-[36rem] max-h-[calc(100dvh-8rem)] rounded-3xl border border-cyan-400/30 bg-[#091122]/95 backdrop-blur-2xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-cyan-500/20 animate-in slide-in-from-bottom-4 duration-200"
+              ? "fixed z-[140] w-[min(32rem,calc(100vw-1rem))] h-[min(38rem,calc(100dvh-7rem))] rounded-3xl border border-cyan-400/30 bg-[#091122]/95 backdrop-blur-2xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-cyan-500/20 animate-in fade-in"
+              : "fixed inset-x-2 sm:inset-x-auto sm:right-6 top-14 sm:top-auto bottom-[4.5rem] sm:bottom-20 z-[140] w-auto sm:w-[32rem] h-auto sm:h-[38rem] max-h-[calc(100dvh-6rem)] rounded-3xl border border-cyan-400/30 bg-[#091122]/95 backdrop-blur-2xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-cyan-500/20 animate-in slide-in-from-bottom-4 duration-200"
       }
       style={
         !isFullScreen && !isEmbedded && pos
@@ -260,44 +260,44 @@ export default function AiTutor({
           : undefined
       }
     >
-      {/* ── Header ── */}
-      <header className="px-3.5 py-3 border-b border-white/10 bg-[#0c162a]/90 backdrop-blur-md flex items-center justify-between shrink-0 select-none">
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-cyan-500/20 shrink-0">
-            <GraduationCap className="w-4 h-4 text-cyan-100" />
+      {/* ── Fixed Top Header ── */}
+      <header className="px-3.5 sm:px-5 py-3 sm:py-3.5 border-b border-white/10 bg-[#0c162a]/95 backdrop-blur-xl flex items-center justify-between shrink-0 select-none z-20">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-cyan-500/20 shrink-0">
+            <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-100" />
           </div>
           <div className="min-w-0">
-            <h3 className="text-xs sm:text-sm font-bold text-white tracking-wide truncate">
+            <h3 className="text-sm sm:text-base font-bold text-white tracking-wide truncate">
               Wisdom Tower AI Tutor
             </h3>
-            <p className="text-[10px] sm:text-[11px] text-slate-400 truncate">
-              Academic Problem Solver
+            <p className="text-[11px] sm:text-xs text-slate-400 truncate">
+              Academic Problem Solver & Study Assistant
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1 shrink-0">
-          {/* Move / Drag Button (available in floating mode) */}
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+          {/* Drag Move Button (in floating mode only) */}
           {!isFullScreen && !isEmbedded && (
             <button
               type="button"
               onMouseDown={(e) => handleDragStart(e.clientX, e.clientY)}
               onTouchStart={(e) => handleDragStart(e.touches[0].clientX, e.touches[0].clientY)}
               title="Click and drag to move window"
-              className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-slate-300 hover:text-white cursor-grab active:cursor-grabbing text-xs select-none touch-none border border-white/10"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-300 hover:text-white cursor-grab active:cursor-grabbing text-xs select-none touch-none border border-white/10"
             >
               <Move className="w-3.5 h-3.5" />
-              <span className="text-[10px] font-semibold hidden sm:inline">Move</span>
+              <span className="text-[11px] font-semibold hidden md:inline">Move</span>
             </button>
           )}
 
-          {/* Minimize Button */}
+          {/* Minimize Button (when floating) */}
           {!isEmbedded && (
             <button
               type="button"
               onClick={() => setIsMinimized(true)}
               title="Minimize window"
-              className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              className="p-1.5 sm:p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
             >
               <Minus className="w-4 h-4" />
             </button>
@@ -308,7 +308,7 @@ export default function AiTutor({
             type="button"
             onClick={() => setIsFullScreen((v) => !v)}
             title={isFullScreen ? "Exit Full Screen" : "Full Screen Mode"}
-            className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            className="p-1.5 sm:p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
           >
             {isFullScreen ? (
               <Minimize2 className="w-4 h-4" />
@@ -323,58 +323,59 @@ export default function AiTutor({
               type="button"
               onClick={handleClear}
               title="Clear conversation"
-              className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              className="p-1.5 sm:p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
             >
               <Trash2 className="w-4 h-4" />
             </button>
           )}
 
-          {/* Obvious Close Button */}
+          {/* Big, Obvious, Always-Reachable Close Button */}
           <button
             type="button"
             onClick={onClose}
             title="Close Tutor"
-            className="px-2.5 py-1.5 rounded-lg text-rose-300 hover:text-white bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/30 transition-all cursor-pointer flex items-center gap-1 text-xs font-bold"
+            aria-label="Close AI Tutor"
+            className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-rose-500/25 hover:bg-rose-500/35 text-rose-200 hover:text-white border border-rose-500/40 text-xs sm:text-sm font-bold active:scale-95 shadow-sm transition-all cursor-pointer"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4 stroke-[2.5]" />
             <span>Close</span>
           </button>
         </div>
       </header>
 
       {/* ── Conversation Scroll Area ── */}
-      <div className="flex-1 overflow-y-auto p-3.5 sm:p-4 space-y-4">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3.5 sm:p-5 space-y-4">
         {messages.map((m) => {
           const isBot = m.role === "assistant";
           return (
             <div
               key={m.id}
-              className={`flex gap-2.5 ${isBot ? "items-start" : "items-end justify-end"}`}
+              className={`flex gap-2.5 sm:gap-3 ${isBot ? "items-start" : "items-end justify-end"}`}
             >
               {isBot && (
-                <div className="w-7 h-7 rounded-lg bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center text-cyan-300 shrink-0 mt-0.5">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-500/20 to-indigo-500/20 border border-cyan-400/30 flex items-center justify-center text-cyan-300 shrink-0 mt-0.5 shadow-sm">
                   <Bot className="w-4 h-4" />
                 </div>
               )}
 
               <div
-                className={`group relative max-w-[90%] sm:max-w-[85%] rounded-2xl p-3 sm:p-3.5 text-xs sm:text-sm leading-relaxed ${
+                className={`group relative rounded-2xl p-3.5 sm:p-4 text-sm sm:text-base leading-relaxed ${
                   isBot
-                    ? "bg-[#0d172c] border border-white/10 text-slate-100 shadow-md"
-                    : "bg-cyan-500 text-slate-950 font-medium rounded-br-xs shadow-md shadow-cyan-500/20"
+                    ? "w-full max-w-full sm:max-w-[92%] bg-[#0c1628]/95 border border-white/10 text-slate-100 shadow-md"
+                    : "max-w-[90%] sm:max-w-[80%] bg-gradient-to-r from-cyan-500 to-blue-500 text-slate-950 font-medium rounded-br-xs shadow-md shadow-cyan-500/20"
                 }`}
               >
                 {/* KaTeX and Markdown parsed rich mathematical body */}
-                <div className="break-words">
+                <div className="break-words font-sans">
                   <RichContent
                     body={m.content}
-                    className={isBot ? "text-slate-100" : "text-slate-950 font-medium"}
+                    className={isBot ? "text-slate-100 study-prose text-sm sm:text-base" : "text-slate-950 font-medium text-sm sm:text-base"}
                   />
                 </div>
 
                 <div
-                  className={`mt-2 flex items-center justify-between gap-3 text-[10px] ${
-                    isBot ? "text-slate-400" : "text-slate-900/70"
+                  className={`mt-2 flex items-center justify-between gap-3 text-[11px] ${
+                    isBot ? "text-slate-400" : "text-slate-900/75"
                   }`}
                 >
                   <span>{m.timestamp}</span>
@@ -383,16 +384,16 @@ export default function AiTutor({
                     <button
                       type="button"
                       onClick={() => handleCopy(m.id, m.content)}
-                      className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-white/10 transition-opacity cursor-pointer inline-flex items-center gap-1"
+                      className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-white/10 transition-opacity cursor-pointer inline-flex items-center gap-1 text-slate-400 hover:text-white"
                       title="Copy text"
                     >
                       {copiedId === m.id ? (
                         <>
-                          <Check className="w-3 h-3 text-emerald-400" />
-                          <span className="text-[10px] text-emerald-400">Copied</span>
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          <span className="text-[11px] text-emerald-400">Copied</span>
                         </>
                       ) : (
-                        <Copy className="w-3 h-3" />
+                        <Copy className="w-3.5 h-3.5" />
                       )}
                     </button>
                   )}
@@ -400,7 +401,7 @@ export default function AiTutor({
               </div>
 
               {!isBot && (
-                <div className="w-7 h-7 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center text-white shrink-0 mb-0.5">
+                <div className="w-8 h-8 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white shrink-0 mb-0.5">
                   <User className="w-4 h-4" />
                 </div>
               )}
@@ -409,12 +410,12 @@ export default function AiTutor({
         })}
 
         {loading && (
-          <div className="flex items-start gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center text-cyan-300 shrink-0">
+          <div className="flex items-start gap-2.5 sm:gap-3">
+            <div className="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center text-cyan-300 shrink-0">
               <Sparkles className="w-4 h-4 animate-spin text-cyan-300" />
             </div>
-            <div className="bg-[#0e192f] border border-white/10 rounded-2xl p-3 text-xs text-cyan-300 flex items-center gap-2">
-              <span className="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+            <div className="bg-[#0c1628]/95 border border-white/10 rounded-2xl p-3.5 text-xs sm:text-sm text-cyan-300 flex items-center gap-2.5">
+              <span className="inline-block w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
               <span>Analyzing problem & formulating step-by-step solution…</span>
             </div>
           </div>
@@ -423,14 +424,14 @@ export default function AiTutor({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* ── Input Bar (Sticky at bottom, above mobile nav) ── */}
-      <footer className="p-3 border-t border-white/10 bg-[#070d1d] shrink-0 sticky bottom-0 z-20">
+      {/* ── Fixed Bottom Composer Bar ── */}
+      <footer className="shrink-0 p-2.5 sm:p-3.5 border-t border-white/10 bg-[#070d1d] z-20 pb-[max(0.75rem,calc(env(safe-area-inset-bottom,0px)+0.5rem))]">
         <form
           onSubmit={(e) => {
             e.preventDefault();
             sendMessage();
           }}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 max-w-4xl mx-auto w-full"
         >
           <input
             ref={inputRef}
@@ -444,15 +445,15 @@ export default function AiTutor({
             autoComplete="off"
             autoCorrect="on"
             enterKeyHint="send"
-            className="flex-1 bg-[#060b17] border border-white/15 focus:border-cyan-400 rounded-2xl px-4 py-2.5 text-xs sm:text-sm text-white placeholder-slate-400 focus:outline-none transition-colors"
+            className="flex-1 bg-[#060b17] border border-white/15 focus:border-cyan-400 rounded-2xl px-4 py-2.5 sm:py-3 text-sm sm:text-base text-white placeholder-slate-400 focus:outline-none transition-colors"
           />
           <button
             type="submit"
             disabled={!input.trim() || loading}
-            className="p-2.5 rounded-2xl bg-cyan-400 text-slate-950 hover:bg-cyan-300 disabled:opacity-40 disabled:hover:bg-cyan-400 font-bold transition-all active:scale-95 cursor-pointer shadow-md shadow-cyan-500/25 shrink-0"
-            aria-label="Send message"
+            className="p-2.5 sm:p-3 rounded-2xl bg-cyan-400 text-slate-950 hover:bg-cyan-300 disabled:opacity-40 disabled:hover:bg-cyan-400 font-bold transition-all active:scale-95 cursor-pointer shadow-md shadow-cyan-500/25 shrink-0 flex items-center justify-center"
+            aria-label="Send question"
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </form>
       </footer>

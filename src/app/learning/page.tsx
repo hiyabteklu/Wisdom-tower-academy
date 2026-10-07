@@ -1191,7 +1191,7 @@ function LearningContent() {
 
         {/* ── 6. AI ACADEMIC TUTOR ───────────────────────────────────── */}
         {activeFeature === "tutor" && (
-          <section className="animate-fade-up max-w-3xl mx-auto">
+          <section className="animate-fade-up max-w-4xl mx-auto">
             <AiTutor
               isOpen={true}
               onClose={() => setActiveFeature(null)}
