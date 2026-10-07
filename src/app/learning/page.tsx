@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useCallback, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   BookOpen,
   Layers,
@@ -296,19 +296,59 @@ function LearningContent() {
     }
   }, []);
 
-  // Clean close helper that returns to tools grid and removes tool params from URL
+  const router = useRouter();
+
+  // Bulletproof close helper: restores student's prior study place or returns to tools grid
   const closeActiveTool = useCallback(() => {
     setActiveFeature(null);
     if (typeof window !== "undefined") {
       try {
         const url = new URL(window.location.href);
+        const returnTo =
+          url.searchParams.get("returnTo") ||
+          url.searchParams.get("from") ||
+          url.searchParams.get("back");
+
+        const savedStudyPath = sessionStorage.getItem("wt_prior_study_route");
+
+        // Clean query params so URL is neat
         url.searchParams.delete("tool");
         url.searchParams.delete("tab");
         url.searchParams.delete("feature");
+        url.searchParams.delete("returnTo");
+        url.searchParams.delete("from");
+        url.searchParams.delete("back");
         window.history.replaceState(null, "", url.pathname + (url.search ? url.search : ""));
+
+        // 1. Explicit returnTo target in query params
+        if (returnTo && returnTo.startsWith("/") && !returnTo.startsWith("/learning")) {
+          router.push(returnTo);
+          return;
+        }
+
+        // 2. Referrer is internal deep study content
+        if (
+          document.referrer &&
+          document.referrer.includes(window.location.host) &&
+          !document.referrer.includes("/learning")
+        ) {
+          window.history.back();
+          return;
+        }
+
+        // 3. Saved prior study route in sessionStorage (e.g. question bank, lecture note, syllabus)
+        if (
+          savedStudyPath &&
+          savedStudyPath.startsWith("/") &&
+          !savedStudyPath.startsWith("/learning")
+        ) {
+          sessionStorage.removeItem("wt_prior_study_route");
+          router.push(savedStudyPath);
+          return;
+        }
       } catch {}
     }
-  }, []);
+  }, [router]);
 
   // Re-sync on searchParams update, client navigation, or popstate event
   useEffect(() => {
@@ -354,8 +394,6 @@ function LearningContent() {
   const [userName, setUserName] = useState("Scholar");
   const [userEmail, setUserEmail] = useState("");
   const [studentId, setStudentId] = useState("WTA-7749");
-  const [floatingTutorOpen, setFloatingTutorOpen] = useState(false);
-  const [floatingCalcOpen, setFloatingCalcOpen] = useState(false);
   const [streakDays, setStreakDays] = useState(1);
   const [userProfile, setUserProfile] = useState<UserProfileRecord | null>(null);
 
@@ -1639,50 +1677,6 @@ function LearningContent() {
           </section>
         )}
       </div>
-
-      {/* Floating Quick Study Tools */}
-      {(!floatingTutorOpen || !floatingCalcOpen) && (
-        <div className="fixed bottom-20 right-3.5 z-40 flex flex-col gap-2 items-end select-none">
-          {!floatingTutorOpen && activeFeature !== "tutor" && (
-            <button
-              type="button"
-              onClick={() => setFloatingTutorOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 text-white font-bold text-xs shadow-xl shadow-cyan-500/25 active:scale-95 transition-all border border-cyan-300/30 cursor-pointer"
-              title="Open AI Tutor"
-            >
-              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-200 animate-pulse" />
-              <span>AI Tutor</span>
-            </button>
-          )}
-
-          {!floatingCalcOpen && activeFeature !== "calculator" && (
-            <button
-              type="button"
-              onClick={() => setFloatingCalcOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-full bg-[#0c1429]/90 text-cyan-300 font-bold text-xs shadow-xl border border-cyan-400/30 hover:border-cyan-400/50 active:scale-95 transition-all cursor-pointer backdrop-blur-xl"
-              title="Open Scientific Calculator"
-            >
-              <CalcIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span>Calculator</span>
-            </button>
-          )}
-        </div>
-      )}
-
-      {floatingCalcOpen && activeFeature !== "calculator" && (
-        <ScientificCalculator
-          isOpen={floatingCalcOpen}
-          onClose={() => setFloatingCalcOpen(false)}
-        />
-      )}
-
-      {floatingTutorOpen && activeFeature !== "tutor" && (
-        <AiTutor
-          isOpen={floatingTutorOpen}
-          onClose={() => setFloatingTutorOpen(false)}
-          defaultFullScreen={false}
-        />
-      )}
     </div>
   );
 }

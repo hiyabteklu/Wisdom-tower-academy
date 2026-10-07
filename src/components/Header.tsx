@@ -22,6 +22,10 @@ import {
   Mail,
   Gamepad2,
   Compass,
+  Sparkles,
+  Calculator as CalcIcon,
+  Folder,
+  Timer,
 } from "lucide-react";
 import { supabase, recoverSession } from "@/lib/supabase";
 import { isAdminEmail } from "@/lib/admin";
@@ -85,6 +89,23 @@ export default function Header() {
   useEffect(() => {
     setIsOpen(false);
     setProfileOpen(false);
+
+    // Track last study route so tools can return student to their exact study place
+    if (
+      pathname &&
+      pathname !== "/learning" &&
+      !pathname.startsWith("/login") &&
+      !pathname.startsWith("/signup") &&
+      !pathname.startsWith("/auth")
+    ) {
+      try {
+        const full =
+          typeof window !== "undefined"
+            ? window.location.pathname + window.location.search
+            : pathname;
+        sessionStorage.setItem("wt_prior_study_route", full);
+      } catch {}
+    }
   }, [pathname]);
 
   useEffect(() => {
@@ -428,6 +449,48 @@ export default function Header() {
                     <span>Admin Panel</span>
                   </Link>
                 )}
+
+                {/* Quick Study Tools in Drawer */}
+                <div className="pt-3 border-t border-white/10">
+                  <p className="px-3 text-[10px] font-black uppercase tracking-wider text-cyan-400 mb-2 flex items-center gap-1.5">
+                    <Sparkles className="w-3 h-3 text-cyan-400" />
+                    <span>Study Tools</span>
+                  </p>
+                  <div className="grid grid-cols-2 gap-1.5 px-1">
+                    <Link
+                      href={`/learning?tool=tutor&returnTo=${encodeURIComponent(pathname)}`}
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center gap-2 p-2 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-cyan-500/15 text-slate-300 hover:text-cyan-300 border border-white/10 transition-all"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-cyan-300 shrink-0" />
+                      <span className="truncate">AI Tutor</span>
+                    </Link>
+                    <Link
+                      href={`/learning?tool=calculator&returnTo=${encodeURIComponent(pathname)}`}
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center gap-2 p-2 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-cyan-500/15 text-slate-300 hover:text-cyan-300 border border-white/10 transition-all"
+                    >
+                      <CalcIcon className="w-3.5 h-3.5 text-cyan-300 shrink-0" />
+                      <span className="truncate">Calculator</span>
+                    </Link>
+                    <Link
+                      href={`/learning?tool=notes&returnTo=${encodeURIComponent(pathname)}`}
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center gap-2 p-2 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-cyan-500/15 text-slate-300 hover:text-cyan-300 border border-white/10 transition-all"
+                    >
+                      <Folder className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                      <span className="truncate">Notebook</span>
+                    </Link>
+                    <Link
+                      href={`/learning?tool=timer&returnTo=${encodeURIComponent(pathname)}`}
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center gap-2 p-2 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-cyan-500/15 text-slate-300 hover:text-cyan-300 border border-white/10 transition-all"
+                    >
+                      <Timer className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                      <span className="truncate">Pomodoro</span>
+                    </Link>
+                  </div>
+                </div>
 
                 <div className="pt-2">
                   <a

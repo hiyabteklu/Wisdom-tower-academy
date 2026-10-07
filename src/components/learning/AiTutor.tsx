@@ -246,10 +246,10 @@ export default function AiTutor({
         isFullScreen
           ? "fixed inset-0 z-[160] bg-[#050914] flex flex-col h-[100dvh] overflow-hidden animate-in fade-in duration-200"
           : isEmbedded
-            ? "relative w-full max-w-4xl mx-auto h-[calc(100dvh-12rem)] min-h-[480px] max-h-[740px] rounded-2xl sm:rounded-3xl border border-cyan-400/30 bg-[#091122]/95 backdrop-blur-2xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-cyan-500/20 animate-in fade-in duration-200"
+            ? "fixed inset-x-0 top-0 bottom-[3.85rem] z-[140] flex flex-col bg-[#070e1c] overflow-hidden sm:relative sm:inset-auto sm:top-auto sm:bottom-auto sm:w-full sm:max-w-4xl sm:mx-auto sm:h-[680px] sm:max-h-[85vh] sm:rounded-3xl sm:border sm:border-cyan-400/30 sm:bg-[#091122]/95 sm:backdrop-blur-2xl sm:shadow-2xl sm:ring-1 sm:ring-cyan-500/20 animate-in fade-in duration-200"
             : pos
               ? "fixed z-[140] w-[min(34rem,calc(100vw-1rem))] h-[min(36rem,calc(100dvh-7.5rem))] rounded-2xl sm:rounded-3xl border border-cyan-400/30 bg-[#091122]/98 backdrop-blur-2xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-cyan-500/20 animate-in fade-in"
-              : "fixed inset-x-2 sm:inset-x-auto sm:right-6 bottom-20 sm:bottom-20 z-[140] w-auto sm:w-[32rem] h-[min(36rem,calc(100dvh-7.5rem))] max-h-[calc(100dvh-6.5rem)] min-h-[380px] rounded-2xl sm:rounded-3xl border border-cyan-400/30 bg-[#091122]/98 backdrop-blur-2xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-cyan-500/20 animate-in slide-in-from-bottom-4 duration-200"
+              : "fixed inset-x-2 sm:inset-x-auto sm:right-6 bottom-20 sm:bottom-20 z-[140] w-auto sm:w-[32rem] h-[min(36rem,calc(100dvh-7.5rem))] max-h-[calc(100dvh-6.5rem)] min-h-[340px] rounded-2xl sm:rounded-3xl border border-cyan-400/30 bg-[#091122]/98 backdrop-blur-2xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-cyan-500/20 animate-in slide-in-from-bottom-4 duration-200"
       }
       style={
         !isFullScreen && !isEmbedded && pos
@@ -445,7 +445,7 @@ export default function AiTutor({
       </div>
 
       {/* ── Fixed Bottom Composer Bar ── */}
-      <footer className="shrink-0 p-2.5 sm:p-3.5 border-t border-white/10 bg-[#070d1d] z-20 pb-[max(0.75rem,calc(env(safe-area-inset-bottom,0px)+0.5rem))]">
+      <footer className="shrink-0 p-2 sm:p-3 border-t border-white/10 bg-[#070d1d] z-20 pb-[max(0.5rem,calc(env(safe-area-inset-bottom,0px)+0.5rem))]">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -460,12 +460,17 @@ export default function AiTutor({
             name="query"
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            onFocus={() => {
+              setTimeout(() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+              }, 250);
+            }}
             placeholder="Ask a question, formula, or problem…"
             disabled={loading}
             autoComplete="off"
             autoCorrect="on"
             enterKeyHint="send"
-            className="flex-1 bg-[#060b17] border border-white/15 focus:border-cyan-400 rounded-2xl px-4 py-2.5 sm:py-3 text-base text-white placeholder-slate-400 focus:outline-none transition-colors"
+            className="flex-1 bg-[#060b17] border border-white/15 focus:border-cyan-400 rounded-2xl px-3.5 py-2.5 sm:py-3 text-base text-white placeholder-slate-400 focus:outline-none transition-colors"
           />
           <button
             type="submit"
