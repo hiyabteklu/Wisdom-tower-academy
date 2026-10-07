@@ -28,6 +28,8 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    console.log("[AI Tutor] API Key inside route.ts:", apiKey ? `${apiKey.slice(0, 8)}... (len: ${apiKey.length})` : "NONE");
+
     const ai = new GoogleGenAI({ apiKey });
 
     const systemInstruction = `You are Wisdom Tower Academy's elite AI Academic Tutor.
@@ -99,11 +101,14 @@ ${courseContext ? `\nCurrent Student Context: ${courseContext}` : ""}`;
     console.error("[AI Tutor] All fallback models failed:", lastError?.message || lastError);
     return NextResponse.json({
       reply: CALM_BUSY_MESSAGE,
+      debugError: process.env.NODE_ENV === "development" ? String(lastError?.message || lastError) : undefined,
+      keyPrefix: apiKey ? apiKey.slice(0, 10) : "none",
     });
   } catch (error: any) {
     console.error("[AI Tutor Unexpected Error]", error);
     return NextResponse.json({
       reply: CALM_BUSY_MESSAGE,
+      debugError: process.env.NODE_ENV === "development" ? String(error?.message || error) : undefined,
     });
   }
 }
