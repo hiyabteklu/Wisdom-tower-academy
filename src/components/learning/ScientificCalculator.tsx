@@ -252,16 +252,15 @@ export default function ScientificCalculator({ isOpen, onClose, isEmbedded = fal
             </button>
           )}
 
-          {!isEmbedded && (
-            <button
-              type="button"
-              onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
-              title="Close"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 hover:text-white border border-rose-500/30 text-xs font-bold active:scale-95 transition-all cursor-pointer"
+            title="Close calculator and return to tools"
+          >
+            <X className="w-4 h-4 stroke-[2.5]" />
+            <span>Close</span>
+          </button>
         </div>
       </div>
 

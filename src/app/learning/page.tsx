@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, Suspense } from "react";
+import { useEffect, useState, useMemo, useCallback, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
@@ -12,6 +12,8 @@ import {
   HelpCircle,
   Timer,
   Calendar,
+  CalendarDays,
+  BarChart3,
   CheckSquare,
   Folder,
   Plus,
@@ -174,31 +176,165 @@ const AVAILABLE_COURSES = [
   },
 ];
 
+// ── Tool Deep-Link Param Normalizer ─────────────────────────────
+function normalizeToolParam(raw: string | null | undefined): FeatureKey | null {
+  if (!raw) return null;
+  const clean = raw.trim().toLowerCase().replace(/[-_ ]/g, "");
+  switch (clean) {
+    case "timer":
+    case "pomodoro":
+    case "focus":
+    case "clock":
+      return "timer";
+    case "planner":
+    case "studyplanner":
+    case "schedule":
+    case "plan":
+    case "calendar":
+      return "planner";
+    case "goals":
+    case "targets":
+    case "target":
+    case "goal":
+      return "goals";
+    case "notes":
+    case "notebook":
+    case "note":
+    case "scholarnotes":
+      return "notes";
+    case "calc":
+    case "calculator":
+    case "scientific":
+    case "scientificcalculator":
+      return "calculator";
+    case "tutor":
+    case "aitutor":
+    case "ai":
+    case "chat":
+    case "ask":
+      return "tutor";
+    case "status":
+    case "analytics":
+    case "stats":
+    case "progress":
+    case "yourstatus":
+      return "analytics";
+    case "courses":
+    case "curriculum":
+    case "syllabus":
+    case "mycourses":
+    case "course":
+      return "courses";
+    default:
+      return null;
+  }
+}
+
 function LearningContent() {
   const searchParams = useSearchParams();
-  const rawParam = searchParams.get("tool") || searchParams.get("tab") || searchParams.get("feature");
-  const normalizedParam = rawParam === "status" ? "analytics" : rawParam;
-  const initialFeature = normalizedParam as FeatureKey | null;
+
+  // Helper to extract param from searchParams or direct window.location fallback in WebViews
+  const getToolFromLocation = useCallback((): FeatureKey | null => {
+    // 1. Next.js useSearchParams
+    const fromNext =
+      searchParams?.get("tool") ||
+      searchParams?.get("tab") ||
+      searchParams?.get("feature");
+    const normalizedNext = normalizeToolParam(fromNext);
+    if (normalizedNext) return normalizedNext;
+
+    // 2. Direct window.location check (vital for Android/iOS WebViews & direct links)
+    if (typeof window !== "undefined") {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const fromWindow =
+          urlParams.get("tool") ||
+          urlParams.get("tab") ||
+          urlParams.get("feature");
+        const normalizedWindow = normalizeToolParam(fromWindow);
+        if (normalizedWindow) return normalizedWindow;
+
+        // Hash query check (e.g. #/learning?tool=calculator)
+        if (window.location.hash && window.location.hash.includes("?")) {
+          const hashQuery = window.location.hash.substring(window.location.hash.indexOf("?"));
+          const hashParams = new URLSearchParams(hashQuery);
+          const fromHash =
+            hashParams.get("tool") ||
+            hashParams.get("tab") ||
+            hashParams.get("feature");
+          const normalizedHash = normalizeToolParam(fromHash);
+          if (normalizedHash) return normalizedHash;
+        }
+
+        // Full href regex match fallback for WebView wrappers
+        const match = window.location.href.match(/[?&](?:tool|tab|feature)=([^&#]+)/i);
+        if (match && match[1]) {
+          const normalizedHref = normalizeToolParam(decodeURIComponent(match[1]));
+          if (normalizedHref) return normalizedHref;
+        }
+      } catch {}
+    }
+    return null;
+  }, [searchParams]);
 
   // Selected tool feature (null = Hub Cards Deck; string = Opened Tool View)
   const [activeFeature, setActiveFeature] = useState<FeatureKey | null>(() => {
-    const valid: FeatureKey[] = [
-      "timer",
-      "planner",
-      "goals",
-      "notes",
-      "calculator",
-      "tutor",
-      "analytics",
-      "courses",
-    ];
-    return initialFeature && valid.includes(initialFeature) ? initialFeature : null;
+    return getToolFromLocation();
   });
+
+  // Open tool helper that synchronizes both state and URL
+  const openTool = useCallback((tool: FeatureKey) => {
+    setActiveFeature(tool);
+    if (typeof window !== "undefined") {
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.set("tool", tool);
+        url.searchParams.delete("tab");
+        url.searchParams.delete("feature");
+        window.history.pushState(null, "", url.pathname + url.search);
+      } catch {}
+    }
+  }, []);
+
+  // Clean close helper that returns to tools grid and removes tool params from URL
+  const closeActiveTool = useCallback(() => {
+    setActiveFeature(null);
+    if (typeof window !== "undefined") {
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("tool");
+        url.searchParams.delete("tab");
+        url.searchParams.delete("feature");
+        window.history.replaceState(null, "", url.pathname + (url.search ? url.search : ""));
+      } catch {}
+    }
+  }, []);
+
+  // Re-sync on searchParams update, client navigation, or popstate event
+  useEffect(() => {
+    const syncFromLocation = () => {
+      const detected = getToolFromLocation();
+      if (detected !== activeFeature) {
+        setActiveFeature(detected);
+      }
+    };
+    syncFromLocation();
+    window.addEventListener("popstate", syncFromLocation);
+    return () => window.removeEventListener("popstate", syncFromLocation);
+  }, [searchParams, getToolFromLocation, activeFeature]);
+
+  // Immediate layout effect to apply detected tool on first paint
+  useEffect(() => {
+    const detected = getToolFromLocation();
+    if (detected && detected !== activeFeature) {
+      setActiveFeature(detected);
+    }
+  }, [getToolFromLocation, activeFeature]);
 
   useEffect(() => {
     if (activeFeature) {
       window.__wtaInPageBack = () => {
-        setActiveFeature(null);
+        closeActiveTool();
         return true;
       };
     } else {
@@ -211,7 +347,7 @@ function LearningContent() {
         window.__wtaInPageBack = undefined;
       }
     };
-  }, [activeFeature]);
+  }, [activeFeature, closeActiveTool]);
 
   // User details
   const [userId, setUserId] = useState<string | null>(null);
@@ -721,11 +857,12 @@ function LearningContent() {
           <div className="mb-5 p-2 rounded-2xl sm:rounded-full border border-white/[0.08] bg-[#0c1626]/90 backdrop-blur-2xl shadow-xl flex flex-wrap items-center justify-between gap-2 sticky top-2 z-20">
             <button
               type="button"
-              onClick={() => setActiveFeature(null)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] active:scale-95 border border-white/[0.08] text-xs font-semibold text-slate-200 hover:text-white transition-all cursor-pointer shadow-sm"
+              onClick={closeActiveTool}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 hover:text-white active:scale-95 border border-rose-500/30 text-xs font-bold transition-all cursor-pointer shadow-sm"
+              title="Return to Study Tools"
             >
               <ArrowLeft className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>Tools</span>
+              <span>Back to Tools</span>
             </button>
 
             {/* iOS Segmented Toolbar */}
@@ -737,7 +874,7 @@ function LearningContent() {
                   <button
                     key={feat.key}
                     type="button"
-                    onClick={() => setActiveFeature(feat.key)}
+                    onClick={() => openTool(feat.key)}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 shrink-0 active:scale-95 cursor-pointer ${
                       isCurrent
                         ? "bg-white text-slate-950 font-bold shadow-md"
@@ -774,7 +911,7 @@ function LearningContent() {
                     <button
                       key={feat.key}
                       type="button"
-                      onClick={() => setActiveFeature(feat.key)}
+                      onClick={() => openTool(feat.key)}
                       className="group relative flex flex-col items-center justify-center p-2.5 sm:p-3.5 rounded-2xl border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/20 active:scale-90 active:bg-white/[0.12] transition-all duration-200 cursor-pointer shadow-sm text-center"
                     >
                       <div className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-white/[0.06] border border-white/[0.08] text-sky-400 group-hover:text-white group-hover:bg-sky-500/20 group-hover:border-sky-400/40 group-active:scale-95 transition-all duration-200 shadow-inner mb-1.5">
@@ -798,7 +935,7 @@ function LearningContent() {
                 </h3>
                 <button
                   type="button"
-                  onClick={() => setActiveFeature("courses")}
+                  onClick={() => openTool("courses")}
                   className="text-xs font-semibold text-sky-400 hover:text-sky-300 flex items-center gap-1 rounded-full px-3 py-1 bg-white/[0.04] border border-white/[0.08] active:scale-95 transition-all cursor-pointer"
                 >
                   <span>All Courses ({activeEnrolledList.length})</span>
@@ -817,7 +954,7 @@ function LearningContent() {
                   <div className="mt-3 flex items-center justify-center gap-2">
                     <button
                       type="button"
-                      onClick={() => setActiveFeature("courses")}
+                      onClick={() => openTool("courses")}
                       className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-bold text-white transition-all cursor-pointer"
                     >
                       Browse Courses
@@ -872,6 +1009,27 @@ function LearningContent() {
         {/* ── 1. FOCUS POMODORO STATION ──────────────────────────────── */}
         {activeFeature === "timer" && (
           <section className="animate-fade-up max-w-4xl mx-auto space-y-4">
+            <div className="flex items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-[#0c1626]/90 border border-white/[0.08] backdrop-blur-2xl shadow-xl">
+              <div className="flex items-center gap-2.5">
+                <Timer className="w-5 h-5 text-sky-400" />
+                <div>
+                  <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                    Focus Pomodoro Station
+                  </h2>
+                  <p className="text-[11px] sm:text-xs text-slate-400 hidden sm:block">
+                    Structured intervals for deep academic work.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={closeActiveTool}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 hover:text-white border border-rose-500/30 text-xs sm:text-sm font-semibold active:scale-95 transition-all cursor-pointer shadow-sm"
+              >
+                <X className="w-4 h-4 stroke-[2.5]" />
+                <span>Close</span>
+              </button>
+            </div>
             <div className="rounded-3xl border border-white/[0.08] bg-[#0c1626]/80 backdrop-blur-2xl p-4 sm:p-8 shadow-2xl">
               <PomodoroTimer />
             </div>
@@ -881,6 +1039,27 @@ function LearningContent() {
         {/* ── 2. WEEKLY STUDY PLANNER ────────────────────────────────── */}
         {activeFeature === "planner" && (
           <section className="animate-fade-up max-w-5xl mx-auto space-y-4">
+            <div className="flex items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-[#0c1626]/90 border border-white/[0.08] backdrop-blur-2xl shadow-xl">
+              <div className="flex items-center gap-2.5">
+                <CalendarDays className="w-5 h-5 text-purple-400" />
+                <div>
+                  <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                    Weekly Study Planner
+                  </h2>
+                  <p className="text-[11px] sm:text-xs text-slate-400 hidden sm:block">
+                    Map timetable slots, exam prep, and revision blocks.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={closeActiveTool}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 hover:text-white border border-rose-500/30 text-xs sm:text-sm font-semibold active:scale-95 transition-all cursor-pointer shadow-sm"
+              >
+                <X className="w-4 h-4 stroke-[2.5]" />
+                <span>Close</span>
+              </button>
+            </div>
             <div className="rounded-3xl border border-white/[0.08] bg-[#0c1626]/80 backdrop-blur-2xl p-2.5 sm:p-5 md:p-6 shadow-2xl">
               <StudyPlanner />
             </div>
@@ -907,6 +1086,15 @@ function LearningContent() {
                 <div className="h-8 px-3.5 flex items-center justify-center rounded-full bg-white/[0.06] border border-white/[0.08] text-white font-bold text-xs shadow-sm">
                   {goalProgressPercent}%
                 </div>
+                <button
+                  type="button"
+                  onClick={closeActiveTool}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 hover:text-white border border-rose-500/30 active:scale-95 transition-all shadow-sm cursor-pointer ml-1"
+                  title="Close targets"
+                >
+                  <X className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <span>Close</span>
+                </button>
               </div>
             </div>
 
@@ -1029,6 +1217,15 @@ function LearningContent() {
                 >
                   <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                   <span>Add Sheet</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={closeActiveTool}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 hover:text-white border border-rose-500/30 active:scale-95 transition-all shadow-sm cursor-pointer ml-1"
+                  title="Close notebook"
+                >
+                  <X className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <span>Close</span>
                 </button>
               </div>
             </div>
@@ -1183,7 +1380,7 @@ function LearningContent() {
           <section className="animate-fade-up max-w-xl mx-auto space-y-4">
             <ScientificCalculator
               isOpen={true}
-              onClose={() => setActiveFeature(null)}
+              onClose={closeActiveTool}
               isEmbedded={true}
             />
           </section>
@@ -1194,7 +1391,7 @@ function LearningContent() {
           <section className="animate-fade-up max-w-4xl mx-auto">
             <AiTutor
               isOpen={true}
-              onClose={() => setActiveFeature(null)}
+              onClose={closeActiveTool}
               isEmbedded={true}
             />
           </section>
@@ -1203,6 +1400,27 @@ function LearningContent() {
         {/* ── 7. YOUR STATUS ────────────────────────────────────────── */}
         {activeFeature === "analytics" && (
           <section className="animate-fade-up max-w-5xl mx-auto space-y-4">
+            <div className="flex items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-[#0c1626]/90 border border-white/[0.08] backdrop-blur-2xl shadow-xl">
+              <div className="flex items-center gap-2.5">
+                <BarChart3 className="w-5 h-5 text-sky-400" />
+                <div>
+                  <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                    Scholar Academic Status
+                  </h2>
+                  <p className="text-[11px] sm:text-xs text-slate-400 hidden sm:block">
+                    Diagnostic reports, practice exam metrics, and study progress.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={closeActiveTool}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 hover:text-white border border-rose-500/30 text-xs sm:text-sm font-semibold active:scale-95 transition-all cursor-pointer shadow-sm"
+              >
+                <X className="w-4 h-4 stroke-[2.5]" />
+                <span>Close</span>
+              </button>
+            </div>
             <StudentAnalyticsDashboard
               userId={userId || "guest"}
               studentName={userName}
@@ -1229,14 +1447,25 @@ function LearningContent() {
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setShowCourseManager(!showCourseManager)}
-                className="flex items-center gap-2 px-4 py-2 rounded-full font-semibold text-xs bg-white/[0.06] hover:bg-white/[0.12] active:scale-95 text-slate-200 border border-white/[0.08] transition-all self-start sm:self-auto shadow-sm cursor-pointer"
-              >
-                <Settings2 className="w-4 h-4" />
-                <span>{showCourseManager ? "Done" : "Manage"}</span>
-              </button>
+              <div className="flex items-center gap-2 self-start sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => setShowCourseManager(!showCourseManager)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full font-semibold text-xs bg-white/[0.06] hover:bg-white/[0.12] active:scale-95 text-slate-200 border border-white/[0.08] transition-all shadow-sm cursor-pointer"
+                >
+                  <Settings2 className="w-4 h-4" />
+                  <span>{showCourseManager ? "Done" : "Manage"}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={closeActiveTool}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-full font-semibold text-xs bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 hover:text-white border border-rose-500/30 active:scale-95 transition-all shadow-sm cursor-pointer"
+                  title="Close courses view"
+                >
+                  <X className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <span>Close</span>
+                </button>
+              </div>
             </div>
 
             {/* Course Customizer Drawer */}

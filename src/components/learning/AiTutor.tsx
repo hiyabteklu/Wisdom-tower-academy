@@ -246,10 +246,10 @@ export default function AiTutor({
         isFullScreen
           ? "fixed inset-0 z-[160] bg-[#050914] flex flex-col h-[100dvh] overflow-hidden animate-in fade-in duration-200"
           : isEmbedded
-            ? "fixed inset-0 z-[150] sm:relative sm:inset-auto sm:z-auto w-full h-[100dvh] sm:h-[680px] max-h-none sm:max-h-[85vh] sm:max-w-4xl sm:mx-auto sm:rounded-3xl border-0 sm:border border-cyan-400/30 bg-[#091122] sm:bg-[#091122]/95 backdrop-blur-2xl shadow-2xl flex flex-col overflow-hidden ring-0 sm:ring-1 sm:ring-cyan-500/20"
+            ? "relative w-full max-w-4xl mx-auto h-[calc(100dvh-12rem)] min-h-[480px] max-h-[740px] rounded-2xl sm:rounded-3xl border border-cyan-400/30 bg-[#091122]/95 backdrop-blur-2xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-cyan-500/20 animate-in fade-in duration-200"
             : pos
-              ? "fixed z-[140] w-[min(32rem,calc(100vw-1rem))] h-[min(38rem,calc(100dvh-7rem))] rounded-3xl border border-cyan-400/30 bg-[#091122]/95 backdrop-blur-2xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-cyan-500/20 animate-in fade-in"
-              : "fixed inset-x-2 sm:inset-x-auto sm:right-6 top-14 sm:top-auto bottom-[4.5rem] sm:bottom-20 z-[140] w-auto sm:w-[32rem] h-auto sm:h-[38rem] max-h-[calc(100dvh-6rem)] rounded-3xl border border-cyan-400/30 bg-[#091122]/95 backdrop-blur-2xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-cyan-500/20 animate-in slide-in-from-bottom-4 duration-200"
+              ? "fixed z-[140] w-[min(34rem,calc(100vw-1rem))] h-[min(36rem,calc(100dvh-7.5rem))] rounded-2xl sm:rounded-3xl border border-cyan-400/30 bg-[#091122]/98 backdrop-blur-2xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-cyan-500/20 animate-in fade-in"
+              : "fixed inset-x-2 sm:inset-x-auto sm:right-6 bottom-20 sm:bottom-20 z-[140] w-auto sm:w-[32rem] h-[min(36rem,calc(100dvh-7.5rem))] max-h-[calc(100dvh-6.5rem)] min-h-[380px] rounded-2xl sm:rounded-3xl border border-cyan-400/30 bg-[#091122]/98 backdrop-blur-2xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-cyan-500/20 animate-in slide-in-from-bottom-4 duration-200"
       }
       style={
         !isFullScreen && !isEmbedded && pos
@@ -260,34 +260,54 @@ export default function AiTutor({
           : undefined
       }
     >
-      {/* ── Fixed Top Header ── */}
-      <header className="px-3.5 sm:px-5 py-3 sm:py-3.5 border-b border-white/10 bg-[#0c162a]/95 backdrop-blur-xl flex items-center justify-between shrink-0 select-none z-20">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-cyan-500/20 shrink-0">
-            <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-100" />
+      {/* ── Fixed Top Header (Draggable when floating) ── */}
+      <header
+        onMouseDown={(e) => {
+          if (!isFullScreen && !isEmbedded) {
+            const target = e.target as HTMLElement;
+            if (!target.closest("button") && !target.closest("input")) {
+              handleDragStart(e.clientX, e.clientY);
+            }
+          }
+        }}
+        onTouchStart={(e) => {
+          if (!isFullScreen && !isEmbedded) {
+            const target = e.target as HTMLElement;
+            if (!target.closest("button") && !target.closest("input")) {
+              handleDragStart(e.touches[0].clientX, e.touches[0].clientY);
+            }
+          }
+        }}
+        className={`px-3 sm:px-4 py-2.5 sm:py-3 border-b border-white/10 bg-[#0c162a]/95 backdrop-blur-xl flex items-center justify-between shrink-0 select-none z-20 ${
+          !isFullScreen && !isEmbedded ? "cursor-move" : ""
+        }`}
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-cyan-500/20 shrink-0">
+            <GraduationCap className="w-4 h-4 text-cyan-100" />
           </div>
           <div className="min-w-0">
-            <h3 className="text-sm sm:text-base font-bold text-white tracking-wide truncate">
+            <h3 className="text-xs sm:text-sm font-bold text-white tracking-wide truncate">
               Wisdom Tower AI Tutor
             </h3>
-            <p className="text-[11px] sm:text-xs text-slate-400 truncate">
-              Academic Problem Solver & Study Assistant
+            <p className="text-[10px] sm:text-xs text-slate-400 truncate">
+              Academic Problem Solver
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-          {/* Drag Move Button (in floating mode only) */}
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+          {/* Drag Move indicator (in floating mode only) */}
           {!isFullScreen && !isEmbedded && (
             <button
               type="button"
               onMouseDown={(e) => handleDragStart(e.clientX, e.clientY)}
               onTouchStart={(e) => handleDragStart(e.touches[0].clientX, e.touches[0].clientY)}
-              title="Click and drag to move window"
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-300 hover:text-white cursor-grab active:cursor-grabbing text-xs select-none touch-none border border-white/10"
+              title="Drag to reposition window"
+              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/10 hover:bg-white/15 text-slate-300 hover:text-white cursor-grab active:cursor-grabbing text-xs select-none touch-none border border-white/10"
             >
               <Move className="w-3.5 h-3.5" />
-              <span className="text-[11px] font-semibold hidden md:inline">Move</span>
+              <span className="text-[10px] font-semibold hidden md:inline">Move</span>
             </button>
           )}
 
@@ -297,7 +317,7 @@ export default function AiTutor({
               type="button"
               onClick={() => setIsMinimized(true)}
               title="Minimize window"
-              className="p-1.5 sm:p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
             >
               <Minus className="w-4 h-4" />
             </button>
@@ -308,7 +328,7 @@ export default function AiTutor({
             type="button"
             onClick={() => setIsFullScreen((v) => !v)}
             title={isFullScreen ? "Exit Full Screen" : "Full Screen Mode"}
-            className="p-1.5 sm:p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
           >
             {isFullScreen ? (
               <Minimize2 className="w-4 h-4" />
@@ -323,21 +343,21 @@ export default function AiTutor({
               type="button"
               onClick={handleClear}
               title="Clear conversation"
-              className="p-1.5 sm:p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
             >
               <Trash2 className="w-4 h-4" />
             </button>
           )}
 
-          {/* Big, Obvious, Always-Reachable Close Button */}
+          {/* Clear & Obvious Close Button */}
           <button
             type="button"
             onClick={onClose}
             title="Close Tutor"
             aria-label="Close AI Tutor"
-            className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-rose-500/25 hover:bg-rose-500/35 text-rose-200 hover:text-white border border-rose-500/40 text-xs sm:text-sm font-bold active:scale-95 shadow-sm transition-all cursor-pointer"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-rose-500/25 hover:bg-rose-500/35 text-rose-200 hover:text-white border border-rose-500/40 text-xs font-bold active:scale-95 shadow-sm transition-all cursor-pointer"
           >
-            <X className="w-4 h-4 stroke-[2.5]" />
+            <X className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Close</span>
           </button>
         </div>
@@ -445,7 +465,7 @@ export default function AiTutor({
             autoComplete="off"
             autoCorrect="on"
             enterKeyHint="send"
-            className="flex-1 bg-[#060b17] border border-white/15 focus:border-cyan-400 rounded-2xl px-4 py-2.5 sm:py-3 text-sm sm:text-base text-white placeholder-slate-400 focus:outline-none transition-colors"
+            className="flex-1 bg-[#060b17] border border-white/15 focus:border-cyan-400 rounded-2xl px-4 py-2.5 sm:py-3 text-base text-white placeholder-slate-400 focus:outline-none transition-colors"
           />
           <button
             type="submit"
