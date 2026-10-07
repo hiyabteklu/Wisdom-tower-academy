@@ -1,12 +1,25 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextRequest } from "next/server";
 
-// Ordered list of fast, low-cost, widely available Gemini models (fastest first for instant responses)
-const FALLBACK_MODELS = [
-  "gemini-3.1-flash-lite", // Blazing fast sub-second latency, minimal thinking
-  "gemini-flash-latest",   // Fast fallback
-  "gemini-3.8-flash",      // Robust final fallback
+// Provider candidate definition
+type Candidate =
+  | { provider: "gemini"; model: string }
+  | { provider: "groq"; model: string };
+
+// Provider / model order for Tutor only:
+// 1) Gemini first: gemini-3.5-flash-lite (primary)
+// 2) Then Groq using GROQ_API_KEY_TUTOR (fast Groq chat model)
+// 3) Then remaining Gemini text models
+const CANDIDATES: Candidate[] = [
+  { provider: "gemini", model: "gemini-3.5-flash-lite" },
+  { provider: "groq", model: "llama-3.3-70b-versatile" },
+  { provider: "gemini", model: "gemini-flash-lite-latest" },
+  { provider: "gemini", model: "gemini-3.1-flash-lite" },
+  { provider: "gemini", model: "gemini-3.7-flash" },
+  { provider: "gemini", model: "gemini-flash-latest" },
 ];
+
+const PER_ATTEMPT_TIMEOUT_MS = 4500;
 
 const CALM_BUSY_MESSAGE =
   "The Wisdom Tower AI Tutor is currently experiencing high demand. Please wait a moment and try asking your question again.";
@@ -60,6 +73,24 @@ At the very end of your response, after your main explanation, provide 2 or 3 sh
 >>> SUGGESTION: <short follow-up prompt>
 Keep each suggestion under 8 words.`;
 
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(`${label} timed out after ${ms}ms`));
+    }, ms);
+    promise.then(
+      (val) => {
+        clearTimeout(timer);
+        resolve(val);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      }
+    );
+  });
+}
+
 function parseSuggestions(buffer: string): string[] {
   if (!buffer) return [];
   const lines = buffer.split("\n");
@@ -104,43 +135,159 @@ function getContextualSuggestions(courseContext?: string): string[] {
   return DEFAULT_SUGGESTIONS;
 }
 
+async function tryGeminiCandidate(
+  ai: GoogleGenAI,
+  model: string,
+  fullSystemInstruction: string,
+  formattedContents: any[],
+  timeoutMs: number
+) {
+  const streamResponse = await withTimeout(
+    ai.models.generateContentStream({
+      model,
+      contents: formattedContents,
+      config: {
+        systemInstruction: fullSystemInstruction,
+        temperature: 0.7,
+        maxOutputTokens: 2048,
+      },
+    }),
+    timeoutMs,
+    `Gemini ${model} init`
+  );
+
+  const iterator = (streamResponse as any)[Symbol.asyncIterator]();
+  const first = await withTimeout<any>(iterator.next(), timeoutMs, `Gemini ${model} first chunk`);
+
+  if (first.done && !first.value?.text) {
+    throw new Error(`Gemini ${model} returned empty response`);
+  }
+
+  return {
+    iterator,
+    firstChunkText: first.value?.text || "",
+  };
+}
+
+async function tryGroqCandidate(
+  apiKey: string,
+  model: string,
+  fullSystemInstruction: string,
+  formattedContents: any[],
+  timeoutMs: number
+) {
+  if (!apiKey || !apiKey.trim()) {
+    throw new Error("GROQ_API_KEY_TUTOR not configured");
+  }
+
+  const groqMessages = [
+    { role: "system", content: fullSystemInstruction },
+    ...formattedContents.map((c: any) => ({
+      role: c.role === "model" ? "assistant" : "user",
+      content: c.parts?.[0]?.text || "",
+    })),
+  ];
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  let res: Response;
+  try {
+    res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey.trim()}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0.7,
+        max_tokens: 2048,
+        stream: true,
+        messages: groqMessages,
+      }),
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timer);
+  }
+
+  if (!res.ok) {
+    const errText = await res.text().catch(() => "");
+    throw new Error(`Groq HTTP ${res.status}: ${errText.slice(0, 150)}`);
+  }
+
+  if (!res.body) {
+    throw new Error("Groq returned empty response body");
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  async function readNextGroqChunk(): Promise<{ done: boolean; text?: string }> {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) return { done: true };
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed === "data: [DONE]") continue;
+        if (trimmed.startsWith("data: ")) {
+          try {
+            const parsed = JSON.parse(trimmed.slice(6));
+            const delta = parsed.choices?.[0]?.delta?.content;
+            if (delta) {
+              return { done: false, text: delta };
+            }
+          } catch {
+            // Ignore malformed or partial json line
+          }
+        }
+      }
+    }
+  }
+
+  // Peek first chunk within timeout
+  const first = await withTimeout<{ done: boolean; text?: string }>(
+    readNextGroqChunk(),
+    timeoutMs,
+    `Groq ${model} first chunk`
+  );
+  if (first.done && !first.text) {
+    throw new Error(`Groq ${model} returned empty stream`);
+  }
+
+  const asyncIterator = {
+    async next() {
+      const r = await readNextGroqChunk();
+      return {
+        done: r.done,
+        value: { text: r.text },
+      };
+    },
+  };
+
+  return {
+    iterator: asyncIterator,
+    firstChunkText: first.text || "",
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { messages, courseContext } = body;
 
-    const apiKey =
+    const geminiApiKey =
       process.env.GEMINI_API_KEY ||
-      process.env.AI_GATEWAY_API_KEY;
-
-    if (!apiKey) {
-      console.warn("[AI Tutor] GEMINI_API_KEY is not configured on the server.");
-      return new Response(
-        `data: ${JSON.stringify({
-          type: "chunk",
-          text: CALM_BUSY_MESSAGE,
-        })}\n\ndata: ${JSON.stringify({
-          type: "suggestions",
-          suggestions: getContextualSuggestions(courseContext),
-        })}\n\ndata: ${JSON.stringify({ type: "done" })}\n\n`,
-        {
-          headers: {
-            "Content-Type": "text/event-stream; charset=utf-8",
-            "Cache-Control": "no-cache",
-            Connection: "keep-alive",
-          },
-        }
-      );
-    }
-
-    const ai = new GoogleGenAI({
-      apiKey,
-      httpOptions: {
-        headers: {
-          "User-Agent": "aistudio-build",
-        },
-      },
-    });
+      process.env.AI_GATEWAY_API_KEY ||
+      "";
+    const groqTutorApiKey = process.env.GROQ_API_KEY_TUTOR || "";
 
     const fullSystemInstruction = `${STATIC_KNOWLEDGE_BLURB}\n\n${SYSTEM_INSTRUCTION}${
       courseContext ? `\n\nCurrent Student Course Context: ${courseContext}` : ""
@@ -161,31 +308,70 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Try models in order (fastest Flash/lite models first)
-    let activeStream: any = null;
-
-    for (const model of FALLBACK_MODELS) {
-      try {
-        const streamResponse = await ai.models.generateContentStream({
-          model,
-          contents: formattedContents,
-          config: {
-            systemInstruction: fullSystemInstruction,
-            temperature: 0.7,
-            maxOutputTokens: 2048,
+    let ai: GoogleGenAI | null = null;
+    if (geminiApiKey) {
+      ai = new GoogleGenAI({
+        apiKey: geminiApiKey,
+        httpOptions: {
+          headers: {
+            "User-Agent": "aistudio-build",
           },
-        });
-        activeStream = streamResponse;
-        break;
+        },
+      });
+    }
+
+    // Try candidates in requested order:
+    // 1) Gemini: gemini-3.5-flash-lite
+    // 2) Groq: llama-3.3-70b-versatile using GROQ_API_KEY_TUTOR
+    // 3) Remaining Gemini text models (gemini-flash-lite-latest, gemini-3.1-flash-lite, gemini-3.7-flash, gemini-flash-latest)
+    let activeIterator: any = null;
+    let firstChunkText = "";
+
+    for (const candidate of CANDIDATES) {
+      try {
+        if (candidate.provider === "gemini") {
+          if (!ai) {
+            console.warn(`[AI Tutor] Skipping Gemini ${candidate.model} (no GEMINI_API_KEY)`);
+            continue;
+          }
+          const result = await tryGeminiCandidate(
+            ai,
+            candidate.model,
+            fullSystemInstruction,
+            formattedContents,
+            PER_ATTEMPT_TIMEOUT_MS
+          );
+          activeIterator = result.iterator;
+          firstChunkText = result.firstChunkText;
+          console.log(`[AI Tutor] Succeeded with Gemini: ${candidate.model}`);
+          break;
+        } else if (candidate.provider === "groq") {
+          if (!groqTutorApiKey) {
+            console.log("[AI Tutor] Skipping Groq candidate (GROQ_API_KEY_TUTOR not set)");
+            continue;
+          }
+          const result = await tryGroqCandidate(
+            groqTutorApiKey,
+            candidate.model,
+            fullSystemInstruction,
+            formattedContents,
+            PER_ATTEMPT_TIMEOUT_MS
+          );
+          activeIterator = result.iterator;
+          firstChunkText = result.firstChunkText;
+          console.log(`[AI Tutor] Succeeded with Groq: ${candidate.model}`);
+          break;
+        }
       } catch (err: any) {
         console.warn(
-          `[AI Tutor] Model "${model}" failed to initialize stream (${err?.message || err}). Trying next fallback...`
+          `[AI Tutor] ${candidate.provider} (${candidate.model}) failed (${err?.message || err}). Trying next option...`
         );
       }
     }
 
-    if (!activeStream) {
-      console.error("[AI Tutor] All fallback models failed to start stream.");
+    // On total failure, return only a calm user-facing message — never raw JSON or API errors
+    if (!activeIterator) {
+      console.error("[AI Tutor] All providers/models failed.");
       return new Response(
         `data: ${JSON.stringify({
           type: "chunk",
@@ -216,29 +402,38 @@ export async function POST(req: NextRequest) {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
         };
 
-        try {
-          for await (const chunk of activeStream) {
-            const text = chunk.text;
-            if (!text) continue;
+        const processChunkText = (text: string | undefined) => {
+          if (!text) return;
 
-            if (inSuggestionMode) {
-              suggestionBuffer += text;
-              continue;
-            }
+          if (inSuggestionMode) {
+            suggestionBuffer += text;
+            return;
+          }
 
-            const markerIndex = text.indexOf(">>> SUGGESTION:");
-            if (markerIndex !== -1) {
-              inSuggestionMode = true;
-              const preText = text.slice(0, markerIndex);
-              if (preText) {
-                streamedAnyText = true;
-                sendEvent({ type: "chunk", text: preText });
-              }
-              suggestionBuffer += text.slice(markerIndex);
-            } else {
+          const markerIndex = text.indexOf(">>> SUGGESTION:");
+          if (markerIndex !== -1) {
+            inSuggestionMode = true;
+            const preText = text.slice(0, markerIndex);
+            if (preText) {
               streamedAnyText = true;
-              sendEvent({ type: "chunk", text });
+              sendEvent({ type: "chunk", text: preText });
             }
+            suggestionBuffer += text.slice(markerIndex);
+          } else {
+            streamedAnyText = true;
+            sendEvent({ type: "chunk", text });
+          }
+        };
+
+        try {
+          // Process initial chunk
+          processChunkText(firstChunkText);
+
+          // Process subsequent chunks
+          while (true) {
+            const next = await activeIterator.next();
+            if (next.done) break;
+            processChunkText(next.value?.text);
           }
 
           // Parse suggestions from suggestionBuffer
