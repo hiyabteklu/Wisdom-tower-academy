@@ -1412,27 +1412,33 @@ function LearningContent() {
       </div>
 
       {/* Floating Quick Study Tools */}
-      <div className="fixed bottom-20 right-3.5 z-40 flex flex-col gap-2 items-end select-none">
-        <button
-          type="button"
-          onClick={() => setFloatingTutorOpen((v) => !v)}
-          className="flex items-center gap-1.5 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 text-white font-bold text-xs shadow-xl shadow-cyan-500/25 active:scale-95 transition-all border border-cyan-300/30 cursor-pointer"
-          title="Open AI Tutor"
-        >
-          <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-200 animate-pulse" />
-          <span>AI Tutor</span>
-        </button>
+      {(!floatingTutorOpen || !floatingCalcOpen) && (
+        <div className="fixed bottom-20 right-3.5 z-40 flex flex-col gap-2 items-end select-none">
+          {!floatingTutorOpen && activeFeature !== "tutor" && (
+            <button
+              type="button"
+              onClick={() => setFloatingTutorOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 text-white font-bold text-xs shadow-xl shadow-cyan-500/25 active:scale-95 transition-all border border-cyan-300/30 cursor-pointer"
+              title="Open AI Tutor"
+            >
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-200 animate-pulse" />
+              <span>AI Tutor</span>
+            </button>
+          )}
 
-        <button
-          type="button"
-          onClick={() => setFloatingCalcOpen((v) => !v)}
-          className="flex items-center gap-1.5 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-full bg-[#0c1429]/90 text-cyan-300 font-bold text-xs shadow-xl border border-cyan-400/30 hover:border-cyan-400/50 active:scale-95 transition-all cursor-pointer backdrop-blur-xl"
-          title="Open Scientific Calculator"
-        >
-          <CalcIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-          <span>Calculator</span>
-        </button>
-      </div>
+          {!floatingCalcOpen && activeFeature !== "calculator" && (
+            <button
+              type="button"
+              onClick={() => setFloatingCalcOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-full bg-[#0c1429]/90 text-cyan-300 font-bold text-xs shadow-xl border border-cyan-400/30 hover:border-cyan-400/50 active:scale-95 transition-all cursor-pointer backdrop-blur-xl"
+              title="Open Scientific Calculator"
+            >
+              <CalcIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span>Calculator</span>
+            </button>
+          )}
+        </div>
+      )}
 
       {floatingCalcOpen && activeFeature !== "calculator" && (
         <ScientificCalculator
