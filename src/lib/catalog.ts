@@ -124,13 +124,20 @@ export async function listCatalogItems(opts?: {
 }
 
 export async function listSellablePackages(): Promise<AcademyPackage[]> {
+  const isExcluded = (p: AcademyPackage) =>
+    p.id === "ece-y3" ||
+    p.id === "ece" ||
+    p.id.toLowerCase().includes("full-year") ||
+    p.id.toLowerCase().includes("full_year") ||
+    p.name.toLowerCase().includes("full year");
+
   const { rows, error } = await listCatalogItems({ includeInactive: false });
   if (error || rows.length === 0) {
-    const list = academyPackages.map(applyStaticPrice);
+    const list = academyPackages.map(applyStaticPrice).filter((p) => !isExcluded(p));
     setRuntimeCatalog(list);
     return list;
   }
-  const list = rows.map(rowToPackage);
+  const list = rows.map(rowToPackage).filter((p) => !isExcluded(p));
   setRuntimeCatalog(list);
   return list;
 }

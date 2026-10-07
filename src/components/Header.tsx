@@ -14,6 +14,7 @@ import {
   User,
   Settings,
   ShoppingBag,
+  Package,
   ExternalLink,
   Home,
   BookOpen,
@@ -224,7 +225,7 @@ export default function Header() {
                               My Learning
                             </Link>
                             <Link href="/packages" role="menuitem" className="flex items-center gap-3 px-4 py-2.5 text-sm text-white/90 hover:bg-white/5" onClick={() => setProfileOpen(false)}>
-                              <ShoppingBag className="w-4 h-4 text-wisdom-muted" />
+                              <Package className="w-4 h-4 text-wisdom-muted" />
                               Packages
                             </Link>
                             {!IS_FREE_MODE && (
@@ -386,7 +387,7 @@ export default function Header() {
                 {[
                   { href: "/", label: "Home", icon: Home },
                   { href: "/academy", label: "Academy", icon: GraduationCap },
-                  { href: "/packages", label: "Packages", icon: ShoppingBag },
+                  { href: "/packages", label: "Packages", icon: Package },
                   { href: "/learning", label: "My Learning", icon: BookOpen },
                   /* Games commented out per request
                   { href: "/games/tower-climb", label: "Tower Climb", icon: Compass },

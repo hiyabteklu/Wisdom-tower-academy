@@ -10,24 +10,6 @@ import { isPackageOwned, IS_FREE_MODE } from "@/lib/ownership";
 import { addToCart } from "@/lib/cart";
 
 function PackageCatalogCard({ pkg }: { pkg: AcademyPackage }) {
-  const [owned, setOwned] = useState(false);
-  const router = useRouter();
-
-  useEffect(() => {
-    let cancelled = false;
-    isPackageOwned(pkg.id).then((has) => {
-      if (!cancelled) setOwned(has);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [pkg.id]);
-
-  const handlePurchase = () => {
-    addToCart(pkg.id);
-    router.push("/cart");
-  };
-
   return (
     <article className="card-modern group flex flex-col h-full justify-between shadow-lg shadow-black/25 overflow-hidden rounded-xl sm:rounded-2xl">
       <div className="card-media-wrap aspect-video">
@@ -42,38 +24,23 @@ function PackageCatalogCard({ pkg }: { pkg: AcademyPackage }) {
 
       <div className="p-2.5 sm:p-4 flex flex-col flex-1 border-t border-white/8 space-y-2 sm:space-y-3 justify-between">
         <div>
-          {/* Title with price */}
+          {/* Title */}
           <div className="flex items-baseline justify-between gap-1.5 sm:gap-3">
             <h2 className="font-display text-xs sm:text-base md:text-lg font-bold text-white leading-snug truncate flex-1">
               {pkg.name}
             </h2>
-            {!IS_FREE_MODE && (
-              <span className="shrink-0 font-display font-bold text-cyan-300 text-xs sm:text-sm md:text-base">
-                {formatEtb(pkg.priceEtb)}
-              </span>
-            )}
           </div>
         </div>
 
         {/* Single clear action to start learning (full label, not truncated) */}
         <div className="pt-1">
-          {IS_FREE_MODE || owned ? (
-            <Link
-              href={pkg.href || "/learning"}
-              className="btn-open w-full text-center py-2 sm:py-2.5 px-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 shadow-sm"
-            >
-              <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-300 shrink-0" />
-              <span>Start Learning</span>
-            </Link>
-          ) : (
-            <button
-              type="button"
-              onClick={handlePurchase}
-              className="btn-open w-full text-center py-2 sm:py-2.5 px-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
-            >
-              <span>Purchase ({formatEtb(pkg.priceEtb)})</span>
-            </button>
-          )}
+          <Link
+            href={pkg.href || "/learning"}
+            className="btn-open w-full text-center py-2 sm:py-2.5 px-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 shadow-sm"
+          >
+            <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-300 shrink-0" />
+            <span>Start Learning</span>
+          </Link>
         </div>
       </div>
     </article>
@@ -106,9 +73,21 @@ export default function PackagesCatalog() {
 
   const grades = list.filter((p) => p.group === "grades");
   const branches = list.filter((p) => p.group === "branch");
-  const specials = list.filter((p) => p.group === "special");
+  // Only the two semesters individually are enough; remove full year card
+  const specials = list.filter(
+    (p) =>
+      p.group === "special" &&
+      p.id !== "ece-y3" &&
+      p.id !== "ece" &&
+      !p.id.toLowerCase().includes("full-year") &&
+      !p.id.toLowerCase().includes("full_year") &&
+      !p.name.toLowerCase().includes("full year")
+  );
   const other = list.filter(
-    (p) => !["grades", "branch", "special"].includes(p.group)
+    (p) =>
+      !["grades", "branch", "special"].includes(p.group) &&
+      !p.id.toLowerCase().includes("full-year") &&
+      !p.name.toLowerCase().includes("full year")
   );
 
   return (
@@ -140,17 +119,6 @@ export default function PackagesCatalog() {
           <PackageGrid list={other} />
         </>
       )}
-
-      <div className="mt-12 rounded-2xl border border-white/10 bg-wisdom-dark/50 p-5 flex gap-3 max-w-2xl mx-auto">
-        <Shield className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
-        <p className="text-sm text-wisdom-muted leading-relaxed">
-          Submit your transaction ID to confirm enrollment. Access appears in{" "}
-          <Link href="/learning" className="text-cyan-400 hover:underline">
-            My Learning
-          </Link>{" "}
-          once confirmed.
-        </p>
-      </div>
     </>
   );
 }
