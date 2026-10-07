@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from "react";
 import {
-  Sparkles,
   Send,
   X,
   Maximize2,
@@ -12,10 +11,8 @@ import {
   Check,
   Bot,
   User,
-  RotateCcw,
-  BookOpen,
   GraduationCap,
-  Layers,
+  Sparkles,
 } from "lucide-react";
 
 type Message = {
@@ -29,21 +26,22 @@ type Props = {
   isOpen: boolean;
   onClose: () => void;
   defaultFullScreen?: boolean;
+  isEmbedded?: boolean;
   courseContext?: string;
 };
 
 const SUGGESTIONS = [
-  "Explain Calculus derivatives and chain rule step-by-step",
-  "How do I balance redox reactions in General Chemistry?",
-  "Key formulas for Ethiopian Grade 12 National Physics exam",
-  "Tips for AAU GAT Quantitative & Analytical reasoning",
-  "Explain Ohm's and Kirchhoff's Laws for ECE Engineering",
+  "Explain Calculus chain rule step-by-step",
+  "How to balance redox reactions in Chemistry",
+  "Key formulas for Physics matriculation exam",
+  "Solve a circuit problem with Ohm's law",
 ];
 
 export default function AiTutor({
   isOpen,
   onClose,
   defaultFullScreen = false,
+  isEmbedded = false,
   courseContext,
 }: Props) {
   const [messages, setMessages] = useState<Message[]>([
@@ -51,7 +49,7 @@ export default function AiTutor({
       id: "welcome",
       role: "assistant",
       content:
-        "👋 Welcome! I am your **Wisdom Tower AI Tutor** powered by Gemini.\n\nAsk me any concept, formula, homework problem, or practice question from your high school, freshman, or engineering tracks. How can I help your studies today?",
+        "👋 Welcome! I am your **Wisdom Tower AI Tutor**.\n\nAsk me any concept, formula, homework problem, or practice question from your high school, freshman, or engineering tracks. How can I help your studies today?",
       timestamp: "Just now",
     },
   ]);
@@ -107,27 +105,29 @@ export default function AiTutor({
         }),
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to receive response from AI tutor.");
-      }
+      const data = await res.json().catch(() => null);
+
+      const botReply =
+        data?.reply ||
+        "The Wisdom Tower AI Tutor is currently experiencing high demand. Please wait a moment and try asking your question again.";
 
       const botMsg: Message = {
         id: "bot-" + Date.now(),
         role: "assistant",
-        content: data.reply || "No response received.",
+        content: botReply,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
 
       setMessages((prev) => [...prev, botMsg]);
-    } catch (err: any) {
+    } catch {
       setMessages((prev) => [
         ...prev,
         {
           id: "err-" + Date.now(),
           role: "assistant",
-          content: `⚠️ **Connection Note:** ${err?.message || "Could not reach AI Tutor. Please verify your GEMINI_API_KEY."}`,
-          timestamp: "Error",
+          content:
+            "The Wisdom Tower AI Tutor is currently experiencing high demand. Please wait a moment and try asking your question again.",
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         },
       ]);
     } finally {
@@ -157,34 +157,33 @@ export default function AiTutor({
       className={
         isFullScreen
           ? "fixed inset-0 z-[120] bg-[#050914] flex flex-col animate-in fade-in duration-200"
-          : "fixed bottom-4 right-4 z-[120] w-[min(26rem,calc(100vw-2rem))] h-[min(38rem,calc(100vh-6rem))] rounded-3xl border border-cyan-400/30 bg-[#091122]/95 backdrop-blur-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-6 duration-250 ring-1 ring-cyan-500/20"
+          : isEmbedded
+            ? "w-full h-[620px] max-h-[85vh] rounded-3xl border border-cyan-400/30 bg-[#091122]/95 backdrop-blur-2xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-cyan-500/20"
+            : "fixed bottom-4 right-4 z-[120] w-[min(26rem,calc(100vw-2rem))] h-[min(38rem,calc(100vh-6rem))] rounded-3xl border border-cyan-400/30 bg-[#091122]/95 backdrop-blur-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-6 duration-250 ring-1 ring-cyan-500/20"
       }
     >
       {/* ── Header ── */}
       <header className="px-4 py-3.5 border-b border-white/10 bg-white/[0.03] flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-cyan-500/20 shrink-0">
-            <Sparkles className="w-5 h-5 text-cyan-200 animate-pulse" />
+            <GraduationCap className="w-5 h-5 text-cyan-100" />
           </div>
           <div className="min-w-0">
-            <h3 className="text-sm font-bold text-white flex items-center gap-1.5 truncate">
-              <span>AI Academic Tutor</span>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-cyan-400/20 text-cyan-300 border border-cyan-400/30">
-                Gemini
-              </span>
+            <h3 className="text-sm font-bold text-white tracking-wide truncate">
+              Wisdom Tower AI Tutor
             </h3>
             <p className="text-[11px] text-slate-400 truncate">
-              Ethiopian Curriculum & Exam Expert
+              Academic Problem Solver & Study Assistant
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           {messages.length > 1 && (
             <button
               type="button"
               onClick={handleClear}
-              title="Clear chat"
+              title="Clear conversation"
               className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
             >
               <Trash2 className="w-4 h-4" />
@@ -194,7 +193,7 @@ export default function AiTutor({
           <button
             type="button"
             onClick={() => setIsFullScreen((v) => !v)}
-            title={isFullScreen ? "Floating Window" : "Full Screen Mode"}
+            title={isFullScreen ? "Exit Full Screen" : "Full Screen Mode"}
             className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
           >
             {isFullScreen ? (
@@ -207,10 +206,11 @@ export default function AiTutor({
           <button
             type="button"
             onClick={onClose}
-            title="Close Tutor"
-            className="p-1.5 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+            title="Close Tutor and return to tools"
+            className="px-2.5 py-1.5 rounded-xl text-slate-200 hover:text-white bg-white/10 hover:bg-rose-500/20 border border-white/10 hover:border-rose-400/30 transition-all cursor-pointer flex items-center gap-1.5 text-xs font-semibold"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4 text-rose-400" />
+            <span>Close</span>
           </button>
         </div>
       </header>
@@ -282,7 +282,7 @@ export default function AiTutor({
             </div>
             <div className="bg-[#0e192f] border border-white/10 rounded-2xl p-3 text-xs text-cyan-300 flex items-center gap-2">
               <span className="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-              <span>Analyzing problem with Gemini AI…</span>
+              <span>Analyzing problem & formulating explanation…</span>
             </div>
           </div>
         )}
@@ -291,7 +291,7 @@ export default function AiTutor({
       </div>
 
       {/* ── Quick Starter Chips ── */}
-      {messages.length <= 2 && !loading && (
+      {messages.length <= 1 && !loading && (
         <div className="px-3 pb-2 flex gap-1.5 overflow-x-auto no-scrollbar shrink-0">
           {SUGGESTIONS.map((sug, i) => (
             <button
@@ -307,7 +307,7 @@ export default function AiTutor({
       )}
 
       {/* ── Input Bar ── */}
-      <footer className="p-3 border-t border-white/10 bg-white/[0.02] shrink-0">
+      <footer className="p-3 border-t border-white/10 bg-[#070d1d] shrink-0">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -318,10 +318,15 @@ export default function AiTutor({
           <input
             ref={inputRef}
             type="text"
+            id="wt-ai-tutor-input"
+            name="query"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask a question, paste an equation or topic…"
+            placeholder="Ask a question, formula, or problem…"
             disabled={loading}
+            autoComplete="off"
+            autoCorrect="on"
+            enterKeyHint="send"
             className="flex-1 bg-[#060b17] border border-white/15 focus:border-cyan-400 rounded-2xl px-4 py-2.5 text-xs sm:text-sm text-white placeholder-slate-400 focus:outline-none transition-colors"
           />
           <button
@@ -337,3 +342,4 @@ export default function AiTutor({
     </div>
   );
 }
+

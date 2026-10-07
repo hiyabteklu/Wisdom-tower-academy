@@ -1191,14 +1191,12 @@ function LearningContent() {
 
         {/* ── 6. AI ACADEMIC TUTOR ───────────────────────────────────── */}
         {activeFeature === "tutor" && (
-          <section className="animate-fade-up max-w-3xl mx-auto space-y-4">
-            <div className="rounded-3xl border border-white/10 bg-[#091122]/90 backdrop-blur-2xl p-4 sm:p-6 shadow-2xl">
-              <AiTutor
-                isOpen={true}
-                onClose={() => setActiveFeature(null)}
-                defaultFullScreen={false}
-              />
-            </div>
+          <section className="animate-fade-up max-w-3xl mx-auto">
+            <AiTutor
+              isOpen={true}
+              onClose={() => setActiveFeature(null)}
+              isEmbedded={true}
+            />
           </section>
         )}
 

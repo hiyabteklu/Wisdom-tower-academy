@@ -1,6 +1,16 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
 
+// Ordered list of fast, low-cost, widely available Gemini models
+const FALLBACK_MODELS = [
+  "gemini-3.8-flash",
+  "gemini-3.1-flash-lite",
+  "gemini-flash-latest",
+];
+
+const CALM_BUSY_MESSAGE =
+  "The Wisdom Tower AI Tutor is currently experiencing high demand. Please wait a moment and try asking your question again.";
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -11,13 +21,11 @@ export async function POST(req: NextRequest) {
       process.env.AI_GATEWAY_API_KEY;
 
     if (!apiKey) {
-      return NextResponse.json(
-        {
-          error:
-            "GEMINI_API_KEY is not configured on the server. Please add GEMINI_API_KEY to your environment variables.",
-        },
-        { status: 500 }
-      );
+      console.warn("[AI Tutor] GEMINI_API_KEY is not configured on the server.");
+      return NextResponse.json({
+        reply:
+          "The Wisdom Tower AI Tutor is currently unavailable. Please try again shortly.",
+      });
     }
 
     const ai = new GoogleGenAI({ apiKey });
@@ -53,27 +61,47 @@ ${courseContext ? `\nCurrent Student Context: ${courseContext}` : ""}`;
       });
     }
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
-      contents: formattedContents,
-      config: {
-        systemInstruction,
-        temperature: 0.7,
-        maxOutputTokens: 2048,
-      },
-    });
+    let lastError: any = null;
 
-    const reply = response.text || "I couldn't generate an answer. Please rephrase your question.";
-    return NextResponse.json({ reply });
+    // Try models in order; stop at first successful reply
+    for (const model of FALLBACK_MODELS) {
+      try {
+        const response = await ai.models.generateContent({
+          model,
+          contents: formattedContents,
+          config: {
+            systemInstruction,
+            temperature: 0.7,
+            maxOutputTokens: 2048,
+          },
+        });
+
+        const reply = response.text?.trim();
+        if (reply) {
+          // Log which model succeeded on the server only
+          console.log(`[AI Tutor] Succeeded with model: ${model}`);
+          return NextResponse.json({ reply });
+        }
+      } catch (err: any) {
+        lastError = err;
+        const msg = String(err?.message || "");
+        const status = err?.status || err?.statusCode || "";
+        console.warn(
+          `[AI Tutor] Model "${model}" failed (${status || msg}). Trying next fallback...`
+        );
+      }
+    }
+
+    // If every model fails, return calm user-facing message only
+    console.error("[AI Tutor] All fallback models failed:", lastError?.message || lastError);
+    return NextResponse.json({
+      reply: CALM_BUSY_MESSAGE,
+    });
   } catch (error: any) {
-    console.error("[AI Tutor API Error]", error);
-    return NextResponse.json(
-      {
-        error:
-          error?.message ||
-          "An error occurred while communicating with Gemini API.",
-      },
-      { status: 500 }
-    );
+    console.error("[AI Tutor Unexpected Error]", error);
+    return NextResponse.json({
+      reply: CALM_BUSY_MESSAGE,
+    });
   }
 }
+
