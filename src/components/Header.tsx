@@ -59,6 +59,16 @@ export default function Header() {
   const menuRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
 
+  const handleLaunchTool = (toolKey: string) => {
+    if (typeof window !== "undefined") {
+      const full = window.location.pathname + window.location.search + window.location.hash;
+      if (full && !full.includes("tool=")) {
+        sessionStorage.setItem("wt_prior_study_route", full);
+      }
+    }
+    setIsOpen(false);
+  };
+
   useEffect(() => {
     let cancelled = false;
 
@@ -458,33 +468,33 @@ export default function Header() {
                   </p>
                   <div className="grid grid-cols-2 gap-1.5 px-1">
                     <Link
-                      href={`/learning?tool=tutor&returnTo=${encodeURIComponent(pathname)}`}
-                      onClick={() => setIsOpen(false)}
-                      className="flex items-center gap-2 p-2 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-cyan-500/15 text-slate-300 hover:text-cyan-300 border border-white/10 transition-all"
+                      href={`/learning?tool=tutor`}
+                      onClick={() => handleLaunchTool("tutor")}
+                      className="flex items-center gap-2 p-2 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-cyan-500/15 text-slate-300 hover:text-cyan-300 border border-white/10 transition-all cursor-pointer"
                     >
                       <Sparkles className="w-3.5 h-3.5 text-cyan-300 shrink-0" />
                       <span className="truncate">AI Tutor</span>
                     </Link>
                     <Link
-                      href={`/learning?tool=calculator&returnTo=${encodeURIComponent(pathname)}`}
-                      onClick={() => setIsOpen(false)}
-                      className="flex items-center gap-2 p-2 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-cyan-500/15 text-slate-300 hover:text-cyan-300 border border-white/10 transition-all"
+                      href={`/learning?tool=calculator`}
+                      onClick={() => handleLaunchTool("calculator")}
+                      className="flex items-center gap-2 p-2 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-cyan-500/15 text-slate-300 hover:text-cyan-300 border border-white/10 transition-all cursor-pointer"
                     >
                       <CalcIcon className="w-3.5 h-3.5 text-cyan-300 shrink-0" />
                       <span className="truncate">Calculator</span>
                     </Link>
                     <Link
-                      href={`/learning?tool=notes&returnTo=${encodeURIComponent(pathname)}`}
-                      onClick={() => setIsOpen(false)}
-                      className="flex items-center gap-2 p-2 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-cyan-500/15 text-slate-300 hover:text-cyan-300 border border-white/10 transition-all"
+                      href={`/learning?tool=notes`}
+                      onClick={() => handleLaunchTool("notes")}
+                      className="flex items-center gap-2 p-2 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-cyan-500/15 text-slate-300 hover:text-cyan-300 border border-white/10 transition-all cursor-pointer"
                     >
                       <Folder className="w-3.5 h-3.5 text-sky-400 shrink-0" />
                       <span className="truncate">Notebook</span>
                     </Link>
                     <Link
-                      href={`/learning?tool=timer&returnTo=${encodeURIComponent(pathname)}`}
-                      onClick={() => setIsOpen(false)}
-                      className="flex items-center gap-2 p-2 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-cyan-500/15 text-slate-300 hover:text-cyan-300 border border-white/10 transition-all"
+                      href={`/learning?tool=timer`}
+                      onClick={() => handleLaunchTool("timer")}
+                      className="flex items-center gap-2 p-2 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-cyan-500/15 text-slate-300 hover:text-cyan-300 border border-white/10 transition-all cursor-pointer"
                     >
                       <Timer className="w-3.5 h-3.5 text-sky-400 shrink-0" />
                       <span className="truncate">Pomodoro</span>

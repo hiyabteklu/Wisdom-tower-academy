@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Send,
   X,
@@ -10,7 +10,6 @@ import {
   Bot,
   User,
   GraduationCap,
-  Sparkles,
 } from "lucide-react";
 import RichContent from "@/components/learning/RichContent";
 import "katex/dist/katex.min.css";
@@ -48,40 +47,79 @@ export default function AiTutor({
   const [loading, setLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // Dynamic visual viewport height tracking for mobile/Android WebViews
-  const [viewportHeight, setViewportHeight] = useState<number | null>(null);
+  // Dynamic visual viewport positioning for mobile/Android WebViews
+  const [viewportStyle, setViewportStyle] = useState<React.CSSProperties>({});
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Track visualViewport for Android WebView and mobile soft keyboards
+  // Track visualViewport so the composer stays strictly pinned above the mobile keyboard
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const updateHeight = () => {
-      if (window.innerWidth < 640 && window.visualViewport) {
-        setViewportHeight(window.visualViewport.height);
+    const updateViewport = () => {
+      if (window.innerWidth < 640) {
+        if (window.visualViewport) {
+          const vv = window.visualViewport;
+          setViewportStyle({
+            position: "fixed",
+            top: `${vv.offsetTop}px`,
+            left: `${vv.offsetLeft}px`,
+            width: `${vv.width}px`,
+            height: `${vv.height}px`,
+            maxHeight: `${vv.height}px`,
+            bottom: "auto",
+          });
+        } else {
+          setViewportStyle({
+            position: "fixed",
+            top: "0px",
+            left: "0px",
+            width: "100%",
+            height: "100dvh",
+            maxHeight: "100dvh",
+          });
+        }
       } else {
-        setViewportHeight(null);
+        setViewportStyle({});
       }
     };
 
-    updateHeight();
+    updateViewport();
 
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener("resize", updateHeight);
-      window.visualViewport.addEventListener("scroll", updateHeight);
+    const vv = window.visualViewport;
+    if (vv) {
+      vv.addEventListener("resize", updateViewport);
+      vv.addEventListener("scroll", updateViewport);
     }
-    window.addEventListener("resize", updateHeight);
+    window.addEventListener("resize", updateViewport);
+    window.addEventListener("scroll", updateViewport);
 
     return () => {
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener("resize", updateHeight);
-        window.visualViewport.removeEventListener("scroll", updateHeight);
+      if (vv) {
+        vv.removeEventListener("resize", updateViewport);
+        vv.removeEventListener("scroll", updateViewport);
       }
-      window.removeEventListener("resize", updateHeight);
+      window.removeEventListener("resize", updateViewport);
+      window.removeEventListener("scroll", updateViewport);
     };
   }, []);
+
+  const keepInputVisible = useCallback(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 640) {
+      requestAnimationFrame(() => {
+        inputRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      });
+    }
+  }, []);
+
+  const handleInputFocus = useCallback(() => {
+    keepInputVisible();
+    // Re-verify after virtual keyboard transitions finish on Android/iOS
+    setTimeout(keepInputVisible, 150);
+    setTimeout(keepInputVisible, 320);
+  }, [keepInputVisible]);
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
@@ -174,14 +212,7 @@ export default function AiTutor({
   return (
     <div
       className="fixed inset-0 z-[150] flex flex-col bg-[#050914] w-full h-[100dvh] max-h-[100dvh] overflow-hidden sm:relative sm:inset-auto sm:z-auto sm:w-full sm:max-w-4xl sm:mx-auto sm:h-[680px] sm:max-h-[85vh] sm:rounded-3xl sm:border sm:border-cyan-400/30 sm:bg-[#091122]/95 sm:backdrop-blur-2xl sm:shadow-2xl sm:ring-1 sm:ring-cyan-500/20 animate-in fade-in duration-200"
-      style={
-        viewportHeight
-          ? {
-              height: `${viewportHeight}px`,
-              maxHeight: `${viewportHeight}px`,
-            }
-          : undefined
-      }
+      style={viewportStyle}
     >
       {/* ── Top Header ── */}
       <header className="px-3.5 sm:px-5 py-2.5 sm:py-3.5 border-b border-white/10 bg-[#0c162a]/95 backdrop-blur-xl flex items-center justify-between shrink-0 select-none z-20 pt-[max(0.6rem,env(safe-area-inset-top,0px))]">
@@ -296,14 +327,33 @@ export default function AiTutor({
           );
         })}
 
+        {/* ── Compact Academy Brand "Thinking" Indicator ── */}
         {loading && (
-          <div className="flex items-start gap-2.5 sm:gap-3">
-            <div className="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center text-cyan-300 shrink-0">
-              <Sparkles className="w-4 h-4 animate-spin text-cyan-300" />
+          <div className="flex items-start gap-2.5 sm:gap-3 animate-in fade-in duration-150">
+            {/* Tutor avatar with brand glow */}
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-500/20 to-indigo-500/20 border border-cyan-400/30 flex items-center justify-center text-cyan-300 shrink-0 mt-0.5 shadow-sm">
+              <Bot className="w-4 h-4" />
             </div>
-            <div className="bg-[#0c1628]/95 border border-white/10 rounded-2xl p-3.5 text-xs sm:text-sm text-cyan-300 flex items-center gap-2.5 shadow-md">
-              <span className="inline-block w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
-              <span>Analyzing problem & formulating step-by-step solution…</span>
+
+            {/* Compact Brand Thinking Bubble */}
+            <div className="rounded-2xl px-3.5 py-2.5 sm:px-4 sm:py-3 bg-[#0c1628]/95 border border-cyan-400/25 text-slate-100 shadow-lg flex items-center gap-3">
+              {/* Academy Brand Motion Circular Ring */}
+              <div className="relative flex items-center justify-center w-4 h-4 shrink-0">
+                <div className="w-4 h-4 rounded-full border-2 border-cyan-400/20 border-t-cyan-400 animate-spin" />
+                <div className="absolute w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.9)] animate-pulse" />
+              </div>
+
+              {/* Thinking status indicator with brand rhythmic bouncing dots */}
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="text-xs sm:text-sm font-semibold text-cyan-200 tracking-wide">
+                  Thinking
+                </span>
+                <span className="flex items-center gap-0.5 mt-0.5">
+                  <span className="w-1 h-1 rounded-full bg-cyan-400 animate-bounce [animation-delay:-0.3s]" />
+                  <span className="w-1 h-1 rounded-full bg-cyan-400 animate-bounce [animation-delay:-0.15s]" />
+                  <span className="w-1 h-1 rounded-full bg-cyan-400 animate-bounce" />
+                </span>
+              </div>
             </div>
           </div>
         )}
@@ -311,8 +361,8 @@ export default function AiTutor({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* ── Fixed Bottom Composer Bar (Always Pinned in Visible Area) ── */}
-      <footer className="shrink-0 p-2.5 sm:p-3.5 border-t border-white/10 bg-[#070d1d] z-20 pb-[max(0.6rem,calc(env(safe-area-inset-bottom,0px)+0.4rem))]">
+      {/* ── Fixed Bottom Composer Bar (Always Pinned Above Virtual Keyboard) ── */}
+      <footer className="shrink-0 p-2.5 sm:p-3.5 border-t border-white/10 bg-[#070d1d] z-30 pb-[max(0.6rem,calc(env(safe-area-inset-bottom,0px)+0.4rem))]">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -326,12 +376,12 @@ export default function AiTutor({
             id="wt-ai-tutor-input"
             name="query"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onFocus={() => {
-              setTimeout(() => {
-                messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-              }, 250);
+            onChange={(e) => {
+              setInput(e.target.value);
+              keepInputVisible();
             }}
+            onFocus={handleInputFocus}
+            onClick={handleInputFocus}
             placeholder="Ask a question, formula, or problem…"
             disabled={loading}
             autoComplete="off"

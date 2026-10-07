@@ -132,6 +132,20 @@ export default function HubContentView({
     setItems(res.items);
     setFetchError(res.error || null);
     setLoading(false);
+
+    // Auto-restore active item from ?res= or ?item= in URL
+    if (typeof window !== "undefined") {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const targetId = params.get("res") || params.get("item");
+        if (targetId) {
+          const match = res.items.find((i) => i.id === targetId);
+          if (match) {
+            void openItem(match);
+          }
+        }
+      } catch {}
+    }
   }, [scopePath, hub, packageId]);
 
   useEffect(() => {
@@ -215,11 +229,29 @@ export default function HubContentView({
     } else {
       setPdfUrl(null);
     }
+
+    if (typeof window !== "undefined") {
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.set("res", item.id);
+        window.history.replaceState(null, "", url.pathname + url.search);
+        sessionStorage.setItem("wt_prior_study_route", url.pathname + url.search);
+      } catch {}
+    }
   }
 
   function backToItems() {
     setActive(null);
     setPdfUrl(null);
+    if (typeof window !== "undefined") {
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("res");
+        url.searchParams.delete("item");
+        window.history.replaceState(null, "", url.pathname + (url.search ? url.search : ""));
+        sessionStorage.setItem("wt_prior_study_route", url.pathname + (url.search ? url.search : ""));
+      } catch {}
+    }
   }
 
   if (loading) {

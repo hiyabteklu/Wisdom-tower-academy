@@ -316,7 +316,7 @@ export default function LearningContent({
     if (typeof window !== "undefined") {
       try {
         const url = new URL(window.location.href);
-        const returnTo =
+        const rawReturnTo =
           url.searchParams.get("returnTo") ||
           url.searchParams.get("from") ||
           url.searchParams.get("back");
@@ -333,29 +333,40 @@ export default function LearningContent({
         window.history.replaceState(null, "", url.pathname + (url.search ? url.search : ""));
 
         // 1. Explicit returnTo target in query params
-        if (returnTo && returnTo.startsWith("/") && !returnTo.startsWith("/learning")) {
-          router.push(returnTo);
+        if (rawReturnTo) {
+          const returnTo = decodeURIComponent(rawReturnTo);
+          if (returnTo && returnTo.startsWith("/") && !returnTo.startsWith("/learning?tool=")) {
+            if (returnTo === "/learning" || returnTo.startsWith("/learning?")) {
+              setActiveFeature(null);
+              return;
+            }
+            router.push(returnTo);
+            return;
+          }
+        }
+
+        // 2. Saved prior study route in sessionStorage (e.g. question bank, lecture note, syllabus)
+        if (
+          savedStudyPath &&
+          savedStudyPath.startsWith("/") &&
+          !savedStudyPath.startsWith("/learning?tool=")
+        ) {
+          if (savedStudyPath === "/learning" || savedStudyPath.startsWith("/learning?")) {
+            setActiveFeature(null);
+            return;
+          }
+          sessionStorage.removeItem("wt_prior_study_route");
+          router.push(savedStudyPath);
           return;
         }
 
-        // 2. Referrer is internal deep study content
+        // 3. Referrer is internal deep study content
         if (
           document.referrer &&
           document.referrer.includes(window.location.host) &&
           !document.referrer.includes("/learning")
         ) {
           window.history.back();
-          return;
-        }
-
-        // 3. Saved prior study route in sessionStorage (e.g. question bank, lecture note, syllabus)
-        if (
-          savedStudyPath &&
-          savedStudyPath.startsWith("/") &&
-          !savedStudyPath.startsWith("/learning")
-        ) {
-          sessionStorage.removeItem("wt_prior_study_route");
-          router.push(savedStudyPath);
           return;
         }
       } catch {}
