@@ -16,6 +16,7 @@ const CANDIDATES: Candidate[] = [
   { provider: "gemini", model: "gemini-flash-lite-latest" },
   { provider: "gemini", model: "gemini-3.1-flash-lite" },
   { provider: "gemini", model: "gemini-3.7-flash" },
+  { provider: "gemini", model: "gemini-3.8-flash" },
   { provider: "gemini", model: "gemini-flash-latest" },
 ];
 

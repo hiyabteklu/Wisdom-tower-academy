@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import Image from "next/image";
 import {
   Send,
   X,
   Trash2,
   Copy,
   Check,
-  Bot,
   User,
   GraduationCap,
   Sparkles,
@@ -53,6 +53,7 @@ export default function AiTutor({
   isOpen,
   onClose,
   courseContext,
+  isEmbedded = false,
   isStandalone = false,
 }: Props) {
   const [messages, setMessages] = useState<Message[]>(() => {
@@ -80,9 +81,13 @@ export default function AiTutor({
   // Dynamic visual viewport positioning for mobile/Android WebViews
   const [viewportStyle, setViewportStyle] = useState<React.CSSProperties>({});
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const typingAnchorRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const lastScrollTimeRef = useRef<number>(0);
+  const rafIdRef = useRef<number | null>(null);
 
   // Persist messages in localStorage
   useEffect(() => {
@@ -160,12 +165,68 @@ export default function AiTutor({
     setTimeout(keepInputVisible, 320);
   }, [keepInputVisible]);
 
-  // Scroll to bottom when new messages arrive or stream updates
+  // Keep typewriter typing edge visible during streaming (smooth, jitter-free, throttled)
+  const keepTypingEdgeInView = useCallback((force = false) => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const now = performance.now();
+    // Throttle scroll updates to avoid vibration & layout thrashing during fast token streams (~75ms)
+    if (!force && now - lastScrollTimeRef.current < 75) {
+      if (!rafIdRef.current) {
+        rafIdRef.current = requestAnimationFrame(() => {
+          rafIdRef.current = null;
+          keepTypingEdgeInView(false);
+        });
+      }
+      return;
+    }
+    lastScrollTimeRef.current = now;
+
+    const anchor = typingAnchorRef.current;
+    if (anchor) {
+      const containerRect = container.getBoundingClientRect();
+      const anchorRect = anchor.getBoundingClientRect();
+
+      // Distance from typing bottom to bottom of visible scrollport
+      const offsetFromBottom = containerRect.bottom - anchorRect.bottom;
+
+      // Keep typing edge clearly visible above the composer (near center/lower viewport)
+      // If typing edge is closer than 110px from container bottom or below it:
+      if (offsetFromBottom < 110) {
+        const delta = 120 - offsetFromBottom;
+        container.scrollBy({ top: delta, behavior: "smooth" });
+      }
+    } else {
+      const remainingScroll =
+        container.scrollHeight - container.scrollTop - container.clientHeight;
+      if (remainingScroll > 20) {
+        container.scrollBy({
+          top: Math.min(remainingScroll, 120),
+          behavior: "smooth",
+        });
+      }
+    }
+  }, []);
+
+  // Smooth scroll to bottom when new messages arrive or when opening
+  const scrollToBottom = useCallback((smooth = true) => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    requestAnimationFrame(() => {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: smooth ? "smooth" : "auto",
+      });
+    });
+  }, []);
+
+  // Scroll to bottom on initial open
   useEffect(() => {
     if (isOpen) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      scrollToBottom(false);
     }
-  }, [isOpen, messages, isThinking]);
+  }, [isOpen, scrollToBottom]);
 
   const handleClose = useCallback(() => {
     closeToolOverlay("tutor");
@@ -192,6 +253,7 @@ export default function AiTutor({
     setInput("");
     setIsThinking(true);
     setIsStreaming(false);
+    scrollToBottom(true);
 
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
@@ -263,6 +325,7 @@ export default function AiTutor({
                     timestamp: botTimestamp,
                   },
                 ]);
+                keepTypingEdgeInView(true);
               } else {
                 accumulatedText += data.text;
                 setMessages((prev) =>
@@ -270,6 +333,7 @@ export default function AiTutor({
                     m.id === botMessageId ? { ...m, content: accumulatedText } : m
                   )
                 );
+                keepTypingEdgeInView(false);
               }
             } else if (data.type === "suggestions" && Array.isArray(data.suggestions)) {
               setMessages((prev) =>
@@ -277,6 +341,7 @@ export default function AiTutor({
                   m.id === botMessageId ? { ...m, suggestions: data.suggestions } : m
                 )
               );
+              keepTypingEdgeInView(false);
             }
           } catch {
             // Ignore incomplete chunks
@@ -342,6 +407,7 @@ export default function AiTutor({
       setIsThinking(false);
       setIsStreaming(false);
       abortControllerRef.current = null;
+      setTimeout(() => keepTypingEdgeInView(true), 100);
     }
   }
 
@@ -445,7 +511,10 @@ export default function AiTutor({
       </header>
 
       {/* ── Scrollable Messages Container ── */}
-      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3.5 sm:p-5 space-y-4">
+      <div
+        ref={scrollContainerRef}
+        className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3.5 sm:p-5 space-y-4 pb-10"
+      >
         {messages.map((m, index) => {
           const isBot = m.role === "assistant";
           const isLatestBot = isBot && index === messages.length - 1;
@@ -456,8 +525,16 @@ export default function AiTutor({
                 className={`flex gap-2.5 sm:gap-3 ${isBot ? "items-start" : "items-end justify-end"}`}
               >
                 {isBot && (
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-500/20 to-indigo-500/20 border border-cyan-400/30 flex items-center justify-center text-cyan-300 shrink-0 mt-0.5 shadow-sm">
-                    <Bot className="w-4 h-4" />
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl overflow-hidden border border-cyan-400/30 bg-[#091122] flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+                    <Image
+                      src="/animation.gif"
+                      alt="Wisdom Tower AI Tutor"
+                      width={36}
+                      height={36}
+                      unoptimized
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                 )}
 
@@ -479,6 +556,11 @@ export default function AiTutor({
                       }
                     />
                   </div>
+
+                  {/* Active typewriter typing edge anchor */}
+                  {isLatestBot && isStreaming && (
+                    <div ref={typingAnchorRef} className="h-1 w-full shrink-0" />
+                  )}
 
                   <div
                     className={`mt-2 flex items-center justify-between gap-3 text-[11px] ${
@@ -537,38 +619,27 @@ export default function AiTutor({
           );
         })}
 
-        {/* ── Compact Academy Brand "Thinking" Indicator (Active ONLY until first token) ── */}
+        {/* ── Compact Brand Thinking Row (Active ONLY until first token) ── */}
         {isThinking && (
-          <div className="flex items-start gap-2.5 sm:gap-3 animate-in fade-in duration-150">
-            {/* Tutor avatar with brand glow */}
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-500/20 to-indigo-500/20 border border-cyan-400/30 flex items-center justify-center text-cyan-300 shrink-0 mt-0.5 shadow-sm">
-              <Bot className="w-4 h-4" />
+          <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-[#0c1628]/95 border border-cyan-400/25 text-slate-100 w-fit shadow-md animate-in fade-in duration-150">
+            <div className="w-5 h-5 rounded-lg overflow-hidden shrink-0 border border-cyan-400/30">
+              <Image
+                src="/animation.gif"
+                alt="Thinking"
+                width={20}
+                height={20}
+                unoptimized
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-cover"
+              />
             </div>
-
-            {/* Compact Brand Thinking Bubble */}
-            <div className="rounded-2xl px-3.5 py-2.5 sm:px-4 sm:py-3 bg-[#0c1628]/95 border border-cyan-400/25 text-slate-100 shadow-lg flex items-center gap-3">
-              {/* Academy Brand Motion Circular Ring */}
-              <div className="relative flex items-center justify-center w-4 h-4 shrink-0">
-                <div className="w-4 h-4 rounded-full border-2 border-cyan-400/20 border-t-cyan-400 animate-spin" />
-                <div className="absolute w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.9)] animate-pulse" />
-              </div>
-
-              {/* Thinking status indicator with brand rhythmic bouncing dots */}
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span className="text-xs sm:text-sm font-semibold text-cyan-200 tracking-wide">
-                  Thinking
-                </span>
-                <span className="flex items-center gap-0.5 mt-0.5">
-                  <span className="w-1 h-1 rounded-full bg-cyan-400 animate-bounce [animation-delay:-0.3s]" />
-                  <span className="w-1 h-1 rounded-full bg-cyan-400 animate-bounce [animation-delay:-0.15s]" />
-                  <span className="w-1 h-1 rounded-full bg-cyan-400 animate-bounce" />
-                </span>
-              </div>
-            </div>
+            <span className="text-xs sm:text-sm font-semibold text-cyan-200 tracking-wide">
+              Thinking…
+            </span>
           </div>
         )}
 
-        <div ref={messagesEndRef} />
+        <div ref={messagesEndRef} className="h-4 w-full shrink-0" />
       </div>
 
       {/* ── Fixed Bottom Composer Bar (Always Pinned Above Virtual Keyboard) ── */}
@@ -588,7 +659,6 @@ export default function AiTutor({
             value={input}
             onChange={(e) => {
               setInput(e.target.value);
-              keepInputVisible();
             }}
             onFocus={handleInputFocus}
             onClick={handleInputFocus}
