@@ -58,9 +58,10 @@ function renderTex(src: string, displayMode: boolean): string {
  * Split text into plain / math segments and render each segment individually.
  * Supports multiple consecutive $$...$$ blocks without merging them.
  *
- * Currency Protection:
- * Single $ is only treated as math delimiter if NOT immediately followed by a digit (0-9)
- * or whitespace. This prevents "$7.48" or "$100" currency values from breaking math parsing.
+ * Math Delimiter & Currency Handling:
+ * A paired $...$ (with no internal newlines or unescaped $) is treated as inline math,
+ * even when the content starts with digits (e.g. $1$, $1.98\text{ mA}$, $25.3\,\Omega$, $870$).
+ * Lone $ (e.g. "costs $7.48" or "price $100") without a closing $ delimiter is left as plain text.
  */
 function renderMixedMath(input: string, forceDisplay: boolean): string {
   if (!input) return "";
@@ -78,7 +79,7 @@ function renderMixedMath(input: string, forceDisplay: boolean): string {
   }
 
   const pattern =
-    /\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]|(?<![\\0-9])\$(?!\s|\d)([^$\n]+?)(?<!\s)\$|\\\(([\s\S]+?)\\\)/g;
+    /\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]|(?<!\\)\$(?!\s)([^$\n]+?)(?<!\s)\$|\\\(([\s\S]+?)\\\)/g;
 
   let out = "";
   let last = 0;

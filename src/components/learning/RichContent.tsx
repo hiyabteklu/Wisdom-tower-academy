@@ -44,12 +44,12 @@ const MATH_PLACEHOLDER_RE = /@@WTMATH(\d+)@@/g;
 /**
  * Extract every math span, replace with placeholder, return map for restore.
  * Order: $$ $$ → \[ \] → $ $ → \( \)
- * Currency Protection: single $ followed by a digit (like $7.48) is preserved as currency.
+ * Currency Protection: lone $ without a closing $ pair (like "costs $7.48") is preserved as plain text.
  */
 function protectMath(text: string): { text: string; math: string[] } {
   const math: string[] = [];
   const pattern =
-    /\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]|(?<![\\0-9])\$(?!\s|\d)([^$\n]+?)(?<!\s)\$|\\\(([\s\S]+?)\\\)/g;
+    /\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]|(?<!\\)\$(?!\s)([^$\n]+?)(?<!\s)\$|\\\(([\s\S]+?)\\\)/g;
 
   const out = text.replace(pattern, (full) => {
     const idx = math.length;
