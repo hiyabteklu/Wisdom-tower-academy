@@ -12,6 +12,10 @@ import {
   GraduationCap,
   Sparkles,
   Square,
+  Plus,
+  History,
+  MessageSquare,
+  Clock,
 } from "lucide-react";
 import RichContent from "@/components/learning/RichContent";
 import "katex/dist/katex.min.css";
@@ -25,6 +29,14 @@ type Message = {
   suggestions?: string[];
 };
 
+export type ChatSession = {
+  id: string;
+  title: string;
+  messages: Message[];
+  createdAt: number;
+  updatedAt: number;
+};
+
 type Props = {
   isOpen: boolean;
   onClose: () => void;
@@ -34,7 +46,9 @@ type Props = {
   courseContext?: string;
 };
 
-const STORAGE_KEY = "wt_ai_tutor_chat_v2";
+const SESSIONS_STORAGE_KEY = "wt_ai_tutor_sessions_v2";
+const ACTIVE_SESSION_ID_KEY = "wt_ai_tutor_active_session_id_v2";
+const LEGACY_STORAGE_KEY = "wt_ai_tutor_chat_v2";
 
 const DEFAULT_WELCOME: Message = {
   id: "welcome",
@@ -49,6 +63,80 @@ const DEFAULT_WELCOME: Message = {
   ],
 };
 
+function createNewSession(customTitle?: string): ChatSession {
+  const now = Date.now();
+  return {
+    id: "session-" + now + "-" + Math.random().toString(36).substring(2, 7),
+    title: customTitle || "New chat",
+    messages: [],
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+function initSessions(): { sessions: ChatSession[]; activeId: string } {
+  if (typeof window === "undefined") {
+    const s = createNewSession();
+    return { sessions: [s], activeId: s.id };
+  }
+
+  try {
+    const stored = window.localStorage.getItem(SESSIONS_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const storedActiveId = window.localStorage.getItem(ACTIVE_SESSION_ID_KEY);
+        const exists = parsed.some((s: ChatSession) => s && s.id === storedActiveId);
+        const activeId = exists && storedActiveId ? storedActiveId : parsed[0].id;
+        return { sessions: parsed, activeId };
+      }
+    }
+
+    // Check legacy single-thread storage for smooth migration
+    const legacy = window.localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (legacy) {
+      const legacyMsgs = JSON.parse(legacy);
+      if (Array.isArray(legacyMsgs) && legacyMsgs.length > 0) {
+        const firstUser = legacyMsgs.find((m: any) => m && m.role === "user");
+        const title = firstUser?.content
+          ? firstUser.content.length > 36
+            ? firstUser.content.slice(0, 36).trim() + "…"
+            : firstUser.content
+          : "Previous Study Chat";
+        const migrated: ChatSession = {
+          id: "session-" + Date.now(),
+          title,
+          messages: legacyMsgs,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        };
+        return { sessions: [migrated], activeId: migrated.id };
+      }
+    }
+  } catch (e) {
+    console.warn("Failed to load AI Tutor sessions from storage", e);
+  }
+
+  const fresh = createNewSession();
+  return { sessions: [fresh], activeId: fresh.id };
+}
+
+function formatSessionTime(timestamp: number): string {
+  const diff = Date.now() - timestamp;
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return "Yesterday";
+  if (days < 7) return `${days}d ago`;
+  return new Date(timestamp).toLocaleDateString([], {
+    month: "short",
+    day: "numeric",
+  });
+}
+
 export default function AiTutor({
   isOpen,
   onClose,
@@ -56,20 +144,51 @@ export default function AiTutor({
   isEmbedded = false,
   isStandalone = false,
 }: Props) {
-  const [messages, setMessages] = useState<Message[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const stored = window.localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed;
+  // Multi-session chat history state
+  const [sessions, setSessions] = useState<ChatSession[]>(() => initSessions().sessions);
+  const [activeSessionId, setActiveSessionId] = useState<string>(
+    () => initSessions().activeId
+  );
+  const [showHistory, setShowHistory] = useState(false);
+
+  // Active session and its messages
+  const activeSession =
+    sessions.find((s) => s.id === activeSessionId) ||
+    sessions[0] ||
+    createNewSession();
+  const messages = activeSession.messages;
+
+  // Updater for active session messages
+  const setMessages = useCallback(
+    (updater: Message[] | ((prev: Message[]) => Message[])) => {
+      setSessions((prevSessions) => {
+        return prevSessions.map((session) => {
+          if (session.id === activeSessionId) {
+            const nextMessages =
+              typeof updater === "function" ? updater(session.messages) : updater;
+            let title = session.title;
+            // Auto-title from the first user question if currently "New chat"
+            if (title === "New chat" || title === "New Study Session") {
+              const firstUser = nextMessages.find((m) => m && m.role === "user");
+              if (firstUser?.content) {
+                const cleaned = firstUser.content.replace(/\s+/g, " ").trim();
+                title =
+                  cleaned.length > 36 ? cleaned.slice(0, 36).trim() + "…" : cleaned;
+              }
+            }
+            return {
+              ...session,
+              title,
+              messages: nextMessages,
+              updatedAt: Date.now(),
+            };
           }
-        }
-      } catch {}
-    }
-    return [DEFAULT_WELCOME];
-  });
+          return session;
+        });
+      });
+    },
+    [activeSessionId]
+  );
 
   const [input, setInput] = useState("");
   // isThinking is true ONLY while waiting for the very first token
@@ -89,14 +208,22 @@ export default function AiTutor({
   const lastScrollTimeRef = useRef<number>(0);
   const rafIdRef = useRef<number | null>(null);
 
-  // Persist messages in localStorage
+  // Debounced persistence of sessions into localStorage
   useEffect(() => {
-    if (typeof window !== "undefined" && messages.length > 0) {
+    if (typeof window === "undefined" || sessions.length === 0) return;
+    const timer = setTimeout(() => {
       try {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
-      } catch {}
-    }
-  }, [messages]);
+        window.localStorage.setItem(
+          SESSIONS_STORAGE_KEY,
+          JSON.stringify(sessions)
+        );
+        window.localStorage.setItem(ACTIVE_SESSION_ID_KEY, activeSessionId);
+      } catch (err) {
+        console.warn("Failed to persist sessions", err);
+      }
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [sessions, activeSessionId]);
 
   // Track visualViewport so the composer stays strictly pinned above mobile keyboard
   useEffect(() => {
@@ -232,8 +359,6 @@ export default function AiTutor({
     closeToolOverlay("tutor");
     onClose();
   }, [onClose]);
-
-  if (!isOpen) return null;
 
   const isBusy = isThinking || isStreaming;
 
@@ -430,27 +555,103 @@ export default function AiTutor({
     }
   }
 
+  const handleNewChat = useCallback(() => {
+    if (isBusy) {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+      setIsThinking(false);
+      setIsStreaming(false);
+    }
+    const fresh = createNewSession();
+    setSessions((prev) => [fresh, ...prev]);
+    setActiveSessionId(fresh.id);
+    setInput("");
+    setShowHistory(false);
+    setTimeout(() => {
+      inputRef.current?.focus();
+      scrollToBottom(false);
+    }, 50);
+  }, [isBusy, scrollToBottom]);
+
+  const handleSelectSession = useCallback(
+    (sessionId: string) => {
+      if (sessionId === activeSessionId) {
+        setShowHistory(false);
+        return;
+      }
+      if (isBusy) {
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+          abortControllerRef.current = null;
+        }
+        setIsThinking(false);
+        setIsStreaming(false);
+      }
+      setActiveSessionId(sessionId);
+      setInput("");
+      setShowHistory(false);
+      setTimeout(() => {
+        inputRef.current?.focus();
+        scrollToBottom(false);
+      }, 50);
+    },
+    [activeSessionId, isBusy, scrollToBottom]
+  );
+
+  const handleDeleteSession = useCallback(
+    (sessionId: string, e?: React.MouseEvent) => {
+      e?.stopPropagation();
+      if (isBusy && sessionId === activeSessionId) {
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+          abortControllerRef.current = null;
+        }
+        setIsThinking(false);
+        setIsStreaming(false);
+      }
+      setSessions((prev) => {
+        const filtered = prev.filter((s) => s.id !== sessionId);
+        if (filtered.length === 0) {
+          const fresh = createNewSession();
+          setActiveSessionId(fresh.id);
+          return [fresh];
+        }
+        if (sessionId === activeSessionId) {
+          setActiveSessionId(filtered[0].id);
+        }
+        return filtered;
+      });
+    },
+    [activeSessionId, isBusy]
+  );
+
+  const handleClearAllSessions = useCallback(() => {
+    if (isBusy) {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+      setIsThinking(false);
+      setIsStreaming(false);
+    }
+    const fresh = createNewSession();
+    setSessions([fresh]);
+    setActiveSessionId(fresh.id);
+    setShowHistory(false);
+    setInput("");
+    setTimeout(() => {
+      inputRef.current?.focus();
+      scrollToBottom(false);
+    }, 50);
+  }, [isBusy, scrollToBottom]);
+
   function handleClear() {
     if (isBusy) {
       handleStop();
     }
-    const freshWelcome: Message = {
-      ...DEFAULT_WELCOME,
-      id: "welcome-" + Date.now(),
-      content: "Chat cleared. What concept or problem would you like to explore next?",
-      timestamp: "Just now",
-      suggestions: [
-        "Review high school physics formula",
-        "Freshman calculus limit problem",
-        "Common Ethiopian matriculation traps",
-      ],
-    };
-    setMessages([freshWelcome]);
-    if (typeof window !== "undefined") {
-      try {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify([freshWelcome]));
-      } catch {}
-    }
+    setMessages([]);
     inputRef.current?.focus();
   }
 
@@ -458,6 +659,8 @@ export default function AiTutor({
     if (isBusy) return;
     sendMessage(prompt);
   }
+
+  if (!isOpen) return null;
 
   return (
     <div
@@ -469,31 +672,64 @@ export default function AiTutor({
       style={viewportStyle}
     >
       {/* ── Top Header ── */}
-      <header className="px-3.5 sm:px-5 py-2.5 sm:py-3.5 border-b border-white/10 bg-[#0c162a]/95 backdrop-blur-xl flex items-center justify-between shrink-0 select-none z-20 pt-[max(0.6rem,env(safe-area-inset-top,0px))]">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-cyan-500/20 shrink-0">
-            <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-100" />
+      <header className="px-3 sm:px-4 py-2 sm:py-2.5 border-b border-white/10 bg-[#0c162a]/95 backdrop-blur-xl flex items-center justify-between shrink-0 select-none z-20 pt-[max(0.6rem,env(safe-area-inset-top,0px))]">
+        <div className="flex items-center gap-2 min-w-0">
+          {/* Chats history drawer toggle */}
+          <button
+            type="button"
+            onClick={() => setShowHistory((prev) => !prev)}
+            title="Open past study chats"
+            aria-label="Toggle chat history"
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-semibold active:scale-95 transition-all cursor-pointer shrink-0 ${
+              showHistory
+                ? "bg-cyan-500/20 border-cyan-400/50 text-cyan-200 shadow-xs"
+                : "bg-white/5 hover:bg-white/10 border-white/10 text-slate-300 hover:text-white"
+            }`}
+          >
+            <History className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden sm:inline">Chats</span>
+            <span className="text-[10px] bg-cyan-500/20 text-cyan-300 px-1.5 py-0.2 rounded-full font-bold">
+              {sessions.length}
+            </span>
+          </button>
+
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-cyan-500/20 shrink-0">
+            <GraduationCap className="w-4 h-4 text-cyan-100" />
           </div>
+
           <div className="min-w-0">
-            <h3 className="text-sm sm:text-base font-bold text-white tracking-wide truncate">
-              Wisdom Tower AI Tutor
+            <h3 className="text-sm font-bold text-white tracking-wide truncate max-w-[140px] sm:max-w-[260px]">
+              {activeSession.title !== "New chat"
+                ? activeSession.title
+                : "Wisdom Tower AI Tutor"}
             </h3>
-            <p className="text-[10px] sm:text-xs text-slate-400 truncate">
+            <p className="text-[10px] text-slate-400 truncate hidden xs:block">
               Ethiopian Academic Study Coach
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {/* Clear conversation button */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* + New Chat Button */}
+          <button
+            type="button"
+            onClick={handleNewChat}
+            title="Start a fresh chat session"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 hover:text-white border border-cyan-400/35 text-xs font-bold active:scale-95 transition-all cursor-pointer shadow-xs"
+          >
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span className="hidden sm:inline">New chat</span>
+          </button>
+
+          {/* Clear current chat messages */}
           <button
             type="button"
             onClick={handleClear}
-            title="Clear chat history"
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 text-xs font-semibold active:scale-95 transition-all cursor-pointer"
+            title="Clear current messages"
+            className="flex items-center gap-1 px-2 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border border-white/10 text-xs font-semibold active:scale-95 transition-all cursor-pointer"
           >
-            <Trash2 className="w-3.5 h-3.5 text-slate-400" />
-            <span className="hidden sm:inline">Clear chat</span>
+            <Trash2 className="w-3.5 h-3.5" />
+            <span className="hidden md:inline">Clear</span>
           </button>
 
           {/* Close button */}
@@ -502,7 +738,7 @@ export default function AiTutor({
             onClick={handleClose}
             title="Close AI Tutor and return"
             aria-label="Close AI Tutor"
-            className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded-xl bg-rose-500/25 hover:bg-rose-500/35 text-rose-200 hover:text-white border border-rose-500/40 text-xs sm:text-sm font-bold active:scale-95 shadow-sm transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-rose-500/25 hover:bg-rose-500/35 text-rose-200 hover:text-white border border-rose-500/40 text-xs sm:text-sm font-bold active:scale-95 shadow-sm transition-all cursor-pointer"
           >
             <X className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
             <span>Close</span>
@@ -510,11 +746,176 @@ export default function AiTutor({
         </div>
       </header>
 
+      {/* ── Slide-Out History Panel ── */}
+      {showHistory && (
+        <div className="absolute inset-0 z-40 flex">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-150"
+            onClick={() => setShowHistory(false)}
+          />
+
+          {/* Side Sheet */}
+          <div className="relative w-full max-w-xs sm:max-w-sm h-full bg-[#0a1224] border-r border-white/10 shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-200">
+            {/* Drawer Header */}
+            <div className="p-3.5 sm:p-4 border-b border-white/10 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-cyan-400" />
+                <h4 className="text-sm font-bold text-white tracking-wide">
+                  Study Chats
+                </h4>
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-semibold">
+                  {sessions.length}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowHistory(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                aria-label="Close history"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* + New Chat Action in Drawer */}
+            <div className="p-3 border-b border-white/5">
+              <button
+                type="button"
+                onClick={handleNewChat}
+                className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 text-white font-bold text-xs shadow-md shadow-cyan-500/20 hover:brightness-110 active:scale-98 transition-all cursor-pointer"
+              >
+                <Plus className="w-4 h-4 stroke-[2.5]" />
+                <span>+ Start New Chat</span>
+              </button>
+            </div>
+
+            {/* Sessions List */}
+            <div className="flex-1 overflow-y-auto p-2 space-y-1.5 overscroll-contain">
+              {sessions.map((s) => {
+                const isActive = s.id === activeSessionId;
+                const userMsgsCount = s.messages.filter(
+                  (m) => m && m.role === "user"
+                ).length;
+
+                return (
+                  <div
+                    key={s.id}
+                    onClick={() => handleSelectSession(s.id)}
+                    className={`group flex items-center justify-between p-2.5 rounded-xl cursor-pointer transition-all border ${
+                      isActive
+                        ? "bg-cyan-500/15 border-cyan-400/40 text-white shadow-sm"
+                        : "bg-white/[0.03] hover:bg-white/[0.08] border-white/5 text-slate-300 hover:text-white"
+                    }`}
+                  >
+                    <div className="min-w-0 flex-1 pr-2">
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className={`text-xs font-semibold truncate ${
+                            isActive ? "text-cyan-200" : "text-slate-200"
+                          }`}
+                        >
+                          {s.title}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-400">
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-slate-500" />
+                          {formatSessionTime(s.updatedAt)}
+                        </span>
+                        <span>•</span>
+                        <span>
+                          {userMsgsCount}{" "}
+                          {userMsgsCount === 1 ? "question" : "questions"}
+                        </span>
+                        {isActive && (
+                          <>
+                            <span>•</span>
+                            <span className="text-cyan-400 font-bold">
+                              Active
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Delete button */}
+                    <button
+                      type="button"
+                      onClick={(e) => handleDeleteSession(s.id, e)}
+                      title="Delete chat session"
+                      className="opacity-60 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 transition-all cursor-pointer shrink-0"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Clear All Footer */}
+            {sessions.length > 1 && (
+              <div className="p-3 border-t border-white/10 bg-[#070d1a]">
+                <button
+                  type="button"
+                  onClick={handleClearAllSessions}
+                  className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-semibold text-rose-300 hover:text-rose-200 hover:bg-rose-500/15 border border-rose-500/20 transition-all cursor-pointer"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  <span>Clear All Past Chats</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* ── Scrollable Messages Container ── */}
       <div
         ref={scrollContainerRef}
         className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3.5 sm:p-5 space-y-4 pb-10"
       >
+        {/* Empty Session Welcome State */}
+        {messages.length === 0 && (
+          <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center p-4 sm:p-6 space-y-4 max-w-md mx-auto my-auto animate-in fade-in duration-200">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden border border-cyan-400/30 bg-[#091122] flex items-center justify-center shadow-lg shadow-cyan-500/15">
+              <Image
+                src="/animation.gif"
+                alt="Wisdom Tower AI Tutor"
+                width={64}
+                height={64}
+                unoptimized
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div>
+              <h3 className="text-base sm:text-lg font-bold text-white tracking-wide">
+                Wisdom Tower AI Tutor
+              </h3>
+              <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
+                Ask any academic concept, formula, derivation, or Ethiopian exam problem.
+              </p>
+            </div>
+            <div className="flex flex-wrap justify-center gap-2 pt-2">
+              {[
+                "Ethiopian university GPA calculation",
+                "Derivative power rule step-by-step",
+                "Newton's Laws with worked examples",
+              ].map((prompt, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => handleSuggestionClick(prompt)}
+                  className="text-xs px-3 py-1.5 rounded-full bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-200 hover:text-white border border-cyan-400/25 transition-all active:scale-95 cursor-pointer"
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {messages.map((m, index) => {
           const isBot = m.role === "assistant";
           const isLatestBot = isBot && index === messages.length - 1;
@@ -619,22 +1020,16 @@ export default function AiTutor({
           );
         })}
 
-        {/* ── Compact Brand Thinking Row (Active ONLY until first token) ── */}
+        {/* ── Classic Bouncing Dots Thinking Indicator (NOT the avatar GIF) ── */}
         {isThinking && (
-          <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-[#0c1628]/95 border border-cyan-400/25 text-slate-100 w-fit shadow-md animate-in fade-in duration-150">
-            <div className="w-5 h-5 rounded-lg overflow-hidden shrink-0 border border-cyan-400/30">
-              <Image
-                src="/animation.gif"
-                alt="Thinking"
-                width={20}
-                height={20}
-                unoptimized
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <span className="text-xs sm:text-sm font-semibold text-cyan-200 tracking-wide">
-              Thinking…
+          <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-[#0c1628]/95 border border-cyan-400/25 text-slate-200 w-fit shadow-md animate-in fade-in duration-150">
+            <span className="text-xs font-semibold text-cyan-300 tracking-wide">
+              Thinking
+            </span>
+            <span className="flex items-center gap-1 mt-0.5" aria-hidden="true">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce [animation-delay:-0.3s]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce [animation-delay:-0.15s]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" />
             </span>
           </div>
         )}
