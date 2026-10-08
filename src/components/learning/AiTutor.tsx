@@ -199,6 +199,7 @@ export default function AiTutor({
 
   // Dynamic visual viewport positioning for mobile/Android WebViews
   const [viewportStyle, setViewportStyle] = useState<React.CSSProperties>({});
+  const [headerStyle, setHeaderStyle] = useState<React.CSSProperties>({});
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const typingAnchorRef = useRef<HTMLDivElement>(null);
@@ -207,6 +208,7 @@ export default function AiTutor({
   const abortControllerRef = useRef<AbortController | null>(null);
   const lastScrollTimeRef = useRef<number>(0);
   const rafIdRef = useRef<number | null>(null);
+  const viewportRafRef = useRef<number | null>(null);
 
   // Debounced persistence of sessions into localStorage
   useEffect(() => {
@@ -225,72 +227,114 @@ export default function AiTutor({
     return () => clearTimeout(timer);
   }, [sessions, activeSessionId]);
 
-  // Track visualViewport so the composer stays strictly pinned above mobile keyboard
+  // Viewport calculation keeping root & composer strictly pinned above virtual keyboard
+  const updateViewport = useCallback(() => {
+    if (typeof window === "undefined") return;
+
+    if (window.innerWidth < 640) {
+      if (window.visualViewport) {
+        const vv = window.visualViewport;
+        setViewportStyle({
+          position: "fixed",
+          top: `${vv.offsetTop}px`,
+          left: `${vv.offsetLeft}px`,
+          width: `${vv.width}px`,
+          height: `${vv.height}px`,
+          maxHeight: `${vv.height}px`,
+          bottom: "auto",
+        });
+      } else {
+        setViewportStyle({
+          position: "fixed",
+          top: "0px",
+          left: "0px",
+          width: "100%",
+          height: "100dvh",
+          maxHeight: "100dvh",
+          bottom: "auto",
+        });
+      }
+
+      // Android WebView Status Bar Inset Detection & Fallback
+      let safeArea = 0;
+      try {
+        const probe = document.createElement("div");
+        probe.style.cssText =
+          "position:fixed;top:0;left:0;height:env(safe-area-inset-top,0px);pointer-events:none;visibility:hidden;z-index:-1;";
+        document.body.appendChild(probe);
+        safeArea = probe.offsetHeight || 0;
+        probe.remove();
+      } catch {
+        safeArea = 0;
+      }
+
+      const isNativeApp =
+        document.documentElement.classList.contains("wta-native-app") ||
+        document.body?.classList.contains("wta-native-app");
+
+      const vvOffsetTop = window.visualViewport?.offsetTop || 0;
+      // If visualViewport.offsetTop is 0 on mobile, still keep at least 28-32px top padding for the status bar in native app
+      const statusBarGuess = isNativeApp ? (vvOffsetTop === 0 ? 32 : 28) : 0;
+      const targetPadding = Math.max(safeArea, statusBarGuess);
+
+      if (targetPadding > 0) {
+        setHeaderStyle({ paddingTop: `${targetPadding}px` });
+      } else {
+        setHeaderStyle({});
+      }
+    } else {
+      setViewportStyle({});
+      setHeaderStyle({});
+    }
+  }, []);
+
+  // Track visualViewport in the same frame on resize and scroll
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const updateViewport = () => {
-      if (window.innerWidth < 640) {
-        if (window.visualViewport) {
-          const vv = window.visualViewport;
-          setViewportStyle({
-            position: "fixed",
-            top: `${vv.offsetTop}px`,
-            left: `${vv.offsetLeft}px`,
-            width: `${vv.width}px`,
-            height: `${vv.height}px`,
-            maxHeight: `${vv.height}px`,
-            bottom: "auto",
-          });
-        } else {
-          setViewportStyle({
-            position: "fixed",
-            top: "0px",
-            left: "0px",
-            width: "100%",
-            height: "100dvh",
-            maxHeight: "100dvh",
-          });
-        }
-      } else {
-        setViewportStyle({});
+    const handleViewportChange = () => {
+      if (viewportRafRef.current) {
+        cancelAnimationFrame(viewportRafRef.current);
       }
+      viewportRafRef.current = requestAnimationFrame(() => {
+        updateViewport();
+      });
     };
 
     updateViewport();
 
     const vv = window.visualViewport;
     if (vv) {
-      vv.addEventListener("resize", updateViewport);
-      vv.addEventListener("scroll", updateViewport);
+      vv.addEventListener("resize", handleViewportChange);
+      vv.addEventListener("scroll", handleViewportChange);
     }
-    window.addEventListener("resize", updateViewport);
-    window.addEventListener("scroll", updateViewport);
+    window.addEventListener("resize", handleViewportChange);
+    window.addEventListener("scroll", handleViewportChange);
 
     return () => {
-      if (vv) {
-        vv.removeEventListener("resize", updateViewport);
-        vv.removeEventListener("scroll", updateViewport);
+      if (viewportRafRef.current) {
+        cancelAnimationFrame(viewportRafRef.current);
       }
-      window.removeEventListener("resize", updateViewport);
-      window.removeEventListener("scroll", updateViewport);
+      if (vv) {
+        vv.removeEventListener("resize", handleViewportChange);
+        vv.removeEventListener("scroll", handleViewportChange);
+      }
+      window.removeEventListener("resize", handleViewportChange);
+      window.removeEventListener("scroll", handleViewportChange);
     };
-  }, []);
+  }, [updateViewport]);
 
-  const keepInputVisible = useCallback(() => {
-    if (typeof window !== "undefined" && window.innerWidth < 640) {
-      requestAnimationFrame(() => {
-        inputRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-      });
-    }
-  }, []);
-
+  // Immediate input focus handler without laggy timeouts
   const handleInputFocus = useCallback(() => {
-    keepInputVisible();
-    setTimeout(keepInputVisible, 150);
-    setTimeout(keepInputVisible, 320);
-  }, [keepInputVisible]);
+    // Force immediate viewport update with no delay
+    updateViewport();
+    requestAnimationFrame(() => {
+      updateViewport();
+      if (window.innerWidth < 640) {
+        messagesEndRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
+      }
+    });
+  }, [updateViewport]);
 
   // Keep typewriter typing edge visible during streaming (smooth, jitter-free, throttled)
   const keepTypingEdgeInView = useCallback((force = false) => {
@@ -362,7 +406,7 @@ export default function AiTutor({
 
   const isBusy = isThinking || isStreaming;
 
-  async function sendMessage(textOverride?: string) {
+  async function sendMessage(textOverride?: string, smoothScroll = true) {
     const q = (textOverride !== undefined ? textOverride : input).trim();
     if (!q || isBusy) return;
 
@@ -378,7 +422,7 @@ export default function AiTutor({
     setInput("");
     setIsThinking(true);
     setIsStreaming(false);
-    scrollToBottom(true);
+    scrollToBottom(smoothScroll);
 
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
@@ -657,7 +701,7 @@ export default function AiTutor({
 
   function handleSuggestionClick(prompt: string) {
     if (isBusy) return;
-    sendMessage(prompt);
+    sendMessage(prompt, false);
   }
 
   if (!isOpen) return null;
@@ -675,7 +719,8 @@ export default function AiTutor({
       {/* ── Top Header ── */}
       <header
         data-ai-tutor-header
-        className="px-2.5 sm:px-4 py-2 sm:py-2.5 border-b border-white/10 bg-[#0c162a]/95 backdrop-blur-xl flex items-center justify-between shrink-0 select-none z-20 pt-[max(0.6rem,env(safe-area-inset-top,0px))] gap-1"
+        className="px-2.5 sm:px-4 py-2 sm:py-2.5 border-b border-white/10 bg-[#0c162a]/95 backdrop-blur-xl flex items-center justify-between shrink-0 select-none z-20 pt-[max(0.75rem,env(safe-area-inset-top,0px))] gap-1"
+        style={headerStyle}
       >
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
           {/* Chats history drawer toggle */}
@@ -767,7 +812,10 @@ export default function AiTutor({
           {/* Side Sheet */}
           <div className="relative w-[85vw] max-w-xs sm:max-w-sm h-full bg-[#0a1224] border-r border-white/10 shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-200">
             {/* Drawer Header */}
-            <div className="p-3.5 sm:p-4 border-b border-white/10 flex items-center justify-between">
+            <div
+              className="p-3.5 sm:p-4 border-b border-white/10 flex items-center justify-between pt-[max(0.75rem,env(safe-area-inset-top,0px))]"
+              style={headerStyle}
+            >
               <div className="flex items-center gap-2">
                 <MessageSquare className="w-4 h-4 text-cyan-400" />
                 <h4 className="text-sm font-bold text-white tracking-wide">
@@ -916,7 +964,8 @@ export default function AiTutor({
                   key={i}
                   type="button"
                   onClick={() => handleSuggestionClick(prompt)}
-                  className="text-xs px-3 py-1.5 rounded-full bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-200 hover:text-white border border-cyan-400/25 transition-all active:scale-95 cursor-pointer"
+                  disabled={isBusy}
+                  className="text-xs px-3 py-1.5 rounded-full bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-200 hover:text-white border border-cyan-400/25 transition-all active:scale-95 cursor-pointer disabled:opacity-40 disabled:pointer-events-none"
                 >
                   {prompt}
                 </button>
