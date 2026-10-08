@@ -470,12 +470,12 @@ body.wta-native-app main {
 /* Standalone & Overlay Tool View: hide site header, footer, and padding for clean full-screen tools */
 html.wta-tool-overlay header:not([data-ai-tutor-header]),
 body.wta-tool-overlay header:not([data-ai-tutor-header]),
-html.wta-tool-overlay footer,
-body.wta-tool-overlay footer,
+html.wta-tool-overlay footer:not([data-ai-tutor-footer]),
+body.wta-tool-overlay footer:not([data-ai-tutor-footer]),
 html.wta-standalone-tool header:not([data-ai-tutor-header]),
 body.wta-standalone-tool header:not([data-ai-tutor-header]),
-html.wta-standalone-tool footer,
-body.wta-standalone-tool footer {
+html.wta-standalone-tool footer:not([data-ai-tutor-footer]),
+body.wta-standalone-tool footer:not([data-ai-tutor-footer]) {
   display: none !important;
 }
 
@@ -500,8 +500,8 @@ body.wta-standalone-tool main {
 
   html.wta-tutor-active header:not([data-ai-tutor-header]),
   body.wta-tutor-active header:not([data-ai-tutor-header]),
-  html.wta-tutor-active footer,
-  body.wta-tutor-active footer,
+  html.wta-tutor-active footer:not([data-ai-tutor-footer]),
+  body.wta-tutor-active footer:not([data-ai-tutor-footer]),
   html.wta-tutor-active .site-atmosphere,
   body.wta-tutor-active .site-atmosphere,
   html.wta-tutor-active [data-global-focus-bar],
@@ -517,6 +517,18 @@ body.wta-standalone-tool main {
     height: 100dvh !important;
     overflow: hidden !important;
   }
+}
+
+/* Ensure AI Tutor header and composer footer are NEVER hidden on mobile or in overlays */
+[data-ai-tutor-header] {
+  display: flex !important;
+  visibility: visible !important;
+}
+
+[data-ai-tutor-footer] {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 /* ========================================================================= */

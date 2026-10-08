@@ -234,13 +234,18 @@ export default function AiTutor({
     if (window.innerWidth < 640) {
       if (window.visualViewport) {
         const vv = window.visualViewport;
+        const vHeight = vv.height > 0 ? vv.height : window.innerHeight;
+        const vWidth = vv.width > 0 ? vv.width : window.innerWidth;
+        const vTop = Math.max(0, vv.offsetTop || 0);
+        const vLeft = Math.max(0, vv.offsetLeft || 0);
+
         setViewportStyle({
           position: "fixed",
-          top: `${vv.offsetTop}px`,
-          left: `${vv.offsetLeft}px`,
-          width: `${vv.width}px`,
-          height: `${vv.height}px`,
-          maxHeight: `${vv.height}px`,
+          top: `${vTop}px`,
+          left: `${vLeft}px`,
+          width: `${vWidth}px`,
+          height: `${vHeight}px`,
+          maxHeight: `${vHeight}px`,
           bottom: "auto",
         });
       } else {
@@ -334,6 +339,9 @@ export default function AiTutor({
         messagesEndRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
       }
     });
+    // Follow-up after keyboard transition completes
+    setTimeout(updateViewport, 150);
+    setTimeout(updateViewport, 300);
   }, [updateViewport]);
 
   // Keep typewriter typing edge visible during streaming (smooth, jitter-free, throttled)
@@ -1096,7 +1104,10 @@ export default function AiTutor({
       </div>
 
       {/* ── Fixed Bottom Composer Bar (Always Pinned Above Virtual Keyboard) ── */}
-      <footer className="shrink-0 p-2.5 sm:p-3.5 border-t border-white/10 bg-[#070d1d] z-30 pb-[max(0.6rem,calc(env(safe-area-inset-bottom,0px)+0.4rem))]">
+      <footer
+        data-ai-tutor-footer
+        className="shrink-0 p-2.5 sm:p-3.5 border-t border-white/10 bg-[#070d1d] z-30 pb-[max(0.6rem,calc(env(safe-area-inset-bottom,0px)+0.4rem))]"
+      >
         <form
           onSubmit={(e) => {
             e.preventDefault();
