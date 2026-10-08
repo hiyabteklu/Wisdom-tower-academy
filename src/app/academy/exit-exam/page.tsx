@@ -49,6 +49,7 @@ export default function ExitExamPage() {
           <p className="text-xs sm:text-sm font-semibold tracking-[0.15em] uppercase text-wisdom-muted">
             Learning Hubs
           </p>
+          {/* Games commented out until fully functional
           <Link
             href="/academy/exit-exam/tower-defense"
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-fuchsia-400 hover:text-fuchsia-300 transition-colors"
@@ -56,6 +57,7 @@ export default function ExitExamPage() {
             <ShieldAlert className="w-3.5 h-3.5" />
             <span>Academic Tower Defense</span>
           </Link>
+          */}
         </div>
 
         <ResourceHubGrid basePath="/academy/exit-exam" />

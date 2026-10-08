@@ -662,3 +662,10 @@ html.reading-font-mono {
   margin: 0 !important;
   padding: 0 !important;
 }
+
+/* Reusable Confetti Canvas: Strictly transparent and pass-through */
+#wta-confetti-canvas {
+  background: transparent !important;
+  background-color: transparent !important;
+  pointer-events: none !important;
+}
