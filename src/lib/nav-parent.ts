@@ -95,8 +95,14 @@ export function structuralParent(pathname: string, explicitFallback?: string): s
   if (pathname.includes("?")) {
     const [base, query] = pathname.split("?");
     const params = new URLSearchParams(query);
-    if (params.has("item") || params.has("note") || params.has("deck") || params.has("id")) {
-      // Opened note / material / flashcards -> list of notes / flashcards for that subject
+    if (
+      params.has("item") ||
+      params.has("note") ||
+      params.has("deck") ||
+      params.has("id") ||
+      params.has("tool")
+    ) {
+      // Opened note / material / flashcards / tool -> list or tools base level
       return normalizePath(base);
     }
   }

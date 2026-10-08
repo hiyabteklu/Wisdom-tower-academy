@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import RichContent from "@/components/learning/RichContent";
 import "katex/dist/katex.min.css";
+import { closeToolOverlay } from "@/lib/native-app";
 
 type Message = {
   id: string;
@@ -29,6 +30,7 @@ type Props = {
   onClose: () => void;
   defaultFullScreen?: boolean;
   isEmbedded?: boolean;
+  isStandalone?: boolean;
   courseContext?: string;
 };
 
@@ -51,6 +53,7 @@ export default function AiTutor({
   isOpen,
   onClose,
   courseContext,
+  isStandalone = false,
 }: Props) {
   const [messages, setMessages] = useState<Message[]>(() => {
     if (typeof window !== "undefined") {
@@ -163,6 +166,11 @@ export default function AiTutor({
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [isOpen, messages, isThinking]);
+
+  const handleClose = useCallback(() => {
+    closeToolOverlay("tutor");
+    onClose();
+  }, [onClose]);
 
   if (!isOpen) return null;
 
@@ -387,7 +395,11 @@ export default function AiTutor({
 
   return (
     <div
-      className="fixed inset-0 z-[150] flex flex-col bg-[#050914] w-full h-[100dvh] max-h-[100dvh] overflow-hidden sm:relative sm:inset-auto sm:z-auto sm:w-full sm:max-w-4xl sm:mx-auto sm:h-[680px] sm:max-h-[85vh] sm:rounded-3xl sm:border sm:border-cyan-400/30 sm:bg-[#091122]/95 sm:backdrop-blur-2xl sm:shadow-2xl sm:ring-1 sm:ring-cyan-500/20 animate-in fade-in duration-200"
+      className={
+        isStandalone
+          ? "fixed inset-0 z-[150] flex flex-col bg-[#050914] w-full h-[100dvh] max-h-[100dvh] overflow-hidden sm:relative sm:inset-auto sm:z-auto sm:w-full sm:max-w-4xl sm:mx-auto sm:h-full sm:max-h-[85vh] sm:rounded-3xl sm:border sm:border-cyan-400/30 sm:bg-[#091122]/95 sm:backdrop-blur-2xl sm:shadow-2xl sm:ring-1 sm:ring-cyan-500/20 animate-in fade-in duration-200"
+          : "fixed inset-0 z-[150] flex flex-col bg-[#050914] w-full h-[100dvh] max-h-[100dvh] overflow-hidden sm:relative sm:inset-auto sm:z-auto sm:w-full sm:max-w-4xl sm:mx-auto sm:h-[680px] sm:max-h-[85vh] sm:rounded-3xl sm:border sm:border-cyan-400/30 sm:bg-[#091122]/95 sm:backdrop-blur-2xl sm:shadow-2xl sm:ring-1 sm:ring-cyan-500/20 animate-in fade-in duration-200"
+      }
       style={viewportStyle}
     >
       {/* ── Top Header ── */}
@@ -421,7 +433,7 @@ export default function AiTutor({
           {/* Close button */}
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             title="Close AI Tutor and return"
             aria-label="Close AI Tutor"
             className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded-xl bg-rose-500/25 hover:bg-rose-500/35 text-rose-200 hover:text-white border border-rose-500/40 text-xs sm:text-sm font-bold active:scale-95 shadow-sm transition-all cursor-pointer"

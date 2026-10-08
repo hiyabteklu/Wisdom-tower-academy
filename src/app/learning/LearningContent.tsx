@@ -43,6 +43,7 @@ import StudyPlanner from "@/components/learning/StudyPlanner";
 import StudentAnalyticsDashboard from "@/components/StudentAnalyticsDashboard";
 import ScientificCalculator from "@/components/learning/ScientificCalculator";
 import AiTutor from "@/components/learning/AiTutor";
+import { isOverlayOrStandaloneMode, closeToolOverlay } from "@/lib/native-app";
 
 // Games commented out per request - code preserved in repository
 // import TowerDefenseGame from "@/components/games/tower-defense/TowerDefenseGame";
@@ -287,6 +288,21 @@ export default function LearningContent({
     return getToolFromLocation();
   });
 
+  // Standalone / Overlay mode check
+  const [isStandalone, setIsStandalone] = useState<boolean>(() => {
+    return isOverlayOrStandaloneMode();
+  });
+
+  useEffect(() => {
+    if (isOverlayOrStandaloneMode()) {
+      setIsStandalone(true);
+      if (typeof document !== "undefined") {
+        document.documentElement.classList.add("wta-tool-overlay");
+        document.body.classList.add("wta-tool-overlay");
+      }
+    }
+  }, []);
+
   // Sync with initialTool prop from server navigation
   useEffect(() => {
     if (initialTool !== undefined) {
@@ -310,10 +326,18 @@ export default function LearningContent({
 
   const router = useRouter();
 
-  // Bulletproof close helper: restores student's prior study place or returns to tools grid
+  // Bulletproof close helper: notifies native app bridge, restores prior study place, or returns to tools grid
   const closeActiveTool = useCallback(() => {
+    const current = activeFeature;
     setActiveFeature(null);
+
     if (typeof window !== "undefined") {
+      // 1. Notify native app bridge if present
+      const dismissedByBridge = closeToolOverlay(current || undefined);
+      if (dismissedByBridge) {
+        return;
+      }
+
       try {
         const url = new URL(window.location.href);
         const rawReturnTo =
@@ -369,9 +393,15 @@ export default function LearningContent({
           window.history.back();
           return;
         }
+
+        // 4. In standalone mode and history has a prior page
+        if (isStandalone && window.history.length > 1) {
+          window.history.back();
+          return;
+        }
       } catch {}
     }
-  }, [router]);
+  }, [router, activeFeature, isStandalone]);
 
   // Re-sync on searchParams update, client navigation, or popstate event
   useEffect(() => {
@@ -903,7 +933,7 @@ export default function LearningContent({
               </div>
             )}
           </>
-        ) : (
+        ) : !isStandalone ? (
           // Feature Screen Top Bar: iOS Segmented Toolbar + Back Button
           <div className="mb-5 p-2 rounded-2xl sm:rounded-full border border-white/[0.08] bg-[#0c1626]/90 backdrop-blur-2xl shadow-xl flex flex-wrap items-center justify-between gap-2 sticky top-2 z-20">
             <button
@@ -939,7 +969,7 @@ export default function LearningContent({
               })}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* ═════════════════════════════════════════════════════════════ */}
         {/* VIEW 1: PHONE NAV / TOOLBAR BUTTONS DOCK (NO BIG CARDS)        */}
@@ -1433,6 +1463,7 @@ export default function LearningContent({
               isOpen={true}
               onClose={closeActiveTool}
               isEmbedded={true}
+              isStandalone={isStandalone}
             />
           </section>
         )}
@@ -1444,6 +1475,7 @@ export default function LearningContent({
               isOpen={true}
               onClose={closeActiveTool}
               isEmbedded={true}
+              isStandalone={isStandalone}
             />
           </section>
         )}

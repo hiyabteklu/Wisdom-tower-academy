@@ -35,6 +35,7 @@ import { IS_FREE_MODE } from "@/lib/ownership";
 import RefreshButton from "@/components/RefreshButton";
 import StudentAvatar from "@/components/StudentAvatar";
 import { DIGITAL_URL } from "@/lib/digital-url";
+import { requestOpenTool } from "@/lib/native-app";
 
 const mainNavLinks = [
   { href: "/", label: "Home" },
@@ -59,7 +60,15 @@ export default function Header() {
   const menuRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
 
-  const handleLaunchTool = (toolKey: string) => {
+  const handleLaunchTool = (e: React.MouseEvent, toolKey: string) => {
+    // If not on /learning, prefer opening the non-destructive tool overlay over full site navigation away from hub content
+    if (pathname !== "/learning") {
+      e.preventDefault();
+      setIsOpen(false);
+      requestOpenTool(toolKey);
+      return;
+    }
+
     if (typeof window !== "undefined") {
       const full = window.location.pathname + window.location.search + window.location.hash;
       if (full && !full.includes("tool=")) {
@@ -469,7 +478,7 @@ export default function Header() {
                   <div className="grid grid-cols-2 gap-1.5 px-1">
                     <Link
                       href={`/learning?tool=tutor`}
-                      onClick={() => handleLaunchTool("tutor")}
+                      onClick={(e) => handleLaunchTool(e, "tutor")}
                       className="flex items-center gap-2 p-2 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-cyan-500/15 text-slate-300 hover:text-cyan-300 border border-white/10 transition-all cursor-pointer"
                     >
                       <Sparkles className="w-3.5 h-3.5 text-cyan-300 shrink-0" />
@@ -477,7 +486,7 @@ export default function Header() {
                     </Link>
                     <Link
                       href={`/learning?tool=calculator`}
-                      onClick={() => handleLaunchTool("calculator")}
+                      onClick={(e) => handleLaunchTool(e, "calculator")}
                       className="flex items-center gap-2 p-2 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-cyan-500/15 text-slate-300 hover:text-cyan-300 border border-white/10 transition-all cursor-pointer"
                     >
                       <CalcIcon className="w-3.5 h-3.5 text-cyan-300 shrink-0" />
@@ -485,7 +494,7 @@ export default function Header() {
                     </Link>
                     <Link
                       href={`/learning?tool=notes`}
-                      onClick={() => handleLaunchTool("notes")}
+                      onClick={(e) => handleLaunchTool(e, "notes")}
                       className="flex items-center gap-2 p-2 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-cyan-500/15 text-slate-300 hover:text-cyan-300 border border-white/10 transition-all cursor-pointer"
                     >
                       <Folder className="w-3.5 h-3.5 text-sky-400 shrink-0" />
@@ -493,7 +502,7 @@ export default function Header() {
                     </Link>
                     <Link
                       href={`/learning?tool=timer`}
-                      onClick={() => handleLaunchTool("timer")}
+                      onClick={(e) => handleLaunchTool(e, "timer")}
                       className="flex items-center gap-2 p-2 rounded-xl text-xs font-semibold bg-white/[0.04] hover:bg-cyan-500/15 text-slate-300 hover:text-cyan-300 border border-white/10 transition-all cursor-pointer"
                     >
                       <Timer className="w-3.5 h-3.5 text-sky-400 shrink-0" />

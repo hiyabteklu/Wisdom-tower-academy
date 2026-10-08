@@ -467,6 +467,25 @@ body.wta-native-app main {
   padding-top: 0 !important;
 }
 
+/* Standalone & Overlay Tool View: hide site header, footer, and padding for clean full-screen tools */
+html.wta-tool-overlay header,
+body.wta-tool-overlay header,
+html.wta-tool-overlay footer,
+body.wta-tool-overlay footer,
+html.wta-standalone-tool header,
+body.wta-standalone-tool header,
+html.wta-standalone-tool footer,
+body.wta-standalone-tool footer {
+  display: none !important;
+}
+
+html.wta-tool-overlay main,
+body.wta-tool-overlay main,
+html.wta-standalone-tool main,
+body.wta-standalone-tool main {
+  padding-top: 0 !important;
+}
+
 /* ========================================================================= */
 /* Native Android App: Suppress Website's Generic Circular Loaders           */
 /* The native Jetpack Compose app renders its own Wisdom Tower GIF animation. */

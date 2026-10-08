@@ -11,11 +11,13 @@ import {
   RotateCcw,
   Sparkles,
 } from "lucide-react";
+import { closeToolOverlay } from "@/lib/native-app";
 
 type Props = {
   isOpen: boolean;
   onClose: () => void;
   isEmbedded?: boolean;
+  isStandalone?: boolean;
 };
 
 // Factorial helper
@@ -118,7 +120,12 @@ function evaluateScientificExpression(raw: string, isRad: boolean): number {
   }
 }
 
-export default function ScientificCalculator({ isOpen, onClose, isEmbedded = false }: Props) {
+export default function ScientificCalculator({
+  isOpen,
+  onClose,
+  isEmbedded = false,
+  isStandalone = false,
+}: Props) {
   const [expression, setExpression] = useState("");
   const [displayResult, setDisplayResult] = useState("0");
   const [isRad, setIsRad] = useState(false); // Default: DEG (standard for high school/freshman)
@@ -129,6 +136,11 @@ export default function ScientificCalculator({ isOpen, onClose, isEmbedded = fal
   // Draggable position state for floating mode
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+
+  const handleClose = useCallback(() => {
+    closeToolOverlay("calculator");
+    onClose();
+  }, [onClose]);
 
   useEffect(() => {
     if (isOpen && pos === null && !isEmbedded && typeof window !== "undefined") {
@@ -194,14 +206,16 @@ export default function ScientificCalculator({ isOpen, onClose, isEmbedded = fal
     <div
       ref={cardRef}
       className={`bg-[#0a1122] border border-cyan-400/30 rounded-3xl shadow-2xl flex flex-col overflow-hidden text-white font-sans ${
-        isEmbedded
+        isStandalone
           ? "w-full max-w-xl mx-auto p-4 sm:p-6"
-          : isFullScreen
-            ? "fixed inset-0 z-[130] rounded-none border-none p-4 sm:p-6"
-            : "w-[min(23rem,calc(100vw-1.5rem))] p-4"
+          : isEmbedded
+            ? "w-full max-w-xl mx-auto p-4 sm:p-6"
+            : isFullScreen
+              ? "fixed inset-0 z-[130] rounded-none border-none p-4 sm:p-6"
+              : "w-[min(23rem,calc(100vw-1.5rem))] p-4"
       }`}
       style={
-        !isEmbedded && !isFullScreen && pos
+        !isEmbedded && !isStandalone && !isFullScreen && pos
           ? {
               position: "fixed",
               left: `${pos.x}px`,
@@ -241,7 +255,7 @@ export default function ScientificCalculator({ isOpen, onClose, isEmbedded = fal
             {isRad ? "RAD" : "DEG"}
           </button>
 
-          {!isEmbedded && (
+          {!isEmbedded && !isStandalone && (
             <button
               type="button"
               onClick={() => setIsFullScreen((v) => !v)}
@@ -254,7 +268,7 @@ export default function ScientificCalculator({ isOpen, onClose, isEmbedded = fal
 
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 hover:text-white border border-rose-500/30 text-xs font-bold active:scale-95 transition-all cursor-pointer"
             title="Close calculator and return to tools"
           >
