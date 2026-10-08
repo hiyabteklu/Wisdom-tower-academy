@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import RichContent from "@/components/learning/RichContent";
 import "katex/dist/katex.min.css";
-import { closeToolOverlay } from "@/lib/native-app";
+import { closeToolOverlay, isNativeToolOverlay } from "@/lib/native-app";
 
 type Message = {
   id: string;
@@ -44,6 +44,7 @@ type Props = {
   isEmbedded?: boolean;
   isStandalone?: boolean;
   courseContext?: string;
+  hideHeader?: boolean;
 };
 
 const SESSIONS_STORAGE_KEY = "wt_ai_tutor_sessions_v2";
@@ -143,7 +144,35 @@ export default function AiTutor({
   courseContext,
   isEmbedded = false,
   isStandalone = false,
+  hideHeader = false,
 }: Props) {
+  // Detect if running inside native Android app dedicated tool overlay WebView
+  // (e.g. /learning?tool=tutor&overlay=1&app=1 or classes wta-native-app + wta-tool-overlay)
+  const [isNativeOverlay, setIsNativeOverlay] = useState<boolean>(() => {
+    if (hideHeader) return true;
+    return isNativeToolOverlay("tutor");
+  });
+
+  useEffect(() => {
+    const checkOverlay = () => {
+      const active = hideHeader || isNativeToolOverlay("tutor");
+      setIsNativeOverlay(active);
+      if (active && typeof document !== "undefined") {
+        document.documentElement.classList.add("wta-native-app", "wta-tool-overlay");
+        if (document.body) {
+          document.body.classList.add("wta-native-app", "wta-tool-overlay");
+        }
+      }
+    };
+    checkOverlay();
+    window.addEventListener("resize", checkOverlay);
+    window.addEventListener("popstate", checkOverlay);
+    return () => {
+      window.removeEventListener("resize", checkOverlay);
+      window.removeEventListener("popstate", checkOverlay);
+    };
+  }, [hideHeader]);
+
   // Multi-session chat history state
   const [sessions, setSessions] = useState<ChatSession[]>(() => initSessions().sessions);
   const [activeSessionId, setActiveSessionId] = useState<string>(
@@ -277,10 +306,20 @@ export default function AiTutor({
         document.documentElement.classList.contains("wta-native-app") ||
         document.body?.classList.contains("wta-native-app");
 
+      const isOverlayActive =
+        hideHeader ||
+        isNativeOverlay ||
+        document.documentElement.classList.contains("wta-tool-overlay") ||
+        document.body?.classList.contains("wta-tool-overlay") ||
+        /(?:[?&])(?:overlay|standalone|embed)=(?:1|true|standalone|overlay)/i.test(
+          typeof window !== "undefined" ? window.location.search : ""
+        );
+
       const vvOffsetTop = window.visualViewport?.offsetTop || 0;
-      // If visualViewport.offsetTop is 0 on mobile, still keep at least 28-32px top padding for the status bar in native app
-      const statusBarGuess = isNativeApp ? (vvOffsetTop === 0 ? 32 : 28) : 0;
-      const targetPadding = Math.max(safeArea, statusBarGuess);
+      // In native tool overlay, the native Android top bar is already above the WebView.
+      // Avoid redundant status bar padding when in tool overlay.
+      const statusBarGuess = (isNativeApp && !isOverlayActive) ? (vvOffsetTop === 0 ? 32 : 28) : 0;
+      const targetPadding = isOverlayActive ? 0 : Math.max(safeArea, statusBarGuess);
 
       if (targetPadding > 0) {
         setHeaderStyle({ paddingTop: `${targetPadding}px` });
@@ -291,7 +330,7 @@ export default function AiTutor({
       setViewportStyle({});
       setHeaderStyle({});
     }
-  }, []);
+  }, [hideHeader, isNativeOverlay]);
 
   // Track visualViewport in the same frame on resize and scroll
   useEffect(() => {
@@ -699,13 +738,35 @@ export default function AiTutor({
     }, 50);
   }, [isBusy, scrollToBottom]);
 
-  function handleClear() {
+  const handleClear = useCallback(() => {
     if (isBusy) {
       handleStop();
     }
     setMessages([]);
     inputRef.current?.focus();
-  }
+  }, [isBusy, setMessages]);
+
+  // Expose optional window.__wtaTutorApi so the native app header can trigger chat history, new chat, or close
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    window.__wtaTutorApi = {
+      openHistory: () => setShowHistory(true),
+      closeHistory: () => setShowHistory(false),
+      toggleHistory: () => setShowHistory((prev) => !prev),
+      newChat: handleNewChat,
+      close: handleClose,
+      clear: handleClear,
+    };
+
+    return () => {
+      try {
+        delete window.__wtaTutorApi;
+      } catch {
+        (window as any).__wtaTutorApi = undefined;
+      }
+    };
+  }, [handleNewChat, handleClose, handleClear]);
 
   function handleSuggestionClick(prompt: string) {
     if (isBusy) return;
@@ -717,18 +778,25 @@ export default function AiTutor({
   return (
     <div
       data-ai-tutor-root
+      data-native-overlay={isNativeOverlay ? "true" : undefined}
       className={
         isStandalone
-          ? "fixed inset-0 z-[150] flex flex-col bg-[#050914] w-full h-[100dvh] max-h-[100dvh] overflow-hidden sm:relative sm:inset-auto sm:z-auto sm:w-full sm:max-w-4xl sm:mx-auto sm:h-full sm:max-h-[85vh] sm:rounded-3xl sm:border sm:border-cyan-400/30 sm:bg-[#091122]/95 sm:backdrop-blur-2xl sm:shadow-2xl sm:ring-1 sm:ring-cyan-500/20 animate-in fade-in duration-200"
-          : "fixed inset-0 z-[150] flex flex-col bg-[#050914] w-full h-[100dvh] max-h-[100dvh] overflow-hidden sm:relative sm:inset-auto sm:z-auto sm:w-full sm:max-w-4xl sm:mx-auto sm:h-[680px] sm:max-h-[85vh] sm:rounded-3xl sm:border sm:border-cyan-400/30 sm:bg-[#091122]/95 sm:backdrop-blur-2xl sm:shadow-2xl sm:ring-1 sm:ring-cyan-500/20 animate-in fade-in duration-200"
+          ? `fixed inset-0 z-[150] flex flex-col bg-[#050914] w-full h-[100dvh] max-h-[100dvh] overflow-hidden sm:relative sm:inset-auto sm:z-auto sm:w-full sm:max-w-4xl sm:mx-auto sm:h-full sm:max-h-[85vh] sm:rounded-3xl sm:border sm:border-cyan-400/30 sm:bg-[#091122]/95 sm:backdrop-blur-2xl sm:shadow-2xl sm:ring-1 sm:ring-cyan-500/20 animate-in fade-in duration-200 ${
+              isNativeOverlay ? "wta-native-tool-overlay" : ""
+            }`
+          : `fixed inset-0 z-[150] flex flex-col bg-[#050914] w-full h-[100dvh] max-h-[100dvh] overflow-hidden sm:relative sm:inset-auto sm:z-auto sm:w-full sm:max-w-4xl sm:mx-auto sm:h-[680px] sm:max-h-[85vh] sm:rounded-3xl sm:border sm:border-cyan-400/30 sm:bg-[#091122]/95 sm:backdrop-blur-2xl sm:shadow-2xl sm:ring-1 sm:ring-cyan-500/20 animate-in fade-in duration-200 ${
+              isNativeOverlay ? "wta-native-tool-overlay" : ""
+            }`
       }
       style={viewportStyle}
     >
-      {/* ── Top Header ── */}
+      {/* ── Top Header (web / standalone default; hidden inside native tool overlay) ── */}
       <header
         data-ai-tutor-header
-        className="px-2.5 sm:px-4 py-2 sm:py-2.5 border-b border-white/10 bg-[#0c162a]/95 backdrop-blur-xl flex items-center justify-between shrink-0 select-none z-20 pt-[max(0.75rem,env(safe-area-inset-top,0px))] gap-1"
-        style={headerStyle}
+        className={`px-2.5 sm:px-4 py-2 sm:py-2.5 border-b border-white/10 bg-[#0c162a]/95 backdrop-blur-xl flex items-center justify-between shrink-0 select-none z-20 pt-[max(0.75rem,env(safe-area-inset-top,0px))] gap-1 ${
+          isNativeOverlay ? "!hidden" : ""
+        }`}
+        style={isNativeOverlay ? { display: "none" } : headerStyle}
       >
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
           {/* Chats history drawer toggle */}
@@ -808,6 +876,68 @@ export default function AiTutor({
         </div>
       </header>
 
+      {/* ── Compact In-Body Toolbar: Rendered in native tool overlay so Chats drawer & New chat stay accessible ── */}
+      {isNativeOverlay && (
+        <div
+          data-ai-tutor-inbody-toolbar
+          className="px-3 py-2 border-b border-white/10 bg-[#0c162a]/95 backdrop-blur-xl flex items-center justify-between shrink-0 select-none z-20 gap-2"
+        >
+          <div className="flex items-center gap-1.5 min-w-0">
+            {/* Chats history drawer toggle */}
+            <button
+              type="button"
+              onClick={() => setShowHistory((prev) => !prev)}
+              title="Open past study chats"
+              aria-label="Toggle chat history"
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-xs font-semibold active:scale-95 transition-all cursor-pointer shrink-0 ${
+                showHistory
+                  ? "bg-cyan-500/20 border-cyan-400/50 text-cyan-200 shadow-xs"
+                  : "bg-white/5 hover:bg-white/10 border-white/10 text-slate-300 hover:text-white"
+              }`}
+            >
+              <History className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <span className="text-xs font-bold">Chats</span>
+              <span className="text-[10px] bg-cyan-500/20 text-cyan-300 px-1.5 py-0.2 rounded-full font-bold">
+                {sessions.length}
+              </span>
+            </button>
+
+            <div className="min-w-0">
+              <span className="text-xs font-semibold text-slate-300 truncate block max-w-[140px] xs:max-w-[220px]">
+                {activeSession.title !== "New chat"
+                  ? activeSession.title
+                  : "AI Tutor"}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* + New Chat Button */}
+            <button
+              type="button"
+              onClick={handleNewChat}
+              title="Start a fresh chat session"
+              aria-label="New chat session"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 hover:text-white border border-cyan-400/35 text-xs font-bold active:scale-95 transition-all cursor-pointer shadow-xs"
+            >
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span className="text-xs font-bold">New</span>
+            </button>
+
+            {/* Clear messages */}
+            <button
+              type="button"
+              onClick={handleClear}
+              title="Clear current messages"
+              aria-label="Clear chat"
+              className="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border border-white/10 text-xs active:scale-95 transition-all cursor-pointer"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── Slide-Out History Panel ── */}
       {showHistory && (
         <div className="absolute inset-0 z-40 flex">
@@ -821,8 +951,10 @@ export default function AiTutor({
           <div className="relative w-[85vw] max-w-xs sm:max-w-sm h-full bg-[#0a1224] border-r border-white/10 shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-200">
             {/* Drawer Header */}
             <div
-              className="p-3.5 sm:p-4 border-b border-white/10 flex items-center justify-between pt-[max(0.75rem,env(safe-area-inset-top,0px))]"
-              style={headerStyle}
+              className={`p-3.5 sm:p-4 border-b border-white/10 flex items-center justify-between ${
+                isNativeOverlay ? "pt-3.5 sm:pt-4" : "pt-[max(0.75rem,env(safe-area-inset-top,0px))]"
+              }`}
+              style={isNativeOverlay ? undefined : headerStyle}
             >
               <div className="flex items-center gap-2">
                 <MessageSquare className="w-4 h-4 text-cyan-400" />

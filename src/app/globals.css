@@ -519,16 +519,38 @@ body.wta-standalone-tool main {
   }
 }
 
-/* Ensure AI Tutor header and composer footer are NEVER hidden on mobile or in overlays */
+/* AI Tutor header & composer footer display rules */
 [data-ai-tutor-header] {
-  display: flex !important;
-  visibility: visible !important;
+  display: flex;
+  visibility: visible;
 }
 
 [data-ai-tutor-footer] {
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
+}
+
+/* Hide AI Tutor header inside native Android app tool overlay so only the single native bar with red Close appears */
+html.wta-native-app.wta-tool-overlay [data-ai-tutor-header],
+body.wta-native-app.wta-tool-overlay [data-ai-tutor-header],
+html.wta-native-app.wta-tool-overlay header[data-ai-tutor-header],
+body.wta-native-app.wta-tool-overlay header[data-ai-tutor-header],
+html.wta-native-app [data-wta-tool-overlay] [data-ai-tutor-header],
+body.wta-native-app [data-wta-tool-overlay] [data-ai-tutor-header],
+html.wta-native-app [data-native-overlay="true"] [data-ai-tutor-header],
+body.wta-native-app [data-native-overlay="true"] [data-ai-tutor-header],
+[data-native-overlay="true"] [data-ai-tutor-header],
+.wta-native-tool-overlay [data-ai-tutor-header] {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
 }
 
 /* ========================================================================= */

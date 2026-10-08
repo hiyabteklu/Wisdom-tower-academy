@@ -43,6 +43,15 @@ declare global {
     __wtaOpenTool?: (tool: string, options?: { standalone?: boolean }) => void;
     __wtaCloseTool?: () => void;
     __wtaOverlay?: boolean;
+    __wtaTutorApi?: {
+      openHistory?: () => void;
+      closeHistory?: () => void;
+      toggleHistory?: () => void;
+      newChat?: () => void;
+      close?: () => void;
+      clear?: () => void;
+      [key: string]: unknown;
+    };
   }
 }
 
@@ -187,6 +196,65 @@ export function isOverlayOrStandaloneMode(): boolean {
     }
   } catch {
     /* ignore */
+  }
+
+  return false;
+}
+
+/**
+ * Checks if the current environment is running inside the native Android app's
+ * dedicated tool overlay WebView (e.g. /learning?tool=tutor&overlay=1&app=1).
+ * When true, the native app provides its own top bar with a red Close button,
+ * so the web tool header should be hidden to prevent dual headers.
+ */
+export function isNativeToolOverlay(toolKey?: string): boolean {
+  if (typeof window === "undefined" || typeof document === "undefined") return false;
+
+  try {
+    const isNative = isAndroidWebView();
+    if (!isNative) return false;
+
+    // Check if document has wta-tool-overlay class
+    if (
+      document.documentElement.classList.contains("wta-tool-overlay") ||
+      document.body?.classList.contains("wta-tool-overlay")
+    ) {
+      return true;
+    }
+
+    // Check URL query parameters or hash
+    const search = window.location.search || "";
+    const hash = window.location.hash || "";
+
+    if (
+      /(?:[?&])(?:overlay|standalone|embed)=(?:1|true|standalone|overlay)/i.test(search) ||
+      /(?:[#&])(?:overlay|standalone|embed)=(?:1|true)/i.test(hash)
+    ) {
+      return true;
+    }
+
+    if (toolKey) {
+      const toolPattern = new RegExp(`(?:[?&])(?:tool|tab)=${toolKey}`, "i");
+      if (toolPattern.test(search) || toolPattern.test(hash)) {
+        return true;
+      }
+    } else {
+      if (/(?:[?&])(?:tool|tab)=(?:tutor|ai-tutor|calculator|notes|timer)/i.test(search)) {
+        return true;
+      }
+    }
+
+    if (
+      Boolean(
+        window.__wtaOverlay ||
+        (window.AndroidBridge && window.AndroidBridge.isOverlay) ||
+        (window.Android && window.Android.isOverlay)
+      )
+    ) {
+      return true;
+    }
+  } catch {
+    /* fallback */
   }
 
   return false;
