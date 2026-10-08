@@ -303,6 +303,36 @@ export default function LearningContent({
     }
   }, []);
 
+  // Dedicated Mobile View for AI Tutor: locks viewport, suppresses site header, footer & nav clutter
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+
+    const syncTutorClasses = () => {
+      const isMobile = window.innerWidth < 640;
+      if (activeFeature === "tutor") {
+        if (isMobile) {
+          document.documentElement.classList.add("wta-tutor-active");
+          document.body.classList.add("wta-tutor-active");
+        } else {
+          document.documentElement.classList.remove("wta-tutor-active");
+          document.body.classList.remove("wta-tutor-active");
+        }
+      } else {
+        document.documentElement.classList.remove("wta-tutor-active");
+        document.body.classList.remove("wta-tutor-active");
+      }
+    };
+
+    syncTutorClasses();
+    window.addEventListener("resize", syncTutorClasses);
+
+    return () => {
+      window.removeEventListener("resize", syncTutorClasses);
+      document.documentElement.classList.remove("wta-tutor-active");
+      document.body.classList.remove("wta-tutor-active");
+    };
+  }, [activeFeature]);
+
   // Sync with initialTool prop from server navigation
   useEffect(() => {
     if (initialTool !== undefined) {
@@ -854,14 +884,26 @@ export default function LearningContent({
     : null;
 
   return (
-    <div className="relative min-h-[85vh] pb-16 bg-[#050811] text-[#f4f7fb]">
+    <div
+      className={`relative bg-[#050811] text-[#f4f7fb] ${
+        activeFeature === "tutor"
+          ? "h-full min-h-0 sm:min-h-[85vh] pb-0 sm:pb-16"
+          : "min-h-[85vh] pb-16"
+      }`}
+    >
       {/* Ambient background glow */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10">
         <div className="absolute -top-32 right-10 w-[35rem] h-[35rem] rounded-full blur-[110px] opacity-20 bg-sky-500" />
         <div className="absolute top-1/2 left-0 w-[30rem] h-[30rem] rounded-full blur-[120px] opacity-15 bg-blue-600" />
       </div>
 
-      <div className="max-w-6xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-4 sm:pt-6">
+      <div
+        className={
+          activeFeature === "tutor"
+            ? "w-full p-0 sm:max-w-6xl sm:mx-auto sm:px-6 lg:px-8 sm:pt-6"
+            : "max-w-6xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-4 sm:pt-6"
+        }
+      >
         {/* ═════════════════════════════════════════════════════════════ */}
         {/* NATIVE APP VIEW HEADER                                         */}
         {/* ═════════════════════════════════════════════════════════════ */}
@@ -935,7 +977,11 @@ export default function LearningContent({
           </>
         ) : !isStandalone ? (
           // Feature Screen Top Bar: iOS Segmented Toolbar + Back Button
-          <div className="mb-5 p-2 rounded-2xl sm:rounded-full border border-white/[0.08] bg-[#0c1626]/90 backdrop-blur-2xl shadow-xl flex flex-wrap items-center justify-between gap-2 sticky top-2 z-20">
+          <div
+            className={`mb-5 p-2 rounded-2xl sm:rounded-full border border-white/[0.08] bg-[#0c1626]/90 backdrop-blur-2xl shadow-xl items-center justify-between gap-2 sticky top-2 z-20 ${
+              activeFeature === "tutor" ? "hidden sm:flex" : "flex flex-wrap"
+            }`}
+          >
             <button
               type="button"
               onClick={closeActiveTool}
@@ -1470,7 +1516,7 @@ export default function LearningContent({
 
         {/* ── 6. AI ACADEMIC TUTOR ───────────────────────────────────── */}
         {activeFeature === "tutor" && (
-          <section className="animate-fade-up max-w-4xl mx-auto">
+          <section className="w-full sm:max-w-4xl sm:mx-auto sm:animate-fade-up">
             <AiTutor
               isOpen={true}
               onClose={closeActiveTool}

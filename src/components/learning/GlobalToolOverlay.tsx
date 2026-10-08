@@ -124,7 +124,9 @@ export default function GlobalToolOverlay() {
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-[120] flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150 overflow-hidden"
+      className={`fixed inset-0 z-[120] flex items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-150 overflow-hidden ${
+        activeTool === "tutor" ? "p-0 sm:p-4" : "p-2 sm:p-4"
+      }`}
       role="dialog"
       aria-modal="true"
       aria-label={`${activeTool === "tutor" ? "AI Tutor" : "Scientific Calculator"} Overlay`}
@@ -135,9 +137,13 @@ export default function GlobalToolOverlay() {
         }
       }}
     >
-      <div className="relative w-full max-w-4xl max-h-[96dvh] flex flex-col justify-center items-center">
+      <div className={`relative w-full max-w-4xl flex flex-col justify-center items-center ${activeTool === "tutor" ? "h-full sm:h-auto sm:max-h-[96dvh]" : "max-h-[96dvh]"}`}>
         {/* Subtle quick bar above modal for deep link reference */}
-        <div className="w-full flex items-center justify-between px-2 pb-2 text-xs text-slate-400 select-none">
+        <div
+          className={`w-full items-center justify-between px-2 pb-2 text-xs text-slate-400 select-none ${
+            activeTool === "tutor" ? "hidden sm:flex" : "flex"
+          }`}
+        >
           <div className="flex items-center gap-2">
             <span className="flex h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
             <span className="font-semibold text-slate-300">
@@ -170,9 +176,15 @@ export default function GlobalToolOverlay() {
         </div>
 
         {/* Tool Component Container */}
-        <div className="w-full flex justify-center items-center overflow-auto max-h-[calc(96dvh-2.5rem)]">
+        <div
+          className={`w-full flex justify-center items-center overflow-auto ${
+            activeTool === "tutor"
+              ? "h-full max-h-none sm:max-h-[calc(96dvh-2.5rem)]"
+              : "max-h-[calc(96dvh-2.5rem)]"
+          }`}
+        >
           {activeTool === "tutor" && (
-            <div className="w-full max-w-3xl">
+            <div className="w-full sm:max-w-3xl h-full">
               <AiTutor
                 isOpen={true}
                 onClose={handleClose}

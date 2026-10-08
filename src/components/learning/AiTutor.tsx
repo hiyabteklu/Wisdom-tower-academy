@@ -672,53 +672,57 @@ export default function AiTutor({
       style={viewportStyle}
     >
       {/* ── Top Header ── */}
-      <header className="px-3 sm:px-4 py-2 sm:py-2.5 border-b border-white/10 bg-[#0c162a]/95 backdrop-blur-xl flex items-center justify-between shrink-0 select-none z-20 pt-[max(0.6rem,env(safe-area-inset-top,0px))]">
-        <div className="flex items-center gap-2 min-w-0">
+      <header className="px-2.5 sm:px-4 py-2 sm:py-2.5 border-b border-white/10 bg-[#0c162a]/95 backdrop-blur-xl flex items-center justify-between shrink-0 select-none z-20 pt-[max(0.6rem,env(safe-area-inset-top,0px))] gap-1">
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
           {/* Chats history drawer toggle */}
           <button
             type="button"
             onClick={() => setShowHistory((prev) => !prev)}
             title="Open past study chats"
             aria-label="Toggle chat history"
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-semibold active:scale-95 transition-all cursor-pointer shrink-0 ${
+            className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl border text-xs font-semibold active:scale-95 transition-all cursor-pointer shrink-0 ${
               showHistory
                 ? "bg-cyan-500/20 border-cyan-400/50 text-cyan-200 shadow-xs"
                 : "bg-white/5 hover:bg-white/10 border-white/10 text-slate-300 hover:text-white"
             }`}
           >
-            <History className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="hidden sm:inline">Chats</span>
+            <History className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+            <span className="text-[11px] font-bold">Chats</span>
             <span className="text-[10px] bg-cyan-500/20 text-cyan-300 px-1.5 py-0.2 rounded-full font-bold">
               {sessions.length}
             </span>
           </button>
 
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-cyan-500/20 shrink-0">
+          <div className="hidden xs:flex w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 items-center justify-center text-white shadow-md shadow-cyan-500/20 shrink-0">
             <GraduationCap className="w-4 h-4 text-cyan-100" />
           </div>
 
           <div className="min-w-0">
-            <h3 className="text-sm font-bold text-white tracking-wide truncate max-w-[140px] sm:max-w-[260px]">
+            <h3 className="text-xs sm:text-sm font-bold text-white tracking-wide truncate max-w-[80px] xs:max-w-[140px] sm:max-w-[260px]">
               {activeSession.title !== "New chat"
                 ? activeSession.title
-                : "Wisdom Tower AI Tutor"}
+                : "AI Tutor"}
             </h3>
-            <p className="text-[10px] text-slate-400 truncate hidden xs:block">
+            <p className="text-[10px] text-slate-400 truncate hidden md:block">
               Ethiopian Academic Study Coach
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
           {/* + New Chat Button */}
           <button
             type="button"
             onClick={handleNewChat}
             title="Start a fresh chat session"
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 hover:text-white border border-cyan-400/35 text-xs font-bold active:scale-95 transition-all cursor-pointer shadow-xs"
+            aria-label="New chat session"
+            className="flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 hover:text-white border border-cyan-400/35 text-xs font-bold active:scale-95 transition-all cursor-pointer shadow-xs"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span className="hidden sm:inline">New chat</span>
+            <span className="text-[11px] font-bold">
+              <span className="inline sm:hidden">New</span>
+              <span className="hidden sm:inline">New chat</span>
+            </span>
           </button>
 
           {/* Clear current chat messages */}
@@ -726,6 +730,7 @@ export default function AiTutor({
             type="button"
             onClick={handleClear}
             title="Clear current messages"
+            aria-label="Clear chat"
             className="flex items-center gap-1 px-2 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border border-white/10 text-xs font-semibold active:scale-95 transition-all cursor-pointer"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -738,7 +743,7 @@ export default function AiTutor({
             onClick={handleClose}
             title="Close AI Tutor and return"
             aria-label="Close AI Tutor"
-            className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-rose-500/25 hover:bg-rose-500/35 text-rose-200 hover:text-white border border-rose-500/40 text-xs sm:text-sm font-bold active:scale-95 shadow-sm transition-all cursor-pointer"
+            className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-rose-500/25 hover:bg-rose-500/35 text-rose-200 hover:text-white border border-rose-500/40 text-xs sm:text-sm font-bold active:scale-95 shadow-sm transition-all cursor-pointer"
           >
             <X className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
             <span>Close</span>
@@ -756,7 +761,7 @@ export default function AiTutor({
           />
 
           {/* Side Sheet */}
-          <div className="relative w-full max-w-xs sm:max-w-sm h-full bg-[#0a1224] border-r border-white/10 shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-200">
+          <div className="relative w-[85vw] max-w-xs sm:max-w-sm h-full bg-[#0a1224] border-r border-white/10 shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-200">
             {/* Drawer Header */}
             <div className="p-3.5 sm:p-4 border-b border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-2">

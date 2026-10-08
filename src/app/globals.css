@@ -486,6 +486,39 @@ body.wta-standalone-tool main {
   padding-top: 0 !important;
 }
 
+/* Dedicated Mobile AI Tutor View (Phone width & Android WebView) */
+@media (max-width: 639px) {
+  html.wta-tutor-active,
+  body.wta-tutor-active {
+    overflow: hidden !important;
+    position: fixed !important;
+    width: 100% !important;
+    height: 100% !important;
+    height: 100dvh !important;
+    overscroll-behavior: none !important;
+  }
+
+  html.wta-tutor-active header,
+  body.wta-tutor-active header,
+  html.wta-tutor-active footer,
+  body.wta-tutor-active footer,
+  html.wta-tutor-active .site-atmosphere,
+  body.wta-tutor-active .site-atmosphere,
+  html.wta-tutor-active [data-global-focus-bar],
+  body.wta-tutor-active [data-global-focus-bar] {
+    display: none !important;
+  }
+
+  html.wta-tutor-active main,
+  body.wta-tutor-active main {
+    padding-top: 0 !important;
+    margin: 0 !important;
+    height: 100% !important;
+    height: 100dvh !important;
+    overflow: hidden !important;
+  }
+}
+
 /* ========================================================================= */
 /* Native Android App: Suppress Website's Generic Circular Loaders           */
 /* The native Jetpack Compose app renders its own Wisdom Tower GIF animation. */
