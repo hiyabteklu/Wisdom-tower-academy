@@ -23,14 +23,15 @@ import {
   TrendingUp,
 } from "lucide-react";
 
+import { useCachedQuery } from "@/hooks/useCachedQuery";
+import { getCachedAuthUser, setCachedAuthUser, clearAllSwrCache } from "@/lib/swr-cache";
+
 export default function AccountPage() {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfileRecord | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [orders, setOrders] = useState<ManualOrder[]>([]);
+  const [user, setUser] = useState<User | null>(() => getCachedAuthUser());
   const [copiedFolio, setCopiedFolio] = useState(false);
 
+  // User session sync
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       let activeUser = session?.user;
@@ -48,34 +49,49 @@ export default function AccountPage() {
         router.replace("/login?next=/account");
         return;
       }
-      await ensureProfile(activeUser);
-      const full = await getFullProfile(activeUser.id);
 
-      // Auto-assign and persist student ID if not yet assigned
-      if (activeUser.id && !full?.student_id_number) {
-        const assigned = await persistStudentIdIfNeeded(activeUser.id, full?.student_id_number);
-        if (full) full.student_id_number = assigned;
-      }
-
+      setCachedAuthUser(activeUser);
       setUser(activeUser);
-      setProfile(full);
-      setLoading(false);
+      await ensureProfile(activeUser);
     });
   }, [router]);
 
-  const loadUserData = useCallback(async () => {
-    if (!user?.id) return;
-    try {
-      const myOrders = await listMyOrders();
-      setOrders(myOrders);
-    } catch {
-      setOrders([]);
+  // Fetch full profile with user-scoped SWR caching
+  const fetchProfile = useCallback(async (): Promise<UserProfileRecord | null> => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const uid = session?.user?.id || user?.id;
+    if (!uid) return null;
+
+    const full = await getFullProfile(uid);
+    if (full && !full.student_id_number) {
+      const assigned = await persistStudentIdIfNeeded(uid, full.student_id_number);
+      full.student_id_number = assigned;
     }
+    return full;
   }, [user?.id]);
 
-  useEffect(() => {
-    if (user) loadUserData();
-  }, [user, loadUserData]);
+  const {
+    data: profile = null,
+    isLoading: isProfileLoading,
+    refresh: refreshProfile,
+  } = useCachedQuery<UserProfileRecord | null>("profile:me", fetchProfile, {
+    scope: "user",
+    enabled: Boolean(user?.id),
+  });
+
+  // Fetch orders with user-scoped SWR caching
+  const { data: orders = [] } = useCachedQuery<ManualOrder[]>(
+    "orders:mine",
+    listMyOrders,
+    {
+      scope: "user",
+      enabled: Boolean(user?.id),
+    }
+  );
+
+  const loading = !user && isProfileLoading;
 
   const displayName = useMemo(() => {
     return (
@@ -88,7 +104,7 @@ export default function AccountPage() {
   }, [profile, user]);
 
   const idData: StudentIdData = useMemo(() => {
-    return computeStudentId(profile, user?.created_at);
+    return computeStudentId(profile || null, user?.created_at);
   }, [profile, user?.created_at]);
 
   // Check if profile is 100% completed to unlock golden avatar crown
@@ -113,6 +129,7 @@ export default function AccountPage() {
   };
 
   const handleLogout = async () => {
+    clearAllSwrCache();
     await supabase.auth.signOut();
     router.replace("/login");
     router.refresh();
@@ -244,8 +261,10 @@ export default function AccountPage() {
         {/* ========================================================= */}
         <ProfileCompletionPanel
           user={user}
-          initialProfile={profile}
-          onProfileUpdated={(updated) => setProfile(updated)}
+          initialProfile={profile || null}
+          onProfileUpdated={(_updated) => {
+            void refreshProfile();
+          }}
         />
       </div>
     </div>

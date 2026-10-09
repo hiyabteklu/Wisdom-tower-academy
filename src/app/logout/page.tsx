@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import BrandLoader from "@/components/BrandLoader";
+import { clearAllSwrCache } from "@/lib/swr-cache";
 
 /** Dedicated sign-out route: works from app menu and deep links */
 export default function LogoutPage() {
@@ -14,6 +15,7 @@ export default function LogoutPage() {
     let cancelled = false;
     (async () => {
       try {
+        clearAllSwrCache();
         await supabase.auth.signOut({ scope: "local" });
         try {
           localStorage.removeItem("wt-academy-auth-v1");

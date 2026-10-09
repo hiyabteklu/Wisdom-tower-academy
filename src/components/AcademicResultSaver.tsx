@@ -24,6 +24,7 @@ import { supabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
 import { getScopeStats, type HubId, type ScopeStats } from "@/lib/content";
 import BrandLoader from "@/components/BrandLoader";
+import { useCachedQuery } from "@/hooks/useCachedQuery";
 
 export type ResultEntry = {
   id: string;
@@ -214,108 +215,88 @@ export default function AcademicResultSaver({
 }: AcademicResultSaverProps) {
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
-  const [results, setResults] = useState<ResultEntry[]>([]);
-  const [study, setStudy] = useState<ScopeStats | null>(null);
-  const [loading, setLoading] = useState(true);
   const [showOpened, setShowOpened] = useState(false);
   const [showAttempts, setShowAttempts] = useState(false);
 
-  const load = useCallback(
-    async (uid: string) => {
-      setLoading(true);
-      try {
-        const semMatch = scopeId.match(/^special-([^-]+(?:-[^-]+)*)-(sem-[12])-(.+)$/);
-        let query = supabase
-          .from("academic_results")
-          .select("id, title, total, correct, missed, percent, notes, created_at")
-          .eq("user_id", uid);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+  }, []);
 
-        if (semMatch) {
-          const otherSem = semMatch[2] === "sem-1" ? "sem-2" : "sem-1";
-          const altScopeId = `special-${semMatch[1]}-${otherSem}-${semMatch[3]}`;
-          query = query.in("scope_id", [scopeId, altScopeId]);
-        } else {
-          query = query.eq("scope_id", scopeId);
-        }
+  const fetchProgress = useCallback(async (): Promise<{ results: ResultEntry[]; study: ScopeStats | null }> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const uid = session?.user?.id;
+    if (!uid) return { results: [], study: null };
 
-        const { data, error: qErr } = await query
-          .order("created_at", { ascending: false })
-          .limit(50);
-        if (qErr) {
-          console.warn("academic_results:", qErr.message);
-          setResults([]);
-        } else {
-          setResults(
-            (data || []).map((row) => ({
-              id: row.id,
-              title: row.title,
-              date: row.created_at,
-              total: row.total,
-              correct: row.correct,
-              missed: row.missed,
-              percent: Number(row.percent),
-              notes: row.notes,
-            }))
-          );
-        }
+    let loadedResults: ResultEntry[] = [];
+    try {
+      const semMatch = scopeId.match(/^special-([^-]+(?:-[^-]+)*)-(sem-[12])-(.+)$/);
+      let query = supabase
+        .from("academic_results")
+        .select("id, title, total, correct, missed, percent, notes, created_at")
+        .eq("user_id", uid);
 
-        if (scopePath) {
-          const { stats, error: sErr } = await getScopeStats({ scopePath, hub });
-          if (sErr) console.warn("scope stats:", sErr);
-          setStudy(stats);
-        } else {
-          setStudy(null);
-        }
-      } catch (e) {
-        console.error(e);
-        setResults([]);
+      if (semMatch) {
+        const otherSem = semMatch[2] === "sem-1" ? "sem-2" : "sem-1";
+        const altScopeId = `special-${semMatch[1]}-${otherSem}-${semMatch[3]}`;
+        query = query.in("scope_id", [scopeId, altScopeId]);
+      } else {
+        query = query.eq("scope_id", scopeId);
       }
-      setLoading(false);
-    },
-    [scopeId, scopePath, hub]
+
+      const { data, error: qErr } = await query
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (!qErr && data) {
+        loadedResults = data.map((row) => ({
+          id: row.id,
+          title: row.title,
+          date: row.created_at,
+          total: row.total,
+          correct: row.correct,
+          missed: row.missed,
+          percent: Number(row.percent),
+          notes: row.notes,
+        }));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
+    let loadedStudy: ScopeStats | null = null;
+    if (scopePath) {
+      try {
+        const { stats, error: sErr } = await getScopeStats({ scopePath, hub });
+        if (!sErr && stats) loadedStudy = stats;
+      } catch {}
+    }
+
+    return { results: loadedResults, study: loadedStudy };
+  }, [scopeId, scopePath, hub]);
+
+  const { data: progressData } = useCachedQuery(
+    `academic-progress:${scopeId}:${scopePath || ""}:${hub || ""}`,
+    fetchProgress,
+    {
+      initialData: { results: [], study: null },
+      scope: "user",
+    }
   );
 
+  const results = useMemo(() => progressData?.results || [], [progressData?.results]);
+  const study = progressData?.study || null;
   useEffect(() => {
-    let mounted = true;
-    supabase.auth.getUser().then(({ data: { user: u } }) => {
-      if (!mounted) return;
-      setUser(u);
-      if (u) load(u.id);
-      else setLoading(false);
-    });
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_e, session) => {
-      const u = session?.user ?? null;
-      setUser(u);
-      if (u) load(u.id);
-      else {
-        setResults([]);
-        setStudy(null);
-        setLoading(false);
-      }
+      setUser(session?.user ?? null);
     });
     return () => {
-      mounted = false;
       subscription.unsubscribe();
     };
-  }, [load]);
-
-  useEffect(() => {
-    const onVis = () => {
-      if (document.visibilityState === "visible" && user) void load(user.id);
-    };
-    document.addEventListener("visibilitychange", onVis);
-    return () => document.removeEventListener("visibilitychange", onVis);
-  }, [user, load]);
-
-  useEffect(() => {
-    const onRefresh = () => {
-      if (user) void load(user.id);
-    };
-    window.addEventListener("wta-refresh", onRefresh);
-    return () => window.removeEventListener("wta-refresh", onRefresh);
-  }, [user, load]);
+  }, []);
 
   const stats = useMemo(() => {
     if (!results.length)

@@ -3,6 +3,7 @@
  * Static priceEtb / includes / description always win for known package ids.
  */
 import { supabase } from "@/lib/supabase";
+import { invalidate } from "@/lib/swr-cache";
 import {
   academyPackages,
   getPackage as getStaticPackage,
@@ -123,6 +124,17 @@ export async function listCatalogItems(opts?: {
   }
 }
 
+export function getStaticSellablePackages(): AcademyPackage[] {
+  const isExcluded = (p: AcademyPackage) =>
+    p.id === "ece-y3" ||
+    p.id === "ece" ||
+    p.id.toLowerCase().includes("full-year") ||
+    p.id.toLowerCase().includes("full_year") ||
+    p.name.toLowerCase().includes("full year");
+
+  return academyPackages.map(applyStaticPrice).filter((p) => !isExcluded(p));
+}
+
 export async function listSellablePackages(): Promise<AcademyPackage[]> {
   const isExcluded = (p: AcademyPackage) =>
     p.id === "ece-y3" ||
@@ -133,7 +145,7 @@ export async function listSellablePackages(): Promise<AcademyPackage[]> {
 
   const { rows, error } = await listCatalogItems({ includeInactive: false });
   if (error || rows.length === 0) {
-    const list = academyPackages.map(applyStaticPrice).filter((p) => !isExcluded(p));
+    const list = getStaticSellablePackages();
     setRuntimeCatalog(list);
     return list;
   }
@@ -175,12 +187,16 @@ export async function upsertCatalogItem(
 
   const { error } = await supabase.from("catalog_items").upsert(payload, { onConflict: "id" });
   if (error) return { ok: false, error: error.message };
+  invalidate("catalog:sellable");
+  invalidate("catalog:all");
   return { ok: true };
 }
 
 export async function deleteCatalogItem(id: string): Promise<{ ok: boolean; error?: string }> {
   const { error } = await supabase.from("catalog_items").delete().eq("id", id);
   if (error) return { ok: false, error: error.message };
+  invalidate("catalog:sellable");
+  invalidate("catalog:all");
   return { ok: true };
 }
 

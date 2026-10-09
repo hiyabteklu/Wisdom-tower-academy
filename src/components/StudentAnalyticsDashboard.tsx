@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { useCachedQuery } from "@/hooks/useCachedQuery";
 import Link from "next/link";
 import {
   Activity,
@@ -49,46 +50,35 @@ export default function StudentAnalyticsDashboard({
   enrolledPackageIds = [],
   className = "",
 }: StudentAnalyticsProps) {
-  const [loading, setLoading] = useState(false);
   const [selectedTrackKey, setSelectedTrackKey] = useState<string>("");
 
-  // Raw progress records from Supabase learning_progress
-  const [rawProgress, setRawProgress] = useState<
-    {
-      resource_id: string;
-      progress_pct: number;
-      total_seconds: number;
-      focus_seconds: number;
-      last_opened_at: string | null;
-      meta: Record<string, unknown>;
-    }[]
-  >([]);
+  // Fetch real user progress from Supabase with user-scoped SWR caching
+  const fetchProgress = useCallback(async () => {
+    if (!userId) return [];
+    try {
+      const { data, error } = await supabase
+        .from("learning_progress")
+        .select("resource_id, progress_pct, total_seconds, focus_seconds, last_opened_at, meta")
+        .eq("user_id", userId);
 
-  // Fetch real user progress from Supabase
-  useEffect(() => {
-    let cancelled = false;
-    async function loadData() {
-      if (!userId) return;
-      setLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from("learning_progress")
-          .select("resource_id, progress_pct, total_seconds, focus_seconds, last_opened_at, meta")
-          .eq("user_id", userId);
-
-        if (!cancelled && !error && data) {
-          setRawProgress(data);
-        }
-      } catch (err) {
-        console.warn("[StudentAnalytics] Failed to fetch learning_progress:", err);
+      if (!error && data) {
+        return data;
       }
-      if (!cancelled) setLoading(false);
+    } catch (err) {
+      console.warn("[StudentAnalytics] Failed to fetch learning_progress:", err);
     }
-    loadData();
-    return () => {
-      cancelled = true;
-    };
+    return [];
   }, [userId]);
+
+  const { data: rawProgress = [], isLoading: loading } = useCachedQuery(
+    `analytics-progress:${userId}`,
+    fetchProgress,
+    {
+      initialData: [],
+      scope: "user",
+      enabled: Boolean(userId),
+    }
+  );
 
   // Determine initial benchmark track key based on auto-read registration
   const defaultResolvedTrack = useMemo(() => {

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { Trophy, Medal, ChevronDown } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useCachedQuery } from "@/hooks/useCachedQuery";
 
 export type LeaderEntry = {
   rank: number;
@@ -47,82 +48,74 @@ export default function BranchLeaderboard({
 }: Props) {
   const resolvedScope = (scopeId || branchName).toLowerCase().replace(/\s+/g, "-");
   const [restOpen, setRestOpen] = useState(defaultRestOpen);
-  const [leaders, setLeaders] = useState<LeaderEntry[]>(() => sampleLeaders(branchName));
-  const [fromDb, setFromDb] = useState(false);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    let cancelled = false;
+  const fetchLeaders = useCallback(async (): Promise<{ leaders: LeaderEntry[]; fromDb: boolean }> => {
+    try {
+      const { data: rpcData, error: rpcErr } = await supabase.rpc("get_leaderboard", {
+        p_scope_id: resolvedScope,
+        p_limit: 10,
+      });
 
-    async function load() {
-      setLoading(true);
-      try {
-        const { data: rpcData, error: rpcErr } = await supabase.rpc("get_leaderboard", {
-          p_scope_id: resolvedScope,
-          p_limit: 10,
-        });
-
-        if (!rpcErr && Array.isArray(rpcData) && rpcData.length > 0) {
-          if (cancelled) return;
-          const mapped: LeaderEntry[] = rpcData.map(
-            (row: { rank: number; name: string; score: number }) => ({
-              rank: Number(row.rank),
-              name: String(row.name || "Student"),
-              score: Number(row.score || 0),
-              badge:
-                Number(row.rank) === 1
-                  ? "Champion"
-                  : Number(row.rank) === 2
-                    ? "Runner-up"
-                    : Number(row.rank) === 3
-                      ? "Third"
-                      : undefined,
-            })
-          );
-          setLeaders(mapped);
-          setFromDb(true);
-          return;
-        }
-
-        const { data: viewData, error: viewErr } = await supabase
-          .from("leaderboard_by_scope")
-          .select("display_name, score, best_percent, attempts")
-          .eq("scope_id", resolvedScope)
-          .order("score", { ascending: false })
-          .limit(10);
-
-        if (!viewErr && Array.isArray(viewData) && viewData.length > 0) {
-          if (cancelled) return;
-          const mapped: LeaderEntry[] = viewData.map((row, i) => ({
-            rank: i + 1,
-            name: String(row.display_name || "Student"),
+      if (!rpcErr && Array.isArray(rpcData) && rpcData.length > 0) {
+        const mapped: LeaderEntry[] = rpcData.map(
+          (row: { rank: number; name: string; score: number }) => ({
+            rank: Number(row.rank),
+            name: String(row.name || "Student"),
             score: Number(row.score || 0),
-            badge: i === 0 ? "Champion" : i === 1 ? "Runner-up" : i === 2 ? "Third" : undefined,
-          }));
-          setLeaders(mapped);
-          setFromDb(true);
-          return;
-        }
-
-        if (!cancelled) {
-          setLeaders(sampleLeaders(branchName));
-          setFromDb(false);
-        }
-      } catch {
-        if (!cancelled) {
-          setLeaders(sampleLeaders(branchName));
-          setFromDb(false);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
+            badge:
+              Number(row.rank) === 1
+                ? "Champion"
+                : Number(row.rank) === 2
+                  ? "Runner-up"
+                  : Number(row.rank) === 3
+                    ? "Third"
+                    : undefined,
+          })
+        );
+        return { leaders: mapped, fromDb: true };
       }
-    }
 
-    void load();
-    return () => {
-      cancelled = true;
-    };
+      const { data: viewData, error: viewErr } = await supabase
+        .from("leaderboard_by_scope")
+        .select("display_name, score, best_percent, attempts")
+        .eq("scope_id", resolvedScope)
+        .order("score", { ascending: false })
+        .limit(10);
+
+      if (!viewErr && Array.isArray(viewData) && viewData.length > 0) {
+        const mapped: LeaderEntry[] = viewData.map((row, i) => ({
+          rank: i + 1,
+          name: String(row.display_name || "Student"),
+          score: Number(row.score || 0),
+          badge: i === 0 ? "Champion" : i === 1 ? "Runner-up" : i === 2 ? "Third" : undefined,
+        }));
+        return { leaders: mapped, fromDb: true };
+      }
+    } catch {
+      /* fallback */
+    }
+    return { leaders: sampleLeaders(branchName), fromDb: false };
   }, [resolvedScope, branchName]);
+
+  const initialSeed = useMemo(
+    () => ({
+      leaders: sampleLeaders(branchName),
+      fromDb: false,
+    }),
+    [branchName]
+  );
+
+  const { data = initialSeed, isRevalidating } = useCachedQuery(
+    `leaderboard:${resolvedScope}`,
+    fetchLeaders,
+    {
+      initialData: initialSeed,
+      scope: "public",
+    }
+  );
+
+  const leaders = data.leaders;
+  const fromDb = data.fromDb;
 
   const top3 = leaders.slice(0, 3);
   const rest = leaders.slice(3, 10);
@@ -141,7 +134,7 @@ export default function BranchLeaderboard({
           </div>
         </div>
         <span className="text-[10px] font-medium text-wisdom-muted shrink-0">
-          {loading ? "…" : fromDb ? "Live ranks" : "Top scholars"}
+          {isRevalidating ? "…" : fromDb ? "Live ranks" : "Top scholars"}
         </span>
       </div>
 

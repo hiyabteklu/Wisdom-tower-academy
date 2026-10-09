@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -15,6 +15,7 @@ import {
 import { getSeenResourceIds, markResourceSeen } from "@/lib/seenItems";
 import { isFreeForRegistered, isPackageOwned } from "@/lib/ownership";
 import { cleanCorruptAuthTokens } from "@/lib/supabase";
+import { useCachedQuery } from "@/hooks/useCachedQuery";
 import {
   BookOpen,
   Clock,
@@ -98,10 +99,9 @@ export default function HubContentView({
   accent = "text-amber-300",
   trackerScopeId,
 }: Props) {
-  const [items, setItems] = useState<LearningResource[]>([]);
   const pathname = usePathname();
   const [owned, setOwned] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [ownedLoaded, setOwnedLoaded] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [active, setActive] = useState<LearningResource | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
@@ -117,46 +117,60 @@ export default function HubContentView({
     setSeenIds(getSeenResourceIds());
   }, []);
 
-  const loadHubData = useCallback(async () => {
-    const has = await isPackageOwned(packageId);
-    setOwned(has);
-    if (!has) {
-      setLoading(false);
-      return;
-    }
+  const fetchResources = useCallback(async (): Promise<LearningResource[]> => {
     const res = await listResources({
       scopePath,
       hub,
       publishedOnly: true,
     });
-    setItems(res.items);
-    setFetchError(res.error || null);
-    setLoading(false);
+    if (res.error) setFetchError(res.error);
+    else setFetchError(null);
+    return res.items || [];
+  }, [scopePath, hub]);
 
-    // Auto-restore active item from ?res= or ?item= in URL
-    if (typeof window !== "undefined") {
+  const {
+    data: cachedItems,
+    isLoading: isResourcesLoading,
+    refresh: refreshResources,
+  } = useCachedQuery<LearningResource[]>(
+    `hub-content:${scopePath}:${hub}`,
+    fetchResources,
+    {
+      scope: "public",
+    }
+  );
+
+  const items = useMemo(() => cachedItems || [], [cachedItems]);
+  const loading = !ownedLoaded && isResourcesLoading;
+
+  useEffect(() => {
+    let cancelled = false;
+    isPackageOwned(packageId).then((has) => {
+      if (!cancelled) {
+        setOwned(has);
+        setOwnedLoaded(true);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [packageId]);
+
+  // Auto-restore active item from ?res= or ?item= in URL
+  useEffect(() => {
+    if (items.length > 0 && !active && typeof window !== "undefined") {
       try {
         const params = new URLSearchParams(window.location.search);
         const targetId = params.get("res") || params.get("item");
         if (targetId) {
-          const match = res.items.find((i) => i.id === targetId);
+          const match = items.find((i) => i.id === targetId);
           if (match) {
             void openItem(match);
           }
         }
       } catch {}
     }
-  }, [scopePath, hub, packageId]);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      await loadHubData();
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [loadHubData]);
+  }, [items, active]);
 
   useEffect(() => {
     if (!active || !owned) return;
@@ -256,7 +270,17 @@ export default function HubContentView({
 
   if (loading) {
     return (
-      <p className="text-center text-wisdom-muted py-12 text-sm">Loading materials…</p>
+      <div className="space-y-3 py-6">
+        {[1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className="rounded-2xl border border-white/10 bg-wisdom-card/60 p-5 animate-pulse space-y-3"
+          >
+            <div className="h-4 w-1/3 bg-white/10 rounded" />
+            <div className="h-3 w-3/4 bg-white/5 rounded" />
+          </div>
+        ))}
+      </div>
     );
   }
 
@@ -520,9 +544,8 @@ export default function HubContentView({
               type="button"
               onClick={() => {
                 cleanCorruptAuthTokens();
-                setLoading(true);
                 setFetchError(null);
-                void loadHubData();
+                void refreshResources();
               }}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-white transition-colors cursor-pointer"
             >

@@ -24,6 +24,7 @@ import {
   type StudentAnalyticsResult,
 } from "@/lib/student-knowledge-base";
 import type { User } from "@supabase/supabase-js";
+import { getCachedAuthUser, setCachedAuthUser, invalidate, getLocalStorageCache } from "@/lib/swr-cache";
 import {
   ArrowLeft,
   Bell,
@@ -84,8 +85,8 @@ function SettingsContent() {
   const searchParams = useSearchParams();
   const initialTab = searchParams.get("tab");
 
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(() => getCachedAuthUser());
+  const [loading, setLoading] = useState(() => !getCachedAuthUser());
 
   // In-place accordion states: clean horizontal cards (no default open forms)
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
@@ -279,6 +280,8 @@ function SettingsContent() {
     });
 
     if (success) {
+      invalidate("profile:me");
+      invalidate("profile");
       setSavedFlash(true);
       setTimeout(() => setSavedFlash(false), 3000);
     }

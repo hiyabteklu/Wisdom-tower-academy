@@ -1,13 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Shield, BookOpen } from "lucide-react";
 import { formatEtb, type AcademyPackage } from "@/data/packages";
-import { listSellablePackages } from "@/lib/catalog";
+import {
+  listSellablePackages,
+  getStaticSellablePackages,
+  setRuntimeCatalog,
+} from "@/lib/catalog";
 import { isPackageOwned, IS_FREE_MODE } from "@/lib/ownership";
 import { addToCart } from "@/lib/cart";
+import { useCachedQuery } from "@/hooks/useCachedQuery";
 
 function PackageCatalogCard({ pkg }: { pkg: AcademyPackage }) {
   return (
@@ -59,15 +64,36 @@ function PackageGrid({ list }: { list: AcademyPackage[] }) {
 }
 
 export default function PackagesCatalog() {
-  const [list, setList] = useState<AcademyPackage[] | null>(null);
+  const staticPackages = useMemo(() => getStaticSellablePackages(), []);
+  const { data: list } = useCachedQuery<AcademyPackage[]>(
+    "catalog:sellable",
+    listSellablePackages,
+    {
+      initialData: staticPackages,
+      scope: "public",
+    }
+  );
 
   useEffect(() => {
-    listSellablePackages().then(setList);
-  }, []);
+    if (list) {
+      setRuntimeCatalog(list);
+    }
+  }, [list]);
 
-  if (!list) {
+  if (!list || list.length === 0) {
     return (
-      <div className="py-20 text-center text-wisdom-muted text-sm">Loading packages…</div>
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4 md:gap-6 py-6">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div
+            key={i}
+            className="rounded-2xl border border-white/10 bg-wisdom-card/60 p-4 animate-pulse space-y-3"
+          >
+            <div className="aspect-video w-full rounded-xl bg-white/5" />
+            <div className="h-4 w-3/4 rounded bg-white/10" />
+            <div className="h-8 w-full rounded-lg bg-white/5" />
+          </div>
+        ))}
+      </div>
     );
   }
 

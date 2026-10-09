@@ -4,6 +4,7 @@
 
 import type { PaymentMethodId } from "@/data/packages";
 import { supabase } from "@/lib/supabase";
+import { invalidate } from "@/lib/swr-cache";
 
 export type OrderStatus =
   | "pending_payment"
@@ -186,11 +187,17 @@ export async function saveOrder(order: ManualOrder): Promise<{ ok: boolean; erro
 
     if (error) {
       console.warn("[orders] supabase save failed, local only:", error.message);
+      invalidate("orders:mine");
+      invalidate("notifications:list");
       return { ok: true, error: error.message };
     }
+    invalidate("orders:mine");
+    invalidate("notifications:list");
     return { ok: true };
   } catch (e) {
     console.warn("[orders] save exception:", e);
+    invalidate("orders:mine");
+    invalidate("notifications:list");
     return { ok: true, error: e instanceof Error ? e.message : "offline" };
   }
 }
@@ -310,6 +317,9 @@ export async function verifyOrder(
       }
     }
 
+    invalidate("orders:mine");
+    invalidate("notifications:list");
+    invalidate("ownership");
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Failed" };
@@ -330,6 +340,8 @@ export async function rejectOrder(
       })
       .eq("id", orderId);
     if (error) return { ok: false, error: error.message };
+    invalidate("orders:mine");
+    invalidate("notifications:list");
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Failed" };

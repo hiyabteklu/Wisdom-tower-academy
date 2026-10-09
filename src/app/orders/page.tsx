@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import {
   listMyOrders,
@@ -12,6 +12,7 @@ import {
 import { formatEtb } from "@/data/packages";
 import { ClipboardList, ExternalLink, RefreshCw } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useCachedQuery } from "@/hooks/useCachedQuery";
 
 function statusStyle(status: OrderStatus) {
   switch (status) {
@@ -27,27 +28,39 @@ function statusStyle(status: OrderStatus) {
 }
 
 export default function OrdersPage() {
-  const [orders, setOrders] = useState<ManualOrder[]>([]);
-  const [loading, setLoading] = useState(true);
   const [loggedIn, setLoggedIn] = useState(false);
 
-  async function load() {
-    setLoading(true);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setLoggedIn(Boolean(session?.user));
+    });
+  }, []);
+
+  const fetchOrders = useCallback(async (): Promise<ManualOrder[]> => {
     const {
       data: { session },
     } = await supabase.auth.getSession();
     setLoggedIn(Boolean(session?.user));
     if (session?.user) {
-      setOrders(await listMyOrders());
-    } else {
-      setOrders(listLocalOrders());
+      return await listMyOrders();
     }
-    setLoading(false);
-  }
-
-  useEffect(() => {
-    load();
+    return listLocalOrders();
   }, []);
+
+  const initialLocal = useMemo(() => {
+    if (typeof window !== "undefined") return listLocalOrders();
+    return [];
+  }, []);
+
+  const {
+    data: orders = [],
+    isLoading,
+    isRevalidating,
+    refresh,
+  } = useCachedQuery<ManualOrder[]>("orders:mine", fetchOrders, {
+    initialData: initialLocal,
+    scope: "user",
+  });
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-12 md:py-16">
@@ -64,11 +77,11 @@ export default function OrdersPage() {
         </div>
         <button
           type="button"
-          onClick={load}
-          disabled={loading}
+          onClick={() => refresh()}
+          disabled={isRevalidating}
           className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/12 text-sm hover:bg-white/5 disabled:opacity-50"
         >
-          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+          <RefreshCw className={`w-4 h-4 ${isRevalidating ? "animate-spin" : ""}`} />
           Refresh
         </button>
       </div>
@@ -82,8 +95,19 @@ export default function OrdersPage() {
         </p>
       )}
 
-      {loading ? (
-        <p className="text-center text-wisdom-muted py-12">Loading…</p>
+      {isLoading ? (
+        <div className="space-y-3 py-6">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="rounded-2xl border border-white/12 bg-wisdom-card/60 p-5 animate-pulse space-y-2.5"
+            >
+              <div className="h-3.5 w-1/4 bg-white/10 rounded" />
+              <div className="h-5 w-1/2 bg-white/10 rounded" />
+              <div className="h-4 w-1/6 bg-white/5 rounded" />
+            </div>
+          ))}
+        </div>
       ) : orders.length === 0 ? (
         <div className="rounded-2xl border border-white/10 bg-wisdom-card p-10 text-center">
           <ClipboardList className="w-10 h-10 text-white/20 mx-auto mb-3" />

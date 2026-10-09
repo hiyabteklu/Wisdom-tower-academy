@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { supabase, recoverSession } from "@/lib/supabase";
 import { clearOwnershipCache } from "@/lib/ownership";
 import { initFcmPushBackground } from "@/lib/fcm-client";
+import { clearAllSwrCache, setActiveUserId, setCachedAuthUser } from "@/lib/swr-cache";
 
 /**
  * Keeps auth session alive across tab close / return.
@@ -11,9 +12,13 @@ import { initFcmPushBackground } from "@/lib/fcm-client";
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     void recoverSession().then((session) => {
-      if (session?.user?.id) {
+      if (session?.user) {
+        setCachedAuthUser(session.user);
+        setActiveUserId(session.user.id);
         void initFcmPushBackground(session.user.id);
       } else {
+        setCachedAuthUser(null);
+        setActiveUserId(null);
         void initFcmPushBackground();
       }
     });
@@ -21,13 +26,21 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      if (
+      if (event === "SIGNED_OUT") {
+        clearAllSwrCache();
+        clearOwnershipCache();
+        setCachedAuthUser(null);
+        setActiveUserId(null);
+      } else if (
         event === "SIGNED_IN" ||
-        event === "SIGNED_OUT" ||
         event === "TOKEN_REFRESHED" ||
         event === "USER_UPDATED"
       ) {
         clearOwnershipCache();
+        if (session?.user) {
+          setCachedAuthUser(session.user);
+          setActiveUserId(session.user.id);
+        }
         if (event === "SIGNED_IN" && session?.user?.id) {
           void initFcmPushBackground(session.user.id);
         }

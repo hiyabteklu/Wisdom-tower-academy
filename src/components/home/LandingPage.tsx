@@ -14,6 +14,7 @@ import InfinityCard from "@/components/home/InfinityCard";
 import LandingPathways from "@/components/home/LandingPathways";
 import { DIGITAL_URL } from "@/lib/digital-url";
 import { supabase, recoverSession } from "@/lib/supabase";
+import { getCachedAuthUser } from "@/lib/swr-cache";
 
 const stats = [
   { value: 30, suffix: "K+", label: "Users", image: "/images/home/stat-users.jpg" },
@@ -121,8 +122,8 @@ export default function LandingPage() {
   const crossSection = useInView();
   const ctaSection = useInView();
 
-  const [user, setUser] = useState<SupabaseUser | null>(null);
-  const [authReady, setAuthReady] = useState(false);
+  const [user, setUser] = useState<SupabaseUser | null>(() => getCachedAuthUser());
+  const [authReady, setAuthReady] = useState(() => Boolean(getCachedAuthUser()));
   const [imgOk, setImgOk] = useState(true);
 
   useEffect(() => {

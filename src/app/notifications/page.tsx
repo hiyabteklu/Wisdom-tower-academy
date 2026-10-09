@@ -19,6 +19,7 @@ import { supabase } from "@/lib/supabase";
 import { listMyOrders, type ManualOrder } from "@/lib/orders";
 import type { NotificationItem } from "@/lib/notifications";
 import BrandLoader from "@/components/BrandLoader";
+import { useCachedQuery } from "@/hooks/useCachedQuery";
 
 type UnifiedNotice = {
   id: string;
@@ -86,70 +87,74 @@ function orderToNotice(o: ManualOrder): UnifiedNotice | null {
   return null;
 }
 
-export default function NotificationsPage() {
-  const [notices, setNotices] = useState<UnifiedNotice[]>([]);
-  const [readIds, setReadIds] = useState<Set<string>>(() => new Set());
-  const [loading, setLoading] = useState(true);
-  const [loggedIn, setLoggedIn] = useState(false);
-  const [filter, setFilter] = useState<"all" | "material" | "admin" | "order">("all");
+async function fetchNotificationsList(): Promise<UnifiedNotice[]> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const user = session?.user;
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    const user = session?.user;
-    setLoggedIn(Boolean(user));
+  const combined: UnifiedNotice[] = [];
 
-    const combined: UnifiedNotice[] = [];
+  // 1. Fetch system & push notifications from API
+  try {
+    const q = new URLSearchParams();
+    if (user?.id) q.set("userId", user.id);
+    if (user?.email) q.set("email", user.email);
 
-    // 1. Fetch system & push notifications from API
-    try {
-      const q = new URLSearchParams();
-      if (user?.id) q.set("userId", user.id);
-      if (user?.email) q.set("email", user.email);
-
-      const res = await fetch(`/api/notifications?${q.toString()}`);
-      const data = await res.json();
-      if (data.ok && Array.isArray(data.notifications)) {
-        data.notifications.forEach((n: NotificationItem) => {
-          combined.push({
-            id: n.id,
-            title: n.title,
-            body: n.body,
-            href: n.url || "/learning",
-            createdAt: n.createdAt,
-            category: n.type === "material" ? "material" : n.type === "admin" ? "admin" : "general",
-          });
+    const res = await fetch(`/api/notifications?${q.toString()}`);
+    const data = await res.json();
+    if (data.ok && Array.isArray(data.notifications)) {
+      data.notifications.forEach((n: NotificationItem) => {
+        combined.push({
+          id: n.id,
+          title: n.title,
+          body: n.body,
+          href: n.url || "/learning",
+          createdAt: n.createdAt,
+          category: n.type === "material" ? "material" : n.type === "admin" ? "admin" : "general",
         });
-      }
+      });
+    }
+  } catch {
+    /* ignore */
+  }
+
+  // 2. Fetch order notices if signed in
+  if (user) {
+    try {
+      const orders = await listMyOrders();
+      orders.forEach((o) => {
+        const n = orderToNotice(o);
+        if (n) combined.push(n);
+      });
     } catch {
       /* ignore */
     }
+  }
 
-    // 2. Fetch order notices if signed in
-    if (user) {
-      try {
-        const orders = await listMyOrders();
-        orders.forEach((o) => {
-          const n = orderToNotice(o);
-          if (n) combined.push(n);
-        });
-      } catch {
-        /* ignore */
-      }
-    }
+  // Sort newest first
+  combined.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  return combined;
+}
 
-    // Sort newest first
-    combined.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-    setNotices(combined);
-    setReadIds(readReadIds());
-    setLoading(false);
-  }, []);
+export default function NotificationsPage() {
+  const [readIds, setReadIds] = useState<Set<string>>(() => readReadIds());
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [filter, setFilter] = useState<"all" | "material" | "admin" | "order">("all");
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setLoggedIn(Boolean(session?.user));
+    });
+  }, []);
+
+  const {
+    data: notices = [],
+    isLoading,
+    refresh,
+  } = useCachedQuery<UnifiedNotice[]>("notifications:list", fetchNotificationsList, {
+    scope: "user",
+  });
 
   const markAllRead = () => {
     const all = new Set(readIds);
@@ -271,7 +276,7 @@ export default function NotificationsPage() {
       </div>
 
       {/* Guest Notice */}
-      {!loggedIn && !loading && (
+      {!loggedIn && !isLoading && (
         <div className="mb-6 rounded-2xl border border-sky-400/30 bg-gradient-to-r from-sky-950/40 to-[#070e1c] p-5 text-center">
           <p className="text-sm font-bold text-white mb-1">Scholar Notifications</p>
           <p className="text-xs text-wisdom-muted mb-4">
@@ -286,13 +291,21 @@ export default function NotificationsPage() {
         </div>
       )}
 
-      {loading && (
-        <div className="flex justify-center py-16" data-wta-spinner="true">
-          <BrandLoader size="md" label="Loading alerts..." />
+      {isLoading && (
+        <div className="space-y-3 py-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="p-4 rounded-2xl border border-white/10 bg-[#070d18] animate-pulse space-y-2.5"
+            >
+              <div className="h-4 w-1/3 bg-white/10 rounded" />
+              <div className="h-3 w-2/3 bg-white/5 rounded" />
+            </div>
+          ))}
         </div>
       )}
 
-      {!loading && filteredNotices.length === 0 && (
+      {!isLoading && filteredNotices.length === 0 && (
         <div className="rounded-2xl border border-white/10 bg-[#091120] px-4 py-16 text-center">
           <Bell className="w-8 h-8 text-white/20 mx-auto mb-3" />
           <p className="text-sm font-semibold text-white mb-1">No notifications</p>
@@ -304,7 +317,7 @@ export default function NotificationsPage() {
         </div>
       )}
 
-      {!loading && filteredNotices.length > 0 && (
+      {!isLoading && filteredNotices.length > 0 && (
         <div className="rounded-2xl border border-white/10 bg-[#070d18] divide-y divide-white/6 overflow-hidden shadow-xl">
           {filteredNotices.map((n) => {
             const isRead = readIds.has(n.id);

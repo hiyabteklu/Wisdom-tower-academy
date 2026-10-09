@@ -6,6 +6,8 @@ import { Bell, CheckCircle2, Clock, XCircle, BookOpen } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { listMyOrders, type ManualOrder } from "@/lib/orders";
 import { requestNotificationPermissionGently } from "@/lib/fcm-client";
+import { useCachedQuery } from "@/hooks/useCachedQuery";
+import { getCachedAuthUser } from "@/lib/swr-cache";
 
 type Notice = {
   id: string;
@@ -75,12 +77,11 @@ export default function NotificationBell({
   size?: "md" | "lg";
 }) {
   const [open, setOpen] = useState(false);
-  const [notices, setNotices] = useState<Notice[]>([]);
-  const [readIds, setReadIds] = useState<Set<string>>(() => new Set());
-  const [loggedIn, setLoggedIn] = useState(false);
+  const [readIds, setReadIds] = useState<Set<string>>(() => readReadIds());
+  const [loggedIn, setLoggedIn] = useState(() => Boolean(getCachedAuthUser()));
   const ref = useRef<HTMLDivElement>(null);
 
-  const load = useCallback(async () => {
+  const fetchNotices = useCallback(async (): Promise<Notice[]> => {
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -126,23 +127,29 @@ export default function NotificationBell({
     }
 
     combined.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-    setNotices(combined.slice(0, 12));
-    setReadIds(readReadIds());
+    return combined.slice(0, 12);
   }, []);
 
+  const { data: notices = [], refresh } = useCachedQuery<Notice[]>(
+    "notifications:bell",
+    fetchNotices,
+    {
+      scope: "user",
+      enabled: loggedIn,
+    }
+  );
+
   useEffect(() => {
-    load();
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(() => {
-      load();
+    } = supabase.auth.onAuthStateChange((_, session) => {
+      setLoggedIn(Boolean(session?.user));
+      void refresh();
     });
-    const t = setInterval(load, 60_000);
     return () => {
       subscription.unsubscribe();
-      clearInterval(t);
     };
-  }, [load]);
+  }, [refresh]);
 
   useEffect(() => {
     if (!open) return;

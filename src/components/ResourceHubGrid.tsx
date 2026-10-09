@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { useCachedQuery } from "@/hooks/useCachedQuery";
 import { resourceHubs } from "@/data/academy";
 import ResourceHubCard from "@/components/ResourceHubCard";
 import {
@@ -100,48 +101,40 @@ export default function ResourceHubGrid({
 
   const [lockMode, setLockMode] = useState<HubLockMode>(staticMode);
   const [owned, setOwned] = useState(false);
-  const [hubCounts, setHubCounts] = useState<Record<string, number> | null>(null);
-
-  // Load published items count for each hub in this scope
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadCounts() {
-      if (!scopePath) return;
-      try {
-        const res = await listResources({
-          scopePath,
-          publishedOnly: true,
-          skipAuthCheck: true,
-        });
-        if (cancelled) return;
-        const counts: Record<string, number> = {
-          books: 0,
-          "short-notes": 0,
-          flashcards: 0,
-          "question-banks": 0,
-          exams: 0,
-        };
-        if (res.items) {
-          for (const item of res.items) {
-            const rawHub = String(item.hub);
-            const h = rawHub === "references" ? "short-notes" : rawHub;
-            if (counts[h] !== undefined) {
-              counts[h] += 1;
-            }
-          }
+  const fetchHubCounts = useCallback(async (): Promise<Record<string, number>> => {
+    if (!scopePath) return {};
+    const res = await listResources({
+      scopePath,
+      publishedOnly: true,
+      skipAuthCheck: true,
+    });
+    const counts: Record<string, number> = {
+      books: 0,
+      "short-notes": 0,
+      flashcards: 0,
+      "question-banks": 0,
+      exams: 0,
+    };
+    if (res.items) {
+      for (const item of res.items) {
+        const rawHub = String(item.hub);
+        const h = rawHub === "references" ? "short-notes" : rawHub;
+        if (counts[h] !== undefined) {
+          counts[h] += 1;
         }
-        setHubCounts(counts);
-      } catch {
-        /* fallback */
       }
     }
-
-    void loadCounts();
-    return () => {
-      cancelled = true;
-    };
+    return counts;
   }, [scopePath]);
+
+  const { data: hubCounts = null } = useCachedQuery<Record<string, number>>(
+    `hub-counts:${scopePath || basePath}`,
+    fetchHubCounts,
+    {
+      scope: "public",
+      enabled: Boolean(scopePath),
+    }
+  );
 
   useEffect(() => {
     let cancelled = false;
