@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import "./globals.css";
 import "./ui-polish.css";
 import "./scroll-zoom.css";
@@ -49,29 +50,41 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const headerList = await headers();
+  const ua = headerList.get("user-agent") || "";
+  const isApp = ua.includes("WisdomTowerApp");
+
   return (
     <html
       lang="en"
       suppressHydrationWarning
-      className="theme-dark dark"
+      className={`theme-dark dark ${isApp ? "wta-app-mode wta-native-app" : ""}`}
       data-theme="dark"
-      style={{ colorScheme: "dark" }}
+      data-wta-app={isApp ? "1" : undefined}
+      style={{
+        colorScheme: "dark",
+        backgroundColor: "#060B15",
+      }}
     >
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{localStorage.setItem('wt-theme','dark');var d=document.documentElement;d.classList.remove('theme-light','light');d.classList.add('theme-dark','dark');d.style.colorScheme='dark';d.setAttribute('data-theme','dark');var p=localStorage.getItem('wt-preferences');if(p){var parsed=JSON.parse(p);if(parsed.amoledMode)d.classList.add('amoled-mode');if(parsed.reducedMotion)d.classList.add('force-reduced-motion');if(parsed.fontSize)d.classList.add('font-scale-'+parsed.fontSize);if(parsed.readingFont)d.classList.add('reading-font-'+parsed.readingFont);}var ua=navigator.userAgent||'';var search=window.location.search||'';var hash=window.location.hash||'';var isApp=(/Android/i.test(ua)&&(/\\bwv\\b/i.test(ua)||/Version\\/4\\.0/i.test(ua)))||/WisdomTowerApp|WisdomTower|wta-native/i.test(ua)||Boolean(window.Android||window.AndroidBridge||window.WisdomTower||window.wtaNative||window.__wtaNativeApp)||/(?:[?&])(?:app|native|wta|platform)=(?:1|true|android|wta)/i.test(search)||/(?:[#&])(?:app|native|wta)=(?:1|true|android|wta)/i.test(hash)||(typeof sessionStorage!=='undefined'&&sessionStorage.getItem('wta-native-app')==='1')||(typeof localStorage!=='undefined'&&localStorage.getItem('wta-native-app')==='1');if(isApp){d.classList.add('wta-native-app');try{sessionStorage.setItem('wta-native-app','1');}catch(e){}try{localStorage.setItem('wta-native-app','1');}catch(e){}}var isOverlay=/(?:[?&])(?:overlay|standalone|embed)=(?:1|true)/i.test(search)||(window.self!==window.top);var isTutor=/(?:[?&])(?:tool|tab)=(?:tutor|ai-tutor)/i.test(search);if(isOverlay||(isApp&&isTutor)){d.classList.add('wta-tool-overlay');}if(isTutor&&window.innerWidth<640){d.classList.add('wta-tutor-active');}}catch(e){}})();`,
+            __html: `(function(){try{localStorage.setItem('wt-theme','dark');var d=document.documentElement;d.classList.remove('theme-light','light');d.classList.add('theme-dark','dark');d.style.colorScheme='dark';d.setAttribute('data-theme','dark');var p=localStorage.getItem('wt-preferences');if(p){var parsed=JSON.parse(p);if(parsed.amoledMode)d.classList.add('amoled-mode');if(parsed.reducedMotion)d.classList.add('force-reduced-motion');if(parsed.fontSize)d.classList.add('font-scale-'+parsed.fontSize);if(parsed.readingFont)d.classList.add('reading-font-'+parsed.readingFont);}var ua=navigator.userAgent||'';var search=window.location.search||'';var hash=window.location.hash||'';var isApp=(ua.indexOf('WisdomTowerApp')!==-1)||Boolean(window.Android||window.AndroidBridge||window.WisdomTower||window.wtaNative||window.__wtaNativeApp)||/(?:[?&])(?:app|native|wta|platform)=(?:1|true|android|wta)/i.test(search)||/(?:[#&])(?:app|native|wta)=(?:1|true|android|wta)/i.test(hash);if(isApp){d.setAttribute('data-wta-app','1');d.classList.add('wta-app-mode','wta-native-app');d.style.backgroundColor='#060B15';d.style.colorScheme='dark';}var isOverlay=/(?:[?&])(?:overlay|standalone|embed)=(?:1|true)/i.test(search)||(window.self!==window.top);var isTutor=/(?:[?&])(?:tool|tab)=(?:tutor|ai-tutor)/i.test(search);if(isOverlay||(isApp&&isTutor)){d.classList.add('wta-tool-overlay');}if(isTutor&&window.innerWidth<640){d.classList.add('wta-tutor-active');}}catch(e){}})();`,
           }}
         />
       </head>
       <body
         suppressHydrationWarning
-        className="min-h-screen flex flex-col antialiased font-sans site-bg text-foreground"
+        className={`min-h-screen flex flex-col antialiased font-sans site-bg text-foreground ${isApp ? "wta-app-mode wta-native-app" : ""}`}
+        style={{
+          colorScheme: "dark",
+          backgroundColor: "#060B15",
+        }}
       >
         <ThemeProvider>
           <AuthProvider>
@@ -83,9 +96,9 @@ export default function RootLayout({
               <div className="atm-glow atm-glow-3" />
               <div className="atm-noise" />
             </div>
-            <Header />
-            <main className="flex-1 pt-16 relative z-10">{children}</main>
-            <Footer />
+            {!isApp && <Header />}
+            <main className={`flex-1 relative z-10 ${isApp ? "pt-0" : "pt-16"}`}>{children}</main>
+            {!isApp && <Footer />}
             <AuthHashHandler />
             <ScrollZoom />
             <GlobalFocusBar />

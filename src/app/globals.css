@@ -554,11 +554,55 @@ body.wta-native-app [data-native-overlay="true"] [data-ai-tutor-header],
 }
 
 /* ========================================================================= */
-/* Native Android App: Suppress Website's Generic Circular Loaders           */
-/* The native Jetpack Compose app renders its own Wisdom Tower GIF animation. */
-/* Website circular spinners are hidden so only the native GIF is visible.   */
-/* Normal web browser users continue to see full loaders untouched.          */
+/* Native Android App Shell (WisdomTowerApp): Suppress Web Chrome & Loaders */
+/* Renders with dark navy #060B15, no header, no footer, no layout shift     */
 /* ========================================================================= */
+html[data-wta-app="1"],
+html.wta-app-mode,
+body.wta-app-mode,
+html[data-wta-app="1"] body {
+  background-color: #060B15 !important;
+  color-scheme: dark !important;
+}
+
+html[data-wta-app="1"] .site-bg,
+body.wta-app-mode .site-bg {
+  background-color: #060B15 !important;
+}
+
+/* Zero space reserved for site header in app mode */
+html[data-wta-app="1"] main,
+html.wta-app-mode main,
+body.wta-app-mode main {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+/* Adjust scroll-padding in app mode since fixed 64px site header is absent */
+html[data-wta-app="1"],
+html.wta-app-mode {
+  scroll-padding-top: 1rem !important;
+}
+
+/* Chrome suppression in app mode (fallback for client-side transitions) */
+html[data-wta-app="1"] header.fixed.top-0,
+html[data-wta-app="1"] [data-site-header],
+html[data-wta-app="1"] .site-header,
+html[data-wta-app="1"] header[role="banner"],
+html[data-wta-app="1"] header:not([data-ai-tutor-header]):not([data-tool-header]),
+html.wta-app-mode header:not([data-ai-tutor-header]):not([data-tool-header]),
+body.wta-app-mode header:not([data-ai-tutor-header]):not([data-tool-header]),
+html[data-wta-app="1"] body > footer,
+html[data-wta-app="1"] footer.site-footer,
+html[data-wta-app="1"] [data-site-footer],
+html[data-wta-app="1"] footer[role="contentinfo"],
+html[data-wta-app="1"] footer:not([data-ai-tutor-footer]):not([data-tool-footer]),
+html.wta-app-mode footer:not([data-ai-tutor-footer]):not([data-tool-footer]),
+body.wta-app-mode footer:not([data-ai-tutor-footer]):not([data-tool-footer]),
+html[data-wta-app="1"] .wta-route-loader,
+html[data-wta-app="1"] [data-wta-spinner],
+html[data-wta-app="1"] [data-brand-loader],
+html[data-wta-app="1"] [data-nextjs-loading],
 html.wta-native-app [data-wta-spinner],
 html.wta-native-app [data-brand-loader],
 html.wta-native-app .wta-brand-loader,
@@ -567,18 +611,23 @@ html.wta-native-app [data-nextjs-loading],
 html.wta-native-app .wta-fullscreen-loader {
   display: none !important;
   visibility: hidden !important;
-  opacity: 0 !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
   pointer-events: none !important;
 }
 
-/* Match native top bar (#0F172A) so the seam is not a different-color strip */
+/* Match native top bar background (#060B15) */
 html.wta-native-app,
 body.wta-native-app {
-  background-color: #0f172a !important;
+  background-color: #060b15 !important;
+  color-scheme: dark !important;
 }
 html.wta-native-app .site-bg,
 body.wta-native-app .site-bg {
-  background-color: #0f172a !important;
+  background-color: #060b15 !important;
 }
 
 /* AMOLED Pure Black Mode (Ideal for mobile OLED screens) */

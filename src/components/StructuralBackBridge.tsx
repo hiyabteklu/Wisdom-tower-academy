@@ -10,20 +10,82 @@ declare global {
     __wtaStructuralBack?: () => boolean;
     __wtaHardRefresh?: () => void;
     __wtaInPageBack?: () => boolean;
+    __wtaNavigate?: (path: string) => boolean;
   }
 }
 
 /**
- * Exposes structural back for the Android WebView and website navigation.
- * Back goes up one site layer: ALWAYS structural parent only, NEVER full chronological history.
- * __wtaStructuralBack returns false ONLY at true root ("/").
+ * Exposes structural back, navigation hook, and page-ready events for the Android WebView.
+ * - window.__wtaNavigate(path): executes router.push(path) and returns true
+ * - 'wta-navigate' CustomEvent: { detail: { path, url } } triggers router.push
+ * - 'wta-page-ready' CustomEvent: fires after usePathname changes + two requestAnimationFrame calls
  */
 export default function StructuralBackBridge() {
   const pathname = usePathname();
   const router = useRouter();
 
+  // 1. Fire 'wta-page-ready' after route change completes + two animation frames for DOM settle
+  useEffect(() => {
+    let raf1: number | null = null;
+    let raf2: number | null = null;
+
+    raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        try {
+          const detail = {
+            path: pathname || "/",
+            url: typeof window !== "undefined" ? window.location.href : pathname || "/",
+            at: Date.now(),
+          };
+          window.dispatchEvent(new CustomEvent("wta-page-ready", { detail }));
+
+          // Notify native Android bridge directly if present
+          const bridge = (window as any).AndroidBridge || (window as any).Android;
+          if (bridge && typeof bridge.onPageReady === "function") {
+            bridge.onPageReady(pathname || "/");
+          }
+        } catch {
+          /* ignore */
+        }
+      });
+    });
+
+    return () => {
+      if (raf1 !== null) cancelAnimationFrame(raf1);
+      if (raf2 !== null) cancelAnimationFrame(raf2);
+    };
+  }, [pathname]);
+
+  // 2. Setup navigation and back bridges
   useEffect(() => {
     isAndroidWebView();
+
+    // Clean navigation hook called by native Android app shell
+    window.__wtaNavigate = (targetPath: string) => {
+      try {
+        if (typeof targetPath === "string" && targetPath.trim()) {
+          router.push(targetPath.trim());
+          return true;
+        }
+      } catch (err) {
+        console.warn("[__wtaNavigate] Navigation error:", err);
+      }
+      return false;
+    };
+
+    // Custom event listener for 'wta-navigate' { detail: { path, url } }
+    const onWtaNavigateEvent = (e: Event) => {
+      try {
+        const customEvent = e as CustomEvent<{ path?: string; url?: string }>;
+        const dest = customEvent.detail?.path || customEvent.detail?.url;
+        if (dest && typeof dest === "string") {
+          router.push(dest.trim());
+        }
+      } catch (err) {
+        console.warn("[wta-navigate] Event navigation error:", err);
+      }
+    };
+    window.addEventListener("wta-navigate", onWtaNavigateEvent);
 
     window.__wtaStructuralBack = () => {
       try {
@@ -88,9 +150,11 @@ export default function StructuralBackBridge() {
       try {
         delete window.__wtaStructuralBack;
         delete window.__wtaHardRefresh;
+        delete window.__wtaNavigate;
       } catch {
         /* ignore */
       }
+      window.removeEventListener("wta-navigate", onWtaNavigateEvent);
     };
   }, [pathname, router]);
 

@@ -57,7 +57,8 @@ declare global {
 
 /**
  * Checks if the current environment is running inside the native Android WebView.
- * Guaranteed to NEVER treat standard Chrome on Android or desktop browsers as native app.
+ * Uses User-Agent / SSR flags and Android bridge interfaces.
+ * Never uses localStorage for detection.
  */
 export function isAndroidWebView(): boolean {
   if (typeof window === "undefined" || typeof document === "undefined") {
@@ -65,25 +66,21 @@ export function isAndroidWebView(): boolean {
   }
 
   try {
-    // 1. Check DOM class (set synchronously in <head>)
+    // 1. Check DOM attribute and class (set synchronously during SSR via next/headers User-Agent)
     if (
+      document.documentElement.getAttribute("data-wta-app") === "1" ||
+      document.documentElement.classList.contains("wta-app-mode") ||
       document.documentElement.classList.contains("wta-native-app") ||
       document.body?.classList.contains("wta-native-app")
     ) {
       return true;
     }
 
-    // 2. Check cached session/local storage
-    try {
-      if (
-        sessionStorage.getItem("wta-native-app") === "1" ||
-        localStorage.getItem("wta-native-app") === "1"
-      ) {
-        markDocumentNative();
-        return true;
-      }
-    } catch {
-      /* ignore storage access restrictions */
+    // 2. Inspect User Agent for WisdomTowerApp token (primary client-side fallback)
+    const ua = navigator.userAgent || "";
+    if (/WisdomTowerApp/i.test(ua)) {
+      markDocumentNative();
+      return true;
     }
 
     // 3. Check JavaScript Bridge interfaces injected by Android WebView
@@ -96,7 +93,7 @@ export function isAndroidWebView(): boolean {
         window.__wtaNativeApp
       )
     ) {
-      persistAndMarkNative();
+      markDocumentNative();
       return true;
     }
 
@@ -107,28 +104,24 @@ export function isAndroidWebView(): boolean {
       /(?:[?&])(?:app|native|wta|platform)=(?:1|true|android|wta)/i.test(search) ||
       /(?:[#&])(?:app|native|wta)=(?:1|true|android|wta)/i.test(hash)
     ) {
-      persistAndMarkNative();
+      markDocumentNative();
       return true;
     }
 
     // 5. Inspect User Agent for Chromium Android WebView tokens
-    const ua = navigator.userAgent || "";
     const isAndroid = /Android/i.test(ua);
-
     if (isAndroid) {
-      // Custom app identifier
-      if (/WisdomTowerApp|WisdomTower|wta-native/i.test(ua)) {
-        persistAndMarkNative();
+      if (/WisdomTower|wta-native/i.test(ua)) {
+        markDocumentNative();
         return true;
       }
 
       // Chromium standard Android WebView token: "; wv)" or " wv" in build string
-      // Regular Chrome for Android NEVER includes the 'wv' token.
       const hasWvToken = /\bwv\b/i.test(ua);
       const hasVersion4 = /Version\/4\.0/i.test(ua);
 
       if (hasWvToken || (hasVersion4 && !/Chrome\/[0-9.]+\s+Mobile\s+Safari/i.test(ua.replace(/Version\/4\.0/, "")))) {
-        persistAndMarkNative();
+        markDocumentNative();
         return true;
       }
     }
@@ -141,22 +134,16 @@ export function isAndroidWebView(): boolean {
 
 function markDocumentNative() {
   if (typeof document !== "undefined") {
+    document.documentElement.setAttribute("data-wta-app", "1");
+    if (!document.documentElement.classList.contains("wta-app-mode")) {
+      document.documentElement.classList.add("wta-app-mode");
+    }
     if (!document.documentElement.classList.contains("wta-native-app")) {
       document.documentElement.classList.add("wta-native-app");
     }
     if (document.body && !document.body.classList.contains("wta-native-app")) {
       document.body.classList.add("wta-native-app");
     }
-  }
-}
-
-function persistAndMarkNative() {
-  markDocumentNative();
-  try {
-    sessionStorage.setItem("wta-native-app", "1");
-    localStorage.setItem("wta-native-app", "1");
-  } catch {
-    /* ignore */
   }
 }
 
