@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     "Institutional privacy policy governing student data protection, academic telemetry, encryption standards, and digital records at Wisdom Tower Academy.",
 };
 
-const LAST_REVISED = "28 September 2026";
+const LAST_REVISED = "11 October 2026";
 const EFFECTIVE_PERIOD = "Academic Year 2026/2027";
 
 export default function PrivacyPage() {
@@ -53,7 +53,7 @@ export default function PrivacyPage() {
           </p>
 
           <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-wisdom-muted">
-            <span>Policy version: 3.2</span>
+            <span>Policy version: 3.3</span>
             <span>•</span>
             <span>Last revised: {LAST_REVISED}</span>
             <span>•</span>
@@ -160,7 +160,9 @@ export default function PrivacyPage() {
                   <h3 className="font-semibold text-white text-sm mb-1">D. Device, Cache & Network Telemetry</h3>
                   <p className="text-xs sm:text-sm text-slate-300/90">
                     IP address (coarse geographic region), browser user agent, operating system, and localized IndexedDB cache storage
-                    used strictly to preserve offline study capability during internet interruptions in Ethiopia.
+                    used strictly to preserve offline study capability during internet interruptions in Ethiopia. If you use the
+                    Android app and allow notifications, we also store the push-notification device token of your phone (and its
+                    platform and device name) so that we can send you study alerts.
                   </p>
                 </div>
               </div>
@@ -240,8 +242,9 @@ export default function PrivacyPage() {
               <ul className="list-disc pl-5 space-y-1.5">
                 <li><strong>Supabase:</strong> Cloud database infrastructure, user authentication, and encrypted receipt asset storage.</li>
                 <li><strong>Google Cloud Platform & Vercel:</strong> Edge computing servers, static asset delivery, and DDoS mitigation.</li>
+                <li><strong>Firebase Cloud Messaging (Google):</strong> Delivery of push notifications to the Android app.</li>
                 <li><strong>Payment Verification Gateways:</strong> Integration services (such as Verify.et) for automated bank reference validation.</li>
-                <li><strong>Google Gemini AI:</strong> Server-side AI processing for &ldquo;Explain with AI&rdquo; question walkthroughs (prompts contain only academic question context; no personal student identity is transferred).</li>
+                <li><strong>Google Gemini AI and Groq:</strong> Server-side AI processing for &ldquo;Explain with AI&rdquo; question walkthroughs and the AI tutor. The text you type into these tools is sent to these providers, so please do not type personal information into them.</li>
               </ul>
             </div>
           </section>
@@ -281,7 +284,14 @@ export default function PrivacyPage() {
               <ul className="list-disc pl-5 space-y-2">
                 <li><strong>Right to Inspect:</strong> View all saved profile details, active package enrollments, and quiz histories inside My Learning and Account Settings.</li>
                 <li><strong>Right to Rectify:</strong> Update your name, phone number, and study preferences at any time.</li>
-                <li><strong>Right to Erasure (Right to Be Forgotten):</strong> Request the permanent deletion of your profile and historical records upon completing your studies.</li>
+                <li>
+                  <strong>Right to Erasure (Right to Be Forgotten):</strong> Permanently delete your account yourself at any time on the{" "}
+                  <Link href="/delete-account" className="text-cyan-300 hover:underline">
+                    Delete your account
+                  </Link>{" "}
+                  page (also available from the mobile app). Your profile, study records, enrollments and device tokens are removed.
+                  Verified payment records are kept for the period in section 09.
+                </li>
                 <li><strong>Right to Opt-Out:</strong> Toggle off optional leaderboard visibility to keep your score progress completely private.</li>
               </ul>
             </div>
