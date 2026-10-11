@@ -55,6 +55,7 @@ const GRADE_IMAGE_FILES: Record<string, Record<string, string>> = {
     biology: "g12-biology.jpeg",
     chemistry: "g12-chemistry.jpeg",
     economics: "g12-economics.jpeg",
+    english: "g12-english.jpeg",
     geography: "g12-geography.jpeg",
     history: "g12-history.jpeg",
     mathematics: "g12-math.jpeg",
