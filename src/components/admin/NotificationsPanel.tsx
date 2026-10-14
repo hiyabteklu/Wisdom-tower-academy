@@ -18,6 +18,7 @@ import {
   Clock,
 } from "lucide-react";
 import type { NotificationItem, NotificationType } from "@/lib/notifications";
+import { supabase } from "@/lib/supabase";
 
 type Preset = {
   label: string;
@@ -113,10 +114,24 @@ export default function NotificationsPanel() {
     setFeedback(null);
 
     try {
+      // The send route is admin-only: it needs the signed-in admin's access token.
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) {
+        setFeedback({
+          type: "error",
+          message: "Your admin session has expired. Please sign in again.",
+        });
+        return;
+      }
+
       const target = targetType === "all" ? "all" : targetUser.trim();
       const res = await fetch("/api/notifications/send", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
         body: JSON.stringify({
           title: title.trim(),
           body: body.trim(),
