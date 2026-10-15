@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import type { NotificationItem, NotificationType } from "@/lib/notifications";
 import { supabase } from "@/lib/supabase";
+import ScheduledNotificationsPanel from "./ScheduledNotificationsPanel";
 
 type Preset = {
   label: string;
@@ -419,6 +420,9 @@ export default function NotificationsPanel() {
           </button>
         </div>
       </form>
+
+      {/* Scheduled notifications: schedule for later, list, cancel */}
+      <ScheduledNotificationsPanel />
 
       {/* History Table */}
       <div className="rounded-3xl border border-white/10 bg-[#08101e] p-5 sm:p-6 shadow-xl">
