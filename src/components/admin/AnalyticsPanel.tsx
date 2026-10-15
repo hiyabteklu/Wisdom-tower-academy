@@ -9,24 +9,29 @@ import {
   Users,
   CreditCard,
   GraduationCap,
-  Inbox,
   Activity,
   RefreshCw,
   TrendingUp,
-  BarChart3,
   Percent,
   Wallet,
   Clock,
   AlertCircle,
-  Calendar,
-  Layers,
   Award,
-  ChevronDown,
-  ChevronUp,
-  BookOpen,
-  Building,
-  CheckCircle2,
 } from "lucide-react";
+
+/**
+ * Admin Overview (analytics) tab.
+ *
+ * 2026-10-15 (Admin mobile redesign, slice A9): LAYOUT ONLY. Audit hits before the change: `animate-ping` (pulse
+ * dot), `animate-spin` (Refresh icon), `transition-*` on bars and cards, a 5-button segmented activity filter,
+ * a nested `max-h-[460px] overflow-y-auto` feed, `truncate` rows that cut the text, text under 11 px, and a
+ * 44 px-short Refresh button. Now: one 44 px pill, a 2-column KPI grid, a static pulse dot, charts stacked in one
+ * column, activity filter as wrapping pills, feed rows that wrap (no nested scroller; the list was already capped
+ * at 16 items). Data loading, calculations and the activity list are unchanged.
+ * Fake-content rule (HANDOFF section 7): removed three claims that were not real data: "Updated in real time"
+ * (the page loads once and on Refresh), "100% Ethiopian Rail", and "Live stream" / "Real-Time" in the feed
+ * title and subtitle (now "Recent Activity"). The unused `activityOpen` state and unused icon imports were dropped.
+ */
 
 function MetricCard({
   label,
@@ -55,30 +60,24 @@ function MetricCard({
   };
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-wisdom-card p-4 sm:p-5 flex flex-col justify-between hover:border-white/20 transition-colors">
+    <div className="min-w-0 rounded-2xl border border-white/10 bg-wisdom-card p-3.5 flex flex-col justify-between">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wider text-wisdom-muted">
-            {label}
+          <p className="text-xs font-semibold uppercase tracking-wider text-wisdom-muted">{label}</p>
+          <p className="text-xl font-extrabold text-white tracking-tight tabular-nums mt-1 break-words">
+            {value}
           </p>
-          <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight tabular-nums">
-              {value}
-            </span>
-            {secondary && (
-              <span className="text-xs font-semibold text-wisdom-muted">{secondary}</span>
-            )}
-          </div>
+          {secondary && <p className="text-xs font-semibold text-wisdom-muted mt-0.5">{secondary}</p>}
         </div>
-        <div className={`p-2.5 rounded-xl border shrink-0 ${colorMap[accentColor]}`}>
-          <Icon className="w-5 h-5" />
+        <div className={`p-2 rounded-xl border shrink-0 ${colorMap[accentColor]}`}>
+          <Icon className="w-4 h-4" />
         </div>
       </div>
 
       {(hint || trend) && (
-        <div className="mt-3 pt-2.5 border-t border-white/6 flex items-center justify-between text-xs text-wisdom-muted">
+        <div className="mt-2.5 pt-2 border-t border-white/6 text-xs text-wisdom-muted">
           <span>{hint}</span>
-          {trend && <span className="font-semibold text-emerald-400">{trend}</span>}
+          {trend && <span className="font-semibold text-emerald-400 ml-1">{trend}</span>}
         </div>
       )}
     </div>
@@ -99,7 +98,6 @@ export default function AnalyticsPanel() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [activityFilter, setActivityFilter] = useState<"all" | "order" | "enroll" | "inquiry" | "user">("all");
-  const [activityOpen, setActivityOpen] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -165,7 +163,7 @@ export default function AnalyticsPanel() {
 
   if (loading && !stats) {
     return (
-      <div className="py-20 flex flex-col items-center justify-center gap-3" data-wta-spinner="true">
+      <div className="py-16 flex flex-col items-center justify-center gap-3" data-wta-spinner="true">
         <BrandLoader size="md" label="Loading executive metrics..." />
       </div>
     );
@@ -175,40 +173,35 @@ export default function AnalyticsPanel() {
   const maxDayOrders = Math.max(1, ...s.last7Days.map((d) => d.orders));
 
   return (
-    <div className="space-y-6">
-      {/* Top Banner & Control Row */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/8 pb-4">
-        <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-cyan-400" />
-            Executive Intelligence & Operational Overview
+    <div className="space-y-4">
+      {/* Header and Refresh */}
+      <div className="space-y-3 border-b border-white/8 pb-3">
+        <div className="min-w-0">
+          <h2 className="text-xl font-bold text-white flex items-start gap-2">
+            <TrendingUp className="w-5 h-5 text-cyan-400 shrink-0 mt-1" />
+            <span>Executive Intelligence & Operational Overview</span>
           </h2>
-          <p className="text-xs sm:text-sm text-wisdom-muted mt-0.5">
-            Real-time financial telemetry, student enrollment, and platform usage metrics
+          <p className="text-xs text-wisdom-muted mt-1 leading-relaxed">
+            Financial, student enrollment, and platform usage metrics
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          <button
-            type="button"
-            onClick={load}
-            disabled={loading}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-white/12 text-sm font-semibold hover:bg-white/5 disabled:opacity-50 transition-colors"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-cyan-400" : ""}`} />
-            Refresh Data
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={load}
+          disabled={loading}
+          className="w-full inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3 rounded-full border border-white/12 text-sm font-semibold text-white/90 active:bg-white/10 disabled:opacity-50 cursor-pointer"
+        >
+          <RefreshCw className="w-4 h-4 shrink-0" />
+          <span>{loading ? "Loading..." : "Refresh Data"}</span>
+        </button>
       </div>
 
-      {/* Today's Pulse Alert Bar (if orders/revenue exist today) */}
-      <div className="rounded-2xl border border-cyan-400/20 bg-cyan-950/20 p-4 flex flex-wrap items-center justify-between gap-3 text-sm">
-        <div className="flex items-center gap-3">
-          <span className="flex h-3 w-3 relative">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-cyan-500" />
-          </span>
-          <div>
+      {/* Today's Pulse */}
+      <div className="rounded-2xl border border-cyan-400/20 bg-cyan-950/20 p-3.5 space-y-2.5 text-sm">
+        <div className="flex items-start gap-2.5">
+          <span className="inline-block h-3 w-3 rounded-full bg-cyan-500 shrink-0 mt-1" />
+          <div className="min-w-0">
             <span className="font-bold text-white">Today&apos;s Pulse:</span>{" "}
             <span className="text-cyan-200">
               {s.todayOrdersCount} order{s.todayOrdersCount === 1 ? "" : "s"} placed today
@@ -221,15 +214,17 @@ export default function AnalyticsPanel() {
         </div>
 
         {s.urgentPendingOrdersCount > 0 && (
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-400/30">
-            <AlertCircle className="w-3.5 h-3.5" />
-            {s.urgentPendingOrdersCount} order{s.urgentPendingOrdersCount === 1 ? "" : "s"} awaiting approval &gt; 2 hrs
+          <div className="flex items-start gap-1.5 px-3 py-2 rounded-2xl text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-400/30">
+            <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+            <span>
+              {s.urgentPendingOrdersCount} order{s.urgentPendingOrdersCount === 1 ? "" : "s"} awaiting approval &gt; 2 hrs
+            </span>
           </div>
         )}
       </div>
 
       {/* Main KPI Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+      <div className="grid grid-cols-2 gap-2.5">
         <MetricCard
           label="Verified Revenue"
           value={formatEtb(s.revenueVerifiedEtb)}
@@ -261,227 +256,197 @@ export default function AnalyticsPanel() {
         />
       </div>
 
-      {/* Secondary Metrics Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="rounded-2xl border border-white/8 bg-wisdom-card/70 p-3.5 sm:p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-wisdom-muted">
-            Course Enrollments
-          </p>
-          <p className="text-xl sm:text-2xl font-bold text-white mt-1 tabular-nums">{s.enrollments}</p>
-          <p className="text-[11px] text-wisdom-muted mt-0.5">Active scholar access seats</p>
+      {/* Secondary Metrics */}
+      <div className="grid grid-cols-2 gap-2.5">
+        <div className="min-w-0 rounded-2xl border border-white/8 bg-wisdom-card/70 p-3.5">
+          <p className="text-xs font-semibold uppercase tracking-wider text-wisdom-muted">Course Enrollments</p>
+          <p className="text-xl font-bold text-white mt-1 tabular-nums">{s.enrollments}</p>
+          <p className="text-xs text-wisdom-muted mt-0.5">Active scholar access seats</p>
         </div>
 
-        <div className="rounded-2xl border border-white/8 bg-wisdom-card/70 p-3.5 sm:p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-wisdom-muted">
-            AI Explanations
-          </p>
-          <p className="text-xl sm:text-2xl font-bold text-cyan-300 mt-1 tabular-nums">{s.explanationsCached}</p>
-          <p className="text-[11px] text-wisdom-muted mt-0.5">Cached tutor explanations</p>
+        <div className="min-w-0 rounded-2xl border border-white/8 bg-wisdom-card/70 p-3.5">
+          <p className="text-xs font-semibold uppercase tracking-wider text-wisdom-muted">AI Explanations</p>
+          <p className="text-xl font-bold text-cyan-300 mt-1 tabular-nums">{s.explanationsCached}</p>
+          <p className="text-xs text-wisdom-muted mt-0.5">Cached tutor explanations</p>
         </div>
 
-        <div className="rounded-2xl border border-white/8 bg-wisdom-card/70 p-3.5 sm:p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-wisdom-muted">
-            Quiz Submissions
-          </p>
-          <p className="text-xl sm:text-2xl font-bold text-emerald-300 mt-1 tabular-nums">{s.academicResults}</p>
-          <p className="text-[11px] text-wisdom-muted mt-0.5">Completed exam sessions</p>
+        <div className="min-w-0 rounded-2xl border border-white/8 bg-wisdom-card/70 p-3.5">
+          <p className="text-xs font-semibold uppercase tracking-wider text-wisdom-muted">Quiz Submissions</p>
+          <p className="text-xl font-bold text-emerald-300 mt-1 tabular-nums">{s.academicResults}</p>
+          <p className="text-xs text-wisdom-muted mt-0.5">Completed exam sessions</p>
         </div>
 
-        <div className="rounded-2xl border border-white/8 bg-wisdom-card/70 p-3.5 sm:p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-wisdom-muted">
-            Inquiries & Support
-          </p>
-          <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-xl sm:text-2xl font-bold text-white tabular-nums">{s.inquiriesTotal}</span>
+        <div className="min-w-0 rounded-2xl border border-white/8 bg-wisdom-card/70 p-3.5">
+          <p className="text-xs font-semibold uppercase tracking-wider text-wisdom-muted">Inquiries & Support</p>
+          <p className="text-xl font-bold text-white mt-1 tabular-nums">
+            {s.inquiriesTotal}
             {s.inquiriesNew > 0 && (
-              <span className="text-xs font-semibold text-amber-400">({s.inquiriesNew} new)</span>
+              <span className="text-xs font-semibold text-amber-400 ml-1.5">({s.inquiriesNew} new)</span>
             )}
-          </div>
-          <p className="text-[11px] text-wisdom-muted mt-0.5">Student support messages</p>
+          </p>
+          <p className="text-xs text-wisdom-muted mt-0.5">Student support messages</p>
         </div>
       </div>
 
-      {/* Charts & Analytical Breakdown Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-        {/* Left Column: Last 7 Days Interactive Order Flow */}
-        <div className="lg:col-span-7 rounded-2xl border border-white/10 bg-wisdom-card p-5 flex flex-col justify-between">
-          <div className="flex items-center justify-between gap-3 mb-4">
-            <div className="flex items-center gap-2">
-              <Activity className="w-4 h-4 text-cyan-400" />
-              <h3 className="font-semibold text-white">Daily Order & Revenue Velocity</h3>
-            </div>
-            <span className="text-xs text-wisdom-muted">Last 7 Days</span>
+      {/* Last 7 days */}
+      <div className="rounded-2xl border border-white/10 bg-wisdom-card p-3.5">
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <Activity className="w-4 h-4 text-cyan-400 shrink-0" />
+            <h3 className="font-semibold text-white">Daily Order & Revenue Velocity</h3>
           </div>
+          <span className="text-xs text-wisdom-muted shrink-0">Last 7 Days</span>
+        </div>
 
-          {/* Bar Visualizer */}
-          <div className="flex items-end justify-between gap-2 sm:gap-3 h-44 pt-4 border-b border-white/8 pb-3">
-            {s.last7Days.map((d) => {
-              const heightPct = Math.round((d.orders / maxDayOrders) * 100);
+        <div className="flex items-end justify-between gap-1.5 h-40 pt-2 border-b border-white/8 pb-3">
+          {s.last7Days.map((d) => {
+            const heightPct = Math.round((d.orders / maxDayOrders) * 100);
+            return (
+              <div key={d.day} className="flex-1 min-w-0 flex flex-col items-center gap-1.5 h-full justify-end">
+                <div className="w-full max-w-[40px] h-28 flex flex-col justify-end rounded-lg bg-white/5 p-0.5 overflow-hidden">
+                  <div
+                    className="w-full rounded-md bg-gradient-to-t from-cyan-600 via-cyan-400 to-amber-300"
+                    style={{ height: `${Math.max(d.orders ? 10 : 2, heightPct)}%` }}
+                    title={`${d.day}: ${d.orders} orders (${d.verified} verified, ${formatEtb(d.revenue)})`}
+                  />
+                </div>
+                <div className="text-center">
+                  <p className="text-xs font-bold text-white tabular-nums">{d.orders}</p>
+                  <p className="text-[11px] text-wisdom-muted uppercase tracking-wider">{d.label}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-wisdom-muted pt-3">
+          <div className="flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-cyan-400" />
+            <span>Orders placed</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-amber-300" />
+            <span>Verified revenue</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Payment method share */}
+      <div className="rounded-2xl border border-white/10 bg-wisdom-card p-3.5">
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <CreditCard className="w-4 h-4 text-emerald-400 shrink-0" />
+            <h3 className="font-semibold text-white">Payment Rail Share</h3>
+          </div>
+          <span className="text-xs text-wisdom-muted shrink-0">{s.ordersTotal} transactions</span>
+        </div>
+
+        {s.byMethod.length === 0 ? (
+          <p className="text-sm text-wisdom-muted text-center py-8">No orders recorded yet</p>
+        ) : (
+          <div className="space-y-3">
+            {s.byMethod.map((m) => {
+              const pct = s.ordersTotal > 0 ? Math.round((m.count / s.ordersTotal) * 100) : 0;
               return (
-                <div key={d.day} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
-                  <div className="text-[10px] text-wisdom-muted tabular-nums opacity-0 group-hover:opacity-100 transition-opacity">
-                    {formatEtb(d.revenue)}
+                <div key={m.method} className="space-y-1.5">
+                  <div className="flex items-start justify-between gap-2 text-xs">
+                    <span className="font-semibold text-white uppercase tracking-wider min-w-0 break-words">
+                      {m.method}
+                    </span>
+                    <span className="text-wisdom-muted text-right shrink-0">
+                      <strong className="text-emerald-300">{formatEtb(m.totalEtb)}</strong> · {m.count} ({pct}%)
+                    </span>
                   </div>
-                  <div className="w-full max-w-[42px] h-32 flex flex-col justify-end rounded-lg bg-white/5 p-0.5 overflow-hidden">
-                    <div
-                      className="w-full rounded-md bg-gradient-to-t from-cyan-600 via-cyan-400 to-amber-300 transition-all duration-500 ease-out"
-                      style={{ height: `${Math.max(d.orders ? 10 : 2, heightPct)}%` }}
-                      title={`${d.day}: ${d.orders} orders (${d.verified} verified, ${formatEtb(d.revenue)})`}
-                    />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs font-bold text-white tabular-nums">{d.orders}</p>
-                    <p className="text-[10px] text-wisdom-muted uppercase tracking-wider">{d.label}</p>
+                  <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+                    <div className="h-full rounded-full bg-emerald-400" style={{ width: `${pct}%` }} />
                   </div>
                 </div>
               );
             })}
           </div>
-
-          <div className="flex items-center justify-between text-xs text-wisdom-muted pt-3">
-            <div className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-cyan-400" />
-              <span>Orders placed</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-amber-300" />
-              <span>Verified revenue</span>
-            </div>
-            <span>Updated in real time</span>
-          </div>
-        </div>
-
-        {/* Right Column: Payment Method Distribution */}
-        <div className="lg:col-span-5 rounded-2xl border border-white/10 bg-wisdom-card p-5 flex flex-col justify-between">
-          <div className="flex items-center justify-between gap-3 mb-4">
-            <div className="flex items-center gap-2">
-              <CreditCard className="w-4 h-4 text-emerald-400" />
-              <h3 className="font-semibold text-white">Payment Rail Share</h3>
-            </div>
-            <span className="text-xs text-wisdom-muted">{s.ordersTotal} transactions</span>
-          </div>
-
-          {s.byMethod.length === 0 ? (
-            <p className="text-sm text-wisdom-muted text-center py-10">No orders recorded yet</p>
-          ) : (
-            <div className="space-y-3.5">
-              {s.byMethod.map((m) => {
-                const pct = s.ordersTotal > 0 ? Math.round((m.count / s.ordersTotal) * 100) : 0;
-                return (
-                  <div key={m.method} className="space-y-1">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-white uppercase tracking-wider">
-                        {m.method}
-                      </span>
-                      <span className="text-wisdom-muted">
-                        <strong className="text-emerald-300">{formatEtb(m.totalEtb)}</strong> · {m.count} ({pct}%)
-                      </span>
-                    </div>
-                    <div className="h-2 rounded-full bg-white/5 overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-emerald-400 transition-all duration-500"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          <div className="pt-3 border-t border-white/8 text-xs text-wisdom-muted flex items-center justify-between">
-            <span>Direct bank transfer & Telebirr integration</span>
-            <span className="text-emerald-400 font-semibold">100% Ethiopian Rail</span>
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* Academic Demographics & Top Packages Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {/* Top Performing Academic Packages */}
-        <div className="rounded-2xl border border-white/10 bg-wisdom-card p-5 space-y-3.5">
-          <div className="flex items-center justify-between gap-3 border-b border-white/8 pb-3">
-            <div className="flex items-center gap-2">
-              <Award className="w-4 h-4 text-amber-400" />
-              <h3 className="font-semibold text-white">Top Packages by Enrollment</h3>
-            </div>
-            <span className="text-xs text-wisdom-muted">By order volume</span>
+      {/* Top packages */}
+      <div className="rounded-2xl border border-white/10 bg-wisdom-card p-3.5 space-y-3">
+        <div className="flex items-center justify-between gap-3 border-b border-white/8 pb-2.5">
+          <div className="flex items-center gap-2 min-w-0">
+            <Award className="w-4 h-4 text-amber-400 shrink-0" />
+            <h3 className="font-semibold text-white">Top Packages by Enrollment</h3>
           </div>
+          <span className="text-xs text-wisdom-muted shrink-0">By order volume</span>
+        </div>
 
-          {s.byPackage.length === 0 ? (
-            <p className="text-sm text-wisdom-muted text-center py-8">No package enrollments yet</p>
-          ) : (
-            <div className="space-y-3">
-              {s.byPackage.map((pkg, idx) => (
-                <div key={pkg.name} className="flex items-center justify-between gap-3 text-sm">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-white/5 text-[11px] font-bold text-wisdom-muted">
-                      {idx + 1}
+        {s.byPackage.length === 0 ? (
+          <p className="text-sm text-wisdom-muted text-center py-6">No package enrollments yet</p>
+        ) : (
+          <div className="space-y-3">
+            {s.byPackage.map((pkg, idx) => (
+              <div key={pkg.name} className="flex items-start justify-between gap-3 text-sm">
+                <div className="flex items-start gap-2.5 min-w-0">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-white/5 text-xs font-bold text-wisdom-muted">
+                    {idx + 1}
+                  </span>
+                  <span className="font-medium text-white/90 break-words min-w-0">{pkg.name}</span>
+                </div>
+                <div className="text-right shrink-0">
+                  <span className="font-bold text-amber-300">{formatEtb(pkg.revenue)}</span>
+                  <span className="text-xs text-wisdom-muted block">{pkg.count} orders</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Stream demographics */}
+      <div className="rounded-2xl border border-white/10 bg-wisdom-card p-3.5 space-y-3">
+        <div className="flex items-center justify-between gap-3 border-b border-white/8 pb-2.5">
+          <div className="flex items-center gap-2 min-w-0">
+            <GraduationCap className="w-4 h-4 text-purple-400 shrink-0" />
+            <h3 className="font-semibold text-white">Scholar Stream Demographics</h3>
+          </div>
+          <span className="text-xs text-wisdom-muted shrink-0">{s.users} registered</span>
+        </div>
+
+        {s.byStream.length === 0 ? (
+          <p className="text-sm text-wisdom-muted text-center py-6">No student profiles registered yet</p>
+        ) : (
+          <div className="space-y-3">
+            {s.byStream.map((stream) => {
+              const pct = s.users > 0 ? Math.round((stream.count / s.users) * 100) : 0;
+              return (
+                <div key={stream.stream} className="space-y-1.5">
+                  <div className="flex items-start justify-between gap-2 text-xs">
+                    <span className="font-medium text-white/90 min-w-0 break-words">{stream.stream}</span>
+                    <span className="text-wisdom-muted shrink-0">
+                      {stream.count} scholars ({pct}%)
                     </span>
-                    <span className="font-medium text-white/90 truncate">{pkg.name}</span>
                   </div>
-                  <div className="text-right shrink-0">
-                    <span className="font-bold text-amber-300">{formatEtb(pkg.revenue)}</span>
-                    <span className="text-xs text-wisdom-muted block">{pkg.count} orders</span>
+                  <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+                    <div className="h-full rounded-full bg-purple-400" style={{ width: `${pct}%` }} />
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Academic Stream & Education Demographics */}
-        <div className="rounded-2xl border border-white/10 bg-wisdom-card p-5 space-y-3.5">
-          <div className="flex items-center justify-between gap-3 border-b border-white/8 pb-3">
-            <div className="flex items-center gap-2">
-              <GraduationCap className="w-4 h-4 text-purple-400" />
-              <h3 className="font-semibold text-white">Scholar Stream Demographics</h3>
-            </div>
-            <span className="text-xs text-wisdom-muted">{s.users} registered</span>
+              );
+            })}
           </div>
-
-          {s.byStream.length === 0 ? (
-            <p className="text-sm text-wisdom-muted text-center py-8">No student profiles registered yet</p>
-          ) : (
-            <div className="space-y-3">
-              {s.byStream.map((stream) => {
-                const pct = s.users > 0 ? Math.round((stream.count / s.users) * 100) : 0;
-                return (
-                  <div key={stream.stream} className="space-y-1">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-medium text-white/90">{stream.stream}</span>
-                      <span className="text-wisdom-muted">
-                        {stream.count} scholars ({pct}%)
-                      </span>
-                    </div>
-                    <div className="h-2 rounded-full bg-white/5 overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-purple-400 transition-all duration-500"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        )}
       </div>
 
-      {/* Live Operational Ledger & Audit Stream */}
+      {/* Recent activity */}
       <div className="rounded-2xl border border-white/10 bg-wisdom-card overflow-hidden">
-        <div className="p-4 sm:p-5 border-b border-white/8 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <Activity className="w-5 h-5 text-cyan-400" />
-            <div>
-              <h3 className="font-semibold text-white">Real-Time Operational Audit Feed</h3>
-              <p className="text-xs text-wisdom-muted">
-                Live stream of student signups, order payments, access grants, and inquiries
+        <div className="p-3.5 border-b border-white/8 space-y-3">
+          <div className="flex items-start gap-2.5">
+            <Activity className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <h3 className="font-semibold text-white">Recent Activity</h3>
+              <p className="text-xs text-wisdom-muted mt-0.5">
+                Latest student signups, order payments, access grants, and inquiries
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white/5 border border-white/8 text-xs font-semibold">
+          <div className="flex flex-wrap gap-2">
             {(
               [
                 ["all", "All"],
@@ -495,10 +460,10 @@ export default function AnalyticsPanel() {
                 key={filterId}
                 type="button"
                 onClick={() => setActivityFilter(filterId)}
-                className={`px-3 py-1.5 rounded-lg transition-all ${
+                className={`min-h-[44px] px-4 rounded-full border text-sm font-semibold cursor-pointer ${
                   activityFilter === filterId
-                    ? "bg-cyan-500 text-wisdom-dark font-bold shadow-sm"
-                    : "text-wisdom-muted hover:text-white"
+                    ? "bg-cyan-500 border-cyan-400 text-wisdom-dark font-bold"
+                    : "bg-white/5 border-white/10 text-wisdom-muted active:bg-white/10"
                 }`}
               >
                 {filterLabel}
@@ -508,38 +473,33 @@ export default function AnalyticsPanel() {
         </div>
 
         {filteredActivity.length === 0 ? (
-          <div className="p-8 text-center text-wisdom-muted text-sm">
+          <div className="p-6 text-center text-wisdom-muted text-sm">
             No events found in this filter category
           </div>
         ) : (
-          <div className="divide-y divide-white/6 max-h-[460px] overflow-y-auto">
+          <div className="divide-y divide-white/6">
             {filteredActivity.map((item) => (
-              <div
-                key={item.id}
-                className="p-3.5 sm:px-5 sm:py-3.5 flex flex-wrap items-center justify-between gap-3 text-sm hover:bg-white/[0.02]"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`inline-block h-2 w-2 rounded-full shrink-0 ${
-                        item.kind === "order"
-                          ? "bg-amber-400"
-                          : item.kind === "enroll"
-                            ? "bg-emerald-400"
-                            : item.kind === "inquiry"
-                              ? "bg-sky-400"
-                              : "bg-purple-400"
-                      }`}
-                    />
-                    <p className="font-semibold text-white/95 truncate">{item.text}</p>
+              <div key={item.id} className="p-3.5 text-sm">
+                <div className="flex items-start gap-2">
+                  <span
+                    className={`inline-block h-2 w-2 rounded-full shrink-0 mt-1.5 ${
+                      item.kind === "order"
+                        ? "bg-amber-400"
+                        : item.kind === "enroll"
+                          ? "bg-emerald-400"
+                          : item.kind === "inquiry"
+                            ? "bg-sky-400"
+                            : "bg-purple-400"
+                    }`}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-white/95 break-words">{item.text}</p>
+                    {item.detail && (
+                      <p className="text-xs text-wisdom-muted mt-0.5 break-words">{item.detail}</p>
+                    )}
+                    <p className="text-xs text-wisdom-muted mt-1 tabular-nums">{timeAgo(item.when)}</p>
                   </div>
-                  {item.detail && (
-                    <p className="text-xs text-wisdom-muted mt-0.5 pl-4 truncate">{item.detail}</p>
-                  )}
                 </div>
-                <span className="text-xs text-wisdom-muted shrink-0 tabular-nums">
-                  {timeAgo(item.when)}
-                </span>
               </div>
             ))}
           </div>
