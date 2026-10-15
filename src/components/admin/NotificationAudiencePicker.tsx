@@ -10,6 +10,10 @@
  * applied 2026-10-15): admin_audience_level_counts, admin_count_notification_audience,
  * admin_list_notification_audiences, admin_add_notification_audience, admin_delete_notification_audience.
  * The value is the string[] the send route and the scheduler take: level labels and `custom:<uuid>`.
+ *
+ * 2026-10-15 (Admin mobile redesign, slice A6 part 2): LAYOUT ONLY. Chips wrap (never scroll sideways) and are
+ * 44 px high, the delete-audience icon is a 44 px target, the "reaches" line wraps, the add-audience form has
+ * 44 px inputs and two equal full-width pill buttons. Logic and database calls are unchanged.
  */
 
 import { useCallback, useEffect, useState } from "react";
@@ -32,6 +36,9 @@ type CustomAudience = {
 };
 
 const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
+
+const FIELD_CLASS =
+  "w-full min-h-[44px] px-3.5 py-2.5 rounded-xl bg-[#050b14] border border-white/12 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-300/60";
 
 export default function NotificationAudiencePicker({
   value,
@@ -144,10 +151,10 @@ export default function NotificationAudiencePicker({
   }
 
   const chip = (selected: boolean) =>
-    `inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold cursor-pointer transition-colors ${
+    `inline-flex items-center justify-center gap-1.5 min-h-[44px] px-4 rounded-full border text-xs font-semibold cursor-pointer ${
       selected
         ? "border-amber-300/70 bg-amber-300/15 text-amber-200"
-        : "border-white/12 bg-white/[0.04] text-slate-200 hover:bg-white/10"
+        : "border-white/12 bg-white/[0.04] text-slate-200 active:bg-white/10"
     }`;
 
   return (
@@ -182,9 +189,9 @@ export default function NotificationAudiencePicker({
               type="button"
               onClick={() => void removeCustom(c)}
               aria-label={`Delete audience ${c.label}`}
-              className="ml-1 p-1 rounded-full text-slate-500 hover:text-rose-400 cursor-pointer"
+              className="ml-1 w-11 h-11 grid place-items-center rounded-full text-slate-500 active:text-rose-400 active:bg-rose-500/10 cursor-pointer"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Trash2 className="w-4 h-4" />
             </button>
           </span>
         ))}
@@ -192,16 +199,16 @@ export default function NotificationAudiencePicker({
         <button
           type="button"
           onClick={() => setAdding((v) => !v)}
-          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full border border-dashed border-white/20 text-xs text-slate-300 hover:bg-white/10 cursor-pointer"
+          className="inline-flex items-center justify-center gap-1 min-h-[44px] px-4 rounded-full border border-dashed border-white/20 text-xs text-slate-300 active:bg-white/10 cursor-pointer"
         >
           <Plus className="w-3.5 h-3.5" />
           Custom audience
         </button>
       </div>
 
-      <p className="text-xs text-slate-400 flex items-center gap-1.5">
-        <Users className="w-3.5 h-3.5 text-amber-300" />
-        {value.length === 0 ? "Reaches everyone: " : "Reaches: "}
+      <p className="text-xs text-slate-400 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+        <Users className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+        <span>{value.length === 0 ? "Reaches everyone:" : "Reaches:"}</span>
         <span className="text-white font-semibold">{count === null ? "…" : `${count} student${count === 1 ? "" : "s"}`}</span>
         {counts && counts.no_level > 0 && (
           <span className="text-slate-500">
@@ -211,17 +218,17 @@ export default function NotificationAudiencePicker({
       </p>
 
       {adding && (
-        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 space-y-3">
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 space-y-3">
           <input
             type="text"
             value={newLabel}
             maxLength={60}
             onChange={(e) => setNewLabel(e.target.value)}
             placeholder="Audience name, e.g. Exit exam group"
-            className="w-full px-3.5 py-2 rounded-lg bg-[#050b14] border border-white/12 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-300/60"
+            className={FIELD_CLASS}
           />
           <div className="flex flex-wrap gap-2">
-            <span className="text-[11px] text-slate-400 w-full">Matches these levels:</span>
+            <span className="text-xs text-slate-400 w-full">Matches these levels:</span>
             {[...ACADEMIC_LEVEL_OPTIONS.map(String), ...extraLevels.map((l) => l.level)].map((level) => {
               const on = newLevels.some((l) => same(l, level));
               return (
@@ -243,13 +250,13 @@ export default function NotificationAudiencePicker({
             value={newPackages}
             onChange={(e) => setNewPackages(e.target.value)}
             placeholder="Optional: package ids separated by commas, e.g. ece-y3-sem-1"
-            className="w-full px-3.5 py-2 rounded-lg bg-[#050b14] border border-white/12 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-300/60"
+            className={FIELD_CLASS}
           />
-          <div className="flex gap-2 justify-end">
+          <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
               onClick={() => setAdding(false)}
-              className="px-3 py-1.5 rounded-lg text-xs text-slate-300 hover:bg-white/10 cursor-pointer"
+              className="min-h-[44px] rounded-full border border-white/15 text-xs font-semibold text-slate-200 active:bg-white/10 cursor-pointer"
             >
               Cancel
             </button>
@@ -257,7 +264,7 @@ export default function NotificationAudiencePicker({
               type="button"
               disabled={busy || !newLabel.trim() || (newLevels.length === 0 && !newPackages.trim())}
               onClick={() => void addCustom()}
-              className="px-4 py-1.5 rounded-lg bg-amber-300 text-slate-950 text-xs font-bold cursor-pointer disabled:opacity-40"
+              className="min-h-[44px] rounded-full bg-amber-300 text-slate-950 text-xs font-bold cursor-pointer disabled:opacity-40"
             >
               {busy ? "Saving..." : "Save audience"}
             </button>
@@ -265,7 +272,7 @@ export default function NotificationAudiencePicker({
         </div>
       )}
 
-      {error && <p className="text-xs text-rose-300">{error}</p>}
+      {error && <p className="text-xs text-rose-300 break-words">{error}</p>}
     </div>
   );
 }

@@ -13,6 +13,11 @@
  * admin_schedule_notification_v2 / admin_update_scheduled_notification_v2 (admin's own session).
  * Scheduling works for groups of students only (the scheduler has no single-student target).
  * Editing a waiting row (`editRow`) loads it into the form; saving updates that row.
+ *
+ * 2026-10-15 (Admin mobile redesign, slice A6 part 2): LAYOUT ONLY. Solid card (no gradient or shadow), the three
+ * categories sit in one row of three compact tiles with the hint of the chosen one underneath, every input,
+ * select, radio and button is at least 44 px high, the submit button is a full-width pill. Logic, state,
+ * validation and API calls are unchanged.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -70,6 +75,12 @@ const CATEGORIES: {
     Icon: Trophy,
   },
 ];
+
+const INPUT_CLASS =
+  "w-full min-h-[44px] px-3.5 py-2.5 rounded-xl bg-[#050b14] border border-white/12 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-300/60";
+
+const RADIO_LABEL_CLASS =
+  "inline-flex items-center gap-2 min-h-[44px] cursor-pointer text-sm text-white";
 
 function childrenAfter(trail: string[]): NotificationPathNode[] {
   let level = NOTIFICATION_PATH_TREE;
@@ -326,18 +337,19 @@ export default function NotificationComposerV2({
   }
 
   const later = when === "later" || editing;
+  const activeCategory = CATEGORIES.find((c) => c.id === category);
 
   return (
     <div
       ref={rootRef}
-      className="rounded-3xl border border-white/10 bg-gradient-to-br from-[#0c1626] to-[#070e1a] p-5 sm:p-7 shadow-xl space-y-6"
+      className="rounded-2xl border border-white/10 bg-[#0a1322] p-3 space-y-5"
     >
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <h3 className="text-sm font-bold text-white">
             {editing ? "Edit scheduled notification" : "New notification"}
           </h3>
-          <p className="text-[11px] text-wisdom-muted">
+          <p className="text-xs text-wisdom-muted mt-0.5">
             1 Category, 2 Write, 3 Destination, 4 Audience, 5 When, then send.
           </p>
         </div>
@@ -350,7 +362,7 @@ export default function NotificationComposerV2({
               setFeedback(null);
               onEditDone?.();
             }}
-            className="px-3 py-1.5 rounded-lg text-xs text-slate-300 border border-white/15 hover:bg-white/10 cursor-pointer"
+            className="shrink-0 min-h-[44px] px-4 rounded-full text-xs font-semibold text-slate-200 border border-white/15 active:bg-white/10 cursor-pointer"
           >
             Stop editing
           </button>
@@ -359,7 +371,7 @@ export default function NotificationComposerV2({
 
       {feedback && (
         <div
-          className={`p-4 rounded-2xl border text-xs sm:text-sm flex items-start gap-2.5 ${
+          className={`p-3 rounded-2xl border text-xs flex items-start gap-2.5 ${
             feedback.ok
               ? "bg-emerald-500/10 border-emerald-400/30 text-emerald-300"
               : "bg-rose-500/10 border-rose-400/30 text-rose-300"
@@ -370,41 +382,43 @@ export default function NotificationComposerV2({
           ) : (
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
           )}
-          <span>{feedback.message}</span>
+          <span className="min-w-0 break-words">{feedback.message}</span>
         </div>
       )}
 
       {/* 1 Category */}
       <div className="space-y-2">
         <p className="text-xs font-semibold text-slate-300">1. Category</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {CATEGORIES.map(({ id, label, hint, Icon }) => {
+        <div className="grid grid-cols-3 gap-2">
+          {CATEGORIES.map(({ id, label, Icon }) => {
             const active = category === id;
             return (
               <button
                 key={id}
                 type="button"
                 onClick={() => setCategory(id)}
-                className={`text-left p-4 rounded-2xl border transition-all cursor-pointer ${
+                className={`flex flex-col items-center justify-center gap-1.5 min-h-[76px] px-1.5 py-2 rounded-2xl border text-center cursor-pointer ${
                   active
                     ? "border-amber-300/70 bg-amber-300/10"
-                    : "border-white/10 bg-white/[0.03] hover:bg-white/[0.07]"
+                    : "border-white/10 bg-white/[0.03] active:bg-white/[0.07]"
                 }`}
               >
-                <Icon className={`w-5 h-5 mb-2 ${active ? "text-amber-300" : "text-slate-400"}`} />
-                <span className="block text-sm font-bold text-white">{label}</span>
-                <span className="block text-[11px] text-wisdom-muted mt-1 leading-relaxed">{hint}</span>
+                <Icon className={`w-5 h-5 ${active ? "text-amber-300" : "text-slate-400"}`} />
+                <span className="block text-xs font-bold text-white leading-tight">{label}</span>
               </button>
             );
           })}
         </div>
+        {activeCategory && (
+          <p className="text-xs text-wisdom-muted leading-relaxed">{activeCategory.hint}</p>
+        )}
       </div>
 
       {/* 2 Write */}
       <div className="space-y-3">
         <p className="text-xs font-semibold text-slate-300">2. Write</p>
         <div className="space-y-1.5">
-          <label className="text-[11px] text-slate-400">
+          <label className="block text-xs text-slate-400">
             Notification title (shown on the phone and in the list) <span className="text-rose-400">*</span>
           </label>
           <input
@@ -413,13 +427,13 @@ export default function NotificationComposerV2({
             maxLength={140}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g. Exam schedule update"
-            className="w-full px-4 py-2.5 rounded-xl bg-[#050b14] border border-white/12 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-300/60 transition-colors"
+            className={INPUT_CLASS}
           />
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <NotificationBlockEditor value={blocks} onChange={setBlocks} />
           <div>
-            <p className="text-[11px] text-slate-400 mb-2">Live preview (reading view)</p>
+            <p className="text-xs text-slate-400 mb-2">Live preview (reading view)</p>
             <NotificationPreview blocks={blocks} />
           </div>
         </div>
@@ -440,13 +454,13 @@ export default function NotificationComposerV2({
         )}
         {category === "material" && (
           <div className="space-y-2">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-2">
               {levels.map((options, depth) => (
                 <select
                   key={depth}
                   value={trail[depth] ?? ""}
                   onChange={(e) => setLevel(depth, e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#050b14] border border-white/12 text-sm text-white focus:outline-none focus:border-amber-300/60"
+                  className={INPUT_CLASS}
                 >
                   <option value="">
                     {depth === 0 ? "Choose a group…" : "Choose (optional, deeper)…"}
@@ -459,12 +473,12 @@ export default function NotificationComposerV2({
                 </select>
               ))}
             </div>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-400 break-words">
               This opens:{" "}
               {pickedChoice ? (
                 <>
                   <span className="text-amber-300">{pickedChoice.crumbs.join(" › ")}</span>{" "}
-                  <span className="font-mono text-slate-500">({pickedChoice.path})</span>
+                  <span className="font-mono text-slate-500 break-all">({pickedChoice.path})</span>
                 </>
               ) : (
                 <span className="text-slate-500">nothing picked yet (choose at least a subject or course)</span>
@@ -475,27 +489,27 @@ export default function NotificationComposerV2({
       </div>
 
       {/* 4 Audience */}
-      <div className="space-y-3">
+      <div className="space-y-2">
         <p className="text-xs font-semibold text-slate-300">4. Audience</p>
-        <div className="flex flex-wrap gap-4">
-          <label className="inline-flex items-center gap-2 cursor-pointer text-xs sm:text-sm text-white">
+        <div className="flex flex-wrap gap-x-5">
+          <label className={RADIO_LABEL_CLASS}>
             <input
               type="radio"
               name="v2audience"
               checked={mode === "groups"}
               onChange={() => setMode("groups")}
-              className="accent-amber-300"
+              className="w-5 h-5 accent-amber-300"
             />
             <span>Groups of students</span>
           </label>
           {!later && (
-            <label className="inline-flex items-center gap-2 cursor-pointer text-xs sm:text-sm text-white">
+            <label className={RADIO_LABEL_CLASS}>
               <input
                 type="radio"
                 name="v2audience"
                 checked={mode === "user"}
                 onChange={() => setMode("user")}
-                className="accent-amber-300"
+                className="w-5 h-5 accent-amber-300"
               />
               <span>One student (user id)</span>
             </label>
@@ -513,7 +527,7 @@ export default function NotificationComposerV2({
             value={targetUser}
             onChange={(e) => setTargetUser(e.target.value)}
             placeholder="Student user id (UUID)"
-            className="w-full px-4 py-2.5 rounded-xl bg-[#050b14] border border-white/12 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-300/60"
+            className={INPUT_CLASS}
           />
         )}
       </div>
@@ -522,18 +536,18 @@ export default function NotificationComposerV2({
       <div className="space-y-2">
         <p className="text-xs font-semibold text-slate-300">5. When</p>
         {!editing && (
-          <div className="flex flex-wrap gap-4">
-            <label className="inline-flex items-center gap-2 cursor-pointer text-xs sm:text-sm text-white">
+          <div className="flex flex-wrap gap-x-5">
+            <label className={RADIO_LABEL_CLASS}>
               <input
                 type="radio"
                 name="v2when"
                 checked={when === "now"}
                 onChange={() => setWhen("now")}
-                className="accent-amber-300"
+                className="w-5 h-5 accent-amber-300"
               />
               <span>Send now</span>
             </label>
-            <label className="inline-flex items-center gap-2 cursor-pointer text-xs sm:text-sm text-white">
+            <label className={RADIO_LABEL_CLASS}>
               <input
                 type="radio"
                 name="v2when"
@@ -542,7 +556,7 @@ export default function NotificationComposerV2({
                   setWhen("later");
                   setMode("groups");
                 }}
-                className="accent-amber-300"
+                className="w-5 h-5 accent-amber-300"
               />
               <span>Schedule for later</span>
             </label>
@@ -550,39 +564,37 @@ export default function NotificationComposerV2({
         )}
         {later && (
           <div className="space-y-1.5">
-            <label className="text-[11px] text-slate-400">Send at (Ethiopia time)</label>
+            <label className="block text-xs text-slate-400">Send at (Ethiopia time)</label>
             <input
               type="datetime-local"
               value={sendAtLocal}
               onChange={(e) => setSendAtLocal(e.target.value)}
-              className="w-full sm:w-72 px-4 py-2.5 rounded-xl bg-[#050b14] border border-white/12 text-sm text-white focus:outline-none focus:border-amber-300/60"
+              className={INPUT_CLASS}
             />
-            <p className="text-[11px] text-slate-500">
-              Checked every minute. Whatever the time zone of this computer, the time typed here is Ethiopia time.
+            <p className="text-xs text-slate-500">
+              Checked every minute. Whatever the time zone of this device, the time typed here is Ethiopia time.
             </p>
           </div>
         )}
       </div>
 
-      <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={sending}
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-300 hover:bg-amber-200 text-slate-950 font-bold text-sm shadow-lg shadow-amber-500/20 transition-all cursor-pointer disabled:opacity-50"
-        >
-          {later ? <Clock className="w-4 h-4" /> : <Send className="w-4 h-4" />}
-          <span>
-            {sending
-              ? "Working..."
-              : editing
-              ? "Save changes"
-              : later
-              ? "Schedule"
-              : "Send now"}
-          </span>
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={handleSubmit}
+        disabled={sending}
+        className="w-full inline-flex items-center justify-center gap-2 min-h-[48px] px-6 rounded-full bg-amber-300 active:bg-amber-200 text-slate-950 font-bold text-sm cursor-pointer disabled:opacity-50"
+      >
+        {later ? <Clock className="w-4 h-4" /> : <Send className="w-4 h-4" />}
+        <span>
+          {sending
+            ? "Working..."
+            : editing
+            ? "Save changes"
+            : later
+            ? "Schedule"
+            : "Send now"}
+        </span>
+      </button>
     </div>
   );
 }

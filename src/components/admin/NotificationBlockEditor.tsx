@@ -10,7 +10,10 @@
  * gold left bar, divider = thin gold gradient). The two glass colours and the dark text colour are close
  * approximations (the app uses theme tokens), so the preview is a guide, not a pixel match.
  *
- * Not used by any screen yet: the composer (R3-b2) will import it.
+ * 2026-10-15 (Admin mobile redesign, slice A6 part 2): LAYOUT ONLY. The add buttons sit in a 3-column grid
+ * and the Bold / Highlight buttons in a 2-column grid, all 44 px high pills; the move up, move down and
+ * delete buttons are 44 px touch targets; the textarea is at least 44 px high. The preview keeps its gold
+ * look. Editing logic is unchanged.
  */
 
 import { useRef, type CSSProperties } from "react";
@@ -44,6 +47,9 @@ const BLOCK_LABEL: Record<EditorBlockType, string> = {
   list: "Bullets (one per line)",
   divider: "Divider",
 };
+
+const SMALL_BUTTON =
+  "min-h-[44px] min-w-[44px] px-3 grid place-items-center rounded-full text-xs font-semibold cursor-pointer disabled:opacity-30";
 
 export function NotificationBlockEditor({
   value,
@@ -88,63 +94,70 @@ export function NotificationBlockEditor({
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs text-slate-400">Add:</span>
-        {ADD_BUTTONS.map((b) => (
-          <button
-            key={b.t}
-            type="button"
-            onClick={() => onChange([...value, newEditorBlock(b.t)])}
-            className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs text-slate-200 hover:bg-white/10"
-          >
-            + {b.label}
-          </button>
-        ))}
+      <div className="space-y-1.5">
+        <p className="text-xs text-slate-400">Add a block:</p>
+        <div className="grid grid-cols-3 gap-2">
+          {ADD_BUTTONS.map((b) => (
+            <button
+              key={b.t}
+              type="button"
+              onClick={() => onChange([...value, newEditorBlock(b.t)])}
+              className="min-h-[44px] rounded-full border border-white/15 bg-white/5 px-2 text-xs text-slate-200 active:bg-white/10 cursor-pointer"
+            >
+              + {b.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs text-slate-400">Select text in a box, then:</span>
-        <button
-          type="button"
-          onMouseDown={keepFocus}
-          onClick={() => wrap("**")}
-          className="rounded-md border border-white/15 bg-white/5 px-3 py-1 text-xs font-bold text-white hover:bg-white/10"
-        >
-          Bold
-        </button>
-        <button
-          type="button"
-          onMouseDown={keepFocus}
-          onClick={() => wrap("==")}
-          className="rounded-md px-3 py-1 text-xs font-bold hover:opacity-90"
-          style={{ background: GOLD, color: DARK_ON_GOLD }}
-        >
-          Highlight
-        </button>
-        <span className="text-xs text-slate-500">
+      <div className="space-y-1.5">
+        <p className="text-xs text-slate-400">Select text in a box, then:</p>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onMouseDown={keepFocus}
+            onClick={() => wrap("**")}
+            className="min-h-[44px] rounded-full border border-white/15 bg-white/5 px-3 text-xs font-bold text-white active:bg-white/10 cursor-pointer"
+          >
+            Bold
+          </button>
+          <button
+            type="button"
+            onMouseDown={keepFocus}
+            onClick={() => wrap("==")}
+            className="min-h-[44px] rounded-full px-3 text-xs font-bold active:opacity-80 cursor-pointer"
+            style={{ background: GOLD, color: DARK_ON_GOLD }}
+          >
+            Highlight
+          </button>
+        </div>
+        <p className="text-xs text-slate-500">
           (or type **bold** and ==highlight== yourself)
-        </span>
+        </p>
       </div>
 
       {value.length === 0 && (
-        <p className="rounded-lg border border-dashed border-white/15 p-4 text-sm text-slate-400">
+        <p className="rounded-xl border border-dashed border-white/15 p-3 text-sm text-slate-400">
           Nothing yet. Add a Title, then a Paragraph.
         </p>
       )}
 
       {value.map((block, index) => (
-        <div key={block.id} className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: GOLD_SOFT }}>
+        <div key={block.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+          <div className="mb-1 flex flex-wrap items-center justify-between gap-x-2">
+            <span
+              className="min-w-0 text-[11px] font-semibold uppercase tracking-wide"
+              style={{ color: GOLD_SOFT }}
+            >
               {BLOCK_LABEL[block.t]}
             </span>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center">
               <button
                 type="button"
                 onClick={() => move(index, -1)}
                 disabled={index === 0}
                 aria-label="Move up"
-                className="rounded px-2 py-0.5 text-xs text-slate-300 hover:bg-white/10 disabled:opacity-30"
+                className={`${SMALL_BUTTON} text-slate-300 active:bg-white/10`}
               >
                 ↑
               </button>
@@ -153,7 +166,7 @@ export function NotificationBlockEditor({
                 onClick={() => move(index, 1)}
                 disabled={index === value.length - 1}
                 aria-label="Move down"
-                className="rounded px-2 py-0.5 text-xs text-slate-300 hover:bg-white/10 disabled:opacity-30"
+                className={`${SMALL_BUTTON} text-slate-300 active:bg-white/10`}
               >
                 ↓
               </button>
@@ -161,7 +174,7 @@ export function NotificationBlockEditor({
                 type="button"
                 onClick={() => remove(block.id)}
                 aria-label="Delete block"
-                className="rounded px-2 py-0.5 text-xs text-red-300 hover:bg-red-500/10"
+                className={`${SMALL_BUTTON} text-red-300 active:bg-red-500/10`}
               >
                 Delete
               </button>
@@ -172,6 +185,7 @@ export function NotificationBlockEditor({
             <div
               style={{
                 height: 1,
+                margin: "8px 0",
                 background: `linear-gradient(90deg, transparent, ${GOLD}, transparent)`,
               }}
             />
@@ -184,7 +198,7 @@ export function NotificationBlockEditor({
                 activeId.current = block.id;
               }}
               onChange={(e) => update(block.id, e.target.value)}
-              className="w-full resize-y rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 outline-none focus:border-amber-300/60"
+              className="w-full min-h-[44px] resize-y rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-amber-300/60"
               placeholder={
                 block.t === "list" ? "One bullet per line" : "Write here"
               }
@@ -254,7 +268,7 @@ function BlockPreview({ block }: { block: ContentBlock }) {
           }}
         >
           <div style={{ width: 4, background: GOLD, flexShrink: 0 }} />
-          <p style={{ color: BODY, fontSize: 13, lineHeight: 1.55, margin: 0, padding: 14, whiteSpace: "pre-wrap" }}>
+          <p style={{ color: BODY, fontSize: 14, lineHeight: 1.55, margin: 0, padding: 14, whiteSpace: "pre-wrap" }}>
             <Runs runs={block.runs} />
           </p>
         </div>
@@ -290,8 +304,8 @@ export function NotificationPreview({ blocks }: { blocks: EditorBlock[] }) {
   const list = editorToBlocks(blocks);
   return (
     <div
-      className="rounded-2xl border border-white/10 p-4"
-      style={{ background: "#0B1220", maxWidth: 380 }}
+      className="rounded-2xl border border-white/10 p-3"
+      style={{ background: "#0B1220", maxWidth: 380, overflowWrap: "anywhere" }}
     >
       {list.length === 0 ? (
         <p className="text-sm text-slate-500">The preview appears as you type.</p>
