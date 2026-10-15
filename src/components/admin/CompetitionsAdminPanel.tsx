@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { AlertCircle, CheckCircle2, RefreshCw, Trophy } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { EntryFlagsInfo, useEntryFlags } from "./EntryFlagsInfo";
 
 /**
  * Admin panel for competitions (global timed exams).
@@ -20,6 +21,10 @@ import { supabase } from "@/lib/supabase";
  * Questions and answer keys are copied from an existing exam of the exam hub
  * when the contest is created. Every question must have a solution: the
  * database refuses an exam where one is missing.
+ *
+ * C10: the Entries list also shows the integrity flags the student's app
+ * recorded during the ranked exam (EntryFlagsInfo.tsx). They are signals for
+ * the admin to look at; nothing is disqualified automatically.
  */
 
 type Competition = {
@@ -175,6 +180,7 @@ export default function CompetitionsAdminPanel() {
   const [entries, setEntries] = useState<EntryRow[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
   const [entriesLoading, setEntriesLoading] = useState(false);
+  const { flags: entryFlags, error: flagsError } = useEntryFlags(entries.map((r) => r.id));
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -806,6 +812,11 @@ export default function CompetitionsAdminPanel() {
                         <p className="text-xs text-wisdom-muted">No ranked entries yet.</p>
                       ) : (
                         <div className="divide-y divide-white/8">
+                          {flagsError && (
+                            <p className="text-xs text-rose-300 pb-2">
+                              Flags could not be loaded: {flagsError}
+                            </p>
+                          )}
                           {entries.map((en) => (
                             <div
                               key={en.id}
@@ -828,6 +839,7 @@ export default function CompetitionsAdminPanel() {
                                     Disqualified: {en.disqualified_reason}
                                   </span>
                                 )}
+                                <EntryFlagsInfo flags={entryFlags[en.id]} />
                               </div>
                               {!en.disqualified && (
                                 <button
