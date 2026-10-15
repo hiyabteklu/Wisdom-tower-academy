@@ -4,8 +4,13 @@ import {
   listAllNotificationsForAdmin,
   deleteNotification,
 } from "@/lib/notifications";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
+
+// 2026-10-15: listing ALL notifications (admin=true) and deleting one now need the admin's
+// access token (Authorization: Bearer ...). Before, both were open to anyone who knew the address.
+// The normal per-student list (no admin flag) is unchanged.
 
 export async function GET(req: NextRequest) {
   try {
@@ -15,6 +20,8 @@ export async function GET(req: NextRequest) {
     const isAdmin = searchParams.get("admin") === "true";
 
     if (isAdmin) {
+      const check = await requireAdmin(req);
+      if (!check.ok) return check.response;
       const items = await listAllNotificationsForAdmin();
       return NextResponse.json({ ok: true, notifications: items });
     }
@@ -29,6 +36,9 @@ export async function GET(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    const check = await requireAdmin(req);
+    if (!check.ok) return check.response;
+
     const id = req.nextUrl.searchParams.get("id");
     if (!id) {
       return NextResponse.json({ ok: false, error: "Missing notification id" }, { status: 400 });

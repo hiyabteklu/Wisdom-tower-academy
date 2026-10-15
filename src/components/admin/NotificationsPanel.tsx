@@ -79,7 +79,12 @@ export default function NotificationsPanel() {
   const loadNotifications = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/notifications?admin=true");
+      // Listing every notification is admin-only: send the signed-in admin's access token.
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      const res = await fetch("/api/notifications?admin=true", {
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+      });
       const data = await res.json();
       if (data.ok && Array.isArray(data.notifications)) {
         setNotifications(data.notifications);
@@ -181,10 +186,16 @@ export default function NotificationsPanel() {
 
   async function handleDelete(id: string) {
     try {
-      await fetch(`/api/notifications?id=${encodeURIComponent(id)}`, {
+      // Deleting is admin-only: send the signed-in admin's access token.
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      const res = await fetch(`/api/notifications?id=${encodeURIComponent(id)}`, {
         method: "DELETE",
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
       });
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      if (res.ok) {
+        setNotifications((prev) => prev.filter((n) => n.id !== id));
+      }
     } catch {
       /* ignore */
     }
