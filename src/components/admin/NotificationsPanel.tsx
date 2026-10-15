@@ -20,6 +20,11 @@ import NotificationComposerV2 from "./NotificationComposerV2";
  * R3-b4 moved scheduling into the composer (step 5 "When") and made the scheduled list editable:
  * pressing Edit on a waiting row loads it into the composer. History and the FCM guide are unchanged
  * apart from a badge for the `contest` type.
+ *
+ * 2026-10-15 (Admin mobile redesign, slice A6): LAYOUT ONLY. Compact header with a 44 px round Refresh icon,
+ * no pulse or spin animation, no big shadows, history as bordered cards (no side-by-side desktop rows),
+ * long links wrap, the FCM developer guide is a closed <details> and its code block wraps instead of
+ * scrolling sideways. Logic and API calls are unchanged.
  */
 export default function NotificationsPanel() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -84,20 +89,18 @@ export default function NotificationsPanel() {
   };
 
   return (
-    <div className="space-y-8">
-      {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-sky-500/15 text-sky-300 border border-sky-400/30">
-              <Radio className="w-3.5 h-3.5 animate-pulse" />
-              FCM Broadcast System
-            </span>
-          </div>
-          <h2 className="font-display text-2xl font-bold text-white tracking-tight">
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3">
+        <div className="min-w-0">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-sky-500/15 text-sky-300 border border-sky-400/30">
+            <Radio className="w-3.5 h-3.5" />
+            FCM Broadcast System
+          </span>
+          <h2 className="font-display text-xl font-bold text-white tracking-tight mt-1.5">
             Push Notifications & Announcements
           </h2>
-          <p className="text-xs sm:text-sm text-wisdom-muted mt-1">
+          <p className="text-xs text-wisdom-muted mt-1 leading-relaxed">
             Publish real-time announcements, content releases, and contest alerts directly to the Android app and website.
           </p>
         </div>
@@ -106,10 +109,10 @@ export default function NotificationsPanel() {
           type="button"
           onClick={() => loadNotifications()}
           disabled={loading}
-          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-colors self-start sm:self-auto cursor-pointer"
+          aria-label="Refresh"
+          className="shrink-0 w-11 h-11 grid place-items-center rounded-full bg-white/5 border border-white/10 text-white active:bg-white/10 disabled:opacity-50 cursor-pointer"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-          <span>Refresh</span>
+          <RefreshCw className="w-4 h-4" />
         </button>
       </div>
 
@@ -124,86 +127,82 @@ export default function NotificationsPanel() {
       {/* Scheduled notifications: list, edit, cancel */}
       <ScheduledNotificationsPanel refreshKey={scheduleRefresh} onEdit={setEditRow} />
 
-      {/* History Table */}
-      <div className="rounded-3xl border border-white/10 bg-[#08101e] p-5 sm:p-6 shadow-xl">
-        <div className="flex items-center justify-between gap-3 mb-4">
+      {/* History */}
+      <div className="rounded-2xl border border-white/10 bg-[#08101e] p-3">
+        <div className="flex items-center justify-between gap-3 mb-3">
           <h3 className="text-sm font-bold text-white flex items-center gap-2">
-            <Clock className="w-4 h-4 text-sky-400" />
+            <Clock className="w-4 h-4 text-sky-400 shrink-0" />
             <span>Notification Broadcast History ({notifications.length})</span>
           </h3>
         </div>
 
         {loading ? (
-          <p className="text-xs text-wisdom-muted py-8 text-center">Loading broadcasts...</p>
+          <p className="text-sm text-wisdom-muted py-6 text-center">Loading broadcasts...</p>
         ) : notifications.length === 0 ? (
-          <p className="text-xs text-wisdom-muted py-8 text-center">No notifications broadcasted yet.</p>
+          <p className="text-sm text-wisdom-muted py-6 text-center">No notifications broadcasted yet.</p>
         ) : (
-          <div className="divide-y divide-white/8">
+          <div className="space-y-2">
             {notifications.map((n) => (
               <div
                 key={n.id}
-                className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 group"
+                className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 flex items-start gap-2"
               >
                 <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
                     <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-md border uppercase tracking-wider ${getTypeBadge(
+                      className={`text-[11px] font-bold px-2 py-0.5 rounded-md border uppercase tracking-wider ${getTypeBadge(
                         n.type
                       )}`}
                     >
                       {n.type}
                     </span>
-                    <span className="text-[11px] font-mono text-slate-400">
+                    <span className="text-xs font-mono text-slate-400 break-all">
                       Target: {n.target === "all" ? "All Users" : n.target}
                     </span>
-                    <span className="text-[11px] text-slate-500">
-                      • {new Date(n.createdAt).toLocaleString()}
-                    </span>
                   </div>
-                  <h4 className="text-sm font-bold text-white">{n.title}</h4>
-                  <p className="text-xs text-wisdom-muted line-clamp-2 mt-0.5">
-                    {n.body}
-                  </p>
+                  <p className="text-xs text-slate-500 mb-1">{new Date(n.createdAt).toLocaleString()}</p>
+                  <h4 className="text-sm font-bold text-white break-words">{n.title}</h4>
+                  <p className="text-sm text-wisdom-muted line-clamp-2 mt-0.5 break-words">{n.body}</p>
                   {n.url && (
                     <a
                       href={n.url}
-                      className="inline-flex items-center gap-1 text-[11px] text-sky-400 hover:underline mt-1"
+                      className="inline-flex items-start gap-1 text-xs text-sky-400 mt-1.5 break-all"
                     >
                       <span>Link: {n.url}</span>
-                      <ExternalLink className="w-3 h-3" />
+                      <ExternalLink className="w-3 h-3 shrink-0 mt-0.5" />
                     </a>
                   )}
                 </div>
 
-                <div className="shrink-0 flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(n.id)}
-                    title="Delete notification"
-                    className="p-2 rounded-xl text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(n.id)}
+                  title="Delete notification"
+                  aria-label="Delete notification"
+                  className="shrink-0 w-11 h-11 grid place-items-center rounded-full text-slate-400 active:text-rose-400 active:bg-rose-500/10 cursor-pointer"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* Android FCM Integration Guide */}
-      <div className="rounded-2xl border border-sky-400/20 bg-sky-950/20 p-5 space-y-2.5">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-sky-300 flex items-center gap-2">
-          <Smartphone className="w-4 h-4" />
+      {/* Android FCM Integration Guide (developer note, closed by default) */}
+      <details className="rounded-2xl border border-sky-400/20 bg-sky-950/20 p-3">
+        <summary className="flex items-center gap-2 min-h-[44px] cursor-pointer text-xs font-bold uppercase tracking-wider text-sky-300">
+          <Smartphone className="w-4 h-4 shrink-0" />
           <span>Android App (Kotlin / Capacitor) FCM Endpoint</span>
-        </h4>
-        <p className="text-xs text-slate-300 leading-relaxed font-mono">
-          Endpoint: <span className="text-amber-300">POST /api/notifications/register-device</span>
-        </p>
-        <p className="text-xs text-slate-400 leading-relaxed">
-          The Android app registers device tokens by sending:
-        </p>
-        <pre className="p-3 rounded-xl bg-black/40 border border-white/10 text-[11px] text-slate-300 font-mono overflow-x-auto">
+        </summary>
+        <div className="space-y-2 pt-2">
+          <p className="text-xs text-slate-300 leading-relaxed font-mono break-all">
+            Endpoint: <span className="text-amber-300">POST /api/notifications/register-device</span>
+          </p>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            The Android app registers device tokens by sending:
+          </p>
+          <pre className="p-3 rounded-xl bg-black/40 border border-white/10 text-[11px] text-slate-300 font-mono whitespace-pre-wrap break-words">
 {`// Example Android HTTP Request on FCM token refresh
 fetch("/api/notifications/register-device", {
   method: "POST",
@@ -215,8 +214,9 @@ fetch("/api/notifications/register-device", {
     deviceName: "Samsung Galaxy A54" // optional
   })
 });`}
-        </pre>
-      </div>
+          </pre>
+        </div>
+      </details>
     </div>
   );
 }
