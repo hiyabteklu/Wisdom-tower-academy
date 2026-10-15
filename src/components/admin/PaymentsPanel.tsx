@@ -19,20 +19,33 @@ import {
   Phone,
   Mail,
   CreditCard,
-  ExternalLink,
   Search,
-  Filter,
   Download,
-  AlertCircle,
-  Clock,
   CheckCircle2,
   FileText,
   Calendar,
   Eye,
-  ShieldCheck,
 } from "lucide-react";
 
+/**
+ * Admin Payments tab.
+ *
+ * 2026-10-15 (Admin mobile redesign, slice A8): LAYOUT ONLY. Audit hits before the change: `backdrop-blur-md` and
+ * `backdrop-blur-sm` (receipt and reject overlays), `animate-spin` (Refresh icon), `animate-fade-in` (toast and 2
+ * modals), `shadow-2xl`, `shadow-lg`, `shadow-md`, `min-w-[240px]` (search box), a 4-button segmented status row,
+ * and many buttons under 44 px. Now: two 44 px pills in a 2-column grid, a 2-column stat strip, search full width,
+ * status filter as a 2x2 grid of pills (no scrolling row), one-column order cards with the money and the buttons
+ * stacked, both windows are solid bottom sheets (no blur, no animation, bounded height with `overscroll-contain`),
+ * toast sits between the screen edges. Logic, state, database calls, approve / reject flow, notifications and CSV
+ * export are unchanged. Unused icon imports (Filter, ShieldCheck, Clock, AlertCircle, ExternalLink) were dropped.
+ */
+
 type FilterStatus = "pending_verification" | "all" | "verified" | "rejected";
+
+const FIELD_CLASS =
+  "w-full min-h-[44px] px-3.5 py-2.5 rounded-xl bg-wisdom-dark border border-white/10 text-sm text-white placeholder-wisdom-muted focus:outline-none focus:border-amber-400";
+
+const SHEET_OVERLAY_CLASS = "fixed inset-0 z-50 flex items-end justify-center bg-black/80";
 
 export default function PaymentsPanel({ adminEmail }: { adminEmail: string }) {
   const [orders, setOrders] = useState<ManualOrder[]>([]);
@@ -169,56 +182,56 @@ export default function PaymentsPanel({ adminEmail }: { adminEmail: string }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Toast Notification */}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 rounded-2xl border border-amber-400/40 bg-wisdom-card p-4 text-sm font-semibold text-amber-300 shadow-2xl animate-fade-in flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-amber-400" />
-          {toast}
+        <div className="fixed bottom-4 inset-x-4 z-[60] rounded-2xl border border-amber-400/40 bg-wisdom-card p-3.5 text-sm font-semibold text-amber-300 flex items-start gap-2">
+          <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+          <span className="min-w-0 break-words">{toast}</span>
         </div>
       )}
 
-      {/* Header and Quick Stats */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/8 pb-4">
-        <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <CreditCard className="w-5 h-5 text-amber-400" />
-            Payment Operations & Order Verification
+      {/* Header and Actions */}
+      <div className="space-y-3 border-b border-white/8 pb-3">
+        <div className="min-w-0">
+          <h2 className="text-xl font-bold text-white flex items-start gap-2">
+            <CreditCard className="w-5 h-5 text-amber-400 shrink-0 mt-1" />
+            <span>Payment Operations & Order Verification</span>
           </h2>
-          <p className="text-xs sm:text-sm text-wisdom-muted mt-0.5">
+          <p className="text-xs text-wisdom-muted mt-1 leading-relaxed">
             Manual bank slip verification, Telebirr & CBE confirmations, and automated student enrollment
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={handleExportCsv}
             disabled={filtered.length === 0}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-white/12 text-sm font-semibold text-white/90 hover:bg-white/5 disabled:opacity-50 transition-colors"
+            className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3 rounded-full border border-white/12 text-sm font-semibold text-white/90 active:bg-white/10 disabled:opacity-50 cursor-pointer"
           >
-            <Download className="w-4 h-4" />
-            Export CSV ({filtered.length})
+            <Download className="w-4 h-4 shrink-0" />
+            <span>Export CSV ({filtered.length})</span>
           </button>
           <button
             type="button"
             onClick={load}
             disabled={loading}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-400/30 text-sm font-semibold hover:bg-amber-500/30 transition-colors"
+            className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30 text-sm font-semibold active:bg-amber-500/30 disabled:opacity-50 cursor-pointer"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-            Refresh
+            <RefreshCw className="w-4 h-4 shrink-0" />
+            <span>{loading ? "Loading..." : "Refresh"}</span>
           </button>
         </div>
       </div>
 
       {/* Financial Pipeline Strip */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-        <div className="rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4">
+      <div className="grid grid-cols-2 gap-2.5">
+        <div className="min-w-0 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-3.5">
           <p className="text-xs font-semibold uppercase tracking-wider text-amber-300">
             Pending Verification
           </p>
-          <p className="text-2xl font-bold text-white mt-1 tabular-nums">
+          <p className="text-xl font-bold text-white mt-1 tabular-nums break-words">
             {formatEtb(pendingAmount)}
           </p>
           <p className="text-xs text-amber-200/80 mt-1 font-medium">
@@ -226,11 +239,11 @@ export default function PaymentsPanel({ adminEmail }: { adminEmail: string }) {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4">
+        <div className="min-w-0 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3.5">
           <p className="text-xs font-semibold uppercase tracking-wider text-emerald-300">
             Total Verified Revenue
           </p>
-          <p className="text-2xl font-bold text-white mt-1 tabular-nums">
+          <p className="text-xl font-bold text-white mt-1 tabular-nums break-words">
             {formatEtb(verifiedAmount)}
           </p>
           <p className="text-xs text-emerald-200/80 mt-1 font-medium">
@@ -238,32 +251,32 @@ export default function PaymentsPanel({ adminEmail }: { adminEmail: string }) {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-wisdom-card p-4">
+        <div className="col-span-2 rounded-2xl border border-white/10 bg-wisdom-card p-3.5">
           <p className="text-xs font-semibold uppercase tracking-wider text-wisdom-muted">
             All-Time Orders
           </p>
-          <p className="text-2xl font-bold text-white mt-1 tabular-nums">{orders.length}</p>
+          <p className="text-xl font-bold text-white mt-1 tabular-nums">{orders.length}</p>
           <p className="text-xs text-wisdom-muted mt-1">
             Across Telebirr, CBE, Abyssinia, and other rails
           </p>
         </div>
       </div>
 
-      {/* Search and Filters Bar */}
-      <div className="flex flex-wrap items-center gap-3 bg-wisdom-card/60 p-3.5 rounded-2xl border border-white/8">
-        <div className="relative flex-1 min-w-[240px]">
+      {/* Search and Filters */}
+      <div className="space-y-2.5 bg-wisdom-card/60 p-3 rounded-2xl border border-white/8">
+        <div className="relative">
           <Search className="w-4 h-4 text-wisdom-muted absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search order ID, student, phone, email, or transaction ref..."
-            className="w-full pl-10 pr-4 py-2 rounded-xl bg-wisdom-dark border border-white/10 text-sm text-white placeholder-wisdom-muted focus:outline-none focus:border-amber-400 transition-colors"
+            placeholder="Search order, student, phone, email, ref"
+            className={`${FIELD_CLASS} pl-10`}
           />
         </div>
 
-        {/* Status Filter Tabs */}
-        <div className="flex items-center gap-1 p-1 rounded-xl bg-wisdom-dark border border-white/10 text-xs font-semibold">
+        {/* Status filter: 2x2 pills, no scrolling row */}
+        <div className="grid grid-cols-2 gap-2">
           {(
             [
               ["pending_verification", `Pending (${pendingOrders.length})`],
@@ -276,10 +289,10 @@ export default function PaymentsPanel({ adminEmail }: { adminEmail: string }) {
               key={stId}
               type="button"
               onClick={() => setFilterStatus(stId)}
-              className={`px-3 py-1.5 rounded-lg transition-all ${
+              className={`min-h-[44px] px-3 rounded-full border text-sm font-semibold cursor-pointer ${
                 filterStatus === stId
-                  ? "bg-amber-500 text-wisdom-dark font-bold shadow-sm"
-                  : "text-wisdom-muted hover:text-white"
+                  ? "bg-amber-500 border-amber-400 text-wisdom-dark font-bold"
+                  : "bg-wisdom-dark border-white/10 text-wisdom-muted active:bg-white/10"
               }`}
             >
               {stLabel}
@@ -291,198 +304,204 @@ export default function PaymentsPanel({ adminEmail }: { adminEmail: string }) {
         <select
           value={bankFilter}
           onChange={(e) => setBankFilter(e.target.value)}
-          className="px-3 py-2 rounded-xl bg-wisdom-dark border border-white/10 text-xs font-semibold text-white focus:outline-none focus:border-amber-400"
+          className={`${FIELD_CLASS} font-semibold`}
         >
           <option value="all">All Payment Methods</option>
           <option value="telebirr">Telebirr</option>
           <option value="cbe">CBE</option>
           <option value="abyssinia">Bank of Abyssinia</option>
         </select>
+
+        <p className="text-xs text-wisdom-muted tabular-nums">
+          Showing {filtered.length} of {orders.length}
+        </p>
       </div>
 
       {/* Orders List */}
       {loading && orders.length === 0 ? (
-        <div className="py-20 flex flex-col items-center justify-center gap-3">
+        <div className="py-16 flex flex-col items-center justify-center gap-3">
           <BrandLoader size="md" label="Loading orders..." />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-white/15 p-12 text-center text-wisdom-muted">
+        <div className="rounded-2xl border border-dashed border-white/15 p-8 text-center text-wisdom-muted">
           <CreditCard className="w-10 h-10 mx-auto mb-3 opacity-40" />
           <p className="font-medium text-white mb-1">No orders found</p>
           <p className="text-sm">No orders matching the selected status or search filter.</p>
         </div>
       ) : (
-        <div className="space-y-3.5">
+        <div className="space-y-2.5">
           {filtered.map((o) => (
             <div
               key={o.id}
-              className={`rounded-2xl border p-4 sm:p-5 transition-all ${
+              className={`rounded-2xl border p-3.5 ${
                 o.status === "pending_verification"
-                  ? "border-amber-400/40 bg-wisdom-card shadow-lg shadow-amber-950/20"
+                  ? "border-amber-400/40 bg-wisdom-card"
                   : o.status === "verified"
                     ? "border-white/10 bg-wisdom-card/90"
                     : "border-white/8 bg-wisdom-card/50 opacity-80"
               }`}
             >
-              <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-sm font-bold text-white">{o.id}</span>
-                    <span
-                      className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                        o.status === "verified"
-                          ? "bg-emerald-500/15 text-emerald-300 border-emerald-400/30"
-                          : o.status === "pending_verification"
-                            ? "bg-amber-500/15 text-amber-300 border-amber-400/30"
-                            : "bg-rose-500/15 text-rose-300 border-rose-400/30"
-                      }`}
-                    >
-                      {statusLabel(o.status)}
-                    </span>
-                    <span className="text-xs text-wisdom-muted">
-                      via <strong className="text-white uppercase">{o.paymentMethod || "Bank"}</strong>
-                    </span>
-                  </div>
-
-                  <h3 className="text-lg font-bold text-white mt-1">{o.packageName}</h3>
-                  <p className="text-sm font-extrabold text-amber-300 mt-0.5">
-                    {formatEtb(o.amountEtb)}
-                  </p>
-                </div>
-
-                {/* Right Action Buttons */}
-                <div className="flex items-center gap-2">
-                  {o.receiptUrl && (
-                    <button
-                      type="button"
-                      onClick={() => setViewReceiptUrl(o.receiptUrl!)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/15 bg-white/5 text-xs font-semibold text-cyan-300 hover:bg-white/10 transition-colors"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                      View Receipt
-                    </button>
-                  )}
-
-                  {o.status === "pending_verification" && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => onVerify(o.id)}
-                        disabled={busyId === o.id}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-500 text-white hover:bg-emerald-400 disabled:opacity-50 transition-colors shadow-md shadow-emerald-500/20"
-                      >
-                        <Check className="w-4 h-4" />
-                        {busyId === o.id ? "Verifying..." : "Approve & Unlock"}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setRejectOrderModal(o)}
-                        disabled={busyId === o.id}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-300 hover:bg-rose-500/10 border border-rose-500/20 disabled:opacity-50 transition-colors"
-                      >
-                        <X className="w-4 h-4" />
-                        Reject
-                      </button>
-                    </>
-                  )}
-                </div>
+              {/* Order id, status, method */}
+              <div className="flex items-start justify-between gap-2">
+                <span className="min-w-0 font-mono text-sm font-bold text-white break-all">{o.id}</span>
+                <span
+                  className={`shrink-0 text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${
+                    o.status === "verified"
+                      ? "bg-emerald-500/15 text-emerald-300 border-emerald-400/30"
+                      : o.status === "pending_verification"
+                        ? "bg-amber-500/15 text-amber-300 border-amber-400/30"
+                        : "bg-rose-500/15 text-rose-300 border-rose-400/30"
+                  }`}
+                >
+                  {statusLabel(o.status)}
+                </span>
               </div>
 
-              {/* Student Metadata Strip */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-wisdom-muted py-2.5 border-t border-white/6">
-                <div>
-                  <span className="text-white/80 font-semibold">{o.studentName}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
+              <h3 className="text-base font-bold text-white mt-2 break-words">{o.packageName}</h3>
+              <div className="flex items-baseline justify-between gap-2 mt-0.5">
+                <p className="text-base font-extrabold text-amber-300 tabular-nums">
+                  {formatEtb(o.amountEtb)}
+                </p>
+                <span className="text-xs text-wisdom-muted min-w-0 truncate">
+                  via <strong className="text-white uppercase">{o.paymentMethod || "Bank"}</strong>
+                </span>
+              </div>
+
+              {/* Student details */}
+              <div className="space-y-1.5 text-xs text-wisdom-muted py-2.5 mt-2.5 border-t border-white/6">
+                <p className="text-sm text-white/90 font-semibold break-words">{o.studentName}</p>
+                <div className="flex items-center gap-1.5 min-w-0">
                   <Phone className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                  <span>{o.phone}</span>
+                  <span className="truncate">{o.phone}</span>
                 </div>
                 {o.email && (
-                  <div className="flex items-center gap-1.5 truncate">
+                  <div className="flex items-center gap-1.5 min-w-0">
                     <Mail className="w-3.5 h-3.5 text-wisdom-muted shrink-0" />
                     <span className="truncate">{o.email}</span>
                   </div>
                 )}
               </div>
 
-              {/* Transaction Reference & Timestamp */}
-              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 text-xs text-wisdom-muted border-t border-white/6">
-                <div>
+              {/* Transaction reference and timestamp */}
+              <div className="space-y-1.5 py-2.5 text-xs text-wisdom-muted border-t border-white/6">
+                <div className="break-all">
                   <span>Ref: </span>
                   <span className="font-mono font-bold text-cyan-300 select-all">
                     {o.transactionRef}
                   </span>
-                  {o.note && (
-                    <span className="text-wisdom-muted ml-2 italic">({o.note})</span>
-                  )}
+                  {o.note && <span className="text-wisdom-muted ml-1 italic">({o.note})</span>}
                 </div>
-                <div className="flex items-center gap-1">
-                  <Calendar className="w-3 h-3" />
+                <div className="flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 shrink-0" />
                   <span>Placed {new Date(o.createdAt).toLocaleString()}</span>
                 </div>
               </div>
+
+              {/* Actions */}
+              {(o.receiptUrl || o.status === "pending_verification") && (
+                <div className="space-y-2 pt-3 border-t border-white/6">
+                  {o.receiptUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setViewReceiptUrl(o.receiptUrl!)}
+                      className="w-full inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3 rounded-full border border-white/15 bg-white/5 text-sm font-semibold text-cyan-300 active:bg-white/10 cursor-pointer"
+                    >
+                      <Eye className="w-4 h-4 shrink-0" />
+                      <span>View Receipt</span>
+                    </button>
+                  )}
+
+                  {o.status === "pending_verification" && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => onVerify(o.id)}
+                        disabled={busyId === o.id}
+                        className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-2 rounded-full text-sm font-bold bg-emerald-500 text-white active:bg-emerald-400 disabled:opacity-50 cursor-pointer"
+                      >
+                        <Check className="w-4 h-4 shrink-0" />
+                        <span>{busyId === o.id ? "Verifying..." : "Approve & Unlock"}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setRejectOrderModal(o)}
+                        disabled={busyId === o.id}
+                        className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-2 rounded-full text-sm font-semibold text-rose-300 active:bg-rose-500/10 border border-rose-500/30 disabled:opacity-50 cursor-pointer"
+                      >
+                        <X className="w-4 h-4 shrink-0" />
+                        <span>Reject</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>
       )}
 
       {/* ========================================================= */}
-      {/* MODAL 1: RECEIPT LIGHTBOX                                 */}
+      {/* SHEET 1: RECEIPT VIEWER                                   */}
       {/* ========================================================= */}
       {viewReceiptUrl && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
-          <div className="relative max-w-xl w-full rounded-3xl border border-white/20 bg-wisdom-card p-5 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-white/8 pb-3">
-              <h3 className="font-bold text-white text-base flex items-center gap-2">
-                <FileText className="w-4 h-4 text-cyan-400" />
-                Payment Receipt Slip
+        <div className={SHEET_OVERLAY_CLASS}>
+          <div
+            className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto overscroll-contain rounded-t-3xl border border-white/15 bg-wisdom-card p-4 space-y-3"
+            style={{ paddingBottom: "max(16px, env(safe-area-inset-bottom, 0px))" }}
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-white/8 pb-3">
+              <h3 className="min-w-0 font-bold text-white text-base flex items-center gap-2">
+                <FileText className="w-4 h-4 text-cyan-400 shrink-0" />
+                <span>Payment Receipt Slip</span>
               </h3>
               <button
                 type="button"
                 onClick={() => setViewReceiptUrl(null)}
-                className="p-1.5 rounded-lg text-wisdom-muted hover:text-white hover:bg-white/5"
+                aria-label="Close"
+                className="shrink-0 w-11 h-11 grid place-items-center rounded-full text-wisdom-muted active:bg-white/10 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="max-h-[70vh] overflow-auto rounded-2xl bg-black/50 p-2 flex items-center justify-center">
+            <div className="rounded-2xl bg-black/50 p-2 flex items-center justify-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={viewReceiptUrl}
                 alt="Payment Receipt"
-                className="max-h-full max-w-full object-contain rounded-xl"
+                className="max-w-full h-auto object-contain rounded-xl"
               />
             </div>
 
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={() => setViewReceiptUrl(null)}
-                className="px-4 py-2 rounded-xl text-xs font-bold bg-white/10 text-white hover:bg-white/15"
-              >
-                Close Viewer
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setViewReceiptUrl(null)}
+              className="w-full min-h-[44px] rounded-full text-sm font-bold bg-white/10 text-white active:bg-white/15 cursor-pointer"
+            >
+              Close Viewer
+            </button>
           </div>
         </div>
       )}
 
       {/* ========================================================= */}
-      {/* MODAL 2: REJECT ORDER WITH REASON                         */}
+      {/* SHEET 2: REJECT ORDER                                     */}
       {/* ========================================================= */}
       {rejectOrderModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="relative max-w-md w-full rounded-3xl border border-rose-400/30 bg-wisdom-card p-6 shadow-2xl space-y-4">
-            <div>
+        <div className={SHEET_OVERLAY_CLASS}>
+          <div
+            className="relative w-full max-w-md max-h-[90vh] overflow-y-auto overscroll-contain rounded-t-3xl border border-rose-400/30 bg-wisdom-card p-4 space-y-4"
+            style={{ paddingBottom: "max(16px, env(safe-area-inset-bottom, 0px))" }}
+          >
+            <div className="min-w-0">
               <p className="text-xs font-bold uppercase tracking-wider text-rose-400">
                 Reject Payment Order
               </p>
-              <h3 className="text-lg font-bold text-white mt-0.5">
+              <h3 className="text-lg font-bold text-white mt-0.5 break-all">
                 Reject Order {rejectOrderModal.id}
               </h3>
-              <p className="text-xs text-wisdom-muted mt-1">
+              <p className="text-xs text-wisdom-muted mt-1 break-words">
                 Student: {rejectOrderModal.studentName} ({formatEtb(rejectOrderModal.amountEtb)})
               </p>
             </div>
@@ -491,18 +510,19 @@ export default function PaymentsPanel({ adminEmail }: { adminEmail: string }) {
               Are you sure you want to reject this payment? The order will be flagged as rejected and the student will be notified if email or SMS is active.
             </p>
 
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/8">
+            <div className="pt-3 border-t border-white/8 grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => setRejectOrderModal(null)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-wisdom-muted hover:text-white"
+                className="min-h-[44px] rounded-full border border-white/15 text-sm font-semibold text-white/90 active:bg-white/10 cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={onConfirmReject}
-                className="px-4 py-2 rounded-xl text-xs font-bold bg-rose-500 text-white hover:bg-rose-400 transition-colors"
+                disabled={busyId === rejectOrderModal.id}
+                className="min-h-[44px] rounded-full text-sm font-bold bg-rose-500 text-white active:bg-rose-400 disabled:opacity-50 cursor-pointer"
               >
                 Confirm Rejection
               </button>
