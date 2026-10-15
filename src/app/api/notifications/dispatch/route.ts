@@ -3,6 +3,13 @@ import { timingSafeEqual } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServiceClient } from "@/lib/supabase-server";
 import { createAndPushNotification } from "@/lib/notifications";
+import { isNotificationCategory, type NotificationCategory } from "@/lib/notification-v2";
+import {
+  AudienceEmptyError,
+  normalizeAudiences,
+  resolveAudienceViaDatabase,
+  sendToAudience,
+} from "@/lib/notification-audience";
 
 /**
  * POST /api/notifications/dispatch
@@ -19,15 +26,22 @@ import { createAndPushNotification } from "@/lib/notifications";
  *  1. takes up to MAX_ROWS_PER_RUN rows with status "pending" and send_at in the past;
  *  2. claims each one (status "sending", attempts + 1); a row that another run
  *     already claimed is skipped, so one row is never sent twice;
- *  3. works out the audience (same rule as the competition access check:
- *     scope = profiles.active_academic_scope, default "freshman"; package =
- *     enrollments or access_grants by user id or e-mail);
+ *  3. works out the audience:
+ *       LEGACY row (no category, no audiences): scope = profiles.active_academic_scope, default
+ *       "freshman"; package = enrollments or access_grants by user id or e-mail (same rule as the
+ *       competition access check);
+ *       V2 row (category or audiences set, notifications v2 slice R2): the database function
+ *       resolve_notification_audience (registration levels and custom audiences, union), the same
+ *       resolver the admin "send now" uses;
  *  4. sends: one broadcast for everybody, or one notification per matching student;
  *  5. marks the row "sent", or puts it back to "pending" (retry on the next run) up to
  *     MAX_ATTEMPTS, then "failed" with last_error.
  *
  * Known gap: a run that dies after step 2 leaves its row in "sending". It is
  * never re-sent on its own (this avoids duplicate pushes); look at it by hand.
+ *
+ * The claim reads every column (select "*"), so this route also works BEFORE the v2 migration adds the
+ * category / content / audiences columns (they are simply absent on the row).
  */
 
 export const runtime = "nodejs";
@@ -48,6 +62,10 @@ type DueRow = {
   package_id: string | null;
   competition_id: string | null;
   attempts: number;
+  // v2 columns (absent before the migration)
+  category?: string | null;
+  content?: Record<string, unknown> | null;
+  audiences?: string[] | null;
 };
 
 type RowResult = {
@@ -91,7 +109,7 @@ async function readAll(
   return out;
 }
 
-/** Who should get this notification? broadcast = everybody. */
+/** LEGACY: who should get this notification? broadcast = everybody. */
 async function resolveAudience(
   client: SupabaseClient,
   row: DueRow
@@ -155,11 +173,45 @@ async function resolveAudience(
   return { broadcast: false, userIds: matched.map((p) => p.id) };
 }
 
+/** V2 row: category + rich content + audiences (registration levels, custom audiences). */
+async function sendRowV2(
+  client: SupabaseClient,
+  row: DueRow
+): Promise<{ recipients: number; pushed: number }> {
+  const category: NotificationCategory = isNotificationCategory(row.category) ? row.category : "admin";
+  const audiences = normalizeAudiences(row.audiences ?? []);
+  const audience = await resolveAudienceViaDatabase(client, audiences);
+
+  const metadata: Record<string, unknown> = { scheduled_notification_id: row.id, category };
+  if (row.content) metadata.content = row.content;
+  if (row.competition_id) metadata.competition_id = row.competition_id;
+  if (audiences.length > 0) metadata.audiences = audiences;
+
+  // contest -> /competitions and admin -> reading view are chosen automatically (url undefined).
+  const url = category === "material" ? row.url ?? undefined : undefined;
+
+  const sent = await sendToAudience({
+    audience,
+    title: row.title,
+    body: row.body,
+    type: category,
+    url,
+    createdBy: "scheduler",
+    metadata,
+  });
+  return { recipients: sent.recipients, pushed: sent.pushed };
+}
+
 /** Sends one claimed row. Throws when nothing could be sent. */
 async function sendRow(
   client: SupabaseClient,
   row: DueRow
 ): Promise<{ recipients: number; pushed: number }> {
+  if (row.category || (row.audiences && row.audiences.length > 0)) {
+    return sendRowV2(client, row);
+  }
+
+  // LEGACY path (unchanged behaviour).
   const audience = await resolveAudience(client, row);
   const metadata: Record<string, unknown> = { scheduled_notification_id: row.id };
   if (row.competition_id) metadata.competition_id = row.competition_id;
@@ -168,7 +220,8 @@ async function sendRow(
     title: row.title,
     body: row.body,
     type: "admin" as const,
-    url: row.url ?? undefined,
+    // Explicit default: the automatic reading-view url of v2 must not change old rows.
+    url: row.url ?? "/learning",
     createdBy: "scheduler",
     metadata,
   };
@@ -239,7 +292,7 @@ export async function POST(req: NextRequest) {
         .update({ status: "sending", attempts: (candidate.attempts ?? 0) + 1 })
         .eq("id", candidate.id)
         .eq("status", "pending")
-        .select("id, title, body, url, audience_scope, package_id, competition_id, attempts");
+        .select("*");
       if (claimError || !claimed || claimed.length === 0) continue;
 
       const row = claimed[0] as DueRow;
@@ -253,7 +306,10 @@ export async function POST(req: NextRequest) {
         results.push({ id: row.id, status: "sent", ...sent });
       } catch (err: unknown) {
         const message = (err instanceof Error ? err.message : "Send failed").slice(0, 500);
-        const giveUp = err instanceof PermanentError || row.attempts >= MAX_ATTEMPTS;
+        const giveUp =
+          err instanceof PermanentError ||
+          err instanceof AudienceEmptyError ||
+          row.attempts >= MAX_ATTEMPTS;
         await client
           .from("scheduled_notifications")
           .update({ status: giveUp ? "failed" : "pending", last_error: message })
