@@ -2,6 +2,28 @@
 
 Newest entry on top. Each agent adds an entry at the end of its session. Details of older work live in the docs named below; do NOT re-audit items marked DONE.
 
+## 2026-10-15 (Claude, admin console review; read-only audit of GitHub, no code changed)
+
+### State of the admin console (`/admin`, `src/app/admin/page.tsx`)
+- 12 tabs exist and are wired: Overview (AnalyticsPanel), Push Broadcasts (NotificationsPanel), Competitions (CompetitionsAdminPanel), Users, Payments, Access Grants, Course Content, Content Locks, Pricing & Catalog, Free Resources, Inquiries, Database & SQL Hub.
+- Access: client check `isAdminEmail`; API routes use `requireAdmin` (`src/lib/admin-auth.ts`, Bearer token verified server-side).
+- The Android app is only a WebView of the live site, so admin changes reach the app on deploy. The app has no admin entry in its menu or nav; `/admin` is opened by URL.
+
+### DONE this week (do not re-check)
+- Notifications locked: send, list and delete require the admin token; `/api/notifications/dispatch` is secret-only.
+- Scheduled notifications panel, Competitions panel and tab, entry integrity flags (C10).
+- Notifications v2 R2 (contest type, rich content, multi-audience send) and R3-a to R3-b4 (path selector, block editor + gold preview, composer v2, audience picker, schedule step in Ethiopia time).
+
+### NOT DONE
+- EVERY commit from Notifications v2 R2 through R3-b4, plus C10 and the Competitions panels, is marked "not compiled". Run `npm run build` in Codespaces first and fix type errors.
+- Set `NOTIFICATION_DISPATCH_SECRET` in Vercel and add a timer (Vercel cron or external pinger) that calls `/api/notifications/dispatch`; without it scheduled notifications never send.
+- Click-through test of every admin tab on a phone (composer 5 steps, scheduled list, Competitions actions, Entries flags).
+- Overview header text says "All 10 modules operational" but there are 12 tabs; fix the wording.
+- Earlier open items from 2026-10-14 still apply (Entrance Questions build + upload test, storage move to Appwrite).
+
+### Environment notes
+- Owner works from a phone and has GitHub Codespaces. Claude cloud sandbox cannot run npm (403); do not retry.
+
 ## 2026-10-14 (Claude, review session)
 
 ### DONE (do not re-check)
