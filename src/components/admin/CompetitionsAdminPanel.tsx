@@ -25,6 +25,11 @@ import { EntryFlagsInfo, useEntryFlags } from "./EntryFlagsInfo";
  * C10: the Entries list also shows the integrity flags the student's app
  * recorded during the ranked exam (EntryFlagsInfo.tsx). They are signals for
  * the admin to look at; nothing is disqualified automatically.
+ *
+ * Slice A5 (docs/ADMIN_MOBILE_PLAN.md): LAYOUT ONLY. Audit found no
+ * overflow-x, min-w-, table or backdrop- in this file. Changes: no shadows and
+ * no spin animation, 2-column field pairs, 44 px pill buttons in a 2-column
+ * grid, tighter padding, nothing under 11 px. Logic and API calls unchanged.
  */
 
 type Competition = {
@@ -68,9 +73,10 @@ const EAT_OFFSET = "+03:00";
 const LOCAL_DT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
 
 const BTN =
-  "px-3 py-1.5 rounded-xl text-xs font-semibold border border-white/10 bg-white/5 text-white hover:bg-white/10 transition-colors cursor-pointer disabled:opacity-50";
+  "min-h-[44px] min-w-0 px-3 rounded-full text-[13px] font-semibold border border-white/10 bg-white/5 text-white active:bg-white/10 cursor-pointer disabled:opacity-50";
 const INPUT =
-  "w-full px-4 py-2.5 rounded-xl bg-[#050b14] border border-white/12 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-400 transition-colors";
+  "w-full min-w-0 px-4 py-2.5 min-h-[44px] rounded-xl bg-[#050b14] border border-white/12 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-400";
+const LABEL = "text-xs font-semibold text-slate-300";
 
 function formatEat(iso: string | null): string {
   if (!iso) return "";
@@ -397,19 +403,15 @@ export default function CompetitionsAdminPanel() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500/15 text-amber-300 border border-amber-400/30">
-              <Trophy className="w-3.5 h-3.5" />
-              Competitions
-            </span>
-          </div>
-          <h2 className="font-display text-2xl font-bold text-white tracking-tight">
-            Global Timed Exams
-          </h2>
-          <p className="text-xs sm:text-sm text-wisdom-muted mt-1">
+    <div className="min-w-0 space-y-3">
+      <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3">
+        <div className="min-w-0">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-300 border border-amber-400/30">
+            <Trophy className="w-3.5 h-3.5" />
+            Competitions
+          </span>
+          <h2 className="mt-1 text-lg font-bold text-white">Global Timed Exams</h2>
+          <p className="text-xs text-wisdom-muted mt-0.5">
             Create a contest from an exam of the exam hub, then show, pause, start, reschedule or
             cancel it. All times are Ethiopia time.
           </p>
@@ -418,16 +420,16 @@ export default function CompetitionsAdminPanel() {
           type="button"
           onClick={() => void load()}
           disabled={loading}
-          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-colors self-start sm:self-auto cursor-pointer"
+          aria-label="Refresh"
+          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/5 border border-white/10 text-white active:bg-white/10 cursor-pointer disabled:opacity-50"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-          <span>Refresh</span>
+          <RefreshCw className="w-4 h-4" />
         </button>
       </div>
 
       {feedback && (
         <div
-          className={`p-4 rounded-2xl border text-xs sm:text-sm flex items-start gap-2.5 ${
+          className={`p-3 rounded-2xl border text-xs flex items-start gap-2.5 ${
             feedback.type === "success"
               ? "bg-emerald-500/10 border-emerald-400/30 text-emerald-300"
               : "bg-rose-500/10 border-rose-400/30 text-rose-300"
@@ -438,27 +440,27 @@ export default function CompetitionsAdminPanel() {
           ) : (
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
           )}
-          <span>{feedback.message}</span>
+          <span className="min-w-0">{feedback.message}</span>
         </div>
       )}
 
       {/* Create form */}
       <form
         onSubmit={handleCreate}
-        className="rounded-3xl border border-white/10 bg-gradient-to-br from-[#0c1626] to-[#070e1a] p-5 sm:p-7 shadow-xl space-y-5"
+        className="min-w-0 rounded-2xl border border-white/10 bg-[#0a1322] p-3 space-y-3"
       >
-        <div className="border-b border-white/8 pb-4">
+        <div className="border-b border-white/8 pb-2">
           <h3 className="text-sm font-bold text-white">Create a Competition</h3>
-          <p className="text-[11px] text-wisdom-muted">
+          <p className="text-xs text-wisdom-muted">
             Questions, correct answers and solutions are copied from the chosen exam. Every
             question must have a solution. The contest is created hidden unless you tick
             &quot;Show to students now&quot;.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-1.5 md:col-span-2">
-            <label className="text-xs font-semibold text-slate-300">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="col-span-2 space-y-1">
+            <label className={LABEL}>
               Exam from the exam hub <span className="text-rose-400">*</span>
             </label>
             <select
@@ -477,15 +479,13 @@ export default function CompetitionsAdminPanel() {
             </select>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">
-              Title (optional, default: the exam title)
-            </label>
+          <div className="col-span-2 space-y-1">
+            <label className={LABEL}>Title (optional, default: the exam title)</label>
             <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className={INPUT} />
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">
+          <div className="col-span-2 space-y-1">
+            <label className={LABEL}>
               Starts at (Ethiopia time) <span className="text-rose-400">*</span>
             </label>
             <input
@@ -496,10 +496,8 @@ export default function CompetitionsAdminPanel() {
             />
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">
-              Duration in minutes (optional, default: the exam&apos;s own)
-            </label>
+          <div className="space-y-1">
+            <label className={LABEL}>Minutes (default: the exam&apos;s own)</label>
             <input
               type="text"
               inputMode="numeric"
@@ -509,20 +507,8 @@ export default function CompetitionsAdminPanel() {
             />
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">
-              Audience (optional, default: the exam&apos;s package)
-            </label>
-            <input
-              type="text"
-              value={audience}
-              onChange={(e) => setAudience(e.target.value)}
-              className={INPUT}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">Points for the account total</label>
+          <div className="space-y-1">
+            <label className={LABEL}>Points for the account total</label>
             <input
               type="text"
               inputMode="numeric"
@@ -532,10 +518,18 @@ export default function CompetitionsAdminPanel() {
             />
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">
-              Prize title (shown only after the contest ends)
-            </label>
+          <div className="col-span-2 space-y-1">
+            <label className={LABEL}>Audience (optional, default: the exam&apos;s package)</label>
+            <input
+              type="text"
+              value={audience}
+              onChange={(e) => setAudience(e.target.value)}
+              className={INPUT}
+            />
+          </div>
+
+          <div className="col-span-2 space-y-1">
+            <label className={LABEL}>Prize title (shown only after the contest ends)</label>
             <input
               type="text"
               value={prizeTitle}
@@ -544,10 +538,8 @@ export default function CompetitionsAdminPanel() {
             />
           </div>
 
-          <div className="space-y-1.5 md:col-span-2">
-            <label className="text-xs font-semibold text-slate-300">
-              Prize details (shown only after the contest ends)
-            </label>
+          <div className="col-span-2 space-y-1">
+            <label className={LABEL}>Prize details (shown only after the contest ends)</label>
             <textarea
               rows={2}
               value={prizeDetails}
@@ -556,74 +548,73 @@ export default function CompetitionsAdminPanel() {
             />
           </div>
 
-          <div className="md:col-span-2 flex flex-wrap gap-x-6 gap-y-2">
-            <label className="inline-flex items-center gap-2 cursor-pointer text-xs sm:text-sm text-white">
-              <input
-                type="checkbox"
-                checked={requiresPackage}
-                onChange={(e) => setRequiresPackage(e.target.checked)}
-                className="accent-sky-400"
-              />
-              <span>Only students who own the exam&apos;s package may enter</span>
-            </label>
-            <label className="inline-flex items-center gap-2 cursor-pointer text-xs sm:text-sm text-white">
-              <input
-                type="checkbox"
-                checked={publishNow}
-                onChange={(e) => setPublishNow(e.target.checked)}
-                className="accent-sky-400"
-              />
-              <span>Show to students now</span>
-            </label>
-          </div>
+          <label className="col-span-2 flex min-h-[44px] items-center gap-3 cursor-pointer text-sm text-white">
+            <input
+              type="checkbox"
+              checked={requiresPackage}
+              onChange={(e) => setRequiresPackage(e.target.checked)}
+              className="h-5 w-5 shrink-0 accent-sky-400"
+            />
+            <span className="min-w-0">Only students who own the exam&apos;s package may enter</span>
+          </label>
+          <label className="col-span-2 flex min-h-[44px] items-center gap-3 cursor-pointer text-sm text-white">
+            <input
+              type="checkbox"
+              checked={publishNow}
+              onChange={(e) => setPublishNow(e.target.checked)}
+              className="h-5 w-5 shrink-0 accent-sky-400"
+            />
+            <span className="min-w-0">Show to students now</span>
+          </label>
         </div>
 
-        <div className="pt-2 flex justify-end">
-          <button
-            type="submit"
-            disabled={busy === "create"}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-sky-400 hover:bg-sky-300 text-slate-950 font-bold text-sm shadow-lg shadow-sky-500/20 transition-all cursor-pointer disabled:opacity-50"
-          >
-            <Trophy className="w-4 h-4" />
-            <span>{busy === "create" ? "Creating..." : "Create competition"}</span>
-          </button>
-        </div>
+        <button
+          type="submit"
+          disabled={busy === "create"}
+          className="inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full bg-sky-400 active:bg-sky-300 text-slate-950 font-bold text-sm cursor-pointer disabled:opacity-50"
+        >
+          <Trophy className="w-4 h-4" />
+          <span>{busy === "create" ? "Creating..." : "Create competition"}</span>
+        </button>
       </form>
 
       {/* List */}
-      <div className="rounded-3xl border border-white/10 bg-[#08101e] p-5 sm:p-6 shadow-xl">
-        <h3 className="text-sm font-bold text-white mb-4">All Competitions ({rows.length})</h3>
+      <div className="min-w-0 rounded-2xl border border-white/10 bg-[#08101e] p-3">
+        <h3 className="text-sm font-bold text-white mb-2">All Competitions ({rows.length})</h3>
 
         {loading ? (
           <p className="text-xs text-wisdom-muted py-6 text-center">Loading...</p>
         ) : rows.length === 0 ? (
           <p className="text-xs text-wisdom-muted py-6 text-center">No competitions yet.</p>
         ) : (
-          <div className="divide-y divide-white/8">
+          <div className="space-y-3">
             {rows.map((c) => {
               const phase = phaseOf(c, nowMs);
               const cancelled = c.countdown_state === "cancelled";
               const paused = c.countdown_state === "paused";
               const upcoming = phase === "upcoming" && !cancelled;
               return (
-                <div key={c.id} className="py-4 space-y-3">
+                <div
+                  key={c.id}
+                  className="min-w-0 space-y-2 rounded-2xl border border-white/10 bg-white/[0.03] p-3"
+                >
                   <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <div className="flex flex-wrap items-center gap-1.5 mb-1">
                       <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-md border uppercase tracking-wider ${badgeClass(
+                        className={`text-[11px] font-bold px-2 py-0.5 rounded-md border uppercase tracking-wider ${badgeClass(
                           cancelled ? "cancelled" : paused ? "paused" : phase
                         )}`}
                       >
                         {cancelled ? "cancelled" : paused ? "paused" : phase}
                       </span>
                       <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-md border uppercase tracking-wider ${badgeClass(
+                        className={`text-[11px] font-bold px-2 py-0.5 rounded-md border uppercase tracking-wider ${badgeClass(
                           c.published ? "live" : "ended"
                         )}`}
                       >
                         {c.published ? "visible" : "hidden"}
                       </span>
-                      <span className="text-[11px] font-mono text-slate-500">
+                      <span className="min-w-0 text-[11px] font-mono text-slate-400">
                         {c.audience ? c.audience : "no audience set"}
                         {c.requires_package ? " / package required" : ""}
                       </span>
@@ -635,11 +626,11 @@ export default function CompetitionsAdminPanel() {
                       {c.points === 1 ? "" : "s"}
                     </p>
                     {c.prize_title && (
-                      <p className="text-[11px] text-slate-400 mt-0.5">Prize: {c.prize_title}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">Prize: {c.prize_title}</p>
                     )}
                   </div>
 
-                  <div className="flex flex-wrap gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
                       className={BTN}
@@ -736,7 +727,7 @@ export default function CompetitionsAdminPanel() {
                     {!cancelled && phase !== "ended" && (
                       <button
                         type="button"
-                        className={`${BTN} hover:text-rose-300`}
+                        className={`${BTN} active:text-rose-300`}
                         disabled={busy !== null}
                         onClick={() => {
                           if (
@@ -771,11 +762,9 @@ export default function CompetitionsAdminPanel() {
                   </div>
 
                   {editId === c.id && (
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-300">
-                          New start (Ethiopia time)
-                        </label>
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 grid grid-cols-2 gap-3 items-end">
+                      <div className="col-span-2 space-y-1">
+                        <label className={LABEL}>New start (Ethiopia time)</label>
                         <input
                           type="datetime-local"
                           value={editStart}
@@ -783,8 +772,8 @@ export default function CompetitionsAdminPanel() {
                           className={INPUT}
                         />
                       </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-300">Duration (minutes)</label>
+                      <div className="space-y-1">
+                        <label className={LABEL}>Minutes</label>
                         <input
                           type="text"
                           inputMode="numeric"
@@ -795,7 +784,7 @@ export default function CompetitionsAdminPanel() {
                       </div>
                       <button
                         type="button"
-                        className="px-4 py-2.5 rounded-xl bg-sky-400 hover:bg-sky-300 text-slate-950 font-bold text-sm cursor-pointer disabled:opacity-50"
+                        className="min-h-[44px] rounded-full bg-sky-400 active:bg-sky-300 text-slate-950 font-bold text-sm cursor-pointer disabled:opacity-50"
                         disabled={busy !== null}
                         onClick={() => void handleReschedule(c)}
                       >
@@ -805,7 +794,7 @@ export default function CompetitionsAdminPanel() {
                   )}
 
                   {entriesFor === c.id && (
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                    <div className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
                       {entriesLoading ? (
                         <p className="text-xs text-wisdom-muted">Loading entries...</p>
                       ) : entries.length === 0 ? (
@@ -818,10 +807,7 @@ export default function CompetitionsAdminPanel() {
                             </p>
                           )}
                           {entries.map((en) => (
-                            <div
-                              key={en.id}
-                              className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
-                            >
+                            <div key={en.id} className="py-2.5 flex flex-col gap-2">
                               <div className="min-w-0 text-xs">
                                 <span className="font-bold text-white">
                                   {names[en.user_id] ?? "(unknown)"}
@@ -844,7 +830,7 @@ export default function CompetitionsAdminPanel() {
                               {!en.disqualified && (
                                 <button
                                   type="button"
-                                  className={`${BTN} hover:text-rose-300`}
+                                  className={`${BTN} w-full active:text-rose-300`}
                                   disabled={busy !== null}
                                   onClick={() => void handleDisqualify(en)}
                                 >
