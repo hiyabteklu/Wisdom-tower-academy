@@ -1,5 +1,9 @@
 "use client";
 
+// Admin mobile redesign A11 (layout only). Logic, state, data calls and texts are unchanged.
+// Phone rules: no horizontal scrolling, 44 px touch targets, no animate-* / blur / shadow,
+// page chips as a 2-column grid, item cards stacked (info row, then buttons row).
+
 import { useCallback, useEffect, useState } from "react";
 import {
   FREE_RESOURCE_LABELS,
@@ -36,8 +40,12 @@ import {
 } from "lucide-react";
 
 const inputCls =
-  "mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2.5 text-sm text-white";
-const labelCls = "block text-xs text-wisdom-muted";
+  "mt-1 w-full min-h-[44px] min-w-0 rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2.5 text-sm text-white";
+const labelCls = "block min-w-0 text-xs text-wisdom-muted";
+const pillCls =
+  "inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full px-4 text-sm font-bold";
+const checkRowCls = "flex min-h-[44px] items-center gap-3 text-sm";
+const checkCls = "h-5 w-5 shrink-0";
 
 function emptyMetaFor(kind: FreeResourceItemKind, slug: FreeResourceSlug): Record<string, unknown> {
   if (kind === "success_story") {
@@ -260,20 +268,20 @@ export default function FreeResourcesPanel() {
         : "Add note";
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 break-words">
       {toast && (
         <div className="rounded-xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
           {toast}
         </div>
       )}
 
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="space-y-3">
         <div>
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-cyan-400" />
+          <h2 className="flex items-center gap-2 text-lg font-bold text-white">
+            <BookOpen className="h-5 w-5 shrink-0 text-cyan-400" />
             Free resources
           </h2>
-          <p className="text-sm text-wisdom-muted mt-0.5 max-w-xl">
+          <p className="mt-1 text-sm text-wisdom-muted">
             Stories and scholarships are full cards. University, department, campus life, and study
             technique notes only append at the end of the hard-coded guides.
           </p>
@@ -281,14 +289,14 @@ export default function FreeResourcesPanel() {
         <button
           type="button"
           onClick={load}
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/12 text-sm"
+          className={`${pillCls} w-full border border-white/12 text-white`}
         >
-          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-          Refresh
+          <RefreshCw className="h-4 w-4" />
+          {loading ? "Refreshing…" : "Refresh"}
         </button>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-2 gap-2">
         {FREE_RESOURCE_SLUGS.map((slug) => {
           const page = pages.find((p) => p.slug === slug);
           const isActive = activeSlug === slug;
@@ -298,56 +306,52 @@ export default function FreeResourcesPanel() {
               key={slug}
               type="button"
               onClick={() => setActiveSlug(slug)}
-              className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold border transition-colors ${
+              className={`flex min-h-[44px] min-w-0 items-center gap-2 rounded-xl border px-3 py-2 text-left text-sm font-semibold leading-tight ${
                 isActive
                   ? "border-cyan-400/50 bg-cyan-500/15 text-cyan-200"
-                  : "border-white/10 text-wisdom-muted hover:text-white hover:border-white/20"
+                  : "border-white/10 text-wisdom-muted"
               }`}
             >
               {noteOnly ? (
-                <StickyNote className="w-3.5 h-3.5 text-amber-300" />
+                <StickyNote className="h-4 w-4 shrink-0 text-amber-300" />
               ) : page?.published ? (
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
               ) : (
-                <Circle className="w-3.5 h-3.5 opacity-50" />
+                <Circle className="h-4 w-4 shrink-0 opacity-50" />
               )}
-              {FREE_RESOURCE_LABELS[slug]}
+              <span className="min-w-0 break-words">{FREE_RESOURCE_LABELS[slug]}</span>
             </button>
           );
         })}
       </div>
 
       {!isNoteOnly && (
-        <div className="rounded-2xl border border-white/12 bg-wisdom-card p-4 sm:p-5 space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-xs uppercase tracking-wider text-wisdom-muted">
-              Page settings · <code className="text-cyan-300">{activeSlug}</code>
-            </p>
-            <a
-              href={`/academy/${activeSlug}`}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm text-cyan-300 hover:underline"
-            >
-              Open live page <ExternalLink className="w-3.5 h-3.5" />
-            </a>
-          </div>
+        <div className="space-y-3 rounded-2xl border border-white/12 bg-wisdom-card p-4">
+          <p className="text-xs uppercase tracking-wider text-wisdom-muted">
+            Page settings · <code className="break-all text-cyan-300">{activeSlug}</code>
+          </p>
+          <a
+            href={`/academy/${activeSlug}`}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex min-h-[44px] items-center gap-1.5 text-sm text-cyan-300"
+          >
+            Open live page <ExternalLink className="h-3.5 w-3.5" />
+          </a>
 
-          <div className="grid sm:grid-cols-2 gap-3">
-            <label className={labelCls}>
-              Page title
-              <input className={inputCls} value={pageTitle} onChange={(e) => setPageTitle(e.target.value)} />
-            </label>
-            <label className={labelCls}>
-              Subtitle
-              <input
-                className={inputCls}
-                value={pageSubtitle}
-                onChange={(e) => setPageSubtitle(e.target.value)}
-                placeholder="One line under the title"
-              />
-            </label>
-          </div>
+          <label className={labelCls}>
+            Page title
+            <input className={inputCls} value={pageTitle} onChange={(e) => setPageTitle(e.target.value)} />
+          </label>
+          <label className={labelCls}>
+            Subtitle
+            <input
+              className={inputCls}
+              value={pageSubtitle}
+              onChange={(e) => setPageSubtitle(e.target.value)}
+              placeholder="One line under the title"
+            />
+          </label>
 
           <label className={labelCls}>
             {activeSlug === "scholarships" ? "Tips and guidance (Markdown)" : "Intro blurb (Markdown, optional)"}
@@ -360,32 +364,31 @@ export default function FreeResourcesPanel() {
             />
           </label>
 
-          <div className="flex flex-wrap items-center gap-4">
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={pagePublished}
-                onChange={(e) => setPagePublished(e.target.checked)}
-              />
-              Page published
-            </label>
-            <button
-              type="button"
-              disabled={savingPage}
-              onClick={savePage}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500 text-wisdom-dark text-sm font-bold disabled:opacity-50"
-            >
-              <Save className="w-4 h-4" />
-              {savingPage ? "Saving…" : "Save page"}
-            </button>
-          </div>
+          <label className={checkRowCls}>
+            <input
+              type="checkbox"
+              className={checkCls}
+              checked={pagePublished}
+              onChange={(e) => setPagePublished(e.target.checked)}
+            />
+            Page published
+          </label>
+          <button
+            type="button"
+            disabled={savingPage}
+            onClick={savePage}
+            className={`${pillCls} w-full bg-cyan-500 text-wisdom-dark disabled:opacity-50`}
+          >
+            <Save className="h-4 w-4" />
+            {savingPage ? "Saving…" : "Save page"}
+          </button>
         </div>
       )}
 
       {isNoteOnly && (
         <div className="rounded-2xl border border-amber-400/25 bg-amber-500/5 p-4 text-sm text-wisdom-muted">
-          <p className="font-semibold text-amber-200 mb-1 flex items-center gap-2">
-            <StickyNote className="w-4 h-4" />
+          <p className="mb-1 flex items-center gap-2 font-semibold text-amber-200">
+            <StickyNote className="h-4 w-4 shrink-0" />
             Additive notes only
           </p>
           <p>
@@ -396,39 +399,37 @@ export default function FreeResourcesPanel() {
             href={`/academy/${activeSlug === "universities" ? "universities" : activeSlug}`}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1.5 text-cyan-300 hover:underline mt-2"
+            className="mt-1 inline-flex min-h-[44px] items-center gap-1.5 text-cyan-300"
           >
-            Open live page <ExternalLink className="w-3.5 h-3.5" />
+            Open live page <ExternalLink className="h-3.5 w-3.5" />
           </a>
         </div>
       )}
 
       {hasItemList && (
         <div className="space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 className="font-semibold text-white">
-              {itemKind === "success_story" && "Student stories"}
-              {itemKind === "scholarship" && "Opportunity listings"}
-              {isNoteOnly && "Published notes"}
-              <span className="ml-2 text-sm font-normal text-wisdom-muted">
-                {items.length} · {items.filter((i) => i.published).length} live
-              </span>
-            </h3>
-            <button
-              type="button"
-              onClick={openNewItem}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500 text-wisdom-dark text-sm font-bold"
-            >
-              <Plus className="w-4 h-4" />
-              {addLabel}
-            </button>
-          </div>
+          <h3 className="font-semibold text-white">
+            {itemKind === "success_story" && "Student stories"}
+            {itemKind === "scholarship" && "Opportunity listings"}
+            {isNoteOnly && "Published notes"}
+            <span className="ml-2 text-sm font-normal text-wisdom-muted">
+              {items.length} · {items.filter((i) => i.published).length} live
+            </span>
+          </h3>
+          <button
+            type="button"
+            onClick={openNewItem}
+            className={`${pillCls} w-full bg-amber-500 text-wisdom-dark`}
+          >
+            <Plus className="h-4 w-4" />
+            {addLabel}
+          </button>
 
-          {loading && <p className="text-sm text-wisdom-muted py-6 text-center">Loading…</p>}
+          {loading && <p className="py-6 text-center text-sm text-wisdom-muted">Loading…</p>}
 
           {!loading && items.length === 0 && !editing && (
-            <p className="text-center text-wisdom-muted text-sm py-10 border border-dashed border-white/15 rounded-2xl">
-              No items yet. Click <strong className="text-white">Add</strong> to create the first one.
+            <p className="rounded-2xl border border-dashed border-white/15 py-10 text-center text-sm text-wisdom-muted">
+              No items yet. Tap <strong className="text-white">Add</strong> to create the first one.
             </p>
           )}
 
@@ -439,72 +440,80 @@ export default function FreeResourcesPanel() {
               return (
                 <li
                   key={item.id}
-                  className="flex flex-wrap items-center gap-3 rounded-2xl border border-white/12 bg-wisdom-card p-3"
+                  className="space-y-3 rounded-2xl border border-white/12 bg-wisdom-card p-3"
                 >
-                  <div className="w-12 h-12 rounded-xl overflow-hidden bg-white/5 border border-white/10 shrink-0 flex items-center justify-center">
-                    {item.imagePath ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={freeResourcePublicUrl(item.imagePath)}
-                        alt=""
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <ImageIcon className="w-5 h-5 text-wisdom-muted" />
-                    )}
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-white/5">
+                      {item.imagePath ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={freeResourcePublicUrl(item.imagePath)}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <ImageIcon className="h-5 w-5 text-wisdom-muted" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="flex items-start gap-2 font-semibold text-white">
+                        <span className="min-w-0 break-words">{item.title}</span>
+                        {item.featured && <Star className="mt-1 h-3.5 w-3.5 shrink-0 text-amber-300" />}
+                      </p>
+                      <p className="break-words text-xs text-wisdom-muted">
+                        {uni ? `${uni.abbr} · ${uni.name}` : item.subtitle || item.kind}
+                        {item.published ? " · published" : " · draft"}
+                      </p>
+                    </div>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-white truncate flex items-center gap-2">
-                      {item.title}
-                      {item.featured && <Star className="w-3.5 h-3.5 text-amber-300" />}
-                    </p>
-                    <p className="text-xs text-wisdom-muted truncate">
-                      {uni ? `${uni.abbr} · ${uni.name}` : item.subtitle || item.kind}
-                      {item.published ? " · published" : " · draft"}
-                    </p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => openEditItem(item)}
+                      className={`${pillCls} flex-1 border border-white/12 text-white`}
+                    >
+                      <Pencil className="h-4 w-4" /> Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeItem(item.id)}
+                      aria-label="Delete item"
+                      className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-rose-400/30 text-rose-300"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => openEditItem(item)}
-                    className="px-3 py-1.5 rounded-lg border border-white/12 text-xs font-semibold"
-                  >
-                    <Pencil className="w-3.5 h-3.5 inline" /> Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => removeItem(item.id)}
-                    className="px-3 py-1.5 rounded-lg border border-rose-400/30 text-xs text-rose-300"
-                  >
-                    <Trash2 className="w-3.5 h-3.5 inline" />
-                  </button>
                 </li>
               );
             })}
           </ul>
 
           {editing && (
-            <div className="rounded-2xl border border-amber-400/30 bg-wisdom-card p-4 sm:p-5 space-y-3">
-              <div className="flex justify-between items-center">
+            <div className="space-y-3 rounded-2xl border border-amber-400/30 bg-wisdom-card p-4">
+              <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-white">{isNew ? "New item" : "Edit item"}</h3>
-                <button type="button" onClick={() => setEditing(null)} className="p-2">
-                  <X className="w-4 h-4" />
+                <button
+                  type="button"
+                  onClick={() => setEditing(null)}
+                  aria-label="Close editor"
+                  className="inline-flex h-11 w-11 items-center justify-center"
+                >
+                  <X className="h-4 w-4" />
                 </button>
               </div>
 
-              <div className="grid sm:grid-cols-2 gap-3">
-                <label className={labelCls}>
-                  Title *
-                  <input className={inputCls} value={itTitle} onChange={(e) => setItTitle(e.target.value)} />
-                </label>
-                <label className={labelCls}>
-                  Subtitle
-                  <input
-                    className={inputCls}
-                    value={itSubtitle}
-                    onChange={(e) => setItSubtitle(e.target.value)}
-                  />
-                </label>
-              </div>
+              <label className={labelCls}>
+                Title *
+                <input className={inputCls} value={itTitle} onChange={(e) => setItTitle(e.target.value)} />
+              </label>
+              <label className={labelCls}>
+                Subtitle
+                <input
+                  className={inputCls}
+                  value={itSubtitle}
+                  onChange={(e) => setItSubtitle(e.target.value)}
+                />
+              </label>
 
               {activeSlug === "universities" && (
                 <label className={labelCls}>
@@ -525,7 +534,7 @@ export default function FreeResourcesPanel() {
               )}
 
               {itemKind === "success_story" && (
-                <div className="grid sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   <label className={labelCls}>
                     Student name
                     <input
@@ -559,7 +568,7 @@ export default function FreeResourcesPanel() {
                       onChange={(e) => setMetaField("year", e.target.value)}
                     />
                   </label>
-                  <label className={`${labelCls} sm:col-span-2`}>
+                  <label className={`${labelCls} col-span-2`}>
                     Quote
                     <input
                       className={inputCls}
@@ -571,7 +580,7 @@ export default function FreeResourcesPanel() {
               )}
 
               {itemKind === "scholarship" && (
-                <div className="grid sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   <label className={labelCls}>
                     Organization
                     <input
@@ -588,7 +597,7 @@ export default function FreeResourcesPanel() {
                       onChange={(e) => setMetaField("amount", e.target.value)}
                     />
                   </label>
-                  <label className={labelCls}>
+                  <label className={`${labelCls} col-span-2`}>
                     Deadline
                     <input
                       className={inputCls}
@@ -597,7 +606,7 @@ export default function FreeResourcesPanel() {
                       onChange={(e) => setItDeadline(e.target.value)}
                     />
                   </label>
-                  <label className={labelCls}>
+                  <label className={`${labelCls} col-span-2`}>
                     External URL
                     <input
                       className={inputCls}
@@ -606,7 +615,7 @@ export default function FreeResourcesPanel() {
                       placeholder="https://…"
                     />
                   </label>
-                  <label className={`${labelCls} sm:col-span-2`}>
+                  <label className={`${labelCls} col-span-2`}>
                     Eligibility
                     <textarea
                       className={inputCls}
@@ -640,35 +649,35 @@ export default function FreeResourcesPanel() {
                 </label>
               )}
 
-              <div className="flex flex-wrap items-center gap-4">
-                <label className="flex items-center gap-2 text-sm">
+              <label className={checkRowCls}>
+                <input
+                  type="checkbox"
+                  className={checkCls}
+                  checked={itPublished}
+                  onChange={(e) => setItPublished(e.target.checked)}
+                />
+                Published
+              </label>
+              {!isNoteOnly && (
+                <label className={checkRowCls}>
                   <input
                     type="checkbox"
-                    checked={itPublished}
-                    onChange={(e) => setItPublished(e.target.checked)}
+                    className={checkCls}
+                    checked={itFeatured}
+                    onChange={(e) => setItFeatured(e.target.checked)}
                   />
-                  Published
+                  Featured
                 </label>
-                {!isNoteOnly && (
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={itFeatured}
-                      onChange={(e) => setItFeatured(e.target.checked)}
-                    />
-                    Featured
-                  </label>
-                )}
-                <button
-                  type="button"
-                  disabled={savingItem}
-                  onClick={saveItem}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500 text-wisdom-dark text-sm font-bold disabled:opacity-50"
-                >
-                  <Save className="w-4 h-4" />
-                  {savingItem ? "Saving…" : "Save item"}
-                </button>
-              </div>
+              )}
+              <button
+                type="button"
+                disabled={savingItem}
+                onClick={saveItem}
+                className={`${pillCls} w-full bg-cyan-500 text-wisdom-dark disabled:opacity-50`}
+              >
+                <Save className="h-4 w-4" />
+                {savingItem ? "Saving…" : "Save item"}
+              </button>
             </div>
           )}
         </div>
