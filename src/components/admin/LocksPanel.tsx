@@ -1,5 +1,9 @@
 "use client";
 
+// Admin mobile redesign A12 (layout only). Logic, lock keys, data calls and texts are unchanged.
+// Phone rules: no horizontal scrolling, 44 px touch targets, no animate-* / blur / shadow,
+// lock modes as a 2-column grid of tiles, folders as 2-column tiles with wrapping labels.
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ADMIN_CONTENT_TREE,
@@ -66,10 +70,15 @@ const HUB_IDS = [
   "life-savers",
 ];
 
+const modeTileCls =
+  "flex min-h-[44px] min-w-0 items-center justify-center gap-1.5 rounded-xl border px-2 py-2 text-center text-sm font-semibold leading-tight disabled:opacity-50";
+const resetCls =
+  "col-span-2 flex min-h-[44px] items-center justify-center rounded-full border border-white/12 px-4 text-sm font-semibold text-wisdom-muted disabled:opacity-40";
+
 function modeBadge(mode: LockMode | undefined) {
   if (!mode)
     return (
-      <span className="text-xs text-wisdom-muted border border-white/10 px-2 py-0.5 rounded-lg">
+      <span className="rounded-lg border border-white/10 px-2 py-0.5 text-xs text-wisdom-muted">
         default
       </span>
     );
@@ -81,7 +90,7 @@ function modeBadge(mode: LockMode | undefined) {
   };
   return (
     <span
-      className={`text-xs font-semibold px-2 py-0.5 rounded-lg border ${colors[mode]}`}
+      className={`rounded-lg border px-2 py-0.5 text-xs font-semibold ${colors[mode]}`}
     >
       {mode.replace("_", " ")}
     </span>
@@ -183,7 +192,7 @@ export default function LocksPanel() {
   const activeLock = activeKey ? lockMap.get(activeKey) : undefined;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 break-words">
       {toast && (
         <div className="rounded-xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
           {toast}
@@ -195,13 +204,13 @@ export default function LocksPanel() {
         </div>
       )}
 
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="space-y-3">
         <div>
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
-            <Shield className="w-5 h-5 text-amber-400" />
+          <h2 className="flex items-center gap-2 text-lg font-bold text-white">
+            <Shield className="h-5 w-5 shrink-0 text-amber-400" />
             Content locks
           </h2>
-          <p className="text-sm text-wisdom-muted mt-0.5">
+          <p className="mt-1 text-sm text-wisdom-muted">
             Lock or unlock packages, subjects, and hubs (books, exams, etc.).
             Specific exams stay controlled by the Published checkbox in Content.
           </p>
@@ -210,44 +219,45 @@ export default function LocksPanel() {
           type="button"
           onClick={load}
           disabled={loading}
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/12 text-sm hover:bg-white/5 disabled:opacity-50"
+          className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full border border-white/12 text-sm font-bold text-white disabled:opacity-50"
         >
-          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-          Refresh
+          <RefreshCw className="h-4 w-4" />
+          {loading ? "Refreshing…" : "Refresh"}
         </button>
       </div>
 
       {/* Package-level shortcuts */}
-      <div className="rounded-2xl border border-white/12 bg-wisdom-card p-4 space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-wider text-wisdom-muted flex items-center gap-2">
-          <Package className="w-3.5 h-3.5" />
+      <div className="space-y-3 rounded-2xl border border-white/12 bg-wisdom-card p-4">
+        <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-wisdom-muted">
+          <Package className="h-3.5 w-3.5 shrink-0" />
           Package shortcuts
         </p>
-        <ul className="space-y-2">
+        <ul className="space-y-3">
           {PACKAGE_SHORTCUTS.map((p) => {
             const key = packageLockKey(p.id);
             const lock = lockMap.get(key);
             return (
               <li
                 key={p.id}
-                className="flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-wisdom-dark/40 px-3 py-2.5"
+                className="space-y-2 rounded-xl border border-white/10 bg-wisdom-dark/40 p-3"
               >
-                <span className="font-semibold text-white text-sm min-w-[10rem]">
-                  {p.label}
-                </span>
-                {modeBadge(lock?.mode)}
-                <div className="flex flex-wrap gap-1.5 ml-auto">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="min-w-0 text-sm font-semibold text-white">
+                    {p.label}
+                  </span>
+                  {modeBadge(lock?.mode)}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
                   {MODES.map((m) => (
                     <button
                       key={m.id}
                       type="button"
                       disabled={busyKey === key}
-                      title={m.hint}
                       onClick={() => applyMode(key, m.id, p.label)}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold border ${
+                      className={`${modeTileCls} ${
                         lock?.mode === m.id
                           ? "border-amber-400/50 bg-amber-500/20 text-amber-100"
-                          : "border-white/12 text-wisdom-muted hover:text-white"
+                          : "border-white/12 text-wisdom-muted"
                       }`}
                     >
                       {m.label}
@@ -257,7 +267,7 @@ export default function LocksPanel() {
                     type="button"
                     disabled={busyKey === key || !lock}
                     onClick={() => resetToDefault(key)}
-                    className="px-2.5 py-1 rounded-lg text-xs border border-white/10 text-wisdom-muted hover:text-white disabled:opacity-40"
+                    className={resetCls}
                   >
                     Default
                   </button>
@@ -269,25 +279,25 @@ export default function LocksPanel() {
       </div>
 
       {/* Tree navigation */}
-      <nav className="flex flex-wrap items-center gap-1 text-sm">
+      <nav className="flex flex-wrap items-center gap-x-1 text-sm">
         <button
           type="button"
           onClick={resetRoot}
-          className="text-amber-300 hover:underline font-medium"
+          className="min-h-[44px] px-1 font-medium text-amber-300"
         >
           Academy
         </button>
         {crumbs.map((c, i) => (
           <span key={c.id + i} className="flex items-center gap-1">
-            <ChevronRight className="w-3.5 h-3.5 text-wisdom-muted" />
+            <ChevronRight className="h-3.5 w-3.5 shrink-0 text-wisdom-muted" />
             <button
               type="button"
               onClick={() => goTo(i)}
-              className={
+              className={`min-h-[44px] px-1 text-left ${
                 i === crumbs.length - 1
-                  ? "text-white font-semibold"
-                  : "text-cyan-300 hover:underline"
-              }
+                  ? "font-semibold text-white"
+                  : "text-cyan-300"
+              }`}
             >
               {c.label}
             </button>
@@ -297,48 +307,47 @@ export default function LocksPanel() {
 
       {/* Controls for current node */}
       {activeKey && (
-        <div className="rounded-2xl border border-amber-400/25 bg-wisdom-card p-4 space-y-3">
+        <div className="space-y-3 rounded-2xl border border-amber-400/25 bg-wisdom-card p-4">
           <div className="flex flex-wrap items-center gap-2">
             {activeLock?.mode === "open" || !activeLock ? (
-              <Unlock className="w-4 h-4 text-emerald-300" />
+              <Unlock className="h-4 w-4 shrink-0 text-emerald-300" />
             ) : (
-              <Lock className="w-4 h-4 text-rose-300" />
+              <Lock className="h-4 w-4 shrink-0 text-rose-300" />
             )}
-            <p className="font-semibold text-white">
+            <p className="min-w-0 font-semibold text-white">
               {current?.label || "Selection"}
             </p>
             {modeBadge(activeLock?.mode)}
           </div>
-          <p className="text-xs text-wisdom-muted font-mono">{activeKey}</p>
-          <div className="flex flex-wrap gap-2">
+          <p className="break-all font-mono text-xs text-wisdom-muted">{activeKey}</p>
+          <div className="grid grid-cols-2 gap-2">
             {MODES.map((m) => (
               <button
                 key={m.id}
                 type="button"
                 disabled={busyKey === activeKey}
-                title={m.hint}
                 onClick={() =>
                   applyMode(activeKey, m.id, current?.label || activeKey)
                 }
-                className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold border ${
+                className={`${modeTileCls} ${
                   activeLock?.mode === m.id
                     ? "border-amber-400/50 bg-amber-500/20 text-amber-100"
-                    : "border-white/12 text-wisdom-muted hover:text-white hover:bg-white/5"
+                    : "border-white/12 text-wisdom-muted"
                 }`}
               >
                 {m.id === "open" ? (
-                  <Unlock className="w-3.5 h-3.5" />
+                  <Unlock className="h-3.5 w-3.5 shrink-0" />
                 ) : (
-                  <Lock className="w-3.5 h-3.5" />
+                  <Lock className="h-3.5 w-3.5 shrink-0" />
                 )}
-                {m.label}
+                <span className="min-w-0">{m.label}</span>
               </button>
             ))}
             <button
               type="button"
               disabled={busyKey === activeKey || !activeLock}
               onClick={() => resetToDefault(activeKey)}
-              className="px-3 py-2 rounded-xl text-sm border border-white/12 text-wisdom-muted hover:text-white disabled:opacity-40"
+              className={resetCls}
             >
               Reset to code default
             </button>
@@ -353,7 +362,7 @@ export default function LocksPanel() {
 
       {/* Children list */}
       {!isHub && listNodes.length > 0 && (
-        <ul className="grid sm:grid-cols-2 gap-2">
+        <ul className="grid grid-cols-2 gap-2">
           {listNodes.map((node) => {
             const childKey =
               node.scopePath && HUB_IDS.includes(node.id)
@@ -365,24 +374,20 @@ export default function LocksPanel() {
                     : null;
             const childLock = childKey ? lockMap.get(childKey) : undefined;
             return (
-              <li key={node.id}>
+              <li key={node.id} className="min-w-0">
                 <button
                   type="button"
                   onClick={() => enter(node)}
-                  className="w-full flex items-center gap-3 rounded-2xl border border-white/12 bg-wisdom-card px-4 py-3.5 text-left hover:border-amber-400/40 transition-colors"
+                  className="flex h-full min-h-[64px] w-full flex-col items-start gap-1.5 rounded-2xl border border-white/12 bg-wisdom-card p-3 text-left"
                 >
-                  <FolderOpen className="w-5 h-5 text-amber-400 shrink-0" />
-                  <span className="flex-1 min-w-0">
-                    <span className="font-semibold text-white block truncate">
-                      {node.label}
-                    </span>
-                    {childLock && (
-                      <span className="mt-1 inline-block">
-                        {modeBadge(childLock.mode)}
-                      </span>
-                    )}
+                  <span className="flex w-full items-center justify-between">
+                    <FolderOpen className="h-5 w-5 shrink-0 text-amber-400" />
+                    <ChevronRight className="h-4 w-4 shrink-0 text-wisdom-muted" />
                   </span>
-                  <ChevronRight className="w-4 h-4 text-wisdom-muted" />
+                  <span className="break-words text-sm font-semibold leading-tight text-white">
+                    {node.label}
+                  </span>
+                  {childLock && modeBadge(childLock.mode)}
                 </button>
               </li>
             );
@@ -391,7 +396,7 @@ export default function LocksPanel() {
       )}
 
       {isHub && (
-        <p className="text-sm text-wisdom-muted text-center py-6 border border-dashed border-white/15 rounded-2xl">
+        <p className="rounded-2xl border border-dashed border-white/15 py-6 text-center text-sm text-wisdom-muted">
           This is a hub. Use the buttons above to lock/unlock the whole hub.
           Open the <strong className="text-white">Content</strong> tab to publish
           or unpublish individual exams and items.
@@ -399,17 +404,20 @@ export default function LocksPanel() {
       )}
 
       {locks.length > 0 && crumbs.length === 0 && (
-        <div className="pt-2">
-          <p className="text-xs font-semibold uppercase tracking-wider text-wisdom-muted mb-2">
+        <div className="pt-1">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-wisdom-muted">
             All active overrides ({locks.length})
           </p>
-          <ul className="space-y-1.5 max-h-48 overflow-y-auto text-xs font-mono">
+          <ul
+            className="max-h-60 space-y-2 text-xs"
+            style={{ overflowY: "auto", overscrollBehavior: "contain" }}
+          >
             {locks.map((l) => (
               <li
                 key={l.lockKey}
-                className="flex items-center gap-2 text-wisdom-muted"
+                className="flex flex-wrap items-center gap-2 text-wisdom-muted"
               >
-                <span className="text-cyan-300/90 truncate">{l.lockKey}</span>
+                <span className="min-w-0 break-all font-mono text-cyan-300/90">{l.lockKey}</span>
                 {modeBadge(l.mode)}
               </li>
             ))}
