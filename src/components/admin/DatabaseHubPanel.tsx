@@ -453,6 +453,8 @@ export default function DatabaseHubPanel() {
   const [checking, setChecking] = useState(false);
   const [copied, setCopied] = useState(false);
   const [selectedSection, setSelectedSection] = useState<"master" | "instructions" | "faq">("master");
+  // A16 (layout only): the long SQL text is hidden until the admin asks to see it.
+  const [showSql, setShowSql] = useState(false);
 
   const runHealthCheck = useCallback(async () => {
     setChecking(true);
@@ -513,127 +515,114 @@ export default function DatabaseHubPanel() {
   const missingCount = healthList.filter((h) => h.status === "missing").length;
 
   return (
-    <div className="space-y-6">
-      {/* Top Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/8 pb-4">
-        <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <Database className="w-5 h-5 text-cyan-400" />
+    <div className="space-y-4">
+      {/* Top header: title, then two equal pills */}
+      <div className="space-y-3 border-b border-white/8 pb-4">
+        <div className="min-w-0">
+          <h2 className="text-lg font-bold text-white flex items-start gap-2 break-words">
+            <Database className="w-5 h-5 mt-0.5 shrink-0 text-cyan-400" />
             Supabase & System Architecture Hub
           </h2>
-          <p className="text-sm text-wisdom-muted mt-0.5">
+          <p className="text-sm text-wisdom-muted mt-0.5 break-words">
             Real-time diagnostic health check, schema validation, and copy-paste SQL scripts
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={runHealthCheck}
             disabled={checking}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-white/12 text-sm font-semibold hover:bg-white/5 disabled:opacity-50 transition-colors"
+            className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-full border border-white/12 px-3 text-sm font-semibold text-white/80 text-center leading-tight disabled:opacity-50"
           >
-            <RefreshCw className={`w-4 h-4 ${checking ? "animate-spin text-cyan-400" : ""}`} />
-            Recheck Tables
+            <RefreshCw className="w-4 h-4 shrink-0" />
+            {checking ? "Checking…" : "Recheck Tables"}
           </button>
           <a
             href="https://supabase.com/dashboard/project/_/sql/new"
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-cyan-500 text-wisdom-dark font-bold text-sm hover:bg-cyan-400 transition-colors"
+            className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-full bg-cyan-500 px-3 text-sm font-bold text-wisdom-dark text-center leading-tight"
           >
             Open SQL Editor
-            <ExternalLink className="w-3.5 h-3.5" />
+            <ExternalLink className="w-3.5 h-3.5 shrink-0" />
           </a>
         </div>
       </div>
 
-      {/* Health Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-        <div className="rounded-2xl border border-white/10 bg-wisdom-card p-4 sm:p-5">
+      {/* Health overview: first card full width, the other two side by side */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="col-span-2 rounded-2xl border border-white/10 bg-wisdom-card p-4">
           <p className="text-xs font-semibold uppercase tracking-wider text-wisdom-muted">
             Database Health
           </p>
-          <div className="flex items-baseline gap-2 mt-1">
-            <p className="text-2xl sm:text-3xl font-bold text-white tabular-nums">
+          <div className="flex flex-wrap items-baseline gap-2 mt-1">
+            <p className="text-2xl font-bold text-white tabular-nums">
               {healthyCount} / {healthList.length}
             </p>
             <span className="text-xs text-emerald-400 font-semibold">Active Tables</span>
           </div>
-          <p className="text-xs text-wisdom-muted mt-1">
+          <p className="text-sm text-wisdom-muted mt-1 break-words">
             {missingCount === 0
               ? "All core tables and schemas are online"
               : `${missingCount} table(s) need initialization`}
           </p>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-wisdom-card p-4 sm:p-5">
+        <div className="rounded-2xl border border-white/10 bg-wisdom-card p-4 min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wider text-wisdom-muted">
             Security & RLS
           </p>
-          <div className="flex items-center gap-2 mt-1.5">
-            <ShieldCheck className="w-6 h-6 text-emerald-400" />
-            <span className="text-base font-bold text-white">Row Level Security</span>
-          </div>
-          <p className="text-xs text-wisdom-muted mt-1">
+          <ShieldCheck className="w-6 h-6 mt-2 text-emerald-400" />
+          <p className="text-sm font-bold text-white mt-1 break-words">Row Level Security</p>
+          <p className="text-xs text-wisdom-muted mt-1 break-words">
             Strict isolation: students access own data; admins manage all
           </p>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-wisdom-card p-4 sm:p-5">
+        <div className="rounded-2xl border border-white/10 bg-wisdom-card p-4 min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wider text-wisdom-muted">
             Auto-ID Sequencing
           </p>
-          <div className="flex items-center gap-2 mt-1.5">
-            <Zap className="w-5 h-5 text-amber-400" />
-            <span className="text-base font-bold text-white">WTA-XXXXX Digital IDs</span>
-          </div>
-          <p className="text-xs text-wisdom-muted mt-1">
+          <Zap className="w-6 h-6 mt-2 text-amber-400" />
+          <p className="text-sm font-bold text-white mt-1 break-words">WTA-XXXXX Digital IDs</p>
+          <p className="text-xs text-wisdom-muted mt-1 break-words">
             Auto-assigned to students upon registration with 1-year expiry
           </p>
         </div>
       </div>
 
-      {/* Table Diagnostic Matrix */}
+      {/* Table diagnostic list: stacked cards, no table, no sideways scroll */}
       <div className="rounded-2xl border border-white/10 bg-wisdom-card overflow-hidden">
-        <div className="p-4 sm:p-5 border-b border-white/8 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h3 className="font-semibold text-white flex items-center gap-2">
-              <Layers className="w-4 h-4 text-cyan-400" />
-              Live Database Diagnostic Matrix
-            </h3>
-            <p className="text-xs text-wisdom-muted mt-0.5">
-              Current accessibility status of all application tables via authenticated client
-            </p>
-          </div>
+        <div className="p-4 border-b border-white/8">
+          <h3 className="font-semibold text-white flex items-start gap-2 break-words">
+            <Layers className="w-4 h-4 mt-1 shrink-0 text-cyan-400" />
+            Live Database Diagnostic Matrix
+          </h3>
+          <p className="text-xs text-wisdom-muted mt-0.5 break-words">
+            Current accessibility status of all application tables via authenticated client
+          </p>
         </div>
 
-        <div className="divide-y divide-white/6 overflow-x-auto">
+        <ul className="divide-y divide-white/6">
           {healthList.map((item) => (
-            <div
-              key={item.table}
-              className="p-3.5 sm:px-5 sm:py-3 flex items-center justify-between gap-3 text-sm hover:bg-white/[0.02]"
-            >
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-xs font-bold text-cyan-300">
-                    public.{item.table}
-                  </span>
-                  <span className="text-xs text-white/90 font-medium">· {item.label}</span>
-                </div>
-                <p className="text-xs text-wisdom-muted mt-0.5 truncate">{item.description}</p>
-              </div>
+            <li key={item.table} className="px-4 py-3 text-sm">
+              <p className="font-mono text-xs font-bold text-cyan-300 break-all">
+                public.{item.table}
+              </p>
+              <p className="text-sm text-white/90 font-medium break-words mt-0.5">{item.label}</p>
+              <p className="text-xs text-wisdom-muted mt-0.5 break-words">{item.description}</p>
 
-              <div className="flex items-center gap-3 shrink-0">
+              <div className="mt-2 flex flex-wrap items-center gap-2">
                 {item.status === "ok" && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-wisdom-muted tabular-nums">
-                      {item.rowCount} row{item.rowCount === 1 ? "" : "s"}
-                    </span>
+                  <>
                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-400/30">
                       <CheckCircle2 className="w-3.5 h-3.5" />
                       Active
                     </span>
-                  </div>
+                    <span className="text-xs text-wisdom-muted tabular-nums">
+                      {item.rowCount} row{item.rowCount === 1 ? "" : "s"}
+                    </span>
+                  </>
                 )}
                 {item.status === "missing" && (
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-400/30">
@@ -651,87 +640,96 @@ export default function DatabaseHubPanel() {
                   </span>
                 )}
                 {item.status === "checking" && (
-                  <span className="text-xs text-wisdom-muted animate-pulse">Checking…</span>
+                  <span className="text-xs text-wisdom-muted">Checking…</span>
                 )}
               </div>
-            </div>
+              {(item.status === "missing" || item.status === "error") && item.errorDetail && (
+                <p className="text-xs text-wisdom-muted mt-1.5 break-words">{item.errorDetail}</p>
+              )}
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
 
-      {/* SQL Script & Run Instructions Box */}
-      <div className="rounded-2xl border border-cyan-400/25 bg-gradient-to-br from-wisdom-card via-wisdom-navy/95 to-wisdom-dark overflow-hidden shadow-xl">
-        <div className="p-4 sm:p-5 border-b border-white/8 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-cyan-500/15 text-cyan-300 border border-cyan-400/30">
+      {/* SQL script and run instructions */}
+      <div className="rounded-2xl border border-cyan-400/25 bg-wisdom-card overflow-hidden">
+        <div className="p-4 border-b border-white/8 space-y-3">
+          <div className="flex items-start gap-2.5">
+            <div className="p-2 rounded-xl bg-cyan-500/15 text-cyan-300 border border-cyan-400/30 shrink-0">
               <Terminal className="w-5 h-5" />
             </div>
-            <div>
-              <h3 className="font-semibold text-white">Master Supabase SQL Script</h3>
-              <p className="text-xs text-wisdom-muted">
+            <div className="min-w-0">
+              <h3 className="font-semibold text-white break-words">Master Supabase SQL Script</h3>
+              <p className="text-xs text-wisdom-muted break-words">
                 Run this once in your Supabase project to ensure all tables, policies, and triggers are ready
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleCopySql}
-              className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                copied
-                  ? "bg-emerald-500 text-white"
-                  : "bg-cyan-500 text-wisdom-dark hover:bg-cyan-400"
-              }`}
-            >
-              {copied ? (
-                <>
-                  <Check className="w-4 h-4" />
-                  Copied to Clipboard!
-                </>
-              ) : (
-                <>
-                  <Copy className="w-4 h-4" />
-                  Copy Master Script
-                </>
-              )}
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleCopySql}
+            className={`inline-flex w-full min-h-[44px] items-center justify-center gap-1.5 rounded-full px-4 text-sm font-bold ${
+              copied ? "bg-emerald-500 text-white" : "bg-cyan-500 text-wisdom-dark"
+            }`}
+          >
+            {copied ? (
+              <>
+                <Check className="w-4 h-4" />
+                Copied to Clipboard!
+              </>
+            ) : (
+              <>
+                <Copy className="w-4 h-4" />
+                Copy Master Script
+              </>
+            )}
+          </button>
         </div>
 
         {/* Step by step guide */}
-        <div className="p-4 sm:p-5 bg-white/[0.02] border-b border-white/8 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+        <div className="p-4 bg-white/[0.02] border-b border-white/8 space-y-3 text-sm">
           <div className="flex items-start gap-2.5">
-            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cyan-400/20 text-cyan-300 font-bold">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cyan-400/20 text-cyan-300 text-xs font-bold">
               1
             </span>
-            <p className="text-wisdom-muted leading-relaxed">
+            <p className="text-wisdom-muted leading-relaxed break-words">
               Click <strong className="text-white">Copy Master Script</strong> above or copy from the box below.
             </p>
           </div>
           <div className="flex items-start gap-2.5">
-            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cyan-400/20 text-cyan-300 font-bold">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cyan-400/20 text-cyan-300 text-xs font-bold">
               2
             </span>
-            <p className="text-wisdom-muted leading-relaxed">
+            <p className="text-wisdom-muted leading-relaxed break-words">
               Open <strong className="text-white">Supabase SQL Editor</strong> via the top right button or dashboard.
             </p>
           </div>
           <div className="flex items-start gap-2.5">
-            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cyan-400/20 text-cyan-300 font-bold">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cyan-400/20 text-cyan-300 text-xs font-bold">
               3
             </span>
-            <p className="text-wisdom-muted leading-relaxed">
+            <p className="text-wisdom-muted leading-relaxed break-words">
               Paste and click <strong className="text-emerald-400">Run</strong>. All tables and RLS rules will be active immediately.
             </p>
           </div>
         </div>
 
-        {/* Code window */}
-        <div className="relative">
-          <pre className="p-4 sm:p-5 text-[11px] font-mono text-slate-300 bg-[#090d16] overflow-x-auto max-h-80 leading-relaxed scrollbar-thin">
-            <code>{MASTER_SQL_SCRIPT}</code>
-          </pre>
+        {/* Script text: hidden by default, wraps instead of scrolling sideways */}
+        <div className="p-4">
+          <button
+            type="button"
+            onClick={() => setShowSql((v) => !v)}
+            className="inline-flex w-full min-h-[44px] items-center justify-center gap-1.5 rounded-full border border-white/12 px-4 text-sm font-semibold text-white/80"
+          >
+            <FileCode2 className="w-4 h-4" />
+            {showSql ? "Hide script" : "Show script"}
+          </button>
+          {showSql && (
+            <pre className="mt-3 rounded-xl p-3 text-xs font-mono text-slate-300 bg-[#090d16] whitespace-pre-wrap break-words leading-relaxed">
+              <code>{MASTER_SQL_SCRIPT}</code>
+            </pre>
+          )}
         </div>
       </div>
     </div>
