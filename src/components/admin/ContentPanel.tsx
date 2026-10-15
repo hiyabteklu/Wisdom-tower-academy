@@ -31,7 +31,25 @@ import {
   Cloud,
 } from "lucide-react";
 
+/**
+ * Admin Content library tab.
+ *
+ * 2026-10-15 (Admin mobile redesign, slice A10): LAYOUT ONLY. Audit hits before the change: `sm:grid-cols-2`
+ * (the folder list was ONE tall column on a phone: the four tall rows in the owner's screenshot), `animate-spin`
+ * (Refresh icon), `transition-colors`, `truncate` on item titles (cut the text), 10 px Appwrite badge, buttons and
+ * inputs under 44 px, `inline-flex` upload chip that could overflow with a long file name. Now: folders are a
+ * compact 2-column grid of tiles (icon, Appwrite badge, label that wraps), Refresh and Add item are two 44 px
+ * pills in a 2-column grid, the edit form uses 44 px fields and a full-width pill Save, item cards wrap their text
+ * and show Edit and Delete as 44 px buttons. Navigation (crumbs, enter, goTo), loading, saving, deleting, the
+ * Appwrite file id logic and every visible text are unchanged.
+ */
+
 type Crumb = { id: string; label: string; node: AdminNavNode };
+
+const FIELD =
+  "mt-1 w-full min-h-[44px] rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2.5 text-sm text-white";
+const AREA =
+  "mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2.5 text-sm text-white font-mono break-words";
 
 export default function ContentPanel() {
   const [crumbs, setCrumbs] = useState<Crumb[]>([]);
@@ -256,62 +274,60 @@ export default function ContentPanel() {
   return (
     <div className="space-y-4">
       {toast && (
-        <div className="rounded-xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200 whitespace-pre-wrap">
+        <div className="rounded-2xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200 whitespace-pre-wrap break-words">
           {toast}
         </div>
       )}
 
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
+      <div className="space-y-3">
+        <div className="min-w-0">
           <h2 className="text-lg font-bold text-white flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-amber-400" />
+            <BookOpen className="w-5 h-5 text-amber-400 shrink-0" />
             Content library
           </h2>
-          <p className="text-sm text-wisdom-muted mt-0.5">
-            All package PDFs/files → Appwrite · catalog & auth stay on Supabase
+          <p className="text-sm text-wisdom-muted mt-0.5 break-words">
+            All package PDFs/files → Appwrite · catalog &amp; auth stay on Supabase
           </p>
         </div>
         {isOnHub && (
-          <div className="flex gap-2">
+          <div className="grid grid-cols-2 gap-2.5">
             <button
               type="button"
               onClick={loadItems}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/12 text-sm"
+              className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3 rounded-full border border-white/12 text-sm font-semibold text-white/90 active:bg-white/10 cursor-pointer"
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+              <RefreshCw className="w-4 h-4 shrink-0" />
               Refresh
             </button>
             <button
               type="button"
               onClick={openNew}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500 text-wisdom-dark text-sm font-bold"
+              className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3 rounded-full bg-amber-500 text-wisdom-dark text-sm font-bold active:bg-amber-400 cursor-pointer"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 shrink-0" />
               Add item
             </button>
           </div>
         )}
       </div>
 
-      <nav className="flex flex-wrap items-center gap-1 text-sm">
+      <nav className="flex flex-wrap items-center gap-x-1 text-sm">
         <button
           type="button"
           onClick={resetRoot}
-          className="text-amber-300 hover:underline font-medium"
+          className="inline-flex items-center min-h-[44px] px-1 text-amber-300 font-medium cursor-pointer"
         >
           Academy
         </button>
         {crumbs.map((c, i) => (
           <span key={c.id + i} className="flex items-center gap-1">
-            <ChevronRight className="w-3.5 h-3.5 text-wisdom-muted" />
+            <ChevronRight className="w-3.5 h-3.5 text-wisdom-muted shrink-0" />
             <button
               type="button"
               onClick={() => goTo(i)}
-              className={
-                i === crumbs.length - 1
-                  ? "text-white font-semibold"
-                  : "text-cyan-300 hover:underline"
-              }
+              className={`inline-flex items-center min-h-[44px] px-1 text-left break-words cursor-pointer ${
+                i === crumbs.length - 1 ? "text-white font-semibold" : "text-cyan-300"
+              }`}
             >
               {c.label}
             </button>
@@ -320,29 +336,32 @@ export default function ContentPanel() {
       </nav>
 
       {isOnHub && onAppwrite && (
-        <div className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/30 bg-cyan-500/10 px-2.5 py-1 text-xs text-cyan-200">
-          <Cloud className="w-3.5 h-3.5" />
-          Files upload to Appwrite · large PDFs: paste File ID
+        <div className="flex items-start gap-1.5 rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-3 py-2 text-xs text-cyan-200">
+          <Cloud className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+          <span className="min-w-0 break-words">Files upload to Appwrite · large PDFs: paste File ID</span>
         </div>
       )}
 
       {!isOnHub && (
-        <ul className="grid sm:grid-cols-2 gap-2">
+        <ul className="grid grid-cols-2 gap-2.5">
           {listNodes.map((node) => (
-            <li key={node.id}>
+            <li key={node.id} className="min-w-0">
               <button
                 type="button"
                 onClick={() => enter(node)}
-                className="w-full flex items-center gap-3 rounded-2xl border border-white/12 bg-wisdom-card px-4 py-3.5 text-left hover:border-amber-400/40 transition-colors"
+                className="w-full h-full min-h-[88px] flex flex-col items-start justify-between gap-2 rounded-2xl border border-white/12 bg-wisdom-card p-3.5 text-left active:bg-white/10 cursor-pointer"
               >
-                <FolderOpen className="w-5 h-5 text-amber-400 shrink-0" />
-                <span className="flex-1 font-semibold text-white">{node.label}</span>
-                {node.useAppwrite && (
-                  <span className="text-[10px] uppercase tracking-wide text-cyan-300/80">
-                    Appwrite
-                  </span>
-                )}
-                <ChevronRight className="w-4 h-4 text-wisdom-muted" />
+                <span className="flex w-full items-start justify-between gap-2">
+                  <FolderOpen className="w-5 h-5 text-amber-400 shrink-0" />
+                  {node.useAppwrite && (
+                    <span className="text-[11px] uppercase tracking-wide text-cyan-300/90">
+                      Appwrite
+                    </span>
+                  )}
+                </span>
+                <span className="font-semibold text-white text-sm leading-snug break-words min-w-0 w-full">
+                  {node.label}
+                </span>
               </button>
             </li>
           ))}
@@ -351,18 +370,23 @@ export default function ContentPanel() {
 
       {isOnHub && (
         <div className="space-y-3">
-          <p className="text-xs text-wisdom-muted">
-            Scope <code className="text-cyan-300">{scopePath}</code> · hub{" "}
-            <code className="text-cyan-300">{hub}</code>
+          <p className="text-xs text-wisdom-muted break-words">
+            Scope <code className="text-cyan-300 break-all">{scopePath}</code> · hub{" "}
+            <code className="text-cyan-300 break-all">{hub}</code>
             {" · "}
             {HUB_CONTENT_DEFAULTS[hub || ""]?.hint}
           </p>
 
           {editing && (
-            <div className="rounded-2xl border border-amber-400/30 bg-wisdom-card p-4 space-y-3">
-              <div className="flex justify-between items-center">
+            <div className="rounded-2xl border border-amber-400/30 bg-wisdom-card p-3.5 space-y-3">
+              <div className="flex justify-between items-center gap-2">
                 <h3 className="font-semibold">{isNew ? "New item" : "Edit item"}</h3>
-                <button type="button" onClick={() => setEditing(null)} className="p-2">
+                <button
+                  type="button"
+                  onClick={() => setEditing(null)}
+                  aria-label="Close"
+                  className="inline-flex items-center justify-center w-11 h-11 rounded-full active:bg-white/10 cursor-pointer"
+                >
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -371,7 +395,7 @@ export default function ContentPanel() {
                 <input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2 text-sm text-white"
+                  className={FIELD}
                 />
               </label>
               <label className="block text-xs text-wisdom-muted">
@@ -379,7 +403,7 @@ export default function ContentPanel() {
                 <input
                   value={chapter}
                   onChange={(e) => setChapter(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2 text-sm text-white"
+                  className={FIELD}
                 />
               </label>
               {(hub === "books" || hub === "life-savers" || hub === "videos") && (
@@ -389,10 +413,10 @@ export default function ContentPanel() {
                     {onAppwrite && (
                       <span className="ml-1 text-cyan-300">(Appwrite · max ~4 MB via site)</span>
                     )}
-                    <div className="mt-1 flex items-center gap-2">
-                      <label className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-white/20 cursor-pointer text-sm">
-                        <Upload className="w-4 h-4" />
-                        {file ? file.name : "Choose file"}
+                    <div className="mt-1">
+                      <label className="flex w-full min-h-[44px] items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-white/20 cursor-pointer text-sm text-white">
+                        <Upload className="w-4 h-4 shrink-0" />
+                        <span className="min-w-0 break-all">{file ? file.name : "Choose file"}</span>
                         <input
                           type="file"
                           accept={hub === "books" || hub === "life-savers" ? "application/pdf" : "*/*"}
@@ -409,9 +433,9 @@ export default function ContentPanel() {
                         value={appwriteFileId}
                         onChange={(e) => setAppwriteFileId(e.target.value)}
                         placeholder="Paste file ID from Appwrite Console"
-                        className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2 text-sm text-white font-mono"
+                        className={`${FIELD} font-mono`}
                       />
-                      <span className="mt-1 block text-[11px] text-wisdom-muted leading-relaxed">
+                      <span className="mt-1 block text-xs text-wisdom-muted leading-relaxed">
                         Upload the PDF in Appwrite → Storage → your bucket → Create file, then copy the
                         File ID here. Skips the 4 MB site limit.
                       </span>
@@ -426,7 +450,7 @@ export default function ContentPanel() {
                     value={bodyMd}
                     onChange={(e) => setBodyMd(e.target.value)}
                     rows={8}
-                    className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2 text-sm text-white font-mono"
+                    className={AREA}
                     placeholder={
                       hub === "videos"
                         ? "https://youtube.com/..."
@@ -444,25 +468,28 @@ export default function ContentPanel() {
                     value={metaJson}
                     onChange={(e) => setMetaJson(e.target.value)}
                     rows={10}
-                    className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2 text-sm text-white font-mono"
+                    className={AREA}
                   />
                 </label>
               )}
-              <label className="flex items-center gap-2 text-sm">
+              <label className="flex items-start gap-3 min-h-[44px] text-sm text-white/90 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={published}
                   onChange={(e) => setPublished(e.target.checked)}
+                  className="mt-0.5 h-5 w-5 shrink-0"
                 />
-                Published (visible to students who own the package)
+                <span className="min-w-0 break-words">
+                  Published (visible to students who own the package)
+                </span>
               </label>
               <button
                 type="button"
                 disabled={saving}
                 onClick={save}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 text-wisdom-dark text-sm font-bold disabled:opacity-50"
+                className="w-full inline-flex items-center justify-center gap-2 min-h-[44px] px-4 rounded-full bg-amber-500 text-wisdom-dark text-sm font-bold active:bg-amber-400 disabled:opacity-50 cursor-pointer"
               >
-                <Save className="w-4 h-4" />
+                <Save className="w-4 h-4 shrink-0" />
                 {saving ? "Saving…" : "Save"}
               </button>
             </div>
@@ -470,39 +497,42 @@ export default function ContentPanel() {
 
           {loading && <p className="text-wisdom-muted text-sm py-6 text-center">Loading…</p>}
           {!loading && items.length === 0 && !editing && (
-            <p className="text-center text-wisdom-muted text-sm py-10 border border-dashed border-white/15 rounded-2xl">
-              No items yet. Click <strong className="text-white">Add item</strong>.
+            <p className="text-center text-wisdom-muted text-sm py-10 px-3 border border-dashed border-white/15 rounded-2xl">
+              No items yet. Tap <strong className="text-white">Add item</strong>.
             </p>
           )}
-          <ul className="space-y-2">
+          <ul className="space-y-2.5">
             {items.map((item) => (
               <li
                 key={item.id}
-                className="flex flex-wrap items-center gap-3 rounded-2xl border border-white/12 bg-wisdom-card p-3"
+                className="rounded-2xl border border-white/12 bg-wisdom-card p-3.5 space-y-3"
               >
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-white truncate">{item.title}</p>
-                  <p className="text-xs text-wisdom-muted">
+                <div className="min-w-0">
+                  <p className="font-semibold text-white break-words">{item.title}</p>
+                  <p className="text-xs text-wisdom-muted mt-0.5 break-words">
                     {item.contentType}
                     {item.chapter != null ? ` · ch ${item.chapter}` : ""}
                     {item.published ? " · published" : " · draft"}
                     {item.storagePath?.startsWith("appwrite:") ? " · Appwrite" : ""}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => openEdit(item)}
-                  className="px-3 py-1.5 rounded-lg border border-white/12 text-xs font-semibold"
-                >
-                  <Pencil className="w-3.5 h-3.5 inline" /> Edit
-                </button>
-                <button
-                  type="button"
-                  onClick={() => remove(item.id)}
-                  className="px-3 py-1.5 rounded-lg border border-rose-400/30 text-xs text-rose-300"
-                >
-                  <Trash2 className="w-3.5 h-3.5 inline" />
-                </button>
+                <div className="flex gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => openEdit(item)}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 min-h-[44px] rounded-full border border-white/12 text-sm font-semibold text-white/90 active:bg-white/10 cursor-pointer"
+                  >
+                    <Pencil className="w-4 h-4 shrink-0" /> Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => remove(item.id)}
+                    aria-label="Delete"
+                    className="inline-flex items-center justify-center w-12 min-h-[44px] rounded-full border border-rose-400/30 text-rose-300 active:bg-rose-500/10 cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
