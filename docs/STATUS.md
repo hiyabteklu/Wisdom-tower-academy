@@ -9,20 +9,25 @@ Newest entry on top. Each agent adds an entry at the end of its session. Details
 - Access: client check `isAdminEmail`; API routes use `requireAdmin` (`src/lib/admin-auth.ts`, Bearer token verified server-side).
 - The Android app is only a WebView of the live site, so admin changes reach the app on deploy. The app has no admin entry in its menu or nav; `/admin` is opened by URL.
 
+### How builds are verified (owner works from a phone)
+- Vercel builds every push to `main`. Check Vercel > Deployments: green "Ready" = built, red "Error" = open it and read the error.
+- `next.config.ts` ignores only ESLint during builds, NOT TypeScript, so a type error fails the deploy. If the newest deploy is red, Vercel keeps serving the previous good one, so a live site does not prove the newest commits built.
+- Commits tagged "not compiled" mean the agent could not test them, not that they failed.
+
 ### DONE this week (do not re-check)
 - Notifications locked: send, list and delete require the admin token; `/api/notifications/dispatch` is secret-only.
 - Scheduled notifications panel, Competitions panel and tab, entry integrity flags (C10).
 - Notifications v2 R2 (contest type, rich content, multi-audience send) and R3-a to R3-b4 (path selector, block editor + gold preview, composer v2, audience picker, schedule step in Ethiopia time).
 
 ### NOT DONE
-- EVERY commit from Notifications v2 R2 through R3-b4, plus C10 and the Competitions panels, is marked "not compiled". Run `npm run build` in Codespaces first and fix type errors.
+- Confirm the latest Vercel deployment (commits from Notifications v2 R2 through R3-b4, C10, Competitions) is green; if red, paste the error to an agent to fix.
 - Set `NOTIFICATION_DISPATCH_SECRET` in Vercel and add a timer (Vercel cron or external pinger) that calls `/api/notifications/dispatch`; without it scheduled notifications never send.
 - Click-through test of every admin tab on a phone (composer 5 steps, scheduled list, Competitions actions, Entries flags).
 - Overview header text says "All 10 modules operational" but there are 12 tabs; fix the wording.
-- Earlier open items from 2026-10-14 still apply (Entrance Questions build + upload test, storage move to Appwrite).
+- Earlier open items from 2026-10-14 still apply (Entrance Questions upload test, storage move to Appwrite).
 
 ### Environment notes
-- Owner works from a phone and has GitHub Codespaces. Claude cloud sandbox cannot run npm (403); do not retry.
+- Owner works from a phone and has GitHub Codespaces (not required for builds). Claude cloud sandbox cannot run npm (403); do not retry.
 
 ## 2026-10-14 (Claude, review session)
 
@@ -33,7 +38,7 @@ Newest entry on top. Each agent adds an entry at the end of its session. Details
 - Open GitHub issues: none.
 
 ### NOT DONE
-- `npm run build` has never been run on the Entrance Questions + Grade changes (no type check yet). Needs an environment where npm works (Codespaces or Vercel preview). Fix any type errors it reports.
+- Confirm in Vercel > Deployments that the Entrance Questions + Grade changes built green (no local type check was ever run).
 - Click-through test: Home -> Entrance Questions -> Natural -> Physics -> 2016; Home -> Grade 12.
 - Upload a test exam in Admin > Entrance Questions > ... > 2016 > Exams and confirm it shows on the public year page.
 - Optional: Entrance card in `src/app/learning/LearningContent.tsx` and `src/lib/academic-levels.ts`; update "Grade 9-12" wording in `src/lib/student-knowledge-base.ts`; remove unused `GRADE_9_12_PACKAGE` / `packageImages["grade-9-12"]` in `src/data/packages.ts`.
