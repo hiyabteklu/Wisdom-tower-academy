@@ -11,19 +11,21 @@ import {
 } from "lucide-react";
 import type { NotificationItem, NotificationType } from "@/lib/notifications";
 import { supabase } from "@/lib/supabase";
-import ScheduledNotificationsPanel from "./ScheduledNotificationsPanel";
+import ScheduledNotificationsPanel, { type ScheduledRowV2 } from "./ScheduledNotificationsPanel";
 import NotificationComposerV2 from "./NotificationComposerV2";
 
 /**
  * Admin Notifications tab.
- * 2026-10-15 (notifications v2, slice R3-b2): the old four-preset form was replaced by
- * `NotificationComposerV2` (three categories, block editor with gold preview, path selector).
- * The scheduled panel below still uses the old scheduling form until R3-b4. History and the FCM guide
- * are unchanged apart from a badge for the new `contest` type.
+ * 2026-10-15 (notifications v2): R3-b2 replaced the four-preset form by `NotificationComposerV2`;
+ * R3-b4 moved scheduling into the composer (step 5 "When") and made the scheduled list editable:
+ * pressing Edit on a waiting row loads it into the composer. History and the FCM guide are unchanged
+ * apart from a badge for the `contest` type.
  */
 export default function NotificationsPanel() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editRow, setEditRow] = useState<ScheduledRowV2 | null>(null);
+  const [scheduleRefresh, setScheduleRefresh] = useState(0);
 
   const loadNotifications = useCallback(async () => {
     setLoading(true);
@@ -111,11 +113,16 @@ export default function NotificationsPanel() {
         </button>
       </div>
 
-      {/* Composer v2 */}
-      <NotificationComposerV2 onSent={() => void loadNotifications()} />
+      {/* Composer v2 (send now, schedule, edit a waiting row) */}
+      <NotificationComposerV2
+        editRow={editRow}
+        onEditDone={() => setEditRow(null)}
+        onSent={() => void loadNotifications()}
+        onScheduled={() => setScheduleRefresh((n) => n + 1)}
+      />
 
-      {/* Scheduled notifications: schedule for later, list, cancel */}
-      <ScheduledNotificationsPanel />
+      {/* Scheduled notifications: list, edit, cancel */}
+      <ScheduledNotificationsPanel refreshKey={scheduleRefresh} onEdit={setEditRow} />
 
       {/* History Table */}
       <div className="rounded-3xl border border-white/10 bg-[#08101e] p-5 sm:p-6 shadow-xl">

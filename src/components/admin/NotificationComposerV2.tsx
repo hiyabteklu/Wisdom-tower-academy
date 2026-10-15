@@ -1,25 +1,31 @@
 "use client";
 
 /**
- * Notifications v2, slices R3-b2 and R3-b3 (sessions R3-C and R3-D). `[~]` NOT compiled, not opened in a browser.
+ * Notifications v2, slices R3-b2 to R3-b4 (sessions R3-C, R3-D, R3-E). `[~]` NOT compiled, not opened in a browser.
  *
- * The new composer for the admin Notifications tab. Three categories only (owner order 2026-10-15):
+ * The composer for the admin Notifications tab. Three categories only (owner order 2026-10-15):
  *   Admin announcement -> students read it inside Notifications (no navigation)
  *   New material release -> opens the subject or hub picked with the path selector
  *   Contest -> opens the Contest (trophy) screen; the server forces the url to /competitions
- * Writing uses the block editor with a gold live preview. Sending uses POST /api/notifications/send in
- * v2 mode (category + content [+ url] [+ target | audiences]); the server builds the short plain preview itself.
- * Audience (R3-b3): groups of students (chips with live counts, several allowed, empty = everyone) or one
- * student by user id.
- *
- * NOT here yet: scheduling and editing waiting rows (R3-b4).
+ * Steps: 1 Category, 2 Write (block editor + gold preview), 3 Destination, 4 Audience (chips with live counts,
+ * or one student), 5 When (send now, or schedule in Ethiopia time).
+ * Send now: POST /api/notifications/send (v2 mode). Schedule / edit: the database functions
+ * admin_schedule_notification_v2 / admin_update_scheduled_notification_v2 (admin's own session).
+ * Scheduling works for groups of students only (the scheduler has no single-student target).
+ * Editing a waiting row (`editRow`) loads it into the form; saving updates that row.
  */
 
-import { useState } from "react";
-import { AlertCircle, BookOpen, CheckCircle2, Megaphone, Send, Trophy } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { AlertCircle, BookOpen, CheckCircle2, Clock, Megaphone, Send, Trophy } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import type { NotificationCategory } from "@/lib/notification-v2";
 import {
+  isNotificationCategory,
+  previewFromContent,
+  sanitizeContent,
+  type NotificationCategory,
+} from "@/lib/notification-v2";
+import {
+  contentToEditor,
   editorToContent,
   newEditorBlock,
   type EditorBlock,
@@ -31,6 +37,13 @@ import {
 } from "@/lib/notification-paths";
 import { NotificationBlockEditor, NotificationPreview } from "./NotificationBlockEditor";
 import NotificationAudiencePicker from "./NotificationAudiencePicker";
+import {
+  formatEat,
+  friendlyScheduleError,
+  type ScheduledRowV2,
+} from "./ScheduledNotificationsPanel";
+
+const EAT_OFFSET = "+03:00";
 
 const CATEGORIES: {
   id: NotificationCategory;
@@ -81,11 +94,46 @@ function pathFromTrail(trail: string[]): string | null {
   return path;
 }
 
+/** Picker trail (node ids) that ends on the node with this public path, or null. */
+function trailForPath(
+  path: string,
+  nodes: NotificationPathNode[] = NOTIFICATION_PATH_TREE,
+  trail: string[] = []
+): string[] | null {
+  for (const node of nodes) {
+    const next = [...trail, node.id];
+    if (node.path === path) return next;
+    if (node.children) {
+      const found = trailForPath(path, node.children, next);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+/** ISO instant -> the value of a datetime-local input in Ethiopia time (UTC+3). */
+function toEatInput(iso: string): string {
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return "";
+  return new Date(t + 3 * 60 * 60 * 1000).toISOString().slice(0, 16);
+}
+
 function initialBlocks(): EditorBlock[] {
   return [newEditorBlock("title"), newEditorBlock("p")];
 }
 
-export default function NotificationComposerV2({ onSent }: { onSent?: () => void }) {
+export default function NotificationComposerV2({
+  onSent,
+  onScheduled,
+  editRow,
+  onEditDone,
+}: {
+  onSent?: () => void;
+  onScheduled?: () => void;
+  editRow?: ScheduledRowV2 | null;
+  onEditDone?: () => void;
+}) {
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const [category, setCategory] = useState<NotificationCategory>("admin");
   const [title, setTitle] = useState("");
   const [blocks, setBlocks] = useState<EditorBlock[]>(initialBlocks);
@@ -94,11 +142,32 @@ export default function NotificationComposerV2({ onSent }: { onSent?: () => void
   const [groups, setGroups] = useState<string[]>([]);
   const [groupCount, setGroupCount] = useState<number | null>(null);
   const [targetUser, setTargetUser] = useState("");
+  const [when, setWhen] = useState<"now" | "later">("now");
+  const [sendAtLocal, setSendAtLocal] = useState("");
   const [sending, setSending] = useState(false);
   const [feedback, setFeedback] = useState<{ ok: boolean; message: string } | null>(null);
 
+  const editing = Boolean(editRow);
   const pickedPath = category === "material" ? pathFromTrail(trail) : null;
   const pickedChoice = pickedPath ? findNotificationPath(pickedPath) : undefined;
+
+  // Load a waiting row into the form when the admin presses Edit.
+  useEffect(() => {
+    if (!editRow) return;
+    setCategory(isNotificationCategory(editRow.category) ? editRow.category : "admin");
+    setTitle(editRow.title);
+    const parsed = editRow.content ? sanitizeContent(editRow.content) : null;
+    setBlocks(
+      parsed && parsed.ok ? contentToEditor(parsed.content) : [newEditorBlock("p", editRow.body)]
+    );
+    setTrail(editRow.url ? trailForPath(editRow.url) ?? [] : []);
+    setMode("groups");
+    setGroups(editRow.audiences ?? []);
+    setWhen("later");
+    setSendAtLocal(toEatInput(editRow.send_at));
+    setFeedback(null);
+    rootRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [editRow]);
 
   function setLevel(depth: number, id: string) {
     const next = trail.slice(0, depth);
@@ -106,7 +175,13 @@ export default function NotificationComposerV2({ onSent }: { onSent?: () => void
     setTrail(next);
   }
 
-  async function handleSend() {
+  function resetForm() {
+    setTitle("");
+    setBlocks(initialBlocks());
+    setSendAtLocal("");
+  }
+
+  async function handleSubmit() {
     setFeedback(null);
     const content = editorToContent(blocks);
     if (!title.trim()) {
@@ -121,11 +196,35 @@ export default function NotificationComposerV2({ onSent }: { onSent?: () => void
       setFeedback({ ok: false, message: "Pick where this material notice should open." });
       return;
     }
+    const later = when === "later" || editing;
+    if (later && mode === "user") {
+      setFeedback({
+        ok: false,
+        message: "Scheduling works for groups of students. Use Send now for one student.",
+      });
+      return;
+    }
     if (mode === "user" && !targetUser.trim()) {
       setFeedback({ ok: false, message: "Enter the student's user id." });
       return;
     }
-    if (mode === "groups") {
+
+    let sendAtIso = "";
+    if (later) {
+      if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(sendAtLocal)) {
+        setFeedback({ ok: false, message: "Pick the date and time to send (Ethiopia time)." });
+        return;
+      }
+      const sendAt = new Date(`${sendAtLocal}:00${EAT_OFFSET}`);
+      if (Number.isNaN(sendAt.getTime()) || sendAt.getTime() <= Date.now() + 60_000) {
+        setFeedback({
+          ok: false,
+          message: "Pick a time at least one minute from now (Ethiopia time).",
+        });
+        return;
+      }
+      sendAtIso = sendAt.toISOString();
+    } else if (mode === "groups") {
       const who =
         groups.length === 0
           ? "EVERY student"
@@ -137,6 +236,37 @@ export default function NotificationComposerV2({ onSent }: { onSent?: () => void
 
     setSending(true);
     try {
+      if (later) {
+        const preview = previewFromContent(content) || title.trim();
+        const common = {
+          p_title: title.trim(),
+          p_body: preview,
+          p_send_at: sendAtIso,
+          p_category: category,
+          p_content: content,
+          p_url: category === "material" ? pickedPath : null,
+          p_audiences: groups.length > 0 ? groups : null,
+        };
+        const { error } = editRow
+          ? await supabase.rpc("admin_update_scheduled_notification_v2", { p_id: editRow.id, ...common })
+          : await supabase.rpc("admin_schedule_notification_v2", common);
+        if (error) {
+          setFeedback({ ok: false, message: friendlyScheduleError(error.message) });
+          return;
+        }
+        setFeedback({
+          ok: true,
+          message: `${editing ? "Changes saved. " : "Scheduled. "}It goes out at ${formatEat(
+            sendAtIso
+          )} (within a minute after that).`,
+        });
+        resetForm();
+        setWhen("now");
+        onScheduled?.();
+        onEditDone?.();
+        return;
+      }
+
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) {
@@ -177,8 +307,7 @@ export default function NotificationComposerV2({ onSent }: { onSent?: () => void
           (data.broadcast ? "Everyone can see it. " : recipients > 0 ? `Students reached: ${recipients}. ` : "") +
           (pushed !== null ? `Push sent to ${pushed} device(s).` : ""),
       });
-      setTitle("");
-      setBlocks(initialBlocks());
+      resetForm();
       onSent?.();
     } catch (err: unknown) {
       setFeedback({ ok: false, message: err instanceof Error ? err.message : "Network error" });
@@ -196,13 +325,36 @@ export default function NotificationComposerV2({ onSent }: { onSent?: () => void
     }
   }
 
+  const later = when === "later" || editing;
+
   return (
-    <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-[#0c1626] to-[#070e1a] p-5 sm:p-7 shadow-xl space-y-6">
-      <div>
-        <h3 className="text-sm font-bold text-white">New notification</h3>
-        <p className="text-[11px] text-wisdom-muted">
-          1 Category, 2 Write, 3 Destination, 4 Audience, then send.
-        </p>
+    <div
+      ref={rootRef}
+      className="rounded-3xl border border-white/10 bg-gradient-to-br from-[#0c1626] to-[#070e1a] p-5 sm:p-7 shadow-xl space-y-6"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-bold text-white">
+            {editing ? "Edit scheduled notification" : "New notification"}
+          </h3>
+          <p className="text-[11px] text-wisdom-muted">
+            1 Category, 2 Write, 3 Destination, 4 Audience, 5 When, then send.
+          </p>
+        </div>
+        {editing && (
+          <button
+            type="button"
+            onClick={() => {
+              resetForm();
+              setWhen("now");
+              setFeedback(null);
+              onEditDone?.();
+            }}
+            className="px-3 py-1.5 rounded-lg text-xs text-slate-300 border border-white/15 hover:bg-white/10 cursor-pointer"
+          >
+            Stop editing
+          </button>
+        )}
       </div>
 
       {feedback && (
@@ -336,18 +488,20 @@ export default function NotificationComposerV2({ onSent }: { onSent?: () => void
             />
             <span>Groups of students</span>
           </label>
-          <label className="inline-flex items-center gap-2 cursor-pointer text-xs sm:text-sm text-white">
-            <input
-              type="radio"
-              name="v2audience"
-              checked={mode === "user"}
-              onChange={() => setMode("user")}
-              className="accent-amber-300"
-            />
-            <span>One student (user id)</span>
-          </label>
+          {!later && (
+            <label className="inline-flex items-center gap-2 cursor-pointer text-xs sm:text-sm text-white">
+              <input
+                type="radio"
+                name="v2audience"
+                checked={mode === "user"}
+                onChange={() => setMode("user")}
+                className="accent-amber-300"
+              />
+              <span>One student (user id)</span>
+            </label>
+          )}
         </div>
-        {mode === "groups" ? (
+        {mode === "groups" || later ? (
           <NotificationAudiencePicker
             value={groups}
             onChange={setGroups}
@@ -364,15 +518,69 @@ export default function NotificationComposerV2({ onSent }: { onSent?: () => void
         )}
       </div>
 
+      {/* 5 When */}
+      <div className="space-y-2">
+        <p className="text-xs font-semibold text-slate-300">5. When</p>
+        {!editing && (
+          <div className="flex flex-wrap gap-4">
+            <label className="inline-flex items-center gap-2 cursor-pointer text-xs sm:text-sm text-white">
+              <input
+                type="radio"
+                name="v2when"
+                checked={when === "now"}
+                onChange={() => setWhen("now")}
+                className="accent-amber-300"
+              />
+              <span>Send now</span>
+            </label>
+            <label className="inline-flex items-center gap-2 cursor-pointer text-xs sm:text-sm text-white">
+              <input
+                type="radio"
+                name="v2when"
+                checked={when === "later"}
+                onChange={() => {
+                  setWhen("later");
+                  setMode("groups");
+                }}
+                className="accent-amber-300"
+              />
+              <span>Schedule for later</span>
+            </label>
+          </div>
+        )}
+        {later && (
+          <div className="space-y-1.5">
+            <label className="text-[11px] text-slate-400">Send at (Ethiopia time)</label>
+            <input
+              type="datetime-local"
+              value={sendAtLocal}
+              onChange={(e) => setSendAtLocal(e.target.value)}
+              className="w-full sm:w-72 px-4 py-2.5 rounded-xl bg-[#050b14] border border-white/12 text-sm text-white focus:outline-none focus:border-amber-300/60"
+            />
+            <p className="text-[11px] text-slate-500">
+              Checked every minute. Whatever the time zone of this computer, the time typed here is Ethiopia time.
+            </p>
+          </div>
+        )}
+      </div>
+
       <div className="flex justify-end">
         <button
           type="button"
-          onClick={handleSend}
+          onClick={handleSubmit}
           disabled={sending}
           className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-300 hover:bg-amber-200 text-slate-950 font-bold text-sm shadow-lg shadow-amber-500/20 transition-all cursor-pointer disabled:opacity-50"
         >
-          <Send className="w-4 h-4" />
-          <span>{sending ? "Sending..." : "Send now"}</span>
+          {later ? <Clock className="w-4 h-4" /> : <Send className="w-4 h-4" />}
+          <span>
+            {sending
+              ? "Working..."
+              : editing
+              ? "Save changes"
+              : later
+              ? "Schedule"
+              : "Send now"}
+          </span>
         </button>
       </div>
     </div>
