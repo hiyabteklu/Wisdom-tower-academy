@@ -37,6 +37,13 @@ const EMPTY: CatalogInput = {
   sortOrder: 200,
 };
 
+// Phone layout classes (A13): 44 px targets, no hover-only states, no animation.
+const FIELD =
+  "mt-1 w-full min-h-[44px] rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2 text-sm text-white";
+const LABEL = "block text-xs text-wisdom-muted min-w-0";
+const PILL =
+  "inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold";
+
 function rowToInput(row: CatalogRow): CatalogInput {
   return {
     id: row.id,
@@ -148,104 +155,113 @@ export default function CatalogPanel() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
+    <div className="space-y-4">
+      <div className="space-y-3">
+        <div className="min-w-0">
           <h2 className="font-display text-xl font-bold text-white flex items-center gap-2">
-            <Package className="w-5 h-5 text-amber-400" />
+            <Package className="w-5 h-5 shrink-0 text-amber-400" />
             Package catalog
           </h2>
-          <p className="text-xs text-wisdom-muted mt-1">
+          <p className="text-xs text-wisdom-muted mt-1 break-words">
             Prices and About text shown on /packages and offer banners. Default new price: 250 ETB.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={load}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 px-3 py-2 text-xs font-semibold text-white/80 hover:border-cyan-400/40"
+            className={`${PILL} border border-white/15 text-white/80`}
           >
-            <RefreshCw className="w-3.5 h-3.5" />
-            Refresh
+            <RefreshCw className="w-4 h-4" />
+            {loading ? "Refreshing…" : "Refresh"}
           </button>
           <button
             type="button"
             onClick={seed}
             disabled={busyId === "seed"}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 px-3 py-2 text-xs font-semibold text-white/80 hover:border-amber-400/40"
+            className={`${PILL} border border-white/15 text-white/80 disabled:opacity-50`}
           >
-            <Database className="w-3.5 h-3.5" />
-            Seed from static
+            <Database className="w-4 h-4" />
+            {busyId === "seed" ? "Seeding…" : "Seed from static"}
           </button>
           <button
             type="button"
             onClick={openNew}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500 px-3 py-2 text-xs font-bold text-wisdom-dark"
+            className={`${PILL} col-span-2 bg-amber-500 font-bold text-wisdom-dark`}
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-4 h-4" />
             Add package
           </button>
         </div>
       </div>
 
       {toast && (
-        <p className="text-sm text-emerald-300 border border-emerald-400/30 rounded-xl px-3 py-2">{toast}</p>
+        <p className="text-sm text-emerald-300 border border-emerald-400/30 rounded-xl px-3 py-2 break-words">
+          {toast}
+        </p>
       )}
       {error && (
-        <p className="text-sm text-rose-300 border border-rose-400/30 rounded-xl px-3 py-2">{error}</p>
+        <p className="text-sm text-rose-300 border border-rose-400/30 rounded-xl px-3 py-2 break-words">
+          {error}
+        </p>
       )}
 
       {editing && (
-        <div className="rounded-2xl border border-amber-400/30 bg-wisdom-card p-5 space-y-4">
-          <div className="flex items-center justify-between">
+        <div className="rounded-2xl border border-amber-400/30 bg-wisdom-card p-4 space-y-3">
+          <div className="flex items-center justify-between gap-2">
             <p className="font-semibold text-white">{isNew ? "New package" : "Edit package"}</p>
-            <button type="button" onClick={() => setEditing(null)} className="text-wisdom-muted hover:text-white">
+            <button
+              type="button"
+              onClick={() => setEditing(null)}
+              aria-label="Close editor"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 text-wisdom-muted"
+            >
               <X className="w-4 h-4" />
             </button>
           </div>
-          <div className="grid sm:grid-cols-2 gap-3">
-            <label className="block text-xs text-wisdom-muted">
+          <div className="grid grid-cols-2 gap-3">
+            <label className={LABEL}>
               ID
               <input
                 value={editing.id}
                 onChange={(e) => setField("id", e.target.value)}
                 disabled={!isNew}
-                className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2 text-sm text-white disabled:opacity-60"
+                className={`${FIELD} disabled:opacity-60`}
               />
             </label>
-            <label className="block text-xs text-wisdom-muted">
+            <label className={LABEL}>
               Price (ETB)
               <input
                 type="number"
                 value={editing.priceEtb}
                 onChange={(e) => setField("priceEtb", Number(e.target.value) || 0)}
-                className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2 text-sm text-white"
+                className={FIELD}
               />
             </label>
-            <label className="block text-xs text-wisdom-muted sm:col-span-2">
+            <label className={`${LABEL} col-span-2`}>
               Name
               <input
                 value={editing.name}
                 onChange={(e) => setField("name", e.target.value)}
-                className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2 text-sm text-white"
+                className={FIELD}
               />
             </label>
-            <label className="block text-xs text-wisdom-muted">
+            <label className={LABEL}>
               Short name
               <input
                 value={editing.shortName}
                 onChange={(e) => setField("shortName", e.target.value)}
-                className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2 text-sm text-white"
+                className={FIELD}
               />
             </label>
-            <label className="block text-xs text-wisdom-muted">
+            <label className={LABEL}>
               Group
               <select
                 value={editing.group}
                 onChange={(e) =>
                   setField("group", e.target.value as CatalogInput["group"])
                 }
-                className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2 text-sm text-white"
+                className={FIELD}
               >
                 <option value="grades">grades</option>
                 <option value="branch">branch</option>
@@ -253,62 +269,63 @@ export default function CatalogPanel() {
                 <option value="custom">custom</option>
               </select>
             </label>
-            <label className="block text-xs text-wisdom-muted sm:col-span-2">
+            <label className={`${LABEL} col-span-2`}>
               About this package (shown to buyers)
               <textarea
                 value={editing.description}
                 onChange={(e) => setField("description", e.target.value)}
                 rows={6}
                 placeholder="What students get, who it is for, and what is included..."
-                className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2 text-sm text-white resize-y min-h-[6rem]"
+                className={`${FIELD} resize-y min-h-[6rem]`}
               />
             </label>
-            <label className="block text-xs text-wisdom-muted">
+            <label className={`${LABEL} col-span-2`}>
               Preview href
               <input
                 value={editing.href}
                 onChange={(e) => setField("href", e.target.value)}
-                className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2 text-sm text-white"
+                className={FIELD}
                 placeholder="/academy/freshman"
               />
             </label>
-            <label className="block text-xs text-wisdom-muted">
+            <label className={`${LABEL} col-span-2`}>
               Image URL
               <input
                 value={editing.image}
                 onChange={(e) => setField("image", e.target.value)}
-                className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2 text-sm text-white"
+                className={FIELD}
               />
             </label>
-            <label className="block text-xs text-wisdom-muted sm:col-span-2">
+            <label className={`${LABEL} col-span-2`}>
               Includes (one per line)
               <textarea
                 value={editing.includes.join("\n")}
                 onChange={(e) => setField("includes", e.target.value.split("\n"))}
                 rows={4}
-                className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2 text-sm text-white"
+                className={FIELD}
               />
             </label>
-            <label className="block text-xs text-wisdom-muted">
+            <label className={LABEL}>
               Enrolled label
               <input
                 value={editing.enrolledLabel}
                 onChange={(e) => setField("enrolledLabel", e.target.value)}
-                className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2 text-sm text-white"
+                className={FIELD}
               />
             </label>
-            <label className="block text-xs text-wisdom-muted">
+            <label className={LABEL}>
               Sort order
               <input
                 type="number"
                 value={editing.sortOrder}
                 onChange={(e) => setField("sortOrder", Number(e.target.value) || 0)}
-                className="mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2 text-sm text-white"
+                className={FIELD}
               />
             </label>
-            <label className="flex items-center gap-2 text-sm text-white mt-6">
+            <label className="col-span-2 flex min-h-[44px] items-center gap-3 text-sm text-white">
               <input
                 type="checkbox"
+                className="h-5 w-5 shrink-0"
                 checked={editing.active}
                 onChange={(e) => setField("active", e.target.checked)}
               />
@@ -319,7 +336,7 @@ export default function CatalogPanel() {
             type="button"
             onClick={save}
             disabled={saving}
-            className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-wisdom-dark disabled:opacity-50"
+            className={`${PILL} w-full bg-amber-500 font-bold text-wisdom-dark disabled:opacity-50`}
           >
             <Save className="w-4 h-4" />
             {saving ? "Saving…" : "Save package"}
@@ -338,33 +355,37 @@ export default function CatalogPanel() {
           {rows.map((row) => (
             <li
               key={row.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-wisdom-card/80 px-4 py-3"
+              className="rounded-2xl border border-white/10 bg-wisdom-card/80 p-3 space-y-3"
             >
               <div className="min-w-0">
-                <p className="font-semibold text-white truncate">
-                  {row.name}{" "}
-                  <span className="text-xs text-wisdom-muted font-normal">({row.id})</span>
+                <p className="font-semibold text-white break-words">{row.name}</p>
+                <p className="text-xs text-wisdom-muted break-all">{row.id}</p>
+                <p className="mt-1 text-sm text-amber-300 font-bold">
+                  {formatEtb(Number(row.price_etb))}
                 </p>
-                <p className="text-xs text-amber-300 font-bold">{formatEtb(Number(row.price_etb))}</p>
                 {row.description && (
-                  <p className="text-xs text-wisdom-muted mt-1 line-clamp-2">{row.description}</p>
+                  <p className="text-xs text-wisdom-muted mt-1 line-clamp-3 break-words">
+                    {row.description}
+                  </p>
                 )}
               </div>
-              <div className="flex gap-2 shrink-0">
+              <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => openEdit(row)}
-                  className="p-2 rounded-lg border border-white/10 text-cyan-300 hover:border-cyan-400/40"
+                  className={`${PILL} border border-white/10 text-cyan-300`}
                 >
                   <Pencil className="w-4 h-4" />
+                  Edit
                 </button>
                 <button
                   type="button"
                   onClick={() => remove(row.id)}
                   disabled={busyId === row.id}
-                  className="p-2 rounded-lg border border-white/10 text-rose-300 hover:border-rose-400/40"
+                  className={`${PILL} border border-white/10 text-rose-300 disabled:opacity-50`}
                 >
                   <Trash2 className="w-4 h-4" />
+                  Delete
                 </button>
               </div>
             </li>
@@ -372,7 +393,7 @@ export default function CatalogPanel() {
         </ul>
       )}
 
-      <p className="text-[11px] text-wisdom-muted">
+      <p className="text-xs text-wisdom-muted">
         Static fallback list has {academyPackages.length} packages. DB rows override prices when
         present.
       </p>
