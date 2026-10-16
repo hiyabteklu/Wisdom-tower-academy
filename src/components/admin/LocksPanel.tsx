@@ -1,8 +1,10 @@
 "use client";
 
-// Admin mobile redesign A12 (layout only). Logic, lock keys, data calls and texts are unchanged.
-// Phone rules: no horizontal scrolling, 44 px touch targets, no animate-* / blur / shadow,
-// lock modes as a 2-column grid of tiles, folders as 2-column tiles with wrapping labels.
+// Admin UI V2, slice U8 part 2 (2026-10-16): LAYOUT ONLY, kit look. Logic, lock keys, data calls and texts are unchanged.
+// Earlier layout slice A12 (2026-10-15) is kept in spirit: no horizontal scrolling, 44 px touch targets, no animate-* / blur / shadow.
+// Changes now: kit page header, cards, badges, pills and tiles; the breadcrumb is a plain div (the kit forbids nav elements);
+// folders are kit tiles; the long "All active overrides" list no longer has its own inner scroll box (it scrolls with the page,
+// so a finger cannot get stuck in a nested scroller); the message is the kit slim toast (closes itself after 3.5 s).
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -19,15 +21,18 @@ import {
   type LockMode,
   type ContentLockRow,
 } from "@/lib/content-locks";
+import { Lock, Unlock, ChevronRight, FolderOpen, RefreshCw, Shield } from "lucide-react";
 import {
-  Lock,
-  Unlock,
-  ChevronRight,
-  FolderOpen,
-  RefreshCw,
-  Package,
-  Shield,
-} from "lucide-react";
+  AdminBadge,
+  AdminCard,
+  AdminPageHeader,
+  AdminPill,
+  AdminSectionTitle,
+  AdminTile,
+  AdminTileGrid,
+  AdminToast,
+  type AdminTone,
+} from "./ui";
 
 const MODES: { id: LockMode; label: string; hint: string }[] = [
   {
@@ -70,30 +75,54 @@ const HUB_IDS = [
   "life-savers",
 ];
 
-const modeTileCls =
-  "flex min-h-[44px] min-w-0 items-center justify-center gap-1.5 rounded-xl border px-2 py-2 text-center text-sm font-semibold leading-tight disabled:opacity-50";
-const resetCls =
-  "col-span-2 flex min-h-[44px] items-center justify-center rounded-full border border-white/12 px-4 text-sm font-semibold text-wisdom-muted disabled:opacity-40";
+const MODE_TONE: Record<LockMode, AdminTone> = {
+  open: "green",
+  require_purchase: "gold",
+  coming_soon: "cyan",
+  locked: "red",
+};
 
 function modeBadge(mode: LockMode | undefined) {
-  if (!mode)
-    return (
-      <span className="rounded-lg border border-white/10 px-2 py-0.5 text-xs text-wisdom-muted">
-        default
-      </span>
-    );
-  const colors: Record<LockMode, string> = {
-    open: "border-emerald-400/40 bg-emerald-500/15 text-emerald-200",
-    require_purchase: "border-amber-400/40 bg-amber-500/15 text-amber-200",
-    coming_soon: "border-sky-400/40 bg-sky-500/15 text-sky-200",
-    locked: "border-rose-400/40 bg-rose-500/15 text-rose-200",
-  };
+  if (!mode) return <AdminBadge tone="neutral">default</AdminBadge>;
+  return <AdminBadge tone={MODE_TONE[mode]}>{mode.replace("_", " ")}</AdminBadge>;
+}
+
+/** The four lock modes as a 2-column grid of pills, plus a reset pill under them. */
+function ModeButtons({
+  current,
+  busy,
+  hasLock,
+  withIcons,
+  resetLabel,
+  onPick,
+  onReset,
+}: {
+  current: LockMode | undefined;
+  busy: boolean;
+  hasLock: boolean;
+  withIcons?: boolean;
+  resetLabel: string;
+  onPick: (mode: LockMode) => void;
+  onReset: () => void;
+}) {
   return (
-    <span
-      className={`rounded-lg border px-2 py-0.5 text-xs font-semibold ${colors[mode]}`}
-    >
-      {mode.replace("_", " ")}
-    </span>
+    <div className="grid grid-cols-2 gap-2">
+      {MODES.map((m) => (
+        <AdminPill
+          key={m.id}
+          tone={current === m.id ? "gold" : "ghost"}
+          icon={withIcons ? (m.id === "open" ? Unlock : Lock) : undefined}
+          disabled={busy}
+          onClick={() => onPick(m.id)}
+          className="px-2 py-2 text-center leading-tight"
+        >
+          {m.label}
+        </AdminPill>
+      ))}
+      <AdminPill fullWidth disabled={busy || !hasLock} onClick={onReset} className="col-span-2">
+        {resetLabel}
+      </AdminPill>
+    </div>
   );
 }
 
@@ -131,12 +160,6 @@ export default function LocksPanel() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  useEffect(() => {
-    if (!toast) return;
-    const t = setTimeout(() => setToast(""), 3500);
-    return () => clearTimeout(t);
-  }, [toast]);
 
   async function applyMode(lockKey: string, mode: LockMode, label?: string) {
     setBusyKey(lockKey);
@@ -192,94 +215,52 @@ export default function LocksPanel() {
   const activeLock = activeKey ? lockMap.get(activeKey) : undefined;
 
   return (
-    <div className="space-y-4 break-words">
-      {toast && (
-        <div className="rounded-xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
-          {toast}
-        </div>
-      )}
+    <div className="min-w-0 space-y-4 break-words">
       {error && (
-        <div className="rounded-xl border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-          {error}
-        </div>
+        <AdminCard tone="red">
+          <p className="text-sm text-rose-200">{error}</p>
+        </AdminCard>
       )}
 
-      <div className="space-y-3">
-        <div>
-          <h2 className="flex items-center gap-2 text-lg font-bold text-white">
-            <Shield className="h-5 w-5 shrink-0 text-amber-400" />
-            Content locks
-          </h2>
-          <p className="mt-1 text-sm text-wisdom-muted">
-            Lock or unlock packages, subjects, and hubs (books, exams, etc.).
-            Specific exams stay controlled by the Published checkbox in Content.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={load}
-          disabled={loading}
-          className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full border border-white/12 text-sm font-bold text-white disabled:opacity-50"
-        >
-          <RefreshCw className="h-4 w-4" />
-          {loading ? "Refreshing…" : "Refresh"}
-        </button>
-      </div>
+      <AdminPageHeader
+        icon={Shield}
+        title="Content locks"
+        subtitle="Lock or unlock packages, subjects, and hubs (books, exams, etc.). Specific exams stay controlled by the Published checkbox in Content."
+      />
+
+      <AdminPill fullWidth icon={RefreshCw} onClick={() => void load()} disabled={loading}>
+        {loading ? "Refreshing…" : "Refresh"}
+      </AdminPill>
 
       {/* Package-level shortcuts */}
-      <div className="space-y-3 rounded-2xl border border-white/12 bg-wisdom-card p-4">
-        <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-wisdom-muted">
-          <Package className="h-3.5 w-3.5 shrink-0" />
-          Package shortcuts
-        </p>
-        <ul className="space-y-3">
+      <div>
+        <AdminSectionTitle>Package shortcuts</AdminSectionTitle>
+        <div className="space-y-2">
           {PACKAGE_SHORTCUTS.map((p) => {
             const key = packageLockKey(p.id);
             const lock = lockMap.get(key);
             return (
-              <li
-                key={p.id}
-                className="space-y-2 rounded-xl border border-white/10 bg-wisdom-dark/40 p-3"
-              >
+              <AdminCard key={p.id} className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="min-w-0 text-sm font-semibold text-white">
-                    {p.label}
-                  </span>
+                  <span className="min-w-0 text-sm font-semibold text-white">{p.label}</span>
                   {modeBadge(lock?.mode)}
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  {MODES.map((m) => (
-                    <button
-                      key={m.id}
-                      type="button"
-                      disabled={busyKey === key}
-                      onClick={() => applyMode(key, m.id, p.label)}
-                      className={`${modeTileCls} ${
-                        lock?.mode === m.id
-                          ? "border-amber-400/50 bg-amber-500/20 text-amber-100"
-                          : "border-white/12 text-wisdom-muted"
-                      }`}
-                    >
-                      {m.label}
-                    </button>
-                  ))}
-                  <button
-                    type="button"
-                    disabled={busyKey === key || !lock}
-                    onClick={() => resetToDefault(key)}
-                    className={resetCls}
-                  >
-                    Default
-                  </button>
-                </div>
-              </li>
+                <ModeButtons
+                  current={lock?.mode}
+                  busy={busyKey === key}
+                  hasLock={Boolean(lock)}
+                  resetLabel="Default"
+                  onPick={(mode) => void applyMode(key, mode, p.label)}
+                  onReset={() => void resetToDefault(key)}
+                />
+              </AdminCard>
             );
           })}
-        </ul>
+        </div>
       </div>
 
-      {/* Tree navigation */}
-      <nav className="flex flex-wrap items-center gap-x-1 text-sm">
+      {/* Tree navigation (breadcrumb) */}
+      <div className="flex flex-wrap items-center gap-x-1 text-sm">
         <button
           type="button"
           onClick={resetRoot}
@@ -303,66 +284,41 @@ export default function LocksPanel() {
             </button>
           </span>
         ))}
-      </nav>
+      </div>
 
       {/* Controls for current node */}
       {activeKey && (
-        <div className="space-y-3 rounded-2xl border border-amber-400/25 bg-wisdom-card p-4">
+        <AdminCard tone="gold" className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
             {activeLock?.mode === "open" || !activeLock ? (
               <Unlock className="h-4 w-4 shrink-0 text-emerald-300" />
             ) : (
               <Lock className="h-4 w-4 shrink-0 text-rose-300" />
             )}
-            <p className="min-w-0 font-semibold text-white">
-              {current?.label || "Selection"}
-            </p>
+            <p className="min-w-0 text-sm font-semibold text-white">{current?.label || "Selection"}</p>
             {modeBadge(activeLock?.mode)}
           </div>
           <p className="break-all font-mono text-xs text-wisdom-muted">{activeKey}</p>
-          <div className="grid grid-cols-2 gap-2">
-            {MODES.map((m) => (
-              <button
-                key={m.id}
-                type="button"
-                disabled={busyKey === activeKey}
-                onClick={() =>
-                  applyMode(activeKey, m.id, current?.label || activeKey)
-                }
-                className={`${modeTileCls} ${
-                  activeLock?.mode === m.id
-                    ? "border-amber-400/50 bg-amber-500/20 text-amber-100"
-                    : "border-white/12 text-wisdom-muted"
-                }`}
-              >
-                {m.id === "open" ? (
-                  <Unlock className="h-3.5 w-3.5 shrink-0" />
-                ) : (
-                  <Lock className="h-3.5 w-3.5 shrink-0" />
-                )}
-                <span className="min-w-0">{m.label}</span>
-              </button>
-            ))}
-            <button
-              type="button"
-              disabled={busyKey === activeKey || !activeLock}
-              onClick={() => resetToDefault(activeKey)}
-              className={resetCls}
-            >
-              Reset to code default
-            </button>
-          </div>
-          <p className="text-xs text-wisdom-muted">
+          <ModeButtons
+            current={activeLock?.mode}
+            busy={busyKey === activeKey}
+            hasLock={Boolean(activeLock)}
+            withIcons
+            resetLabel="Reset to code default"
+            onPick={(mode) => void applyMode(activeKey, mode, current?.label || activeKey)}
+            onReset={() => void resetToDefault(activeKey)}
+          />
+          <p className="text-xs leading-snug text-wisdom-muted">
             Hub-level locks override subject locks; subject locks override package
             locks. Individual exams: use <strong className="text-white">Published</strong>{" "}
             in the Content tab.
           </p>
-        </div>
+        </AdminCard>
       )}
 
       {/* Children list */}
       {!isHub && listNodes.length > 0 && (
-        <ul className="grid grid-cols-2 gap-2">
+        <AdminTileGrid>
           {listNodes.map((node) => {
             const childKey =
               node.scopePath && HUB_IDS.includes(node.id)
@@ -374,56 +330,43 @@ export default function LocksPanel() {
                     : null;
             const childLock = childKey ? lockMap.get(childKey) : undefined;
             return (
-              <li key={node.id} className="min-w-0">
-                <button
-                  type="button"
-                  onClick={() => enter(node)}
-                  className="flex h-full min-h-[64px] w-full flex-col items-start gap-1.5 rounded-2xl border border-white/12 bg-wisdom-card p-3 text-left"
-                >
-                  <span className="flex w-full items-center justify-between">
-                    <FolderOpen className="h-5 w-5 shrink-0 text-amber-400" />
-                    <ChevronRight className="h-4 w-4 shrink-0 text-wisdom-muted" />
-                  </span>
-                  <span className="break-words text-sm font-semibold leading-tight text-white">
-                    {node.label}
-                  </span>
-                  {childLock && modeBadge(childLock.mode)}
-                </button>
-              </li>
+              <AdminTile
+                key={node.id}
+                icon={FolderOpen}
+                label={node.label}
+                badge={childLock ? modeBadge(childLock.mode) : undefined}
+                onClick={() => enter(node)}
+              />
             );
           })}
-        </ul>
+        </AdminTileGrid>
       )}
 
       {isHub && (
-        <p className="rounded-2xl border border-dashed border-white/15 py-6 text-center text-sm text-wisdom-muted">
-          This is a hub. Use the buttons above to lock/unlock the whole hub.
-          Open the <strong className="text-white">Content</strong> tab to publish
-          or unpublish individual exams and items.
-        </p>
+        <AdminCard>
+          <p className="py-3 text-center text-sm text-wisdom-muted">
+            This is a hub. Use the buttons above to lock/unlock the whole hub.
+            Open the <strong className="text-white">Content</strong> tab to publish
+            or unpublish individual exams and items.
+          </p>
+        </AdminCard>
       )}
 
       {locks.length > 0 && crumbs.length === 0 && (
-        <div className="pt-1">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-wisdom-muted">
-            All active overrides ({locks.length})
-          </p>
-          <ul
-            className="max-h-60 space-y-2 text-xs"
-            style={{ overflowY: "auto", overscrollBehavior: "contain" }}
-          >
+        <div>
+          <AdminSectionTitle>All active overrides ({locks.length})</AdminSectionTitle>
+          <AdminCard className="space-y-2">
             {locks.map((l) => (
-              <li
-                key={l.lockKey}
-                className="flex flex-wrap items-center gap-2 text-wisdom-muted"
-              >
+              <div key={l.lockKey} className="flex flex-wrap items-center gap-2 text-xs text-wisdom-muted">
                 <span className="min-w-0 break-all font-mono text-cyan-300/90">{l.lockKey}</span>
                 {modeBadge(l.mode)}
-              </li>
+              </div>
             ))}
-          </ul>
+          </AdminCard>
         </div>
       )}
+
+      <AdminToast message={toast || null} onClose={() => setToast("")} durationMs={3500} />
     </div>
   );
 }
