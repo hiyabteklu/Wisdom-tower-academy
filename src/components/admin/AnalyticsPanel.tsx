@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useState, useMemo, type ReactNode } from "react";
 import { fetchAdminStats, type AdminStats } from "@/lib/admin-data";
 import { statusLabel } from "@/lib/orders";
 import { formatEtb } from "@/data/packages";
 import BrandLoader from "@/components/BrandLoader";
+import { AdminCard, AdminChip, AdminChips, AdminEmpty, AdminPill, type AdminChipOption, type AdminIcon } from "@/components/admin/ui";
 import {
   Users,
   CreditCard,
@@ -31,55 +32,70 @@ import {
  * Fake-content rule (HANDOFF section 7): removed three claims that were not real data: "Updated in real time"
  * (the page loads once and on Refresh), "100% Ethiopian Rail", and "Live stream" / "Real-Time" in the feed
  * title and subtitle (now "Recent Activity"). The unused `activityOpen` state and unused icon imports were dropped.
+ *
+ * 2026-10-16 (slice U3 of docs/ADMIN_UI_V2_PLAN.md): LOOK ONLY, same data and texts. Uses the shared kit
+ * (`ui.tsx`): gold icon chips on every card (the unused per-card accent colours and the never-passed `trend`
+ * prop were dropped), kit cards, the kit filter chips (gold when active), the kit Refresh pill and the kit
+ * empty state. Chart bar colours stay: they carry meaning (orders, revenue, payment rails, streams).
  */
+
+type ActivityFilter = "all" | "order" | "enroll" | "inquiry" | "user";
+
+const ACTIVITY_FILTERS: AdminChipOption<ActivityFilter>[] = [
+  { id: "all", label: "All" },
+  { id: "order", label: "Orders" },
+  { id: "enroll", label: "Grants" },
+  { id: "inquiry", label: "Inquiries" },
+  { id: "user", label: "Scholars" },
+];
 
 function MetricCard({
   label,
   value,
   secondary,
   hint,
-  icon: Icon,
-  accentColor,
-  trend,
+  icon,
 }: {
   label: string;
   value: string | number;
   secondary?: string;
   hint?: string;
-  icon: React.ComponentType<{ className?: string }>;
-  accentColor: "emerald" | "amber" | "cyan" | "purple" | "rose" | "sky";
-  trend?: string;
+  icon: AdminIcon;
 }) {
-  const colorMap = {
-    emerald: "border-emerald-400/20 bg-emerald-500/10 text-emerald-300",
-    amber: "border-amber-400/20 bg-amber-500/10 text-amber-300",
-    cyan: "border-cyan-400/20 bg-cyan-500/10 text-cyan-300",
-    purple: "border-purple-400/20 bg-purple-500/10 text-purple-300",
-    rose: "border-rose-400/20 bg-rose-500/10 text-rose-300",
-    sky: "border-sky-400/20 bg-sky-500/10 text-sky-300",
-  };
-
   return (
-    <div className="min-w-0 rounded-2xl border border-white/10 bg-wisdom-card p-3.5 flex flex-col justify-between">
+    <AdminCard className="flex flex-col justify-between">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wider text-wisdom-muted">{label}</p>
-          <p className="text-xl font-extrabold text-white tracking-tight tabular-nums mt-1 break-words">
-            {value}
-          </p>
-          {secondary && <p className="text-xs font-semibold text-wisdom-muted mt-0.5">{secondary}</p>}
+          <p className="mt-1 break-words text-xl font-extrabold tabular-nums tracking-tight text-white">{value}</p>
+          {secondary && <p className="mt-0.5 text-xs font-semibold text-wisdom-muted">{secondary}</p>}
         </div>
-        <div className={`p-2 rounded-xl border shrink-0 ${colorMap[accentColor]}`}>
-          <Icon className="w-4 h-4" />
-        </div>
+        <AdminChip icon={icon} size="sm" />
       </div>
 
-      {(hint || trend) && (
-        <div className="mt-2.5 pt-2 border-t border-white/6 text-xs text-wisdom-muted">
-          <span>{hint}</span>
-          {trend && <span className="font-semibold text-emerald-400 ml-1">{trend}</span>}
-        </div>
-      )}
+      {hint && <div className="mt-2.5 border-t border-white/10 pt-2 text-xs text-wisdom-muted">{hint}</div>}
+    </AdminCard>
+  );
+}
+
+function InfoTile({ label, value, valueClass, note }: { label: string; value: ReactNode; valueClass?: string; note: string }) {
+  return (
+    <AdminCard>
+      <p className="text-xs font-semibold uppercase tracking-wider text-wisdom-muted">{label}</p>
+      <p className={`mt-1 text-xl font-bold tabular-nums ${valueClass ?? "text-white"}`}>{value}</p>
+      <p className="mt-0.5 text-xs text-wisdom-muted">{note}</p>
+    </AdminCard>
+  );
+}
+
+function CardHeader({ icon, title, meta }: { icon: AdminIcon; title: string; meta?: string }) {
+  return (
+    <div className="mb-3 flex items-center justify-between gap-3">
+      <div className="flex min-w-0 items-center gap-2.5">
+        <AdminChip icon={icon} size="sm" />
+        <h3 className="min-w-0 text-sm font-semibold leading-tight text-white">{title}</h3>
+      </div>
+      {meta ? <span className="shrink-0 text-xs text-wisdom-muted">{meta}</span> : null}
     </div>
   );
 }
@@ -97,7 +113,7 @@ function timeAgo(iso: string) {
 export default function AnalyticsPanel() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activityFilter, setActivityFilter] = useState<"all" | "order" | "enroll" | "inquiry" | "user">("all");
+  const [activityFilter, setActivityFilter] = useState<ActivityFilter>("all");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -173,49 +189,43 @@ export default function AnalyticsPanel() {
   const maxDayOrders = Math.max(1, ...s.last7Days.map((d) => d.orders));
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Header and Refresh */}
-      <div className="space-y-3 border-b border-white/8 pb-3">
-        <div className="min-w-0">
-          <h2 className="text-xl font-bold text-white flex items-start gap-2">
-            <TrendingUp className="w-5 h-5 text-cyan-400 shrink-0 mt-1" />
-            <span>Executive Intelligence & Operational Overview</span>
-          </h2>
-          <p className="text-xs text-wisdom-muted mt-1 leading-relaxed">
-            Financial, student enrollment, and platform usage metrics
-          </p>
+      <div className="space-y-3">
+        <div className="flex items-start gap-3">
+          <AdminChip icon={TrendingUp} />
+          <div className="min-w-0 flex-1">
+            <h2 className="text-base font-bold leading-snug text-white">Executive Intelligence & Operational Overview</h2>
+            <p className="mt-1 text-xs leading-relaxed text-wisdom-muted">
+              Financial, student enrollment, and platform usage metrics
+            </p>
+          </div>
         </div>
 
-        <button
-          type="button"
-          onClick={load}
-          disabled={loading}
-          className="w-full inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3 rounded-full border border-white/12 text-sm font-semibold text-white/90 active:bg-white/10 disabled:opacity-50 cursor-pointer"
-        >
-          <RefreshCw className="w-4 h-4 shrink-0" />
-          <span>{loading ? "Loading..." : "Refresh Data"}</span>
-        </button>
+        <AdminPill type="button" onClick={load} disabled={loading} icon={RefreshCw} fullWidth>
+          {loading ? "Loading..." : "Refresh Data"}
+        </AdminPill>
       </div>
 
       {/* Today's Pulse */}
-      <div className="rounded-2xl border border-cyan-400/20 bg-cyan-950/20 p-3.5 space-y-2.5 text-sm">
+      <div className="space-y-2.5 rounded-2xl border border-cyan-400/20 bg-cyan-950/20 p-3 text-sm">
         <div className="flex items-start gap-2.5">
-          <span className="inline-block h-3 w-3 rounded-full bg-cyan-500 shrink-0 mt-1" />
+          <span className="mt-1 inline-block h-3 w-3 shrink-0 rounded-full bg-cyan-500" />
           <div className="min-w-0">
             <span className="font-bold text-white">Today&apos;s Pulse:</span>{" "}
             <span className="text-cyan-200">
               {s.todayOrdersCount} order{s.todayOrdersCount === 1 ? "" : "s"} placed today
             </span>
             <span className="text-wisdom-muted"> · </span>
-            <span className="text-emerald-300 font-semibold">
+            <span className="font-semibold text-emerald-300">
               {formatEtb(s.todayRevenueEtb)} verified today
             </span>
           </div>
         </div>
 
         {s.urgentPendingOrdersCount > 0 && (
-          <div className="flex items-start gap-1.5 px-3 py-2 rounded-2xl text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-400/30">
-            <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+          <div className="flex items-start gap-1.5 rounded-2xl border border-amber-400/30 bg-amber-500/20 px-3 py-2 text-xs font-semibold text-amber-300">
+            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             <span>
               {s.urgentPendingOrdersCount} order{s.urgentPendingOrdersCount === 1 ? "" : "s"} awaiting approval &gt; 2 hrs
             </span>
@@ -224,86 +234,63 @@ export default function AnalyticsPanel() {
       </div>
 
       {/* Main KPI Grid */}
-      <div className="grid grid-cols-2 gap-2.5">
+      <div className="grid grid-cols-2 gap-2">
         <MetricCard
           label="Verified Revenue"
           value={formatEtb(s.revenueVerifiedEtb)}
           hint={`${s.ordersVerified} approved orders`}
           secondary={`avg ${formatEtb(s.avgOrderEtb)}`}
           icon={Wallet}
-          accentColor="emerald"
         />
         <MetricCard
           label="Pending Pipeline"
           value={formatEtb(s.pipelineEtb)}
           hint={`${s.ordersPending} pending payment confirmation`}
           icon={Clock}
-          accentColor="amber"
         />
         <MetricCard
           label="Registered Scholars"
           value={s.users}
           hint={`${s.enrollments} total unlocked package grants`}
           icon={Users}
-          accentColor="purple"
         />
         <MetricCard
           label="Order Conversion"
           value={`${s.conversionPct}%`}
           hint={`${s.ordersTotal} checkouts initiated`}
           icon={Percent}
-          accentColor="cyan"
         />
       </div>
 
       {/* Secondary Metrics */}
-      <div className="grid grid-cols-2 gap-2.5">
-        <div className="min-w-0 rounded-2xl border border-white/8 bg-wisdom-card/70 p-3.5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-wisdom-muted">Course Enrollments</p>
-          <p className="text-xl font-bold text-white mt-1 tabular-nums">{s.enrollments}</p>
-          <p className="text-xs text-wisdom-muted mt-0.5">Active scholar access seats</p>
-        </div>
-
-        <div className="min-w-0 rounded-2xl border border-white/8 bg-wisdom-card/70 p-3.5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-wisdom-muted">AI Explanations</p>
-          <p className="text-xl font-bold text-cyan-300 mt-1 tabular-nums">{s.explanationsCached}</p>
-          <p className="text-xs text-wisdom-muted mt-0.5">Cached tutor explanations</p>
-        </div>
-
-        <div className="min-w-0 rounded-2xl border border-white/8 bg-wisdom-card/70 p-3.5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-wisdom-muted">Quiz Submissions</p>
-          <p className="text-xl font-bold text-emerald-300 mt-1 tabular-nums">{s.academicResults}</p>
-          <p className="text-xs text-wisdom-muted mt-0.5">Completed exam sessions</p>
-        </div>
-
-        <div className="min-w-0 rounded-2xl border border-white/8 bg-wisdom-card/70 p-3.5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-wisdom-muted">Inquiries & Support</p>
-          <p className="text-xl font-bold text-white mt-1 tabular-nums">
-            {s.inquiriesTotal}
-            {s.inquiriesNew > 0 && (
-              <span className="text-xs font-semibold text-amber-400 ml-1.5">({s.inquiriesNew} new)</span>
-            )}
-          </p>
-          <p className="text-xs text-wisdom-muted mt-0.5">Student support messages</p>
-        </div>
+      <div className="grid grid-cols-2 gap-2">
+        <InfoTile label="Course Enrollments" value={s.enrollments} note="Active scholar access seats" />
+        <InfoTile label="AI Explanations" value={s.explanationsCached} valueClass="text-cyan-300" note="Cached tutor explanations" />
+        <InfoTile label="Quiz Submissions" value={s.academicResults} valueClass="text-emerald-300" note="Completed exam sessions" />
+        <InfoTile
+          label="Inquiries & Support"
+          value={
+            <>
+              {s.inquiriesTotal}
+              {s.inquiriesNew > 0 && (
+                <span className="ml-1.5 text-xs font-semibold text-amber-400">({s.inquiriesNew} new)</span>
+              )}
+            </>
+          }
+          note="Student support messages"
+        />
       </div>
 
       {/* Last 7 days */}
-      <div className="rounded-2xl border border-white/10 bg-wisdom-card p-3.5">
-        <div className="flex items-center justify-between gap-3 mb-3">
-          <div className="flex items-center gap-2 min-w-0">
-            <Activity className="w-4 h-4 text-cyan-400 shrink-0" />
-            <h3 className="font-semibold text-white">Daily Order & Revenue Velocity</h3>
-          </div>
-          <span className="text-xs text-wisdom-muted shrink-0">Last 7 Days</span>
-        </div>
+      <AdminCard>
+        <CardHeader icon={Activity} title="Daily Order & Revenue Velocity" meta="Last 7 Days" />
 
-        <div className="flex items-end justify-between gap-1.5 h-40 pt-2 border-b border-white/8 pb-3">
+        <div className="flex h-40 items-end justify-between gap-1.5 border-b border-white/10 pb-3 pt-2">
           {s.last7Days.map((d) => {
             const heightPct = Math.round((d.orders / maxDayOrders) * 100);
             return (
-              <div key={d.day} className="flex-1 min-w-0 flex flex-col items-center gap-1.5 h-full justify-end">
-                <div className="w-full max-w-[40px] h-28 flex flex-col justify-end rounded-lg bg-white/5 p-0.5 overflow-hidden">
+              <div key={d.day} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1.5">
+                <div className="flex h-28 w-full max-w-[40px] flex-col justify-end overflow-hidden rounded-lg bg-white/5 p-0.5">
                   <div
                     className="w-full rounded-md bg-gradient-to-t from-cyan-600 via-cyan-400 to-amber-300"
                     style={{ height: `${Math.max(d.orders ? 10 : 2, heightPct)}%` }}
@@ -311,15 +298,15 @@ export default function AnalyticsPanel() {
                   />
                 </div>
                 <div className="text-center">
-                  <p className="text-xs font-bold text-white tabular-nums">{d.orders}</p>
-                  <p className="text-[11px] text-wisdom-muted uppercase tracking-wider">{d.label}</p>
+                  <p className="text-xs font-bold tabular-nums text-white">{d.orders}</p>
+                  <p className="text-[11px] uppercase tracking-wider text-wisdom-muted">{d.label}</p>
                 </div>
               </div>
             );
           })}
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-wisdom-muted pt-3">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-3 text-xs text-wisdom-muted">
           <div className="flex items-center gap-2">
             <span className="h-2.5 w-2.5 rounded-full bg-cyan-400" />
             <span>Orders placed</span>
@@ -329,20 +316,14 @@ export default function AnalyticsPanel() {
             <span>Verified revenue</span>
           </div>
         </div>
-      </div>
+      </AdminCard>
 
       {/* Payment method share */}
-      <div className="rounded-2xl border border-white/10 bg-wisdom-card p-3.5">
-        <div className="flex items-center justify-between gap-3 mb-3">
-          <div className="flex items-center gap-2 min-w-0">
-            <CreditCard className="w-4 h-4 text-emerald-400 shrink-0" />
-            <h3 className="font-semibold text-white">Payment Rail Share</h3>
-          </div>
-          <span className="text-xs text-wisdom-muted shrink-0">{s.ordersTotal} transactions</span>
-        </div>
+      <AdminCard>
+        <CardHeader icon={CreditCard} title="Payment Rail Share" meta={`${s.ordersTotal} transactions`} />
 
         {s.byMethod.length === 0 ? (
-          <p className="text-sm text-wisdom-muted text-center py-8">No orders recorded yet</p>
+          <p className="py-8 text-center text-sm text-wisdom-muted">No orders recorded yet</p>
         ) : (
           <div className="space-y-3">
             {s.byMethod.map((m) => {
@@ -350,14 +331,14 @@ export default function AnalyticsPanel() {
               return (
                 <div key={m.method} className="space-y-1.5">
                   <div className="flex items-start justify-between gap-2 text-xs">
-                    <span className="font-semibold text-white uppercase tracking-wider min-w-0 break-words">
+                    <span className="min-w-0 break-words font-semibold uppercase tracking-wider text-white">
                       {m.method}
                     </span>
-                    <span className="text-wisdom-muted text-right shrink-0">
+                    <span className="shrink-0 text-right text-wisdom-muted">
                       <strong className="text-emerald-300">{formatEtb(m.totalEtb)}</strong> · {m.count} ({pct}%)
                     </span>
                   </div>
-                  <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+                  <div className="h-2 overflow-hidden rounded-full bg-white/5">
                     <div className="h-full rounded-full bg-emerald-400" style={{ width: `${pct}%` }} />
                   </div>
                 </div>
@@ -365,52 +346,40 @@ export default function AnalyticsPanel() {
             })}
           </div>
         )}
-      </div>
+      </AdminCard>
 
       {/* Top packages */}
-      <div className="rounded-2xl border border-white/10 bg-wisdom-card p-3.5 space-y-3">
-        <div className="flex items-center justify-between gap-3 border-b border-white/8 pb-2.5">
-          <div className="flex items-center gap-2 min-w-0">
-            <Award className="w-4 h-4 text-amber-400 shrink-0" />
-            <h3 className="font-semibold text-white">Top Packages by Enrollment</h3>
-          </div>
-          <span className="text-xs text-wisdom-muted shrink-0">By order volume</span>
-        </div>
+      <AdminCard>
+        <CardHeader icon={Award} title="Top Packages by Enrollment" meta="By order volume" />
 
         {s.byPackage.length === 0 ? (
-          <p className="text-sm text-wisdom-muted text-center py-6">No package enrollments yet</p>
+          <p className="py-6 text-center text-sm text-wisdom-muted">No package enrollments yet</p>
         ) : (
           <div className="space-y-3">
             {s.byPackage.map((pkg, idx) => (
               <div key={pkg.name} className="flex items-start justify-between gap-3 text-sm">
-                <div className="flex items-start gap-2.5 min-w-0">
+                <div className="flex min-w-0 items-start gap-2.5">
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-white/5 text-xs font-bold text-wisdom-muted">
                     {idx + 1}
                   </span>
-                  <span className="font-medium text-white/90 break-words min-w-0">{pkg.name}</span>
+                  <span className="min-w-0 break-words font-medium text-white/90">{pkg.name}</span>
                 </div>
-                <div className="text-right shrink-0">
+                <div className="shrink-0 text-right">
                   <span className="font-bold text-amber-300">{formatEtb(pkg.revenue)}</span>
-                  <span className="text-xs text-wisdom-muted block">{pkg.count} orders</span>
+                  <span className="block text-xs text-wisdom-muted">{pkg.count} orders</span>
                 </div>
               </div>
             ))}
           </div>
         )}
-      </div>
+      </AdminCard>
 
       {/* Stream demographics */}
-      <div className="rounded-2xl border border-white/10 bg-wisdom-card p-3.5 space-y-3">
-        <div className="flex items-center justify-between gap-3 border-b border-white/8 pb-2.5">
-          <div className="flex items-center gap-2 min-w-0">
-            <GraduationCap className="w-4 h-4 text-purple-400 shrink-0" />
-            <h3 className="font-semibold text-white">Scholar Stream Demographics</h3>
-          </div>
-          <span className="text-xs text-wisdom-muted shrink-0">{s.users} registered</span>
-        </div>
+      <AdminCard>
+        <CardHeader icon={GraduationCap} title="Scholar Stream Demographics" meta={`${s.users} registered`} />
 
         {s.byStream.length === 0 ? (
-          <p className="text-sm text-wisdom-muted text-center py-6">No student profiles registered yet</p>
+          <p className="py-6 text-center text-sm text-wisdom-muted">No student profiles registered yet</p>
         ) : (
           <div className="space-y-3">
             {s.byStream.map((stream) => {
@@ -418,12 +387,12 @@ export default function AnalyticsPanel() {
               return (
                 <div key={stream.stream} className="space-y-1.5">
                   <div className="flex items-start justify-between gap-2 text-xs">
-                    <span className="font-medium text-white/90 min-w-0 break-words">{stream.stream}</span>
-                    <span className="text-wisdom-muted shrink-0">
+                    <span className="min-w-0 break-words font-medium text-white/90">{stream.stream}</span>
+                    <span className="shrink-0 text-wisdom-muted">
                       {stream.count} scholars ({pct}%)
                     </span>
                   </div>
-                  <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+                  <div className="h-2 overflow-hidden rounded-full bg-white/5">
                     <div className="h-full rounded-full bg-purple-400" style={{ width: `${pct}%` }} />
                   </div>
                 </div>
@@ -431,58 +400,26 @@ export default function AnalyticsPanel() {
             })}
           </div>
         )}
-      </div>
+      </AdminCard>
 
       {/* Recent activity */}
-      <div className="rounded-2xl border border-white/10 bg-wisdom-card overflow-hidden">
-        <div className="p-3.5 border-b border-white/8 space-y-3">
-          <div className="flex items-start gap-2.5">
-            <Activity className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
-            <div className="min-w-0">
-              <h3 className="font-semibold text-white">Recent Activity</h3>
-              <p className="text-xs text-wisdom-muted mt-0.5">
-                Latest student signups, order payments, access grants, and inquiries
-              </p>
-            </div>
-          </div>
+      <div className="pt-1">
+        <CardHeader icon={Activity} title="Recent Activity" />
+        <p className="-mt-1 mb-3 text-xs text-wisdom-muted">
+          Latest student signups, order payments, access grants, and inquiries
+        </p>
 
-          <div className="flex flex-wrap gap-2">
-            {(
-              [
-                ["all", "All"],
-                ["order", "Orders"],
-                ["enroll", "Grants"],
-                ["inquiry", "Inquiries"],
-                ["user", "Scholars"],
-              ] as const
-            ).map(([filterId, filterLabel]) => (
-              <button
-                key={filterId}
-                type="button"
-                onClick={() => setActivityFilter(filterId)}
-                className={`min-h-[44px] px-4 rounded-full border text-sm font-semibold cursor-pointer ${
-                  activityFilter === filterId
-                    ? "bg-cyan-500 border-cyan-400 text-wisdom-dark font-bold"
-                    : "bg-white/5 border-white/10 text-wisdom-muted active:bg-white/10"
-                }`}
-              >
-                {filterLabel}
-              </button>
-            ))}
-          </div>
-        </div>
+        <AdminChips options={ACTIVITY_FILTERS} value={activityFilter} onChange={setActivityFilter} />
 
-        {filteredActivity.length === 0 ? (
-          <div className="p-6 text-center text-wisdom-muted text-sm">
-            No events found in this filter category
-          </div>
-        ) : (
-          <div className="divide-y divide-white/6">
-            {filteredActivity.map((item) => (
-              <div key={item.id} className="p-3.5 text-sm">
-                <div className="flex items-start gap-2">
+        <div className="mt-3 space-y-2">
+          {filteredActivity.length === 0 ? (
+            <AdminEmpty title="No events found in this filter category" />
+          ) : (
+            filteredActivity.map((item) => (
+              <AdminCard key={item.id} className="text-sm">
+                <div className="flex items-start gap-2.5">
                   <span
-                    className={`inline-block h-2 w-2 rounded-full shrink-0 mt-1.5 ${
+                    className={`mt-1.5 inline-block h-2 w-2 shrink-0 rounded-full ${
                       item.kind === "order"
                         ? "bg-amber-400"
                         : item.kind === "enroll"
@@ -493,17 +430,15 @@ export default function AnalyticsPanel() {
                     }`}
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-white/95 break-words">{item.text}</p>
-                    {item.detail && (
-                      <p className="text-xs text-wisdom-muted mt-0.5 break-words">{item.detail}</p>
-                    )}
-                    <p className="text-xs text-wisdom-muted mt-1 tabular-nums">{timeAgo(item.when)}</p>
+                    <p className="break-words font-semibold text-white/95">{item.text}</p>
+                    {item.detail && <p className="mt-0.5 break-words text-xs text-wisdom-muted">{item.detail}</p>}
+                    <p className="mt-1 text-xs tabular-nums text-wisdom-muted">{timeAgo(item.when)}</p>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              </AdminCard>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );
