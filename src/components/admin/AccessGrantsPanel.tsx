@@ -11,22 +11,33 @@ import {
   type AccessGrant,
 } from "@/lib/access-grants";
 import { academyPackages } from "@/data/packages";
+import { KeyRound, Plus, RefreshCw, Trash2, ShieldCheck } from "lucide-react";
 import {
-  KeyRound,
-  Plus,
-  RefreshCw,
-  Trash2,
-  ShieldCheck,
-  Search,
-} from "lucide-react";
+  AdminCard,
+  AdminEmpty,
+  AdminField,
+  AdminInput,
+  AdminPageHeader,
+  AdminPill,
+  AdminSearch,
+  AdminSelect,
+  AdminSheet,
+  AdminSkeleton,
+  AdminToast,
+} from "./ui";
+
+/**
+ * Admin Access Grants tab.
+ *
+ * 2026-10-16 (Admin UI V2, slice U8 part 1): LAYOUT ONLY. Kit page header, kit cards, kit fields and pills,
+ * the search is the kit search, grants are kit cards, the browser confirm boxes before Revoke and Revoke all are
+ * a kit bottom sheet (same two sentences), the message is the kit slim toast, a static skeleton while loading.
+ * listAccessGrants, grantAccess, grantAllPackages, revokeAccess, revokeAllForEmail and every text are unchanged.
+ */
 
 type Props = { adminEmail: string };
 
-// Phone layout classes (A14): 44 px targets, no hover-only states, no animation.
-const FIELD =
-  "mt-1 w-full min-h-[44px] rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2 text-sm text-white";
-const PILL =
-  "inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold disabled:opacity-50";
+type PendingRevoke = { kind: "one"; id: string; label: string } | { kind: "all"; email: string };
 
 export default function AccessGrantsPanel({ adminEmail }: Props) {
   const [grants, setGrants] = useState<AccessGrant[]>([]);
@@ -39,6 +50,7 @@ export default function AccessGrantsPanel({ adminEmail }: Props) {
   const [packageId, setPackageId] = useState<string>(ALL_PACKAGES_ID);
   const [note, setNote] = useState("Beta access");
   const [filter, setFilter] = useState("");
+  const [pendingRevoke, setPendingRevoke] = useState<PendingRevoke | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -60,12 +72,6 @@ export default function AccessGrantsPanel({ adminEmail }: Props) {
   useEffect(() => {
     void load();
   }, [load]);
-
-  useEffect(() => {
-    if (!toast) return;
-    const t = setTimeout(() => setToast(""), 4000);
-    return () => clearTimeout(t);
-  }, [toast]);
 
   const filtered = useMemo(() => {
     const q = filter.trim().toLowerCase();
@@ -119,8 +125,7 @@ export default function AccessGrantsPanel({ adminEmail }: Props) {
     void load();
   }
 
-  async function onRevoke(id: string, label: string) {
-    if (!confirm(`Revoke access for ${label}?`)) return;
+  async function onRevoke(id: string) {
     setBusy(true);
     const res = await revokeAccess(id);
     setBusy(false);
@@ -133,7 +138,6 @@ export default function AccessGrantsPanel({ adminEmail }: Props) {
   }
 
   async function onRevokeEmail(em: string) {
-    if (!confirm(`Revoke ALL grants for ${em}?`)) return;
     setBusy(true);
     const res = await revokeAllForEmail(em);
     setBusy(false);
@@ -145,134 +149,95 @@ export default function AccessGrantsPanel({ adminEmail }: Props) {
     void load();
   }
 
+  async function confirmRevoke() {
+    const p = pendingRevoke;
+    setPendingRevoke(null);
+    if (!p) return;
+    if (p.kind === "one") await onRevoke(p.id);
+    else await onRevokeEmail(p.email);
+  }
+
   return (
-    <div className="space-y-4">
-      {toast && (
-        <div className="rounded-xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200 break-words">
-          {toast}
-        </div>
-      )}
+    <div className="min-w-0 space-y-4">
       {error && (
-        <div className="rounded-xl border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200 break-words">
-          {error}
-        </div>
+        <AdminCard tone="red">
+          <p className="break-words text-sm text-rose-200">{error}</p>
+        </AdminCard>
       )}
 
-      <div className="space-y-3">
-        <div className="min-w-0">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
-            <KeyRound className="w-5 h-5 shrink-0 text-amber-400" />
-            Access grants
-          </h2>
-          <p className="text-sm text-wisdom-muted mt-0.5 break-words">
-            Whitelist emails for beta users: unlock specific packages or the whole
-            catalog without payment. Works even before they sign up (matched by email).
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={load}
-          disabled={loading}
-          className={`${PILL} w-full border border-white/12 text-white/80`}
-        >
-          <RefreshCw className="w-4 h-4" />
-          {loading ? "Refreshing…" : "Refresh"}
-        </button>
-      </div>
+      <AdminPageHeader
+        icon={KeyRound}
+        title="Access grants"
+        subtitle="Whitelist emails for beta users: unlock specific packages or the whole catalog without payment. Works even before they sign up (matched by email)."
+      />
 
-      <form
-        onSubmit={onGrant}
-        className="rounded-2xl border border-amber-400/25 bg-wisdom-card p-4 space-y-3"
-      >
-        <p className="text-xs font-semibold uppercase tracking-wider text-amber-200/90 flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 shrink-0" />
-          Grant access
-        </p>
-        <div className="grid grid-cols-1 gap-3">
-          <label className="block text-xs text-wisdom-muted min-w-0">
-            Email
-            <input
+      <AdminPill fullWidth icon={RefreshCw} onClick={() => void load()} disabled={loading}>
+        {loading ? "Refreshing…" : "Refresh"}
+      </AdminPill>
+
+      <form onSubmit={onGrant} className="min-w-0">
+        <AdminCard tone="gold" className="space-y-3">
+          <p className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-amber-200">
+            <ShieldCheck className="h-4 w-4 shrink-0" />
+            Grant access
+          </p>
+          <AdminField label="Email">
+            <AdminInput
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="beta.user@example.com"
-              className={FIELD}
               autoComplete="off"
             />
-          </label>
-          <label className="block text-xs text-wisdom-muted min-w-0">
-            Package
-            <select
-              value={packageId}
-              onChange={(e) => setPackageId(e.target.value)}
-              className={FIELD}
-            >
+          </AdminField>
+          <AdminField label="Package">
+            <AdminSelect value={packageId} onChange={(e) => setPackageId(e.target.value)}>
               <option value={ALL_PACKAGES_ID}>★ All packages (full access)</option>
               {academyPackages.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
                 </option>
               ))}
-            </select>
-          </label>
-          <label className="block text-xs text-wisdom-muted min-w-0">
-            Note (optional)
-            <input
+            </AdminSelect>
+          </AdminField>
+          <AdminField label="Note (optional)">
+            <AdminInput
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="Beta tester · March cohort"
-              className={FIELD}
             />
-          </label>
-        </div>
-        <button
-          type="submit"
-          disabled={busy}
-          className={`${PILL} w-full bg-amber-500 font-bold text-wisdom-dark`}
-        >
-          <Plus className="w-4 h-4" />
-          {busy ? "Saving…" : "Grant access"}
-        </button>
-        <p className="text-xs text-wisdom-muted break-words">
-          User does not need an account yet. When they sign in with this email,
-          packages unlock automatically: no cart or payment.
-        </p>
+          </AdminField>
+          <AdminPill type="submit" tone="primary" fullWidth icon={Plus} disabled={busy}>
+            {busy ? "Saving…" : "Grant access"}
+          </AdminPill>
+          <p className="break-words text-xs leading-snug text-wisdom-muted">
+            User does not need an account yet. When they sign in with this email,
+            packages unlock automatically: no cart or payment.
+          </p>
+        </AdminCard>
       </form>
 
       <div className="space-y-2">
-        <div className="relative">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-wisdom-muted" />
-          <input
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            placeholder="Filter by email or package…"
-            className="w-full min-h-[44px] rounded-xl border border-white/12 bg-wisdom-card pl-9 pr-3 py-2 text-sm text-white"
-          />
-        </div>
+        <AdminSearch value={filter} onChange={setFilter} placeholder="Filter by email or package…" />
         <p className="text-xs text-wisdom-muted">{filtered.length} grant(s)</p>
       </div>
 
       {loading && grants.length === 0 ? (
-        <p className="py-10 text-center text-wisdom-muted text-sm">Loading grants…</p>
+        <AdminSkeleton rows={3} />
       ) : filtered.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-white/15 p-6 text-center text-wisdom-muted text-sm">
-          No access grants yet. Add a beta email above.
-        </div>
+        <AdminEmpty icon={KeyRound} title="No access grants yet. Add a beta email above." />
       ) : (
-        <ul className="space-y-2">
+        <div className="space-y-2">
           {filtered.map((g) => (
-            <li
-              key={g.id}
-              className="rounded-2xl border border-white/12 bg-wisdom-card p-3 space-y-3"
-            >
+            <AdminCard key={g.id} className="space-y-3">
               <div className="min-w-0">
-                <p className="font-semibold text-white break-all">{g.email}</p>
-                <p className="text-xs text-wisdom-muted mt-0.5 break-words">
+                <p className="break-all text-sm font-semibold text-white">{g.email}</p>
+                <p className="mt-0.5 break-words text-xs text-wisdom-muted">
                   <span
                     className={
                       g.packageId === ALL_PACKAGES_ID
-                        ? "text-amber-300 font-semibold"
+                        ? "font-semibold text-amber-300"
                         : "text-cyan-300"
                     }
                   >
@@ -284,28 +249,49 @@ export default function AccessGrantsPanel({ adminEmail }: Props) {
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
+                <AdminPill
+                  tone="danger"
+                  icon={Trash2}
                   disabled={busy}
-                  onClick={() => onRevoke(g.id, `${g.email} / ${g.packageId}`)}
-                  className={`${PILL} border border-rose-400/30 text-rose-300`}
+                  onClick={() => setPendingRevoke({ kind: "one", id: g.id, label: `${g.email} / ${g.packageId}` })}
                 >
-                  <Trash2 className="w-4 h-4" />
                   Revoke
-                </button>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => onRevokeEmail(g.email)}
-                  className={`${PILL} border border-white/12 text-wisdom-muted`}
-                >
+                </AdminPill>
+                <AdminPill disabled={busy} onClick={() => setPendingRevoke({ kind: "all", email: g.email })}>
                   Revoke all
-                </button>
+                </AdminPill>
               </div>
-            </li>
+            </AdminCard>
           ))}
-        </ul>
+        </div>
       )}
+
+      {/* Confirm before revoking */}
+      <AdminSheet
+        open={pendingRevoke !== null}
+        onClose={() => setPendingRevoke(null)}
+        title={pendingRevoke?.kind === "all" ? "Revoke all grants" : "Revoke access"}
+        footer={
+          <div className="flex gap-2">
+            <AdminPill fullWidth onClick={() => setPendingRevoke(null)}>
+              Back
+            </AdminPill>
+            <AdminPill fullWidth tone="danger" icon={Trash2} onClick={() => void confirmRevoke()}>
+              {pendingRevoke?.kind === "all" ? "Revoke all" : "Revoke"}
+            </AdminPill>
+          </div>
+        }
+      >
+        <p className="break-words text-sm text-wisdom-muted">
+          {pendingRevoke?.kind === "all"
+            ? `Revoke ALL grants for ${pendingRevoke.email}?`
+            : pendingRevoke
+              ? `Revoke access for ${pendingRevoke.label}?`
+              : ""}
+        </p>
+      </AdminSheet>
+
+      <AdminToast message={toast || null} onClose={() => setToast("")} />
     </div>
   );
 }
