@@ -11,7 +11,8 @@
  * - layout only: nothing here fetches data or changes permissions
  */
 
-import { useEffect, useRef, type ReactNode, type ComponentType, type ButtonHTMLAttributes, type InputHTMLAttributes, type TextareaHTMLAttributes, type SelectHTMLAttributes } from "react";
+import { useEffect, useRef, useState, type ReactNode, type ComponentType, type ButtonHTMLAttributes, type InputHTMLAttributes, type TextareaHTMLAttributes, type SelectHTMLAttributes } from "react";
+import { createPortal } from "react-dom";
 import { ChevronRight, Inbox, Search, X } from "lucide-react";
 
 export type AdminIcon = ComponentType<{ className?: string }>;
@@ -347,14 +348,30 @@ export function AdminSelect({ className, children, ...rest }: SelectHTMLAttribut
 
 /* ---------- Bottom sheet ---------- */
 
+type SheetRescue = { left: number; top: number; width: number; height: number };
+
 /**
  * Editors and confirmations open as a bottom sheet: rounded top corners, plain dim backdrop,
  * its own vertical scroll that does not chain into the page. The phone Back button closes it
  * (one history entry is pushed while it is open).
+ *
+ * U11 (2026-10-16, owner: in the Android app every Add, Edit and Delete only dims the screen, the sheet never
+ * shows; in a browser it works). Hypothesis: inside the app WebView the sheet panel is positioned outside the
+ * visible area while the backdrop still covers everything. Two measures, both inside this component:
+ * 1. The sheet is rendered with a portal directly under document.body, so no ancestor of the admin page can
+ *    become the containing block of its fixed positioning.
+ * 2. About 120 ms after opening it measures its own panel. If the panel is not where a bottom sheet must be
+ *    (inside the window, bottom edge on the window bottom), the wrapper switches to absolute positioning at the
+ *    current scroll position with the window size ("rescue"), which is always in view.
+ * TEMP-DEBUG: a small grey line at the top of the dim shows the measured numbers (window size, panel box and
+ * ok or RESCUE). Remove that line once the owner has confirmed the sheets open on the phone.
  */
 export function AdminSheet({ open, onClose, title, children, footer }: { open: boolean; onClose: () => void; title: string; children: ReactNode; footer?: ReactNode }) {
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const [rescue, setRescue] = useState<SheetRescue | null>(null);
+  const [diag, setDiag] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -386,12 +403,47 @@ export function AdminSheet({ open, onClose, title, children, footer }: { open: b
     };
   }, [open]);
 
-  if (!open) return null;
+  // Measure the panel after it has been laid out; fall back to a position that is always in view.
+  useEffect(() => {
+    if (!open) {
+      setRescue(null);
+      setDiag("");
+      return;
+    }
+    const id = window.setTimeout(() => {
+      const el = panelRef.current;
+      if (!el) {
+        setDiag("panel missing");
+        return;
+      }
+      const r = el.getBoundingClientRect();
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const vv = window.visualViewport;
+      const sane = r.width > 0 && r.height >= 40 && r.left >= -1 && r.right <= vw + 1 && r.top >= 0 && Math.abs(r.bottom - vh) <= 2;
+      const vvText = vv ? `${Math.round(vv.width)}x${Math.round(vv.height)}` : "none";
+      setDiag(
+        `win ${Math.round(vw)}x${Math.round(vh)} vv ${vvText} panel top ${Math.round(r.top)} bottom ${Math.round(r.bottom)} left ${Math.round(r.left)} w ${Math.round(r.width)} h ${Math.round(r.height)} ${sane ? "ok" : "RESCUE"}`
+      );
+      if (!sane) setRescue({ left: window.scrollX, top: window.scrollY, width: vw, height: vh });
+    }, 120);
+    return () => window.clearTimeout(id);
+  }, [open]);
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center" role="dialog" aria-modal="true" aria-label={title}>
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} aria-hidden="true" />
-      <div className="relative flex max-h-[88vh] w-full max-w-xl min-w-0 flex-col rounded-t-3xl border border-b-0 border-white/10 bg-wisdom-dark">
+  if (!open || typeof document === "undefined") return null;
+
+  const wrapperStyle = rescue
+    ? { position: "absolute" as const, left: rescue.left, top: rescue.top, width: rescue.width, height: rescue.height }
+    : undefined;
+
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-end justify-center" style={wrapperStyle} role="dialog" aria-modal="true" aria-label={title}>
+      <div className="absolute inset-0 touch-none bg-black/60" onClick={onClose} aria-hidden="true" />
+      {diag ? <div className="pointer-events-none absolute left-2 right-2 top-2 break-words text-[10px] leading-tight text-white/60">{diag}</div> : null}
+      <div
+        ref={panelRef}
+        className="relative flex max-h-[88vh] w-full max-w-xl min-w-0 flex-col break-words rounded-t-3xl border border-b-0 border-white/10 bg-wisdom-dark text-white"
+      >
         <div className="flex items-center gap-2 border-b border-white/10 py-2 pl-4 pr-2">
           <h2 className="min-w-0 flex-1 truncate text-base font-bold text-white">{title}</h2>
           <button
@@ -406,7 +458,8 @@ export function AdminSheet({ open, onClose, title, children, footer }: { open: b
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4">{children}</div>
         {footer ? <div className="border-t border-white/10 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">{footer}</div> : null}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
