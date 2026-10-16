@@ -3,24 +3,32 @@ import { NextRequest } from "next/server";
 
 // Provider candidate definition
 type Candidate =
-  | { provider: "gemini"; model: string }
-  | { provider: "groq"; model: string };
+  | { provider: "gateway"; model: string; timeoutMs?: number }
+  | { provider: "gemini"; model: string; timeoutMs?: number }
+  | { provider: "groq"; model: string; timeoutMs?: number };
 
-// Provider / model order for Tutor only:
-// 1) Gemini first: gemini-3.5-flash-lite (primary)
-// 2) Then Groq using GROQ_API_KEY_TUTOR (fast Groq chat model)
-// 3) Then remaining Gemini text models
+// Provider / model order for Tutor only (3 tutor keys):
+// 1) Vercel AI Gateway (AI_GATEWAY_API_KEY_TUTOR): openai/gpt-oss-20b  (primary)
+// 2) Gemini (GEMINI_API_KEY): gemini-3.1-flash-lite  (GA, long-lived, high capacity)
+// 3) Groq (GROQ_API_KEY_TUTOR): llama-3.3-70b-versatile  (separate provider = separate rate limits)
+// 4) Gemini: gemini-3.5-flash-lite
+// 5) Gemini: gemini-3.5-flash
+// 6) Gemini: gemini-3.6-flash
+// Removed (unreliable): gemini-3.8-flash, gemini-3.7-flash, *-latest aliases.
 const CANDIDATES: Candidate[] = [
-  { provider: "gemini", model: "gemini-3.5-flash-lite" },
-  { provider: "groq", model: "llama-3.3-70b-versatile" },
-  { provider: "gemini", model: "gemini-flash-lite-latest" },
+  // gpt-oss is a reasoning model: allow more time before the first visible token
+  { provider: "gateway", model: "openai/gpt-oss-20b", timeoutMs: 9000 },
   { provider: "gemini", model: "gemini-3.1-flash-lite" },
-  { provider: "gemini", model: "gemini-3.7-flash" },
-  { provider: "gemini", model: "gemini-3.8-flash" },
-  { provider: "gemini", model: "gemini-flash-latest" },
+  { provider: "groq", model: "llama-3.3-70b-versatile" },
+  { provider: "gemini", model: "gemini-3.5-flash-lite" },
+  { provider: "gemini", model: "gemini-3.5-flash" },
+  { provider: "gemini", model: "gemini-3.6-flash" },
 ];
 
 const PER_ATTEMPT_TIMEOUT_MS = 4500;
+
+const GATEWAY_CHAT_URL = "https://ai-gateway.vercel.sh/v1/chat/completions";
+const GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 const CALM_BUSY_MESSAGE =
   "The Wisdom Tower AI Tutor is currently experiencing high demand. Please wait a moment and try asking your question again.";
@@ -170,18 +178,24 @@ async function tryGeminiCandidate(
   };
 }
 
-async function tryGroqCandidate(
-  apiKey: string,
-  model: string,
-  fullSystemInstruction: string,
-  formattedContents: any[],
-  timeoutMs: number
-) {
+// Generic OpenAI-compatible streaming candidate (used for Vercel AI Gateway and Groq).
+async function tryOpenAICompatCandidate(opts: {
+  label: string; // "Gateway" | "Groq" (for logs/errors only)
+  url: string;
+  apiKey: string;
+  model: string;
+  fullSystemInstruction: string;
+  formattedContents: any[];
+  timeoutMs: number;
+  maxTokens?: number;
+}) {
+  const { label, url, apiKey, model, fullSystemInstruction, formattedContents, timeoutMs } = opts;
+
   if (!apiKey || !apiKey.trim()) {
-    throw new Error("GROQ_API_KEY_TUTOR not configured");
+    throw new Error(`${label} API key not configured`);
   }
 
-  const groqMessages = [
+  const messages = [
     { role: "system", content: fullSystemInstruction },
     ...formattedContents.map((c: any) => ({
       role: c.role === "model" ? "assistant" : "user",
@@ -194,7 +208,7 @@ async function tryGroqCandidate(
 
   let res: Response;
   try {
-    res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    res = await fetch(url, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey.trim()}`,
@@ -203,9 +217,9 @@ async function tryGroqCandidate(
       body: JSON.stringify({
         model,
         temperature: 0.7,
-        max_tokens: 2048,
+        max_tokens: opts.maxTokens ?? 2048,
         stream: true,
-        messages: groqMessages,
+        messages,
       }),
       signal: controller.signal,
     });
@@ -215,18 +229,18 @@ async function tryGroqCandidate(
 
   if (!res.ok) {
     const errText = await res.text().catch(() => "");
-    throw new Error(`Groq HTTP ${res.status}: ${errText.slice(0, 150)}`);
+    throw new Error(`${label} HTTP ${res.status}: ${errText.slice(0, 150)}`);
   }
 
   if (!res.body) {
-    throw new Error("Groq returned empty response body");
+    throw new Error(`${label} returned empty response body`);
   }
 
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
 
-  async function readNextGroqChunk(): Promise<{ done: boolean; text?: string }> {
+  async function readNextChunk(): Promise<{ done: boolean; text?: string }> {
     while (true) {
       const { done, value } = await reader.read();
       if (done) return { done: true };
@@ -241,6 +255,7 @@ async function tryGroqCandidate(
         if (trimmed.startsWith("data: ")) {
           try {
             const parsed = JSON.parse(trimmed.slice(6));
+            // Only visible answer text ("content"); reasoning tokens are ignored.
             const delta = parsed.choices?.[0]?.delta?.content;
             if (delta) {
               return { done: false, text: delta };
@@ -253,19 +268,19 @@ async function tryGroqCandidate(
     }
   }
 
-  // Peek first chunk within timeout
+  // Peek first visible chunk within timeout
   const first = await withTimeout<{ done: boolean; text?: string }>(
-    readNextGroqChunk(),
+    readNextChunk(),
     timeoutMs,
-    `Groq ${model} first chunk`
+    `${label} ${model} first chunk`
   );
   if (first.done && !first.text) {
-    throw new Error(`Groq ${model} returned empty stream`);
+    throw new Error(`${label} ${model} returned empty stream`);
   }
 
   const asyncIterator = {
     async next() {
-      const r = await readNextGroqChunk();
+      const r = await readNextChunk();
       return {
         done: r.done,
         value: { text: r.text },
@@ -289,6 +304,7 @@ export async function POST(req: NextRequest) {
       process.env.AI_GATEWAY_API_KEY ||
       "";
     const groqTutorApiKey = process.env.GROQ_API_KEY_TUTOR || "";
+    const gatewayTutorApiKey = process.env.AI_GATEWAY_API_KEY_TUTOR || "";
 
     const fullSystemInstruction = `${STATIC_KNOWLEDGE_BLURB}\n\n${SYSTEM_INSTRUCTION}${
       courseContext ? `\n\nCurrent Student Course Context: ${courseContext}` : ""
@@ -321,16 +337,33 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Try candidates in requested order:
-    // 1) Gemini: gemini-3.5-flash-lite
-    // 2) Groq: llama-3.3-70b-versatile using GROQ_API_KEY_TUTOR
-    // 3) Remaining Gemini text models (gemini-flash-lite-latest, gemini-3.1-flash-lite, gemini-3.7-flash, gemini-flash-latest)
+    // Try candidates in the order defined in CANDIDATES above.
     let activeIterator: any = null;
     let firstChunkText = "";
 
     for (const candidate of CANDIDATES) {
+      const timeoutMs = candidate.timeoutMs ?? PER_ATTEMPT_TIMEOUT_MS;
       try {
-        if (candidate.provider === "gemini") {
+        if (candidate.provider === "gateway") {
+          if (!gatewayTutorApiKey) {
+            console.log("[AI Tutor] Skipping Gateway candidate (AI_GATEWAY_API_KEY_TUTOR not set)");
+            continue;
+          }
+          const result = await tryOpenAICompatCandidate({
+            label: "Gateway",
+            url: GATEWAY_CHAT_URL,
+            apiKey: gatewayTutorApiKey,
+            model: candidate.model,
+            fullSystemInstruction,
+            formattedContents,
+            timeoutMs,
+            maxTokens: 4096, // headroom for reasoning tokens
+          });
+          activeIterator = result.iterator;
+          firstChunkText = result.firstChunkText;
+          console.log(`[AI Tutor] Succeeded with Gateway: ${candidate.model}`);
+          break;
+        } else if (candidate.provider === "gemini") {
           if (!ai) {
             console.warn(`[AI Tutor] Skipping Gemini ${candidate.model} (no GEMINI_API_KEY)`);
             continue;
@@ -340,7 +373,7 @@ export async function POST(req: NextRequest) {
             candidate.model,
             fullSystemInstruction,
             formattedContents,
-            PER_ATTEMPT_TIMEOUT_MS
+            timeoutMs
           );
           activeIterator = result.iterator;
           firstChunkText = result.firstChunkText;
@@ -351,13 +384,15 @@ export async function POST(req: NextRequest) {
             console.log("[AI Tutor] Skipping Groq candidate (GROQ_API_KEY_TUTOR not set)");
             continue;
           }
-          const result = await tryGroqCandidate(
-            groqTutorApiKey,
-            candidate.model,
+          const result = await tryOpenAICompatCandidate({
+            label: "Groq",
+            url: GROQ_CHAT_URL,
+            apiKey: groqTutorApiKey,
+            model: candidate.model,
             fullSystemInstruction,
             formattedContents,
-            PER_ATTEMPT_TIMEOUT_MS
-          );
+            timeoutMs,
+          });
           activeIterator = result.iterator;
           firstChunkText = result.firstChunkText;
           console.log(`[AI Tutor] Succeeded with Groq: ${candidate.model}`);
@@ -488,4 +523,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-
