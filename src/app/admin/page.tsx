@@ -19,6 +19,7 @@ import AccessGrantsPanel from "@/components/admin/AccessGrantsPanel";
 import DatabaseHubPanel from "@/components/admin/DatabaseHubPanel";
 import NotificationsPanel from "@/components/admin/NotificationsPanel";
 import CompetitionsAdminPanel from "@/components/admin/CompetitionsAdminPanel";
+import { AdminChip } from "@/components/admin/ui";
 import BrandLoader from "@/components/BrandLoader";
 import {
   CreditCard,
@@ -41,12 +42,13 @@ import {
 } from "lucide-react";
 
 /*
- * Admin Console, phone-first shell (slice A1 of docs/ADMIN_MOBILE_PLAN.md).
+ * Admin Console, phone-first shell (slice A1 of docs/ADMIN_MOBILE_PLAN.md, section bar by slice U2 of docs/ADMIN_UI_V2_PLAN.md).
  * - Home = grid of module tiles with real counts only. No horizontal tab ribbon.
- * - Section view = one slim solid sticky row (back chevron + title) and the panel full width.
+ * - Section view = one slim solid sticky bar (back chevron, gold icon chip, title, real-count subtitle) and the panel directly on the page.
  * - No own header, no backdrop blur, no pulse animation, no hard-coded status line.
  * - Deep links `/admin?tab=<id>` (and every alias below) open a section directly.
  * - Sections are opened with history.pushState so the phone Back button returns to the grid.
+ * - 16 px of space under the app top bar at scroll 0 (the layout adds a 14 px fade there), 24 px at the bottom.
  * Admin gate, badge queries and the panels themselves are unchanged.
  */
 
@@ -131,6 +133,8 @@ type TabDef = {
   icon: React.ComponentType<{ className?: string }>;
   badge?: number;
   badgeColor?: string;
+  // Built only from real counts, never invented text
+  subtitle?: string;
 };
 
 function AdminDashboardInner() {
@@ -159,8 +163,11 @@ function AdminDashboardInner() {
 
   useEffect(() => {
     const onPop = () => {
-      setActiveTab(readTabFromLocation());
-      pushedRef.current = false;
+      const t = readTabFromLocation();
+      setActiveTab(t);
+      // Only the return to the grid consumes our pushed entry. A closing bottom sheet
+      // pops its own entry and leaves the section (and this flag) as they were.
+      if (t === null) pushedRef.current = false;
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
@@ -232,6 +239,7 @@ function AdminDashboardInner() {
         label: "Scholars & Users",
         icon: Users,
         badge: usersCount != null && usersCount > 0 ? usersCount : undefined,
+        subtitle: usersCount != null ? `${usersCount} ${usersCount === 1 ? "scholar" : "scholars"}` : undefined,
       },
       {
         id: "payments",
@@ -239,6 +247,7 @@ function AdminDashboardInner() {
         icon: CreditCard,
         badge: pendingPaymentsCount != null && pendingPaymentsCount > 0 ? pendingPaymentsCount : undefined,
         badgeColor: "bg-amber-500/25 text-amber-200 border-amber-400/40",
+        subtitle: pendingPaymentsCount != null ? `${pendingPaymentsCount} pending` : undefined,
       },
       { id: "grants", label: "Access Grants", icon: KeyRound },
       { id: "content", label: "Course Content", icon: BookOpen },
@@ -251,6 +260,7 @@ function AdminDashboardInner() {
         icon: Inbox,
         badge: newInquiriesCount != null && newInquiriesCount > 0 ? newInquiriesCount : undefined,
         badgeColor: "bg-cyan-500/25 text-cyan-200 border-cyan-400/40",
+        subtitle: newInquiriesCount != null ? `${newInquiriesCount} new` : undefined,
       },
       { id: "database", label: "Database & SQL Hub", icon: Database },
     ],
@@ -283,7 +293,8 @@ function AdminDashboardInner() {
     const ActiveIcon = activeDef?.icon;
     return (
       <div className="min-h-screen bg-wisdom-dark text-white">
-        <div className="sticky top-0 z-30 flex items-center gap-2 border-b border-white/10 bg-wisdom-dark px-2 py-2">
+        {/* pt-4 keeps the bar content below the 14 px fade the admin layout draws under the app top bar */}
+        <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-white/10 bg-wisdom-dark px-3 pb-3 pt-4">
           <button
             type="button"
             onClick={goHome}
@@ -292,12 +303,17 @@ function AdminDashboardInner() {
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
-          {ActiveIcon && <ActiveIcon className="h-5 w-5 shrink-0 text-amber-300" />}
-          <h1 className="min-w-0 flex-1 truncate text-base font-bold">{activeDef?.label ?? "Admin"}</h1>
+          {ActiveIcon && <AdminChip icon={ActiveIcon} />}
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-lg font-bold leading-tight">{activeDef?.label ?? "Admin"}</h1>
+            {activeDef?.subtitle && (
+              <p className="mt-0.5 truncate text-xs text-wisdom-muted">{activeDef.subtitle}</p>
+            )}
+          </div>
         </div>
 
-        <main className="min-w-0 px-3 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
-          <div className="min-w-0 rounded-2xl border border-white/10 bg-wisdom-card/40 p-3">
+        <main className="min-w-0 px-3 pt-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+          <div className="min-w-0">
             {activeTab === "overview" && <AnalyticsPanel />}
             {activeTab === "notifications" && <NotificationsPanel />}
             {activeTab === "competitions" && <CompetitionsAdminPanel />}
@@ -319,7 +335,7 @@ function AdminDashboardInner() {
   // ---------- Home grid ----------
   return (
     <div className="min-h-screen bg-wisdom-dark text-white">
-      <main className="min-w-0 px-3 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <main className="min-w-0 px-3 pt-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         {/* Real counts */}
         <div className="grid grid-cols-3 gap-2">
           {stats.map((s) => (
