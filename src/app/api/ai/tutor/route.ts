@@ -72,7 +72,12 @@ Problem Solving & Explanations:
    - Block/display math: use double dollar signs on separate lines, e.g.,
      $$f'(x) = \\lim_{h \\to 0} \\frac{f(x+h) - f(x)}{h}$$
    - Ensure all LaTeX delimiters are properly closed and valid.
-3. Errors & Safeguards:
+   - Use real LaTeX for everything mathematical (x^2, x_3, \\Delta, \\times) — never Unicode fake math like x² or Δ. Units go in \\text{...}, e.g. $9.8\\,\\text{m/s}^2$.
+3. Markdown Rules (the app renderer supports only this):
+   - Allowed: # / ## / ### headings, **bold**, *italic*, bullet lists with "- ", "> " callouts, "---" dividers, inline \`code\`.
+   - Never use HTML tags, Markdown pipe tables, or images. For any table, use a LaTeX array inside $$...$$, e.g. $$\\begin{array}{l|c} \\text{Quantity} & \\text{Value} \\\\ \\hline m & 20\\,\\text{kg} \\end{array}$$
+   - Put every heading, list item and display equation on its own line with a blank line between blocks.
+4. Errors & Safeguards:
    - NEVER expose internal server information, API keys, or raw system error codes. Never show raw API errors.
    - Keep answers structured, insightful, and easy to read.
 
@@ -239,32 +244,49 @@ async function tryOpenAICompatCandidate(opts: {
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
+  // A single network read can contain MANY SSE events. Every delta must be queued —
+  // returning after the first one would silently drop the rest (garbled, missing words).
+  const pending: string[] = [];
+  let streamEnded = false;
+
+  function consumeLine(line: string) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed === "data: [DONE]") return;
+    if (!trimmed.startsWith("data:")) return;
+    try {
+      const parsed = JSON.parse(trimmed.slice(5).trim());
+      // Only visible answer text ("content"); reasoning tokens are ignored.
+      const delta = parsed.choices?.[0]?.delta?.content;
+      if (typeof delta === "string" && delta.length > 0) {
+        pending.push(delta);
+      }
+    } catch {
+      // Ignore malformed or partial json line
+    }
+  }
 
   async function readNextChunk(): Promise<{ done: boolean; text?: string }> {
     while (true) {
+      if (pending.length > 0) {
+        return { done: false, text: pending.shift() as string };
+      }
+      if (streamEnded) return { done: true };
+
       const { done, value } = await reader.read();
-      if (done) return { done: true };
+      if (done) {
+        streamEnded = true;
+        buffer += decoder.decode();
+        if (buffer) {
+          consumeLine(buffer);
+          buffer = "";
+        }
+        continue;
+      }
 
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split("\n");
       buffer = lines.pop() || "";
-
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed || trimmed === "data: [DONE]") continue;
-        if (trimmed.startsWith("data: ")) {
-          try {
-            const parsed = JSON.parse(trimmed.slice(6));
-            // Only visible answer text ("content"); reasoning tokens are ignored.
-            const delta = parsed.choices?.[0]?.delta?.content;
-            if (delta) {
-              return { done: false, text: delta };
-            }
-          } catch {
-            // Ignore malformed or partial json line
-          }
-        }
-      }
+      for (const line of lines) consumeLine(line);
     }
   }
 
