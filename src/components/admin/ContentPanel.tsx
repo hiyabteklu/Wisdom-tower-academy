@@ -24,32 +24,42 @@ import {
   Pencil,
   Trash2,
   Save,
-  X,
   Upload,
   BookOpen,
   RefreshCw,
   Cloud,
 } from "lucide-react";
+import {
+  AdminBadge,
+  AdminCard,
+  AdminField,
+  AdminInput,
+  AdminPageHeader,
+  AdminPill,
+  AdminSheet,
+  AdminTextarea,
+  AdminTile,
+  AdminTileGrid,
+  AdminToast,
+} from "./ui";
 
 /**
  * Admin Content library tab.
  *
- * 2026-10-15 (Admin mobile redesign, slice A10): LAYOUT ONLY. Audit hits before the change: `sm:grid-cols-2`
- * (the folder list was ONE tall column on a phone: the four tall rows in the owner's screenshot), `animate-spin`
- * (Refresh icon), `transition-colors`, `truncate` on item titles (cut the text), 10 px Appwrite badge, buttons and
- * inputs under 44 px, `inline-flex` upload chip that could overflow with a long file name. Now: folders are a
- * compact 2-column grid of tiles (icon, Appwrite badge, label that wraps), Refresh and Add item are two 44 px
- * pills in a 2-column grid, the edit form uses 44 px fields and a full-width pill Save, item cards wrap their text
- * and show Edit and Delete as 44 px buttons. Navigation (crumbs, enter, goTo), loading, saving, deleting, the
- * Appwrite file id logic and every visible text are unchanged.
+ * 2026-10-15 (Admin mobile redesign, slice A10): LAYOUT ONLY (2-column folder grid, 44 px targets).
+ *
+ * 2026-10-16 (Admin UI V2, slice U9 part 3): LAYOUT ONLY. Kit page header, folders as kit tiles (the Appwrite
+ * tag is a kit badge), the breadcrumb is a plain div (the kit forbids nav elements), item cards with Edit and
+ * Delete pills. The editor (New item / Edit item) is a kit bottom sheet with Save in its footer, and the browser
+ * confirm before Delete is a kit bottom sheet (same sentence). Messages are the kit slim toast, which sits above
+ * the sheet, so a save error is visible while the editor is open (8 s, as before). The file picker is no longer a
+ * label nested inside a label. Navigation (crumbs, enter, goTo), loading, saving, deleting, the Appwrite file id
+ * logic, the Meta JSON check and every visible text are unchanged.
  */
 
 type Crumb = { id: string; label: string; node: AdminNavNode };
 
-const FIELD =
-  "mt-1 w-full min-h-[44px] rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2.5 text-sm text-white";
-const AREA =
-  "mt-1 w-full rounded-xl border border-white/15 bg-wisdom-dark/50 px-3 py-2.5 text-sm text-white font-mono break-words";
+const AREA = "font-mono break-words";
 
 export default function ContentPanel() {
   const [crumbs, setCrumbs] = useState<Crumb[]>([]);
@@ -67,6 +77,7 @@ export default function ContentPanel() {
   const [file, setFile] = useState<File | null>(null);
   const [appwriteFileId, setAppwriteFileId] = useState("");
   const [saving, setSaving] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
 
   const current = crumbs[crumbs.length - 1]?.node;
   const scopePath = current?.scopePath;
@@ -97,12 +108,6 @@ export default function ContentPanel() {
   useEffect(() => {
     if (isOnHub) void loadItems();
   }, [isOnHub, loadItems]);
-
-  useEffect(() => {
-    if (!toast) return;
-    const t = setTimeout(() => setToast(""), 8000);
-    return () => clearTimeout(t);
-  }, [toast]);
 
   function enter(node: AdminNavNode) {
     setCrumbs((c) => [...c, { id: node.id, label: node.label, node }]);
@@ -255,289 +260,252 @@ export default function ContentPanel() {
           : "Saved (draft)"
     );
     setEditing(null);
-    loadItems();
+    void loadItems();
   }
 
   async function remove(id: string) {
-    if (!confirm("Delete this content item?")) return;
     const res = await deleteResource(id);
     if (!res.ok) setToast(res.error || "Delete failed");
     else {
       setToast("Deleted");
-      loadItems();
+      void loadItems();
     }
+  }
+
+  async function confirmDelete() {
+    const id = pendingDelete;
+    setPendingDelete(null);
+    if (id) await remove(id);
   }
 
   const listNodes =
     crumbs.length === 0 ? ADMIN_CONTENT_TREE : current?.children || [];
 
+  const fileLabel =
+    (hub === "books" || hub === "life-savers" ? "PDF file" : "Optional file") +
+    (onAppwrite ? " (Appwrite · max ~4 MB via site)" : "");
+
   return (
-    <div className="space-y-4">
-      {toast && (
-        <div className="rounded-2xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200 whitespace-pre-wrap break-words">
-          {toast}
+    <div className="min-w-0 space-y-4">
+      <AdminPageHeader
+        icon={BookOpen}
+        title="Content library"
+        subtitle="All package PDFs/files → Appwrite · catalog & auth stay on Supabase"
+      />
+
+      {isOnHub && (
+        <div className="grid grid-cols-2 gap-2">
+          <AdminPill icon={RefreshCw} onClick={() => void loadItems()}>
+            Refresh
+          </AdminPill>
+          <AdminPill tone="primary" icon={Plus} onClick={openNew}>
+            Add item
+          </AdminPill>
         </div>
       )}
 
-      <div className="space-y-3">
-        <div className="min-w-0">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-amber-400 shrink-0" />
-            Content library
-          </h2>
-          <p className="text-sm text-wisdom-muted mt-0.5 break-words">
-            All package PDFs/files → Appwrite · catalog &amp; auth stay on Supabase
-          </p>
-        </div>
-        {isOnHub && (
-          <div className="grid grid-cols-2 gap-2.5">
-            <button
-              type="button"
-              onClick={loadItems}
-              className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3 rounded-full border border-white/12 text-sm font-semibold text-white/90 active:bg-white/10 cursor-pointer"
-            >
-              <RefreshCw className="w-4 h-4 shrink-0" />
-              Refresh
-            </button>
-            <button
-              type="button"
-              onClick={openNew}
-              className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3 rounded-full bg-amber-500 text-wisdom-dark text-sm font-bold active:bg-amber-400 cursor-pointer"
-            >
-              <Plus className="w-4 h-4 shrink-0" />
-              Add item
-            </button>
-          </div>
-        )}
-      </div>
-
-      <nav className="flex flex-wrap items-center gap-x-1 text-sm">
+      {/* Breadcrumb */}
+      <div className="flex flex-wrap items-center gap-x-1 text-sm">
         <button
           type="button"
           onClick={resetRoot}
-          className="inline-flex items-center min-h-[44px] px-1 text-amber-300 font-medium cursor-pointer"
+          className="inline-flex min-h-[44px] cursor-pointer items-center px-1 font-medium text-amber-300"
         >
           Academy
         </button>
         {crumbs.map((c, i) => (
           <span key={c.id + i} className="flex items-center gap-1">
-            <ChevronRight className="w-3.5 h-3.5 text-wisdom-muted shrink-0" />
+            <ChevronRight className="h-3.5 w-3.5 shrink-0 text-wisdom-muted" />
             <button
               type="button"
               onClick={() => goTo(i)}
-              className={`inline-flex items-center min-h-[44px] px-1 text-left break-words cursor-pointer ${
-                i === crumbs.length - 1 ? "text-white font-semibold" : "text-cyan-300"
+              className={`inline-flex min-h-[44px] cursor-pointer items-center break-words px-1 text-left ${
+                i === crumbs.length - 1 ? "font-semibold text-white" : "text-cyan-300"
               }`}
             >
               {c.label}
             </button>
           </span>
         ))}
-      </nav>
+      </div>
 
       {isOnHub && onAppwrite && (
-        <div className="flex items-start gap-1.5 rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-3 py-2 text-xs text-cyan-200">
-          <Cloud className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-          <span className="min-w-0 break-words">Files upload to Appwrite · large PDFs: paste File ID</span>
-        </div>
+        <AdminCard className="flex items-start gap-1.5">
+          <Cloud className="mt-0.5 h-3.5 w-3.5 shrink-0 text-cyan-300" />
+          <span className="min-w-0 break-words text-xs text-cyan-200">
+            Files upload to Appwrite · large PDFs: paste File ID
+          </span>
+        </AdminCard>
       )}
 
       {!isOnHub && (
-        <ul className="grid grid-cols-2 gap-2.5">
+        <AdminTileGrid>
           {listNodes.map((node) => (
-            <li key={node.id} className="min-w-0">
-              <button
-                type="button"
-                onClick={() => enter(node)}
-                className="w-full h-full min-h-[88px] flex flex-col items-start justify-between gap-2 rounded-2xl border border-white/12 bg-wisdom-card p-3.5 text-left active:bg-white/10 cursor-pointer"
-              >
-                <span className="flex w-full items-start justify-between gap-2">
-                  <FolderOpen className="w-5 h-5 text-amber-400 shrink-0" />
-                  {node.useAppwrite && (
-                    <span className="text-[11px] uppercase tracking-wide text-cyan-300/90">
-                      Appwrite
-                    </span>
-                  )}
-                </span>
-                <span className="font-semibold text-white text-sm leading-snug break-words min-w-0 w-full">
-                  {node.label}
-                </span>
-              </button>
-            </li>
+            <AdminTile
+              key={node.id}
+              icon={FolderOpen}
+              label={node.label}
+              badge={node.useAppwrite ? <AdminBadge tone="cyan">Appwrite</AdminBadge> : undefined}
+              onClick={() => enter(node)}
+            />
           ))}
-        </ul>
+        </AdminTileGrid>
       )}
 
       {isOnHub && (
         <div className="space-y-3">
-          <p className="text-xs text-wisdom-muted break-words">
-            Scope <code className="text-cyan-300 break-all">{scopePath}</code> · hub{" "}
-            <code className="text-cyan-300 break-all">{hub}</code>
+          <p className="break-words text-xs text-wisdom-muted">
+            Scope <code className="break-all text-cyan-300">{scopePath}</code> · hub{" "}
+            <code className="break-all text-cyan-300">{hub}</code>
             {" · "}
             {HUB_CONTENT_DEFAULTS[hub || ""]?.hint}
           </p>
 
-          {editing && (
-            <div className="rounded-2xl border border-amber-400/30 bg-wisdom-card p-3.5 space-y-3">
-              <div className="flex justify-between items-center gap-2">
-                <h3 className="font-semibold">{isNew ? "New item" : "Edit item"}</h3>
-                <button
-                  type="button"
-                  onClick={() => setEditing(null)}
-                  aria-label="Close"
-                  className="inline-flex items-center justify-center w-11 h-11 rounded-full active:bg-white/10 cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              <label className="block text-xs text-wisdom-muted">
-                Title
-                <input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className={FIELD}
-                />
-              </label>
-              <label className="block text-xs text-wisdom-muted">
-                Chapter # (optional)
-                <input
-                  value={chapter}
-                  onChange={(e) => setChapter(e.target.value)}
-                  className={FIELD}
-                />
-              </label>
-              {(hub === "books" || hub === "life-savers" || hub === "videos") && (
-                <>
-                  <label className="block text-xs text-wisdom-muted">
-                    {hub === "books" || hub === "life-savers" ? "PDF file" : "Optional file"}
-                    {onAppwrite && (
-                      <span className="ml-1 text-cyan-300">(Appwrite · max ~4 MB via site)</span>
-                    )}
-                    <div className="mt-1">
-                      <label className="flex w-full min-h-[44px] items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-white/20 cursor-pointer text-sm text-white">
-                        <Upload className="w-4 h-4 shrink-0" />
-                        <span className="min-w-0 break-all">{file ? file.name : "Choose file"}</span>
-                        <input
-                          type="file"
-                          accept={hub === "books" || hub === "life-savers" ? "application/pdf" : "*/*"}
-                          className="hidden"
-                          onChange={(e) => setFile(e.target.files?.[0] || null)}
-                        />
-                      </label>
-                    </div>
-                  </label>
-                  {onAppwrite && (
-                    <label className="block text-xs text-wisdom-muted">
-                      Appwrite File ID {hub === "life-savers" ? "(for Life Saver PDFs)" : "(for large textbooks)"}
-                      <input
-                        value={appwriteFileId}
-                        onChange={(e) => setAppwriteFileId(e.target.value)}
-                        placeholder="Paste file ID from Appwrite Console"
-                        className={`${FIELD} font-mono`}
-                      />
-                      <span className="mt-1 block text-xs text-wisdom-muted leading-relaxed">
-                        Upload the PDF in Appwrite → Storage → your bucket → Create file, then copy the
-                        File ID here. Skips the 4 MB site limit.
-                      </span>
-                    </label>
-                  )}
-                </>
-              )}
-              {(hub === "short-notes" || hub === "videos") && (
-                <label className="block text-xs text-wisdom-muted">
-                  {hub === "videos" ? "Video URL (or notes)" : "Short notes (Markdown)"}
-                  <textarea
-                    value={bodyMd}
-                    onChange={(e) => setBodyMd(e.target.value)}
-                    rows={8}
-                    className={AREA}
-                    placeholder={
-                      hub === "videos"
-                        ? "https://youtube.com/..."
-                        : "## Topic\n\nYour short notes…"
-                    }
-                  />
-                </label>
-              )}
-              {(hub === "flashcards" ||
-                hub === "question-banks" ||
-                hub === "exams") && (
-                <label className="block text-xs text-wisdom-muted">
-                  Content JSON (meta)
-                  <textarea
-                    value={metaJson}
-                    onChange={(e) => setMetaJson(e.target.value)}
-                    rows={10}
-                    className={AREA}
-                  />
-                </label>
-              )}
-              <label className="flex items-start gap-3 min-h-[44px] text-sm text-white/90 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={published}
-                  onChange={(e) => setPublished(e.target.checked)}
-                  className="mt-0.5 h-5 w-5 shrink-0"
-                />
-                <span className="min-w-0 break-words">
-                  Published (visible to students who own the package)
-                </span>
-              </label>
-              <button
-                type="button"
-                disabled={saving}
-                onClick={save}
-                className="w-full inline-flex items-center justify-center gap-2 min-h-[44px] px-4 rounded-full bg-amber-500 text-wisdom-dark text-sm font-bold active:bg-amber-400 disabled:opacity-50 cursor-pointer"
-              >
-                <Save className="w-4 h-4 shrink-0" />
-                {saving ? "Saving…" : "Save"}
-              </button>
-            </div>
-          )}
-
-          {loading && <p className="text-wisdom-muted text-sm py-6 text-center">Loading…</p>}
+          {loading && <p className="py-6 text-center text-sm text-wisdom-muted">Loading…</p>}
           {!loading && items.length === 0 && !editing && (
-            <p className="text-center text-wisdom-muted text-sm py-10 px-3 border border-dashed border-white/15 rounded-2xl">
-              No items yet. Tap <strong className="text-white">Add item</strong>.
-            </p>
+            <AdminCard>
+              <p className="px-3 py-6 text-center text-sm text-wisdom-muted">
+                No items yet. Tap <strong className="text-white">Add item</strong>.
+              </p>
+            </AdminCard>
           )}
-          <ul className="space-y-2.5">
+          <div className="space-y-2">
             {items.map((item) => (
-              <li
-                key={item.id}
-                className="rounded-2xl border border-white/12 bg-wisdom-card p-3.5 space-y-3"
-              >
+              <AdminCard key={item.id} className="space-y-3">
                 <div className="min-w-0">
-                  <p className="font-semibold text-white break-words">{item.title}</p>
-                  <p className="text-xs text-wisdom-muted mt-0.5 break-words">
+                  <p className="break-words text-sm font-semibold text-white">{item.title}</p>
+                  <p className="mt-0.5 break-words text-xs text-wisdom-muted">
                     {item.contentType}
                     {item.chapter != null ? ` · ch ${item.chapter}` : ""}
                     {item.published ? " · published" : " · draft"}
                     {item.storagePath?.startsWith("appwrite:") ? " · Appwrite" : ""}
                   </p>
                 </div>
-                <div className="flex gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => openEdit(item)}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 min-h-[44px] rounded-full border border-white/12 text-sm font-semibold text-white/90 active:bg-white/10 cursor-pointer"
-                  >
-                    <Pencil className="w-4 h-4 shrink-0" /> Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => remove(item.id)}
-                    aria-label="Delete"
-                    className="inline-flex items-center justify-center w-12 min-h-[44px] rounded-full border border-rose-400/30 text-rose-300 active:bg-rose-500/10 cursor-pointer"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                <div className="grid grid-cols-2 gap-2">
+                  <AdminPill tone="gold" icon={Pencil} onClick={() => openEdit(item)}>
+                    Edit
+                  </AdminPill>
+                  <AdminPill tone="danger" icon={Trash2} aria-label="Delete" onClick={() => setPendingDelete(item.id)}>
+                    Delete
+                  </AdminPill>
                 </div>
-              </li>
+              </AdminCard>
             ))}
-          </ul>
+          </div>
         </div>
       )}
+
+      {/* Editor sheet */}
+      <AdminSheet
+        open={editing !== null}
+        onClose={() => setEditing(null)}
+        title={isNew ? "New item" : "Edit item"}
+        footer={
+          <AdminPill fullWidth tone="primary" icon={Save} disabled={saving} onClick={() => void save()}>
+            {saving ? "Saving…" : "Save"}
+          </AdminPill>
+        }
+      >
+        {editing ? (
+          <div className="space-y-3">
+            <AdminField label="Title">
+              <AdminInput value={title} onChange={(e) => setTitle(e.target.value)} />
+            </AdminField>
+            <AdminField label="Chapter # (optional)">
+              <AdminInput value={chapter} onChange={(e) => setChapter(e.target.value)} />
+            </AdminField>
+            {(hub === "books" || hub === "life-savers" || hub === "videos") && (
+              <>
+                <div className="min-w-0">
+                  <span className="mb-1 block text-xs font-semibold text-wisdom-muted">{fileLabel}</span>
+                  <label className="flex min-h-[44px] w-full cursor-pointer items-center gap-2 rounded-xl border border-dashed border-white/20 px-3 py-2 text-sm text-white">
+                    <Upload className="h-4 w-4 shrink-0" />
+                    <span className="min-w-0 break-all">{file ? file.name : "Choose file"}</span>
+                    <input
+                      type="file"
+                      accept={hub === "books" || hub === "life-savers" ? "application/pdf" : "*/*"}
+                      className="hidden"
+                      onChange={(e) => setFile(e.target.files?.[0] || null)}
+                    />
+                  </label>
+                </div>
+                {onAppwrite && (
+                  <AdminField
+                    label={`Appwrite File ID ${hub === "life-savers" ? "(for Life Saver PDFs)" : "(for large textbooks)"}`}
+                    hint="Upload the PDF in Appwrite → Storage → your bucket → Create file, then copy the File ID here. Skips the 4 MB site limit."
+                  >
+                    <AdminInput
+                      value={appwriteFileId}
+                      onChange={(e) => setAppwriteFileId(e.target.value)}
+                      placeholder="Paste file ID from Appwrite Console"
+                      className="font-mono"
+                    />
+                  </AdminField>
+                )}
+              </>
+            )}
+            {(hub === "short-notes" || hub === "videos") && (
+              <AdminField label={hub === "videos" ? "Video URL (or notes)" : "Short notes (Markdown)"}>
+                <AdminTextarea
+                  value={bodyMd}
+                  onChange={(e) => setBodyMd(e.target.value)}
+                  rows={8}
+                  className={AREA}
+                  placeholder={
+                    hub === "videos"
+                      ? "https://youtube.com/..."
+                      : "## Topic\n\nYour short notes…"
+                  }
+                />
+              </AdminField>
+            )}
+            {(hub === "flashcards" ||
+              hub === "question-banks" ||
+              hub === "exams") && (
+              <AdminField label="Content JSON (meta)">
+                <AdminTextarea
+                  value={metaJson}
+                  onChange={(e) => setMetaJson(e.target.value)}
+                  rows={10}
+                  className={AREA}
+                />
+              </AdminField>
+            )}
+            <label className="flex min-h-[44px] cursor-pointer items-start gap-3 text-sm text-white/90">
+              <input
+                type="checkbox"
+                checked={published}
+                onChange={(e) => setPublished(e.target.checked)}
+                className="mt-0.5 h-5 w-5 shrink-0 accent-amber-400"
+              />
+              <span className="min-w-0 break-words">
+                Published (visible to students who own the package)
+              </span>
+            </label>
+          </div>
+        ) : null}
+      </AdminSheet>
+
+      {/* Confirm before deleting */}
+      <AdminSheet
+        open={pendingDelete !== null}
+        onClose={() => setPendingDelete(null)}
+        title="Delete item"
+        footer={
+          <div className="flex gap-2">
+            <AdminPill fullWidth onClick={() => setPendingDelete(null)}>
+              Back
+            </AdminPill>
+            <AdminPill fullWidth tone="danger" icon={Trash2} onClick={() => void confirmDelete()}>
+              Delete
+            </AdminPill>
+          </div>
+        }
+      >
+        <p className="text-sm text-wisdom-muted">Delete this content item?</p>
+      </AdminSheet>
+
+      <AdminToast message={toast || null} onClose={() => setToast("")} durationMs={8000} />
     </div>
   );
 }
