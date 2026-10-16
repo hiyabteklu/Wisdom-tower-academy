@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from "react";
 import {
-  Smartphone,
   Trash2,
   ExternalLink,
   RefreshCw,
@@ -18,7 +17,6 @@ import NotificationComposerV2 from "./NotificationComposerV2";
 import {
   AdminBadge,
   AdminCard,
-  AdminChip,
   AdminEmpty,
   AdminPill,
   AdminSectionTitle,
@@ -35,7 +33,7 @@ type PanelView = "home" | "compose" | "scheduled" | "history";
  * Admin Notifications tab.
  * 2026-10-15 (notifications v2): R3-b2 replaced the four-preset form by `NotificationComposerV2`;
  * R3-b4 moved scheduling into the composer (step 5 "When") and made the scheduled list editable:
- * pressing Edit on a waiting row loads it into the composer. History and the FCM guide are unchanged
+ * pressing Edit on a waiting row loads it into the composer. History is unchanged
  * apart from a badge for the `contest` type.
  *
  * 2026-10-15 (Admin mobile redesign, slice A6): LAYOUT ONLY (compact header, no animation, wrapped text).
@@ -44,7 +42,10 @@ type PanelView = "home" | "compose" | "scheduled" | "history";
  * home-grid look. LAYOUT ONLY: the composer and the scheduled list are the same components with the same props;
  * they stay mounted (only hidden) so a half-written message is not lost when the admin looks at another tile.
  * History uses kit cards and a confirm bottom sheet before a delete (the delete call itself is unchanged).
- * The composer and the scheduled list are restyled in the next U4 slices.
+ *
+ * 2026-10-16 (owner request): the "Android App (Kotlin / Capacitor) FCM Endpoint" developer note (an example
+ * request for the app programmer, not an admin tool) was removed from the landing. It was static text only;
+ * the endpoint `/api/notifications/register-device` itself is untouched.
  */
 export default function NotificationsPanel() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -147,33 +148,6 @@ export default function NotificationsPanel() {
               onClick={() => setView("history")}
             />
           </AdminTileGrid>
-
-          {/* Android FCM Integration Guide (developer note, closed by default) */}
-          <details className="rounded-2xl border border-white/10 bg-wisdom-card p-3">
-            <summary className="flex min-h-[44px] cursor-pointer items-center gap-3 text-xs font-bold uppercase tracking-wider text-amber-200">
-              <AdminChip icon={Smartphone} size="sm" />
-              <span className="min-w-0 flex-1">Android App (Kotlin / Capacitor) FCM Endpoint</span>
-            </summary>
-            <div className="space-y-2 pt-2">
-              <p className="break-all font-mono text-xs leading-relaxed text-slate-300">
-                Endpoint: <span className="text-amber-300">POST /api/notifications/register-device</span>
-              </p>
-              <p className="text-xs leading-relaxed text-slate-400">The Android app registers device tokens by sending:</p>
-              <pre className="whitespace-pre-wrap break-words rounded-xl border border-white/10 bg-black/40 p-3 font-mono text-[11px] text-slate-300">
-{`// Example Android HTTP Request on FCM token refresh
-fetch("/api/notifications/register-device", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    token: fcmToken,
-    userId: currentUserId, // optional
-    platform: "android",
-    deviceName: "Samsung Galaxy A54" // optional
-  })
-});`}
-              </pre>
-            </div>
-          </details>
         </>
       ) : (
         <div className="flex items-center gap-2">
