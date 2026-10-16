@@ -10,10 +10,12 @@
  * gold left bar, divider = thin gold gradient). The two glass colours and the dark text colour are close
  * approximations (the app uses theme tokens), so the preview is a guide, not a pixel match.
  *
- * 2026-10-15 (Admin mobile redesign, slice A6 part 2): LAYOUT ONLY. The add buttons sit in a 3-column grid
- * and the Bold / Highlight buttons in a 2-column grid, all 44 px high pills; the move up, move down and
- * delete buttons are 44 px touch targets; the textarea is at least 44 px high. The preview keeps its gold
- * look. Editing logic is unchanged.
+ * 2026-10-15 (Admin mobile redesign, slice A6 part 2): LAYOUT ONLY (3-column add grid, 2-column Bold /
+ * Highlight grid, 44 px targets). Editing logic is unchanged.
+ *
+ * 2026-10-16 (Admin UI V2, slice U4 part 3b): LAYOUT ONLY. The editing controls use the kit look (kit card per
+ * block, kit textarea, kit pill colours, delete in the danger colour). The PREVIEW is untouched on purpose: it
+ * must keep the gold look of the Android reading view. Editing logic and exports are unchanged.
  */
 
 import { useRef, type CSSProperties } from "react";
@@ -24,6 +26,7 @@ import {
   type EditorBlockType,
 } from "@/lib/notification-authoring";
 import type { ContentBlock, ContentRun } from "@/lib/notification-v2";
+import { AdminCard, AdminTextarea } from "./ui";
 
 const GOLD = "#FCD34D";
 const GOLD_SOFT = "rgba(252, 211, 77, 0.75)";
@@ -50,6 +53,9 @@ const BLOCK_LABEL: Record<EditorBlockType, string> = {
 
 const SMALL_BUTTON =
   "min-h-[44px] min-w-[44px] px-3 grid place-items-center rounded-full text-xs font-semibold cursor-pointer disabled:opacity-30";
+
+const KIT_PILL =
+  "min-h-[44px] rounded-full border border-white/10 bg-wisdom-card px-2 text-sm font-semibold text-wisdom-muted active:bg-white/10 cursor-pointer";
 
 export function NotificationBlockEditor({
   value,
@@ -95,14 +101,14 @@ export function NotificationBlockEditor({
   return (
     <div className="space-y-3">
       <div className="space-y-1.5">
-        <p className="text-xs text-slate-400">Add a block:</p>
+        <p className="text-xs text-wisdom-muted">Add a block:</p>
         <div className="grid grid-cols-3 gap-2">
           {ADD_BUTTONS.map((b) => (
             <button
               key={b.t}
               type="button"
               onClick={() => onChange([...value, newEditorBlock(b.t)])}
-              className="min-h-[44px] rounded-full border border-white/15 bg-white/5 px-2 text-xs text-slate-200 active:bg-white/10 cursor-pointer"
+              className={KIT_PILL}
             >
               + {b.label}
             </button>
@@ -111,13 +117,13 @@ export function NotificationBlockEditor({
       </div>
 
       <div className="space-y-1.5">
-        <p className="text-xs text-slate-400">Select text in a box, then:</p>
+        <p className="text-xs text-wisdom-muted">Select text in a box, then:</p>
         <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
             onMouseDown={keepFocus}
             onClick={() => wrap("**")}
-            className="min-h-[44px] rounded-full border border-white/15 bg-white/5 px-3 text-xs font-bold text-white active:bg-white/10 cursor-pointer"
+            className="min-h-[44px] cursor-pointer rounded-full border border-white/10 bg-wisdom-card px-3 text-sm font-bold text-white active:bg-white/10"
           >
             Bold
           </button>
@@ -125,7 +131,7 @@ export function NotificationBlockEditor({
             type="button"
             onMouseDown={keepFocus}
             onClick={() => wrap("==")}
-            className="min-h-[44px] rounded-full px-3 text-xs font-bold active:opacity-80 cursor-pointer"
+            className="min-h-[44px] cursor-pointer rounded-full px-3 text-sm font-bold active:opacity-80"
             style={{ background: GOLD, color: DARK_ON_GOLD }}
           >
             Highlight
@@ -137,13 +143,13 @@ export function NotificationBlockEditor({
       </div>
 
       {value.length === 0 && (
-        <p className="rounded-xl border border-dashed border-white/15 p-3 text-sm text-slate-400">
+        <p className="rounded-2xl border border-dashed border-white/15 p-3 text-sm text-wisdom-muted">
           Nothing yet. Add a Title, then a Paragraph.
         </p>
       )}
 
       {value.map((block, index) => (
-        <div key={block.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+        <AdminCard key={block.id}>
           <div className="mb-1 flex flex-wrap items-center justify-between gap-x-2">
             <span
               className="min-w-0 text-[11px] font-semibold uppercase tracking-wide"
@@ -174,7 +180,7 @@ export function NotificationBlockEditor({
                 type="button"
                 onClick={() => remove(block.id)}
                 aria-label="Delete block"
-                className={`${SMALL_BUTTON} text-red-300 active:bg-red-500/10`}
+                className={`${SMALL_BUTTON} text-rose-300 active:bg-rose-500/10`}
               >
                 Delete
               </button>
@@ -190,7 +196,7 @@ export function NotificationBlockEditor({
               }}
             />
           ) : (
-            <textarea
+            <AdminTextarea
               value={block.text}
               rows={block.t === "title" || block.t === "subtitle" ? 1 : 3}
               onFocus={(e) => {
@@ -198,13 +204,13 @@ export function NotificationBlockEditor({
                 activeId.current = block.id;
               }}
               onChange={(e) => update(block.id, e.target.value)}
-              className="w-full min-h-[44px] resize-y rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-amber-300/60"
+              className="resize-y"
               placeholder={
                 block.t === "list" ? "One bullet per line" : "Write here"
               }
             />
           )}
-        </div>
+        </AdminCard>
       ))}
     </div>
   );
