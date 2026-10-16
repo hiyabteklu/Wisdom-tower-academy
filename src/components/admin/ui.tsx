@@ -355,22 +355,25 @@ type SheetRescue = { left: number; top: number; width: number; height: number };
  * its own vertical scroll that does not chain into the page. The phone Back button closes it
  * (one history entry is pushed while it is open).
  *
- * U11 (2026-10-16, owner: in the Android app every Add, Edit and Delete only dims the screen, the sheet never
- * shows; in a browser it works). Hypothesis: inside the app WebView the sheet panel is positioned outside the
- * visible area while the backdrop still covers everything. Two measures, both inside this component:
- * 1. The sheet is rendered with a portal directly under document.body, so no ancestor of the admin page can
- *    become the containing block of its fixed positioning.
- * 2. About 120 ms after opening it measures its own panel. If the panel is not where a bottom sheet must be
- *    (inside the window, bottom edge on the window bottom), the wrapper switches to absolute positioning at the
- *    current scroll position with the window size ("rescue"), which is always in view.
- * TEMP-DEBUG: a small grey line at the top of the dim shows the measured numbers (window size, panel box and
- * ok or RESCUE). Remove that line once the owner has confirmed the sheets open on the phone.
+ * U11 (2026-10-16). Owner: in the Android app every Add, Edit and Delete only dims the screen. FOUND from the
+ * TEMP-DEBUG line the owner screenshotted: in the app WebView the panel measured `top 636 bottom 637 h 1` (window
+ * 360x637), i.e. it is NOT off-screen, it is collapsed to its 1 px border and the content overflows below the
+ * window edge. The same sheet in the phone browser measured `h 683 ok`. Hypothesis for the cause (not proven):
+ * the class max-h-[88vh] resolves to about zero in the app WebView. Measures in this component:
+ * 1. Portal directly under document.body (no ancestor can become the containing block of the fixed wrapper).
+ * 2. The panel max-height is set INLINE in pixels from window.innerHeight (88 percent), not with the vh unit.
+ * 3. About 120 ms after opening it measures the panel. If its height is under 40 px, it forces an explicit
+ *    pixel height (88 percent of the window). If it is positioned outside the window, the wrapper switches to
+ *    absolute positioning at the current scroll position ("RESCUE").
+ * TEMP-DEBUG: the grey line at the top of the dim shows the numbers (first and final measure). Remove it after
+ * the owner confirms the sheets open on the phone.
  */
 export function AdminSheet({ open, onClose, title, children, footer }: { open: boolean; onClose: () => void; title: string; children: ReactNode; footer?: ReactNode }) {
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
   const panelRef = useRef<HTMLDivElement | null>(null);
   const [rescue, setRescue] = useState<SheetRescue | null>(null);
+  const [forceH, setForceH] = useState<number | null>(null);
   const [diag, setDiag] = useState("");
 
   useEffect(() => {
@@ -403,14 +406,15 @@ export function AdminSheet({ open, onClose, title, children, footer }: { open: b
     };
   }, [open]);
 
-  // Measure the panel after it has been laid out; fall back to a position that is always in view.
+  // Measure the panel after layout; fix a collapsed height and a position outside the window.
   useEffect(() => {
     if (!open) {
       setRescue(null);
+      setForceH(null);
       setDiag("");
       return;
     }
-    const id = window.setTimeout(() => {
+    const measure = (final: boolean) => {
       const el = panelRef.current;
       if (!el) {
         setDiag("panel missing");
@@ -420,14 +424,22 @@ export function AdminSheet({ open, onClose, title, children, footer }: { open: b
       const vw = window.innerWidth;
       const vh = window.innerHeight;
       const vv = window.visualViewport;
-      const sane = r.width > 0 && r.height >= 40 && r.left >= -1 && r.right <= vw + 1 && r.top >= 0 && Math.abs(r.bottom - vh) <= 2;
+      const tooSmall = r.height < 40;
+      const misplaced = r.left < -1 || r.right > vw + 1 || r.top < 0 || (!tooSmall && Math.abs(r.bottom - vh) > 2);
       const vvText = vv ? `${Math.round(vv.width)}x${Math.round(vv.height)}` : "none";
       setDiag(
-        `win ${Math.round(vw)}x${Math.round(vh)} vv ${vvText} panel top ${Math.round(r.top)} bottom ${Math.round(r.bottom)} left ${Math.round(r.left)} w ${Math.round(r.width)} h ${Math.round(r.height)} ${sane ? "ok" : "RESCUE"}`
+        `${final ? "final" : "first"} win ${Math.round(vw)}x${Math.round(vh)} vv ${vvText} panel top ${Math.round(r.top)} bottom ${Math.round(r.bottom)} left ${Math.round(r.left)} w ${Math.round(r.width)} h ${Math.round(r.height)} ${tooSmall ? "FORCE-H " : ""}${misplaced ? "RESCUE" : "ok"}`
       );
-      if (!sane) setRescue({ left: window.scrollX, top: window.scrollY, width: vw, height: vh });
-    }, 120);
-    return () => window.clearTimeout(id);
+      if (final) return;
+      if (tooSmall) setForceH(Math.round(vh * 0.88));
+      if (misplaced) setRescue({ left: window.scrollX, top: window.scrollY, width: vw, height: vh });
+    };
+    const id1 = window.setTimeout(() => measure(false), 120);
+    const id2 = window.setTimeout(() => measure(true), 600);
+    return () => {
+      window.clearTimeout(id1);
+      window.clearTimeout(id2);
+    };
   }, [open]);
 
   if (!open || typeof document === "undefined") return null;
@@ -435,6 +447,10 @@ export function AdminSheet({ open, onClose, title, children, footer }: { open: b
   const wrapperStyle = rescue
     ? { position: "absolute" as const, left: rescue.left, top: rescue.top, width: rescue.width, height: rescue.height }
     : undefined;
+  const panelStyle = {
+    maxHeight: Math.round(window.innerHeight * 0.88),
+    ...(forceH !== null ? { height: forceH } : {}),
+  };
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center" style={wrapperStyle} role="dialog" aria-modal="true" aria-label={title}>
@@ -442,9 +458,10 @@ export function AdminSheet({ open, onClose, title, children, footer }: { open: b
       {diag ? <div className="pointer-events-none absolute left-2 right-2 top-2 break-words text-[10px] leading-tight text-white/60">{diag}</div> : null}
       <div
         ref={panelRef}
-        className="relative flex max-h-[88vh] w-full max-w-xl min-w-0 flex-col break-words rounded-t-3xl border border-b-0 border-white/10 bg-wisdom-dark text-white"
+        style={panelStyle}
+        className="relative flex w-full max-w-xl min-w-0 flex-col break-words rounded-t-3xl border border-b-0 border-white/10 bg-wisdom-dark text-white"
       >
-        <div className="flex items-center gap-2 border-b border-white/10 py-2 pl-4 pr-2">
+        <div className="flex shrink-0 items-center gap-2 border-b border-white/10 py-2 pl-4 pr-2">
           <h2 className="min-w-0 flex-1 truncate text-base font-bold text-white">{title}</h2>
           <button
             type="button"
@@ -456,7 +473,7 @@ export function AdminSheet({ open, onClose, title, children, footer }: { open: b
           </button>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4">{children}</div>
-        {footer ? <div className="border-t border-white/10 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">{footer}</div> : null}
+        {footer ? <div className="shrink-0 border-t border-white/10 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">{footer}</div> : null}
       </div>
     </div>,
     document.body
