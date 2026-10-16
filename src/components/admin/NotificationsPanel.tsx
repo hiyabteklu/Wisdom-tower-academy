@@ -6,13 +6,30 @@ import {
   Trash2,
   ExternalLink,
   RefreshCw,
-  Radio,
-  Clock,
+  Send,
+  CalendarClock,
+  History as HistoryIcon,
+  ChevronLeft,
 } from "lucide-react";
 import type { NotificationItem, NotificationType } from "@/lib/notifications";
 import { supabase } from "@/lib/supabase";
 import ScheduledNotificationsPanel, { type ScheduledRowV2 } from "./ScheduledNotificationsPanel";
 import NotificationComposerV2 from "./NotificationComposerV2";
+import {
+  AdminBadge,
+  AdminCard,
+  AdminChip,
+  AdminEmpty,
+  AdminPill,
+  AdminSectionTitle,
+  AdminSheet,
+  AdminSkeleton,
+  AdminTile,
+  AdminTileGrid,
+  type AdminTone,
+} from "./ui";
+
+type PanelView = "home" | "compose" | "scheduled" | "history";
 
 /**
  * Admin Notifications tab.
@@ -21,16 +38,22 @@ import NotificationComposerV2 from "./NotificationComposerV2";
  * pressing Edit on a waiting row loads it into the composer. History and the FCM guide are unchanged
  * apart from a badge for the `contest` type.
  *
- * 2026-10-15 (Admin mobile redesign, slice A6): LAYOUT ONLY. Compact header with a 44 px round Refresh icon,
- * no pulse or spin animation, no big shadows, history as bordered cards (no side-by-side desktop rows),
- * long links wrap, the FCM developer guide is a closed <details> and its code block wraps instead of
- * scrolling sideways. Logic and API calls are unchanged.
+ * 2026-10-15 (Admin mobile redesign, slice A6): LAYOUT ONLY (compact header, no animation, wrapped text).
+ *
+ * 2026-10-16 (Admin UI V2, slice U4 part 1): landing as three tiles (Compose, Scheduled, History) in the
+ * home-grid look. LAYOUT ONLY: the composer and the scheduled list are the same components with the same props;
+ * they stay mounted (only hidden) so a half-written message is not lost when the admin looks at another tile.
+ * History uses kit cards and a confirm bottom sheet before a delete (the delete call itself is unchanged).
+ * The composer and the scheduled list are restyled in the next U4 slices.
  */
 export default function NotificationsPanel() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
   const [editRow, setEditRow] = useState<ScheduledRowV2 | null>(null);
   const [scheduleRefresh, setScheduleRefresh] = useState(0);
+  const [view, setView] = useState<PanelView>("home");
+  const [pendingDelete, setPendingDelete] = useState<NotificationItem | null>(null);
 
   const loadNotifications = useCallback(async () => {
     setLoading(true);
@@ -44,6 +67,7 @@ export default function NotificationsPanel() {
       const data = await res.json();
       if (data.ok && Array.isArray(data.notifications)) {
         setNotifications(data.notifications);
+        setLoaded(true);
       }
     } catch {
       /* ignore */
@@ -73,136 +97,69 @@ export default function NotificationsPanel() {
     }
   }
 
-  const getTypeBadge = (t: NotificationType) => {
+  async function confirmDelete() {
+    const target = pendingDelete;
+    setPendingDelete(null);
+    if (target) await handleDelete(target.id);
+  }
+
+  // Pressing Edit on a waiting scheduled row loads it into the composer, so show the composer.
+  function startEdit(row: ScheduledRowV2 | null) {
+    setEditRow(row);
+    if (row) setView("compose");
+  }
+
+  const getTypeTone = (t: NotificationType): AdminTone => {
     switch (t) {
       case "material":
-        return "bg-sky-500/15 text-sky-300 border-sky-400/30";
+        return "cyan";
       case "admin":
-        return "bg-amber-500/15 text-amber-300 border-amber-400/30";
+        return "gold";
       case "contest":
-        return "bg-orange-500/15 text-orange-300 border-orange-400/30";
+        return "gold";
       case "payment":
-        return "bg-emerald-500/15 text-emerald-300 border-emerald-400/30";
+        return "green";
       default:
-        return "bg-indigo-500/15 text-indigo-300 border-indigo-400/30";
+        return "neutral";
     }
+  };
+
+  const titleOfView: Record<Exclude<PanelView, "home">, string> = {
+    compose: "Compose",
+    scheduled: "Scheduled",
+    history: "History",
   };
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3">
-        <div className="min-w-0">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-sky-500/15 text-sky-300 border border-sky-400/30">
-            <Radio className="w-3.5 h-3.5" />
-            FCM Broadcast System
-          </span>
-          <h2 className="font-display text-xl font-bold text-white tracking-tight mt-1.5">
-            Push Notifications & Announcements
-          </h2>
-          <p className="text-xs text-wisdom-muted mt-1 leading-relaxed">
+      {view === "home" ? (
+        <>
+          <p className="text-xs leading-relaxed text-wisdom-muted">
             Publish real-time announcements, content releases, and contest alerts directly to the Android app and website.
           </p>
-        </div>
+          <AdminTileGrid>
+            <AdminTile icon={Send} label="Compose" onClick={() => setView("compose")} />
+            <AdminTile icon={CalendarClock} label="Scheduled" onClick={() => setView("scheduled")} />
+            <AdminTile
+              icon={HistoryIcon}
+              label="History"
+              badge={loaded ? <AdminBadge tone="gold">{notifications.length}</AdminBadge> : undefined}
+              onClick={() => setView("history")}
+            />
+          </AdminTileGrid>
 
-        <button
-          type="button"
-          onClick={() => loadNotifications()}
-          disabled={loading}
-          aria-label="Refresh"
-          className="shrink-0 w-11 h-11 grid place-items-center rounded-full bg-white/5 border border-white/10 text-white active:bg-white/10 disabled:opacity-50 cursor-pointer"
-        >
-          <RefreshCw className="w-4 h-4" />
-        </button>
-      </div>
-
-      {/* Composer v2 (send now, schedule, edit a waiting row) */}
-      <NotificationComposerV2
-        editRow={editRow}
-        onEditDone={() => setEditRow(null)}
-        onSent={() => void loadNotifications()}
-        onScheduled={() => setScheduleRefresh((n) => n + 1)}
-      />
-
-      {/* Scheduled notifications: list, edit, cancel */}
-      <ScheduledNotificationsPanel refreshKey={scheduleRefresh} onEdit={setEditRow} />
-
-      {/* History */}
-      <div className="rounded-2xl border border-white/10 bg-[#08101e] p-3">
-        <div className="flex items-center justify-between gap-3 mb-3">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
-            <Clock className="w-4 h-4 text-sky-400 shrink-0" />
-            <span>Notification Broadcast History ({notifications.length})</span>
-          </h3>
-        </div>
-
-        {loading ? (
-          <p className="text-sm text-wisdom-muted py-6 text-center">Loading broadcasts...</p>
-        ) : notifications.length === 0 ? (
-          <p className="text-sm text-wisdom-muted py-6 text-center">No notifications broadcasted yet.</p>
-        ) : (
-          <div className="space-y-2">
-            {notifications.map((n) => (
-              <div
-                key={n.id}
-                className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 flex items-start gap-2"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
-                    <span
-                      className={`text-[11px] font-bold px-2 py-0.5 rounded-md border uppercase tracking-wider ${getTypeBadge(
-                        n.type
-                      )}`}
-                    >
-                      {n.type}
-                    </span>
-                    <span className="text-xs font-mono text-slate-400 break-all">
-                      Target: {n.target === "all" ? "All Users" : n.target}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 mb-1">{new Date(n.createdAt).toLocaleString()}</p>
-                  <h4 className="text-sm font-bold text-white break-words">{n.title}</h4>
-                  <p className="text-sm text-wisdom-muted line-clamp-2 mt-0.5 break-words">{n.body}</p>
-                  {n.url && (
-                    <a
-                      href={n.url}
-                      className="inline-flex items-start gap-1 text-xs text-sky-400 mt-1.5 break-all"
-                    >
-                      <span>Link: {n.url}</span>
-                      <ExternalLink className="w-3 h-3 shrink-0 mt-0.5" />
-                    </a>
-                  )}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => handleDelete(n.id)}
-                  title="Delete notification"
-                  aria-label="Delete notification"
-                  className="shrink-0 w-11 h-11 grid place-items-center rounded-full text-slate-400 active:text-rose-400 active:bg-rose-500/10 cursor-pointer"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Android FCM Integration Guide (developer note, closed by default) */}
-      <details className="rounded-2xl border border-sky-400/20 bg-sky-950/20 p-3">
-        <summary className="flex items-center gap-2 min-h-[44px] cursor-pointer text-xs font-bold uppercase tracking-wider text-sky-300">
-          <Smartphone className="w-4 h-4 shrink-0" />
-          <span>Android App (Kotlin / Capacitor) FCM Endpoint</span>
-        </summary>
-        <div className="space-y-2 pt-2">
-          <p className="text-xs text-slate-300 leading-relaxed font-mono break-all">
-            Endpoint: <span className="text-amber-300">POST /api/notifications/register-device</span>
-          </p>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            The Android app registers device tokens by sending:
-          </p>
-          <pre className="p-3 rounded-xl bg-black/40 border border-white/10 text-[11px] text-slate-300 font-mono whitespace-pre-wrap break-words">
+          {/* Android FCM Integration Guide (developer note, closed by default) */}
+          <details className="rounded-2xl border border-white/10 bg-wisdom-card p-3">
+            <summary className="flex min-h-[44px] cursor-pointer items-center gap-3 text-xs font-bold uppercase tracking-wider text-amber-200">
+              <AdminChip icon={Smartphone} size="sm" />
+              <span className="min-w-0 flex-1">Android App (Kotlin / Capacitor) FCM Endpoint</span>
+            </summary>
+            <div className="space-y-2 pt-2">
+              <p className="break-all font-mono text-xs leading-relaxed text-slate-300">
+                Endpoint: <span className="text-amber-300">POST /api/notifications/register-device</span>
+              </p>
+              <p className="text-xs leading-relaxed text-slate-400">The Android app registers device tokens by sending:</p>
+              <pre className="whitespace-pre-wrap break-words rounded-xl border border-white/10 bg-black/40 p-3 font-mono text-[11px] text-slate-300">
 {`// Example Android HTTP Request on FCM token refresh
 fetch("/api/notifications/register-device", {
   method: "POST",
@@ -214,9 +171,112 @@ fetch("/api/notifications/register-device", {
     deviceName: "Samsung Galaxy A54" // optional
   })
 });`}
-          </pre>
+              </pre>
+            </div>
+          </details>
+        </>
+      ) : (
+        <div className="flex items-center gap-2">
+          <AdminPill icon={ChevronLeft} onClick={() => setView("home")}>
+            Back
+          </AdminPill>
+          <h3 className="min-w-0 flex-1 truncate text-base font-bold text-white">{titleOfView[view]}</h3>
+          {view === "history" ? (
+            <button
+              type="button"
+              onClick={() => loadNotifications()}
+              disabled={loading}
+              aria-label="Refresh"
+              className="grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-full border border-white/10 bg-wisdom-card text-white active:bg-white/10 disabled:opacity-50"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </button>
+          ) : null}
         </div>
-      </details>
+      )}
+
+      {/* Composer v2 (send now, schedule, edit a waiting row). Kept mounted so a draft survives. */}
+      <div className={view === "compose" ? "" : "hidden"}>
+        <NotificationComposerV2
+          editRow={editRow}
+          onEditDone={() => setEditRow(null)}
+          onSent={() => void loadNotifications()}
+          onScheduled={() => setScheduleRefresh((n) => n + 1)}
+        />
+      </div>
+
+      {/* Scheduled notifications: list, edit, cancel */}
+      <div className={view === "scheduled" ? "" : "hidden"}>
+        <ScheduledNotificationsPanel refreshKey={scheduleRefresh} onEdit={startEdit} />
+      </div>
+
+      {/* History */}
+      {view === "history" ? (
+        <div>
+          <AdminSectionTitle>Notification Broadcast History ({notifications.length})</AdminSectionTitle>
+          {loading && notifications.length === 0 ? (
+            <AdminSkeleton rows={3} />
+          ) : notifications.length === 0 ? (
+            <AdminEmpty title="No notifications broadcasted yet." />
+          ) : (
+            <div className="space-y-2">
+              {notifications.map((n) => (
+                <AdminCard key={n.id} className="flex items-start gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <AdminBadge tone={getTypeTone(n.type)} className="uppercase tracking-wider">
+                        {n.type}
+                      </AdminBadge>
+                      <span className="break-all font-mono text-xs text-slate-400">
+                        Target: {n.target === "all" ? "All Users" : n.target}
+                      </span>
+                    </div>
+                    <p className="mb-1 text-xs text-slate-500">{new Date(n.createdAt).toLocaleString()}</p>
+                    <h4 className="break-words text-sm font-bold text-white">{n.title}</h4>
+                    <p className="mt-0.5 line-clamp-2 break-words text-sm text-wisdom-muted">{n.body}</p>
+                    {n.url && (
+                      <a href={n.url} className="mt-1.5 inline-flex items-start gap-1 break-all text-xs text-cyan-300">
+                        <span>Link: {n.url}</span>
+                        <ExternalLink className="mt-0.5 h-3 w-3 shrink-0" />
+                      </a>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setPendingDelete(n)}
+                    title="Delete notification"
+                    aria-label="Delete notification"
+                    className="grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-full text-slate-400 active:bg-rose-500/10 active:text-rose-400"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </AdminCard>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : null}
+
+      {/* Confirm before deleting a broadcast */}
+      <AdminSheet
+        open={pendingDelete !== null}
+        onClose={() => setPendingDelete(null)}
+        title="Delete notification"
+        footer={
+          <div className="flex gap-2">
+            <AdminPill fullWidth onClick={() => setPendingDelete(null)}>
+              Cancel
+            </AdminPill>
+            <AdminPill fullWidth tone="danger" icon={Trash2} onClick={() => void confirmDelete()}>
+              Delete
+            </AdminPill>
+          </div>
+        }
+      >
+        <p className="break-words text-sm font-semibold text-white">{pendingDelete?.title}</p>
+        <p className="mt-1 line-clamp-3 break-words text-sm text-wisdom-muted">{pendingDelete?.body}</p>
+      </AdminSheet>
     </div>
   );
 }
